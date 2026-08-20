@@ -2,7 +2,7 @@
  * Rutas del grupo autenticado `(app)` y utilidades de redirección.
  * Cada feature nueva añade aquí su prefijo protegido.
  */
-export const PROTECTED_PREFIXES = ["/dashboard", "/quick"] as const;
+export const PROTECTED_PREFIXES = ["/dashboard", "/quick", "/settings"] as const;
 
 export const LOGIN_PATH = "/auth/login";
 

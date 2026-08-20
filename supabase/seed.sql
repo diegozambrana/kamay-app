@@ -4,10 +4,13 @@
 --   multi@kamay.test    → dueño de "Taller Kamay" y "Kamay Feria" (dos organizaciones)
 --   recovery@kamay.test → ayudante de "Taller Kamay" (para la prueba de recuperación)
 
+--   geeko@kamay.test    → dueña de "Geeko Store" (la organización real, con su configuración)
+
 -- Organizaciones
 insert into organizations (id, name) values
   ('10000000-0000-0000-0000-000000000001', 'Taller Kamay'),
-  ('10000000-0000-0000-0000-000000000002', 'Kamay Feria');
+  ('10000000-0000-0000-0000-000000000002', 'Kamay Feria'),
+  ('10000000-0000-0000-0000-000000000003', 'Geeko Store');
 
 -- Usuarios de Supabase Auth
 insert into auth.users (
@@ -27,7 +30,9 @@ select
 from (values
   ('20000000-0000-0000-0000-000000000001'::uuid, 'owner@kamay.test'),
   ('20000000-0000-0000-0000-000000000002'::uuid, 'multi@kamay.test'),
-  ('20000000-0000-0000-0000-000000000003'::uuid, 'recovery@kamay.test')
+  ('20000000-0000-0000-0000-000000000003'::uuid, 'recovery@kamay.test'),
+  ('20000000-0000-0000-0000-000000000004'::uuid, 'geeko@kamay.test'),
+  ('20000000-0000-0000-0000-000000000005'::uuid, 'ayudante@kamay.test')
 ) as u(id, email);
 
 insert into auth.identities (
@@ -47,4 +52,35 @@ insert into memberships (organization_id, user_id, role, display_name) values
   ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'owner', 'Dueña Taller'),
   ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', 'owner', 'Multi Org'),
   ('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', 'owner', 'Multi Org'),
-  ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'assistant', 'Ayudante Recuperación');
+  ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'assistant', 'Ayudante Recuperación'),
+  ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000004', 'owner', 'Dueña Geeko'),
+  ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000005', 'assistant', 'Ayudante Geeko');
+
+-- ── Geeko Store: la configuración real del negocio ────────────────────────
+-- Tres líneas productivas más General/Compartido, que es donde caen los
+-- registros que no pertenecen a una sola línea (esquema §18, semilla).
+
+insert into business_lines (id, organization_id, name, color, is_shared, position) values
+  ('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'Sublimación',  'blue',   false, 1),
+  ('30000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 'Impresión 3D', 'violet', false, 2),
+  ('30000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'Alfarería',    'orange', false, 3),
+  ('30000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', 'General',      'zinc',   true,  4);
+
+insert into sales_channels (id, organization_id, name, position) values
+  ('40000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'Feria',          1),
+  ('40000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 'Redes',          2),
+  ('40000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'Pedido directo', 3),
+  ('40000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', 'Mostrador',      4);
+
+-- Juego mínimo para poder registrar egresos e ítems desde el primer día.
+insert into expense_categories (id, organization_id, name) values
+  ('50000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'Insumos'),
+  ('50000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 'Servicios'),
+  ('50000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'Transporte'),
+  ('50000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', 'Herramientas');
+
+insert into units (id, organization_id, code, name) values
+  ('60000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'u',  'Unidad'),
+  ('60000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 'kg', 'Kilogramo'),
+  ('60000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'm',  'Metro'),
+  ('60000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', 'l',  'Litro');

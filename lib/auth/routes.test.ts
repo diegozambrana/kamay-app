@@ -11,6 +11,8 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/dashboard")).toBe(true);
     expect(isProtectedPath("/quick")).toBe(true);
     expect(isProtectedPath("/dashboard/anything")).toBe(true);
+    expect(isProtectedPath("/settings")).toBe(true);
+    expect(isProtectedPath("/settings/lines")).toBe(true);
   });
 
   it("leaves public routes unprotected", () => {

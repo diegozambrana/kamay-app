@@ -1,11 +1,22 @@
 "use client";
 
-import { ThemeToggle } from "@/components/theme-toggle";
-import { useOrganizationStore } from "@/stores/organization-store";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-/** Barra superior de escritorio. La navegación llega con cada feature. */
+import { navEntriesFor } from "@/components/layout/nav-entries";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LineSelector } from "@/features/business-lines/line-selector";
+import { cn } from "@/lib/utils";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useUserStore } from "@/stores/user-store";
+
+/** Barra superior de escritorio: organización, contexto de línea y menú por rol. */
 export function Header() {
   const organization = useOrganizationStore((state) => state.organization);
+  const role = useUserStore((state) => state.membership?.role);
+  const pathname = usePathname();
+
+  const entries = navEntriesFor(role);
 
   return (
     <header
@@ -18,9 +29,27 @@ export function Header() {
           {organization.name}
         </span>
       )}
+
+      <LineSelector />
+
       <nav aria-label="Navegación principal" className="flex-1">
-        {/* Navegación vacía: cada feature añade sus entradas. */}
+        <ul className="flex items-center gap-1">
+          {entries.map((entry) => (
+            <li key={entry.href}>
+              <Link
+                href={entry.href}
+                className={cn(
+                  "rounded-md px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
+                  pathname.startsWith(entry.href) && "bg-muted text-foreground",
+                )}
+              >
+                {entry.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
+
       <ThemeToggle />
     </header>
   );

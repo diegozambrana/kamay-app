@@ -315,6 +315,14 @@
     "mtime": 1787197009.632019,
     "hash": "5179e40ecb24478fa72ec5e283917df7"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/user-auth/spec.md": {
+    "mtime": 1787227886.2076564,
+    "hash": "eb3d013bd05152125c20fea75f8a7fa2"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/tenant-isolation/spec.md": {
+    "mtime": 1787227873.7043939,
+    "hash": "4d39216c154fcd4c91d9070143e7030c"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-19-kam-01-project-scaffolding/tasks.md": {
     "mtime": 1787196815.6812282,
     "hash": "b848cb663c365c2e94c19df3a84f1ef9"
@@ -331,23 +339,23 @@
     "mtime": 1787194854.2820199,
     "hash": "675fd318da2cfa3b927655ae7c7008b7"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-02-auth-orgs-isolation/tasks.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-02-auth-orgs-isolation/tasks.md": {
     "mtime": 1787226977.4698489,
     "hash": "7af9172c33db5ff075b4f669ec97f811"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-02-auth-orgs-isolation/design.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-02-auth-orgs-isolation/design.md": {
     "mtime": 1787225303.0328174,
     "hash": "31d21fa8220eab66120057e628b81b57"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-02-auth-orgs-isolation/proposal.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-02-auth-orgs-isolation/proposal.md": {
     "mtime": 1787225159.0243282,
     "hash": "f4a8b42d893ec2ec175cddbdaf0f10fe"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-02-auth-orgs-isolation/specs/user-auth/spec.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-02-auth-orgs-isolation/specs/user-auth/spec.md": {
     "mtime": 1787225223.6831279,
     "hash": "c23c85358cdecf2a3a5eb332ca0236ac"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-02-auth-orgs-isolation/specs/tenant-isolation/spec.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-02-auth-orgs-isolation/specs/tenant-isolation/spec.md": {
     "mtime": 1787225202.0352983,
     "hash": "d8e35f45d4ee17045eecda5feedcc642"
   },

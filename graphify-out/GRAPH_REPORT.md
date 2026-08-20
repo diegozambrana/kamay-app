@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `785d21b4`
+- Built from commit: `cb64a384`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -107,7 +107,7 @@ Nodes (17): 7. Flujos principales, vista por vista, code:block10 (V15 → secci�
 
 ### Community 9 - "Community 9"
 Cohesion: 0.14
-Nodes (11): 10. Inventario, 12. Tareas, 17. Sincronización sin conexión, 19. Lo que este esquema aún no incluye, 1. Alcance y advertencia, 20. Lista de verificación antes de producción, 2. Cómo se traducen los principios, 3. Convenciones (+3 more)
+Nodes (11): 10. Inventario, 15. Notificaciones, 17. Sincronización sin conexión, 19. Lo que este esquema aún no incluye, 1. Alcance y advertencia, 20. Lista de verificación antes de producción, 2. Cómo se traducen los principios, 3. Convenciones (+3 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.29
@@ -163,11 +163,11 @@ Nodes (3): 13. Adjuntos, code:sql (create policy "storage: solo la propia organi
 
 ### Community 24 - "Community 24"
 Cohesion: 0.5
-Nodes (4): 18. Orden de migraciones, code:block25 (001_extensions_and_helpers    -- pgcrypto, is_member(), is_o), code:sql (-- Líneas), Semilla de Geeko Store
+Nodes (4): 5. Identidad y multi-tenant, code:sql (-- Organizaciones (tenants)), code:sql (create or replace function is_member(org uuid)), Funciones auxiliares de seguridad
 
 ### Community 25 - "Community 25"
 Cohesion: 0.5
-Nodes (4): 5. Identidad y multi-tenant, code:sql (-- Organizaciones (tenants)), code:sql (create or replace function is_member(org uuid)), Funciones auxiliares de seguridad
+Nodes (4): 18. Orden de migraciones, code:block25 (001_extensions_and_helpers    -- pgcrypto, is_member(), is_o), code:sql (-- Líneas), Semilla de Geeko Store
 
 ### Community 26 - "Community 26"
 Cohesion: 0.67

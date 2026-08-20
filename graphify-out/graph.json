@@ -2682,7 +2682,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L50",
       "id": "prd_kamay_esquema_base_de_datos_supabase_4_mapa_de_entidades",
-      "community": 34,
+      "community": 9,
       "norm_label": "4. mapa de entidades"
     },
     {
@@ -2691,7 +2691,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L52",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_1",
-      "community": 34,
+      "community": 9,
       "norm_label": "code:mermaid (erdiagram)"
     },
     {
@@ -2700,7 +2700,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L90",
       "id": "prd_kamay_esquema_base_de_datos_supabase_5_identidad_y_multi_tenant",
-      "community": 25,
+      "community": 24,
       "norm_label": "5. identidad y multi-tenant"
     },
     {
@@ -2709,7 +2709,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L94",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_2",
-      "community": 25,
+      "community": 24,
       "norm_label": "code:sql (-- organizaciones (tenants))"
     },
     {
@@ -2718,7 +2718,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L123",
       "id": "prd_kamay_esquema_base_de_datos_supabase_funciones_auxiliares_de_seguridad",
-      "community": 25,
+      "community": 24,
       "norm_label": "funciones auxiliares de seguridad"
     },
     {
@@ -2727,7 +2727,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L127",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_3",
-      "community": 25,
+      "community": 24,
       "norm_label": "code:sql (create or replace function is_member(org uuid))"
     },
     {
@@ -2808,7 +2808,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L323",
       "id": "prd_kamay_esquema_base_de_datos_supabase_8_egresos",
-      "community": 9,
+      "community": 33,
       "norm_label": "8. egresos"
     },
     {
@@ -2817,7 +2817,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L325",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_9",
-      "community": 9,
+      "community": 33,
       "norm_label": "code:sql (-- una sola bandeja: compras (traen material) y gastos (no t)"
     },
     {
@@ -2889,7 +2889,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L498",
       "id": "prd_kamay_esquema_base_de_datos_supabase_11_vistas_derivadas",
-      "community": 33,
+      "community": 32,
       "norm_label": "11. vistas derivadas"
     },
     {
@@ -2898,7 +2898,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L502",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_13",
-      "community": 33,
+      "community": 32,
       "norm_label": "code:sql (-- saldo actual por item)"
     },
     {
@@ -2907,7 +2907,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L568",
       "id": "prd_kamay_esquema_base_de_datos_supabase_12_tareas",
-      "community": 9,
+      "community": 34,
       "norm_label": "12. tareas"
     },
     {
@@ -2916,7 +2916,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L570",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_14",
-      "community": 9,
+      "community": 34,
       "norm_label": "code:sql (create table tasks ()"
     },
     {
@@ -3033,7 +3033,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L783",
       "id": "prd_kamay_esquema_base_de_datos_supabase_15_notificaciones",
-      "community": 32,
+      "community": 9,
       "norm_label": "15. notificaciones"
     },
     {
@@ -3042,7 +3042,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L785",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_21",
-      "community": 32,
+      "community": 9,
       "norm_label": "code:sql (create table notifications ()"
     },
     {
@@ -3141,7 +3141,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L914",
       "id": "prd_kamay_esquema_base_de_datos_supabase_18_orden_de_migraciones",
-      "community": 24,
+      "community": 25,
       "norm_label": "18. orden de migraciones"
     },
     {
@@ -3150,7 +3150,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L916",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_25",
-      "community": 24,
+      "community": 25,
       "norm_label": "code:block25 (001_extensions_and_helpers    -- pgcrypto, is_member(), is_o)"
     },
     {
@@ -3159,7 +3159,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L940",
       "id": "prd_kamay_esquema_base_de_datos_supabase_semilla_de_geeko_store",
-      "community": 24,
+      "community": 25,
       "norm_label": "semilla de geeko store"
     },
     {
@@ -3168,7 +3168,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L942",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_26",
-      "community": 24,
+      "community": 25,
       "norm_label": "code:sql (-- lineas)"
     },
     {
@@ -5407,9 +5407,9 @@
       "source_file": "tests/integration/harness.test.ts",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_integration_harness_test_ts",
-      "target": "integration_harness_test_localsupabaseenv",
-      "confidence_score": 1.0
+      "target": "integration_harness_test_localsupabaseenv"
     },
     {
       "relation": "contains",
@@ -5417,9 +5417,9 @@
       "source_file": "tests/integration/harness.test.ts",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_integration_harness_test_ts",
-      "target": "integration_harness_test_url_secretkey",
-      "confidence_score": 1.0
+      "target": "integration_harness_test_url_secretkey"
     },
     {
       "relation": "contains",
@@ -8921,5 +8921,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "785d21b450640b6a515dffc2a64d1378ce69bdd1"
+  "built_at_commit": "cb64a384eab3f1387741230cff6958225c8ccd79"
 }

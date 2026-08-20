@@ -1,0 +1,17 @@
+# Configuración de GitGuardian.
+#
+# `kamay123` no es una credencial: es la contraseña con la que
+# `supabase/seed.sql` siembra los usuarios ficticios `@kamay.test` de la base
+# local que crea `supabase db reset`. No abre ningún servicio real y no hay
+# nada que revocar — las pruebas e2e la necesitan en claro para iniciar sesión
+# contra ese stack local.
+#
+# Se ignora el valor exacto, no una ruta ni un archivo: cualquier otro secreto
+# que aparezca en las pruebas —o en cualquier parte del repositorio— se sigue
+# detectando igual.
+version: 2
+
+secret:
+  ignored-matches:
+    - name: Contraseña de la semilla local de desarrollo (supabase/seed.sql)
+      match: kamay123

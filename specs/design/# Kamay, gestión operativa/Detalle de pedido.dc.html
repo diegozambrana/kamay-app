@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; background: #ffffff; font-family: Geist, ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #18181b; } a:hover { color: #52525b; }
+</style>
+</helmet>
+<div style="min-width: 1440px; min-height: 100vh; display: flex; flex-direction: column; background: #fafafa; color: #09090b;">
+
+  <header style="flex: none; height: 56px; padding: 0 16px; border-bottom: 1px solid #e4e4e7; background: #ffffff; display: flex; align-items: center; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 8px; flex: none;">
+      <span style="width: 26px; height: 26px; border-radius: 6px; background: #18181b; color: #fafafa; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;">G</span>
+      <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Geeko Store</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 2px; padding: 3px; background: #f4f4f5; border-radius: 8px; flex: none;">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #a1a1aa;"></span>Todas
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: #ffffff; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(9,9,11,0.06);">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #2563eb;"></span>Sublimación
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #7c3aed;"></span>Impresión 3D
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #ea580c;"></span>Alfarería
+      </button>
+    </div>
+    <span style="flex: 1;"></span>
+    <div style="position: relative; display: flex; align-items: center; flex: none;">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" style="position: absolute; left: 9px; pointer-events: none;"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input type="text" placeholder="Buscar pedido o cliente" style="width: 240px; height: 34px; padding: 0 10px 0 30px; border: 1px solid #e4e4e7; border-radius: 8px; background: #ffffff; color: #09090b; font-family: inherit; font-size: 13px; outline: none;" />
+    </div>
+    <button type="button" style="position: relative; width: 34px; height: 34px; border: 1px solid #e4e4e7; background: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none;" style-hover="background: #f4f4f5;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#09090b" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"></path><path d="M10.5 20a2 2 0 003 0"></path></svg>
+      <span style="position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #dc2626; color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center;">{{ notificaciones }}</span>
+    </button>
+    <div style="display: flex; align-items: center; gap: 8px; flex: none;">
+      <span style="width: 32px; height: 32px; border-radius: 999px; background: #f4f4f5; border: 1px solid #e4e4e7; color: #52525b; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">DZ</span>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </div>
+  </header>
+
+  <main style="flex: 1; padding: 16px 16px 32px 16px; display: flex; flex-direction: column; gap: 12px; max-width: 1400px; width: 100%; box-sizing: border-box; margin: 0 auto;">
+
+    <section style="background: #ffffff; border: 1px solid #e4e4e7; border-left: 3px solid #2563eb; border-radius: 10px; padding: 16px; display: flex; align-items: flex-start; gap: 16px;">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <a href="#" style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #71717a; text-decoration: none;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M14 6l-6 6 6 6"></path></svg>Pedidos
+          </a>
+          <span style="font-size: 12px; color: #d4d4d8;">/</span>
+          <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: #71717a;">PED-142</span>
+        </div>
+
+        <div style="display: flex; align-items: baseline; gap: 10px;">
+          <span style="font-size: 26px; font-weight: 700; letter-spacing: -0.02em;">Pedido #142</span>
+          <span style="font-size: 18px; font-weight: 500; color: #3f3f46;">Andrea Villarroel</span>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+          <span style="height: 24px; padding: 0 9px; border-radius: 6px; background: #18181b; color: #fafafa; font-size: 12px; font-weight: 500; display: flex; align-items: center;">En diseño</span>
+          <span style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; border-radius: 6px; font-size: 12px; font-weight: 500;">
+            <span style="width: 7px; height: 7px; border-radius: 999px; background: #2563eb;"></span>Sublimación
+          </span>
+          <span style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border: 1px solid #e4e4e7; background: #ffffff; color: #52525b; border-radius: 6px; font-size: 12px; font-weight: 500;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#52525b" stroke-width="1.8" stroke-linecap="round"><path d="M2 7h10v9H2z"></path><path d="M12 11h5l3 3v2h-8z"></path><circle cx="6" cy="18" r="1.8"></circle><circle cx="16.5" cy="18" r="1.8"></circle></svg>
+            Delivery · Zona Sur, La Paz
+          </span>
+          <span style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border: 1px solid #e4e4e7; background: #ffffff; color: #71717a; border-radius: 6px; font-size: 12px; font-weight: 500;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+            Comprometido 22 ago
+          </span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; flex: none;">
+        <button type="button" style="height: 36px; padding: 0 12px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">Cambiar estado</button>
+        <button type="button" style="height: 36px; padding: 0 14px; border: none; background: #18181b; color: #fafafa; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="background: #27272a;">Registrar cobro</button>
+        <div style="position: relative;">
+          <button type="button" onClick="{{ alternarMenu }}" style="width: 36px; height: 36px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;" style-hover="background: #f4f4f5;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#09090b" stroke-width="2.4" stroke-linecap="round"><path d="M12 6h.01M12 12h.01M12 18h.01"></path></svg>
+          </button>
+          <sc-if value="{{ menuAbierto }}" hint-placeholder-val="{{ false }}">
+            <div style="position: absolute; z-index: 20; right: 0; top: 42px; width: 172px; padding: 5px; background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; box-shadow: 0 8px 24px rgba(9,9,11,0.12); display: flex; flex-direction: column; gap: 1px;">
+              <button type="button" style="text-align: left; height: 34px; padding: 0 10px; border: none; background: none; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">Editar pedido</button>
+              <button type="button" style="text-align: left; height: 34px; padding: 0 10px; border: none; background: none; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">Duplicar</button>
+              <button type="button" style="text-align: left; height: 34px; padding: 0 10px; border: none; background: none; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">Archivar</button>
+              <span style="height: 1px; background: #e4e4e7; margin: 4px 0;"></span>
+              <button type="button" style="text-align: left; height: 34px; padding: 0 10px; border: none; background: none; color: #dc2626; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #fef2f2;">Cancelar pedido</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </section>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; align-items: start;">
+
+      <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+
+        <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Líneas del pedido</span>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 180px 70px 110px 110px;">
+            <span style="padding: 0 0 8px 0; border-bottom: 1px solid #e4e4e7; font-size: 11px; font-weight: 600; color: #71717a; letter-spacing: 0.02em;">PRODUCTO</span>
+            <span style="padding: 0 0 8px 0; border-bottom: 1px solid #e4e4e7; font-size: 11px; font-weight: 600; color: #71717a; letter-spacing: 0.02em;">VARIANTE</span>
+            <span style="padding: 0 0 8px 0; border-bottom: 1px solid #e4e4e7; font-size: 11px; font-weight: 600; color: #71717a; letter-spacing: 0.02em; text-align: right;">CANT.</span>
+            <span style="padding: 0 0 8px 0; border-bottom: 1px solid #e4e4e7; font-size: 11px; font-weight: 600; color: #71717a; letter-spacing: 0.02em; text-align: right;">P. UNIT.</span>
+            <span style="padding: 0 0 8px 0; border-bottom: 1px solid #e4e4e7; font-size: 11px; font-weight: 600; color: #71717a; letter-spacing: 0.02em; text-align: right;">SUBTOTAL</span>
+
+            <sc-for list="{{ lineas }}" as="l" hint-placeholder-count="3">
+              <span style="padding: 10px 8px 10px 0; border-bottom: 1px solid #f4f4f5; font-size: 13px; font-weight: 500;">{{ l.producto }}</span>
+              <span style="padding: 10px 8px 10px 0; border-bottom: 1px solid #f4f4f5; font-size: 13px; color: #52525b;">{{ l.variante }}</span>
+              <span style="padding: 10px 0; border-bottom: 1px solid #f4f4f5; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; text-align: right;">{{ l.cantidad }}</span>
+              <span style="padding: 10px 0; border-bottom: 1px solid #f4f4f5; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; color: #52525b; text-align: right;">{{ l.unitario }}</span>
+              <span style="padding: 10px 0; border-bottom: 1px solid #f4f4f5; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; font-weight: 600; text-align: right;">{{ l.subtotal }}</span>
+            </sc-for>
+
+            <span style="padding: 12px 0 0 0;"></span>
+            <span style="padding: 12px 0 0 0;"></span>
+            <span style="padding: 12px 0 0 0;"></span>
+            <span style="padding: 12px 0 0 0; font-size: 13px; font-weight: 600; text-align: right;">Total</span>
+            <span style="padding: 12px 0 0 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 16px; font-weight: 700; text-align: right;">Bs 1.220</span>
+          </div>
+        </section>
+
+        <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Notas y referencias</span>
+          <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #3f3f46; text-wrap: pretty;">El logo va centrado y en una sola cara; la clienta pidió el fondo blanco, no crema. Entrega en la oficina de Calacoto entre 15:00 y 18:00, coordinar por WhatsApp el día anterior. Confirmó que el arte definitivo es el archivo v3.</p>
+          <div style="display: grid; grid-template-columns: repeat(2, 180px); gap: 10px;">
+            <sc-for list="{{ referencias }}" as="r" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="box-sizing: border-box; width: 180px; height: 130px; border: 1px solid #e4e4e7; border-radius: 8px; background-color: #f4f4f5; background-image: repeating-linear-gradient(135deg, #e4e4e7 0 6px, #f4f4f5 6px 12px); display: flex; align-items: flex-end; padding: 6px;">
+                  <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 9px; color: #71717a; background: rgba(255,255,255,0.86); padding: 1px 4px; border-radius: 3px;">{{ r.slot }}</span>
+                </div>
+                <span style="font-size: 11px; color: #71717a;">{{ r.nombre }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Tareas relacionadas</span>
+          <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e4e4e7; border-left: 3px solid #2563eb; border-radius: 8px; text-decoration: none; color: inherit;" style-hover="background: #fafafa;">
+            <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600;">Diseñar arte pedido #142</span>
+            <span style="font-size: 12px; color: #71717a; flex: none;">Marcela · 20 ago</span>
+            <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: #f4f4f5; color: #52525b; font-size: 11px; font-weight: 500; display: flex; align-items: center; flex: none;">Por hacer</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" style="flex: none;"><path d="M10 6l6 6-6 6"></path></svg>
+          </a>
+          <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e4e4e7; border-left: 3px solid #2563eb; border-radius: 8px; text-decoration: none; color: inherit;" style-hover="background: #fafafa;">
+            <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600;">Sublimar 20 tazas mágicas 11oz</span>
+            <span style="font-size: 12px; color: #71717a; flex: none;">Julio · 21 ago</span>
+            <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: #18181b; color: #fafafa; font-size: 11px; font-weight: 500; display: flex; align-items: center; flex: none;">Haciendo</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" style="flex: none;"><path d="M10 6l6 6-6 6"></path></svg>
+          </a>
+          <button type="button" style="align-self: flex-start; height: 34px; padding: 0 12px; border: 1px dashed #d4d4d8; background: none; color: #3f3f46; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="border-color: #a1a1aa; color: #09090b;">+ Crear tarea para este pedido</button>
+        </section>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+
+        <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Pagos</span>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <span style="font-size: 13px; color: #52525b;">Total del pedido</span>
+              <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500;">Bs 1.220</span>
+            </div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <span style="font-size: 13px; color: #52525b;">Anticipo recibido</span>
+              <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500;">Bs 500</span>
+            </div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between; padding-top: 6px; border-top: 1px solid #e4e4e7;">
+              <span style="font-size: 13px; font-weight: 600;">Saldo pendiente</span>
+              <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 18px; font-weight: 700;">Bs 720</span>
+            </div>
+          </div>
+          <div style="height: 1px; background: #e4e4e7;"></div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: #71717a; letter-spacing: 0.02em;">COBROS REGISTRADOS</span>
+            <sc-for list="{{ cobros }}" as="c" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; color: #52525b; width: 52px; flex: none;">{{ c.fecha }}</span>
+                <span style="font-size: 12px; color: #3f3f46; flex: 1; min-width: 0;">{{ c.forma }}</span>
+                <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; font-weight: 600; flex: none;">{{ c.monto }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Rentabilidad</span>
+            <span style="display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 7px; border: 1px solid #e4e4e7; background: #f4f4f5; color: #52525b; border-radius: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.02em;">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#52525b" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 018 0v3"></path></svg>
+              SOLO DUEÑO
+            </span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <span style="font-size: 13px; color: #52525b;">Ingreso</span>
+              <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500;">Bs 1.220</span>
+            </div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <span style="font-size: 13px; color: #52525b;">Costo de materiales</span>
+              <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500;">− Bs 480</span>
+            </div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <span style="font-size: 13px; color: #52525b;">Gastos asignados</span>
+              <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500;">− Bs 145</span>
+            </div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between; padding-top: 6px; border-top: 1px solid #e4e4e7;">
+              <span style="font-size: 13px; font-weight: 600;">Margen</span>
+              <span style="display: flex; align-items: baseline; gap: 6px;">
+                <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 16px; font-weight: 700;">Bs 595</span>
+                <span style="font-size: 12px; color: #71717a;">48,8%</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Historial</span>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <sc-for list="{{ historial }}" as="h" hint-placeholder-count="4">
+              <div style="display: flex; align-items: flex-start; gap: 9px;">
+                <span style="width: 24px; height: 24px; border-radius: 999px; background: #f4f4f5; border: 1px solid #e4e4e7; color: #52525b; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none;">{{ h.iniciales }}</span>
+                <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                  <span style="font-size: 12px; line-height: 1.45; color: #3f3f46; text-wrap: pretty;">{{ h.texto }}</span>
+                  <span style="font-size: 11px; color: #a1a1aa;">{{ h.cuando }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;notificaciones&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:4,&quot;min&quot;:0,&quot;max&quot;:99,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = { menu: false };
+  renderVals() {
+    return {
+      notificaciones: this.props.notificaciones ?? 4,
+      menuAbierto: this.state.menu,
+      alternarMenu: () => this.setState(s => ({ menu: !s.menu })),
+      lineas: [
+        { producto: "Taza mágica 11oz", variante: "Arte personalizado full color", cantidad: 20, unitario: "Bs 52", subtotal: "Bs 1.040" },
+        { producto: "Caja de regalo individual", variante: "Kraft con lazo", cantidad: 20, unitario: "Bs 6", subtotal: "Bs 120" },
+        { producto: "Delivery Zona Sur", variante: "Entrega en oficina", cantidad: 1, unitario: "Bs 60", subtotal: "Bs 60" }
+      ],
+      referencias: [
+        { slot: "logo del cliente", nombre: "logo-andrea-v3.png" },
+        { slot: "referencia de color", nombre: "referencia-taza.jpg" }
+      ],
+      cobros: [
+        { fecha: "12 ago", forma: "Efectivo · anticipo", monto: "Bs 300" },
+        { fecha: "14 ago", forma: "Transferencia BNB", monto: "Bs 200" }
+      ],
+      historial: [
+        { iniciales: "MC", texto: "Marcela pasó el pedido de Registrado a En diseño", cuando: "hace 5 h" },
+        { iniciales: "DZ", texto: "Diego registró un cobro de Bs 200 por transferencia", cuando: "14 ago, 11:05" },
+        { iniciales: "DZ", texto: "Diego confirmó el pedido y pasó a Registrado", cuando: "12 ago, 17:40" },
+        { iniciales: "MC", texto: "Marcela creó el pedido desde la cotización de Andrea Villarroel", cuando: "12 ago, 09:15" }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

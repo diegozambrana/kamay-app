@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; background: #ffffff; font-family: Geist, ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #18181b; } a:hover { color: #52525b; }
+</style>
+</helmet>
+<div style="min-width: 1440px; min-height: 100vh; display: flex; flex-direction: column; background: #fafafa; color: #09090b;">
+
+  <header style="flex: none; height: 56px; padding: 0 16px; border-bottom: 1px solid #e4e4e7; background: #ffffff; display: flex; align-items: center; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 8px; flex: none;">
+      <span style="width: 26px; height: 26px; border-radius: 6px; background: #18181b; color: #fafafa; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;">G</span>
+      <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Geeko Store</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 2px; padding: 3px; background: #f4f4f5; border-radius: 8px; flex: none;">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #a1a1aa;"></span>Todas
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #2563eb;"></span>Sublimación
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #7c3aed;"></span>Impresión 3D
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: #ffffff; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(9,9,11,0.06);">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #ea580c;"></span>Alfarería
+      </button>
+    </div>
+    <span style="flex: 1;"></span>
+    <div style="position: relative; display: flex; align-items: center; flex: none;">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" style="position: absolute; left: 9px; pointer-events: none;"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input type="text" placeholder="Buscar tarea o cliente" style="width: 240px; height: 34px; padding: 0 10px 0 30px; border: 1px solid #e4e4e7; border-radius: 8px; background: #ffffff; color: #09090b; font-family: inherit; font-size: 13px; outline: none;" />
+    </div>
+    <button type="button" style="position: relative; width: 34px; height: 34px; border: 1px solid #e4e4e7; background: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none;" style-hover="background: #f4f4f5;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#09090b" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"></path><path d="M10.5 20a2 2 0 003 0"></path></svg>
+      <span style="position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #dc2626; color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center;">{{ notificaciones }}</span>
+    </button>
+    <div style="display: flex; align-items: center; gap: 8px; flex: none;">
+      <span style="width: 32px; height: 32px; border-radius: 999px; background: #f4f4f5; border: 1px solid #e4e4e7; color: #52525b; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">DZ</span>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </div>
+  </header>
+
+  <main style="flex: 1; padding: 16px 16px 32px 16px; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; max-width: 1400px; width: 100%; box-sizing: border-box; margin: 0 auto;">
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+
+      <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <a href="#" style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #71717a; text-decoration: none;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M14 6l-6 6 6 6"></path></svg>Tareas
+          </a>
+          <span style="font-size: 12px; color: #d4d4d8;">/</span>
+          <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: #71717a;">TAR-084</span>
+        </div>
+
+        <input type="text" value="{{ titulo }}" onChange="{{ cambiarTitulo }}" style="width: 100%; box-sizing: border-box; padding: 4px 8px; margin: -4px -8px; border: 1px solid transparent; border-radius: 8px; background: none; color: #09090b; font-family: inherit; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; outline: none;" style-hover="border-color: #e4e4e7;" style-focus="border-color: #a1a1aa; background: #ffffff;" />
+
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid #e4e4e7; border-radius: 8px; background: #ffffff;">
+            <span style="font-size: 12px; color: #71717a;">Estado</span>
+            <select style="border: none; background: none; color: #09090b; font-family: inherit; font-size: 13px; font-weight: 600; outline: none; cursor: pointer;">
+              <option>Haciendo</option>
+              <option>Por hacer</option>
+              <option>En revisión</option>
+              <option>Hecho</option>
+            </select>
+          </div>
+
+          <span style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid #fed7aa; background: #fff7ed; color: #9a3412; border-radius: 8px; font-size: 13px; font-weight: 500;">
+            <span style="width: 7px; height: 7px; border-radius: 999px; background: #ea580c;"></span>Alfarería
+          </span>
+
+          <button type="button" style="display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 10px 0 6px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">
+            <span style="width: 24px; height: 24px; border-radius: 999px; background: #f4f4f5; border: 1px solid #e4e4e7; color: #52525b; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center;">JT</span>
+            Julio Terán
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+
+          <div style="position: relative;">
+            <button type="button" onClick="{{ alternarCalendario }}" style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid #fde68a; background: #fffbeb; color: #b45309; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="background: #fef3c7;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+              Vence hoy · 19 ago
+            </button>
+            <sc-if value="{{ calendarioAbierto }}" hint-placeholder-val="{{ false }}">
+              <div style="position: absolute; z-index: 20; top: 40px; left: 0; width: 244px; padding: 12px; background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; box-shadow: 0 8px 24px rgba(9,9,11,0.12);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                  <button type="button" style="width: 24px; height: 24px; border: 1px solid #e4e4e7; background: #ffffff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#52525b" stroke-width="2" stroke-linecap="round"><path d="M14 6l-6 6 6 6"></path></svg></button>
+                  <span style="font-size: 13px; font-weight: 600;">Agosto 2026</span>
+                  <button type="button" style="width: 24px; height: 24px; border: 1px solid #e4e4e7; background: #ffffff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#52525b" stroke-width="2" stroke-linecap="round"><path d="M10 6l6 6-6 6"></path></svg></button>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
+                  <sc-for list="{{ diasSemana }}" as="d" hint-placeholder-count="7">
+                    <span style="height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; color: #a1a1aa;">{{ d.nombre }}</span>
+                  </sc-for>
+                  <sc-for list="{{ dias }}" as="d" hint-placeholder-count="35">
+                    <sc-if value="{{ d.hoy }}" hint-placeholder-val="{{ false }}">
+                      <span style="height: 28px; border-radius: 6px; background: #18181b; color: #fafafa; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">{{ d.n }}</span>
+                    </sc-if>
+                    <sc-if value="{{ d.normal }}" hint-placeholder-val="{{ true }}">
+                      <span style="height: 28px; border-radius: 6px; color: #3f3f46; font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer;" style-hover="background: #f4f4f5;">{{ d.n }}</span>
+                    </sc-if>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <button type="button" style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#52525b" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"></path><path d="M10.5 20a2 2 0 003 0"></path></svg>
+            Recordarme
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="height: 24px; padding: 0 8px; border-radius: 6px; background: #f4f4f5; color: #52525b; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px;">hornada-07<span style="color: #a1a1aa; cursor: pointer;">×</span></span>
+            <span style="height: 24px; padding: 0 8px; border-radius: 6px; background: #f4f4f5; color: #52525b; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px;">feria-agosto<span style="color: #a1a1aa; cursor: pointer;">×</span></span>
+            <button type="button" style="height: 24px; padding: 0 8px; border: 1px dashed #d4d4d8; background: none; color: #71717a; border-radius: 6px; font-family: inherit; font-size: 11px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b; border-color: #a1a1aa;">+ etiqueta</button>
+          </div>
+        </div>
+      </section>
+
+      <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Descripción</span>
+          <span style="flex: 1;"></span>
+          <div style="display: flex; align-items: center; gap: 2px; padding: 3px; background: #f4f4f5; border-radius: 8px;">
+            <sc-if value="{{ modoEscribir }}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{ verEscribir }}" style="height: 26px; padding: 0 10px; border: none; background: #ffffff; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(9,9,11,0.06);">Escribir</button>
+            </sc-if>
+            <sc-if value="{{ modoPrevia }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ verEscribir }}" style="height: 26px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">Escribir</button>
+            </sc-if>
+            <sc-if value="{{ modoPrevia }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ verPrevia }}" style="height: 26px; padding: 0 10px; border: none; background: #ffffff; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(9,9,11,0.06);">Vista previa</button>
+            </sc-if>
+            <sc-if value="{{ modoEscribir }}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{ verPrevia }}" style="height: 26px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">Vista previa</button>
+            </sc-if>
+          </div>
+        </div>
+
+        <sc-if value="{{ modoEscribir }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 0; border: 1px solid #e4e4e7; border-radius: 8px; overflow: hidden;">
+            <div style="display: flex; align-items: center; gap: 2px; padding: 5px 6px; border-bottom: 1px solid #e4e4e7; background: #fafafa;">
+              <button type="button" style="width: 28px; height: 28px; border: none; background: none; color: #3f3f46; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;" style-hover="background: #f4f4f5;">B</button>
+              <button type="button" style="width: 28px; height: 28px; border: none; background: none; color: #3f3f46; border-radius: 6px; font-family: inherit; font-size: 13px; font-style: italic; cursor: pointer;" style-hover="background: #f4f4f5;">I</button>
+              <button type="button" style="width: 28px; height: 28px; border: none; background: none; color: #3f3f46; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="background: #f4f4f5;">H</button>
+              <span style="width: 1px; height: 18px; background: #e4e4e7; margin: 0 4px;"></span>
+              <button type="button" style="width: 28px; height: 28px; border: none; background: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;" style-hover="background: #f4f4f5;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3f3f46" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg>
+              </button>
+              <button type="button" style="width: 28px; height: 28px; border: none; background: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;" style-hover="background: #f4f4f5;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3f3f46" stroke-width="1.8" stroke-linecap="round"><path d="M10 6h10M10 12h10M10 18h10"></path><path d="M3 6l1.5 1.5L7 5"></path><path d="M3 12l1.5 1.5L7 11"></path><path d="M3.5 18h.01"></path></svg>
+              </button>
+              <button type="button" style="width: 28px; height: 28px; border: none; background: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;" style-hover="background: #f4f4f5;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3f3f46" stroke-width="1.8" stroke-linecap="round"><path d="M10 13a4 4 0 006 .5l2-2a4 4 0 00-5.7-5.7L11 7"></path><path d="M14 11a4 4 0 00-6-.5l-2 2A4 4 0 0011.7 18l1.3-1.2"></path></svg>
+              </button>
+              <span style="flex: 1;"></span>
+              <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: #a1a1aa; padding-right: 4px;">MARKDOWN</span>
+            </div>
+            <textarea style="width: 100%; box-sizing: border-box; min-height: 190px; padding: 12px; border: none; resize: vertical; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12.5px; line-height: 1.6; color: #09090b; outline: none;" defaultValue="{{ markdown }}"></textarea>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ modoPrevia }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height: 190px; padding: 14px; border: 1px solid #e4e4e7; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+            <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em;">Proceso de la hornada 07</span>
+            <span style="font-size: 13px; line-height: 1.55; color: #3f3f46; text-wrap: pretty;">Set de 6 tazas de gres con esmalte celeste, encargo de <strong style="font-weight: 600;">Rosa Mamani</strong>. Las tazas van al horno junto con las macetas medianas.</span>
+            <div style="display: flex; flex-direction: column; gap: 7px; padding-top: 2px;">
+              <sc-for list="{{ checklist }}" as="c" hint-placeholder-count="5">
+                <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; user-select: none;">
+                  <input type="checkbox" checked="{{ c.hecho }}" onChange="{{ c.alternar }}" style="width: 15px; height: 15px; accent-color: #18181b; cursor: pointer;" />
+                  <sc-if value="{{ c.hecho }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size: 13px; color: #a1a1aa; text-decoration: line-through;">{{ c.texto }}</span>
+                  </sc-if>
+                  <sc-if value="{{ c.pendiente }}" hint-placeholder-val="{{ true }}">
+                    <span style="font-size: 13px; color: #09090b;">{{ c.texto }}</span>
+                  </sc-if>
+                </label>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </section>
+
+      <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Adjuntos</span>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 74px; border: 1px dashed #d4d4d8; border-radius: 8px; background: #fafafa; cursor: pointer;" style-hover="border-color: #a1a1aa; background: #f4f4f5;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#71717a" stroke-width="1.8" stroke-linecap="round"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"></path></svg>
+          <span style="font-size: 13px; color: #52525b;">Arrastra fotos o archivos aquí, o <strong style="font-weight: 600;">elige del equipo</strong></span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 132px); gap: 8px;">
+          <sc-for list="{{ fotos }}" as="f" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="position: relative; box-sizing: border-box; width: 132px; height: 100px; border: 1px solid #e4e4e7; border-radius: 8px; background-color: #f4f4f5; background-image: repeating-linear-gradient(135deg, #e4e4e7 0 6px, #f4f4f5 6px 12px); display: flex; align-items: flex-end; padding: 6px;">
+                <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 9px; color: #71717a; background: rgba(255,255,255,0.86); padding: 1px 4px; border-radius: 3px;">{{ f.slot }}</span>
+              </div>
+              <span style="font-size: 11px; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ f.nombre }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid #e4e4e7; border-radius: 8px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#52525b" stroke-width="1.8" stroke-linecap="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"></path><path d="M14 3v5h5"></path></svg>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+            <span style="font-size: 13px; font-weight: 500;">ficha-esmalte-celeste.pdf</span>
+            <span style="font-size: 11px; color: #71717a;">248 KB · subido por Julio Terán</span>
+          </div>
+          <button type="button" style="height: 28px; padding: 0 10px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">Abrir</button>
+        </div>
+      </section>
+
+      <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Vínculos</span>
+        <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e4e4e7; border-left: 3px solid #ea580c; border-radius: 8px; text-decoration: none; color: inherit;" style-hover="background: #fafafa;">
+          <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: #71717a; width: 62px; flex: none;">PEDIDO</span>
+          <span style="font-size: 13px; font-weight: 600; flex: 1; min-width: 0;">Rosa Mamani · 6 macetas de gres medianas</span>
+          <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: #f4f4f5; color: #52525b; font-size: 11px; font-weight: 500; display: flex; align-items: center; flex: none;">En cola</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" style="flex: none;"><path d="M10 6l6 6-6 6"></path></svg>
+        </a>
+        <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e4e4e7; border-left: 3px solid #ea580c; border-radius: 8px; text-decoration: none; color: inherit;" style-hover="background: #fafafa;">
+          <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: #71717a; width: 62px; flex: none;">ÍTEM</span>
+          <span style="font-size: 13px; font-weight: 600; flex: 1; min-width: 0;">Esmalte celeste 500 ml</span>
+          <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-size: 11px; font-weight: 500; display: flex; align-items: center; flex: none;">Bajo mínimo · 2 / 5</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" style="flex: none;"><path d="M10 6l6 6-6 6"></path></svg>
+        </a>
+        <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e4e4e7; border-left: 3px solid #a1a1aa; border-radius: 8px; text-decoration: none; color: inherit;" style-hover="background: #fafafa;">
+          <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: #71717a; width: 62px; flex: none;">CONTACTO</span>
+          <span style="font-size: 13px; font-weight: 600; flex: 1; min-width: 0;">Rosa Mamani</span>
+          <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: #f4f4f5; color: #52525b; font-size: 11px; font-weight: 500; display: flex; align-items: center; flex: none;">Cliente activa</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" style="flex: none;"><path d="M10 6l6 6-6 6"></path></svg>
+        </a>
+      </section>
+
+      <section style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Entregables esperados</span>
+        <div style="display: flex; align-items: center; gap: 11px; padding: 11px; border: 1px solid #e4e4e7; border-radius: 8px; background: #fafafa;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#52525b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+            <span style="font-size: 13px; font-weight: 600;">Nuevo producto</span>
+            <span style="font-size: 12px; color: #52525b;">Se creará al cerrar la tarea: "Set de 6 tazas artesanales" en Alfarería.</span>
+          </div>
+          <span style="height: 20px; padding: 0 7px; border-radius: 6px; border: 1px solid #e4e4e7; background: #ffffff; color: #52525b; font-size: 11px; font-weight: 500; display: flex; align-items: center; flex: none;">Pendiente</span>
+        </div>
+      </section>
+    </div>
+
+    <aside style="background: #ffffff; border: 1px solid #e4e4e7; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 16px;">
+      <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Historial</span>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <sc-for list="{{ historial }}" as="h" hint-placeholder-count="5">
+          <div style="display: flex; align-items: flex-start; gap: 9px;">
+            <span style="width: 24px; height: 24px; border-radius: 999px; background: #f4f4f5; border: 1px solid #e4e4e7; color: #52525b; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none;">{{ h.iniciales }}</span>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span style="font-size: 12px; line-height: 1.45; color: #3f3f46; text-wrap: pretty;">{{ h.texto }}</span>
+              <span style="font-size: 11px; color: #a1a1aa;">{{ h.cuando }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </aside>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;notificaciones&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:4,&quot;min&quot;:0,&quot;max&quot;:99,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = {
+    titulo: "Set de 6 tazas artesanales",
+    tab: "escribir",
+    cal: false,
+    check: { modelado: true, secado: true, quema1: true, esmaltado: false, quema2: false }
+  };
+
+  md = "## Proceso de la hornada 07\n\nSet de 6 tazas de gres con esmalte celeste, encargo de **Rosa Mamani**. Las tazas van al horno junto con las macetas medianas.\n\n- [x] Modelado en torno\n- [x] Secado a sombra (48 h)\n- [x] Primera quema — bizcocho\n- [ ] Esmaltado celeste\n- [ ] Segunda quema — esmalte";
+
+  items = [
+    { id: "modelado", texto: "Modelado en torno" },
+    { id: "secado", texto: "Secado a sombra (48 h)" },
+    { id: "quema1", texto: "Primera quema — bizcocho" },
+    { id: "esmaltado", texto: "Esmaltado celeste" },
+    { id: "quema2", texto: "Segunda quema — esmalte" }
+  ];
+
+  renderVals() {
+    const dias = [];
+    for (let i = 0; i < 5; i++) dias.push({ n: "", normal: false, hoy: false });
+    for (let n = 1; n <= 31; n++) dias.push({ n, hoy: n === 19, normal: n !== 19 });
+
+    return {
+      notificaciones: this.props.notificaciones ?? 4,
+      titulo: this.state.titulo,
+      cambiarTitulo: (e) => this.setState({ titulo: e.target.value }),
+      markdown: this.md,
+      modoEscribir: this.state.tab === "escribir",
+      modoPrevia: this.state.tab === "previa",
+      verEscribir: () => this.setState({ tab: "escribir" }),
+      verPrevia: () => this.setState({ tab: "previa" }),
+      calendarioAbierto: this.state.cal,
+      alternarCalendario: () => this.setState(s => ({ cal: !s.cal })),
+      diasSemana: ["L", "M", "M", "J", "V", "S", "D"].map(nombre => ({ nombre })),
+      dias,
+      checklist: this.items.map(i => ({
+        texto: i.texto, hecho: !!this.state.check[i.id], pendiente: !this.state.check[i.id],
+        alternar: () => this.setState(s => ({ check: Object.assign({}, s.check, { [i.id]: !s.check[i.id] }) }))
+      })),
+      fotos: [
+        { slot: "taza cruda", nombre: "tazas-torno-01.jpg" },
+        { slot: "prueba esmalte", nombre: "prueba-celeste.jpg" },
+        { slot: "horno cargado", nombre: "hornada-07-carga.jpg" }
+      ],
+      historial: [
+        { iniciales: "JT", texto: "Julio marcó \"Primera quema — bizcocho\" como hecha", cuando: "hace 40 min" },
+        { iniciales: "JT", texto: "Julio adjuntó hornada-07-carga.jpg", cuando: "hace 3 h" },
+        { iniciales: "DZ", texto: "Diego movió la tarea de Por hacer a Haciendo", cuando: "ayer, 16:20" },
+        { iniciales: "MC", texto: "Marcela vinculó el pedido de Rosa Mamani", cuando: "hace 2 días" },
+        { iniciales: "DZ", texto: "Diego creó la tarea y asignó a Julio Terán", cuando: "14 ago" }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

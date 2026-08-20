@@ -12,6 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Documentación, especificaciones y salidas generadas — no son código de la aplicación.
+    "specs/**",
+    "openspec/**",
+    "graphify-out/**",
+    "supabase/**",
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

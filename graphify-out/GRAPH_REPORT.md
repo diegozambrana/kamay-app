@@ -1,16 +1,16 @@
 # Graph Report - kamay-app  (2026-08-19)
 
 ## Corpus Check
-- 32 files · ~58,294 words
+- 32 files · ~58,379 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 443 nodes · 482 edges · 38 communities (32 shown, 6 thin omitted)
+- 445 nodes · 484 edges · 40 communities (31 shown, 9 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `526c621c`
+- Built from commit: `785d21b4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -48,6 +48,8 @@
 - [[_COMMUNITY_Community 30|Community 30]]
 - [[_COMMUNITY_Community 31|Community 31]]
 - [[_COMMUNITY_Community 32|Community 32]]
+- [[_COMMUNITY_Community 33|Community 33]]
+- [[_COMMUNITY_Community 34|Community 34]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `7. Mapa de Vistas / Pantallas` - 24 edges
@@ -65,7 +67,7 @@
 - `Button()` --calls--> `cn()`  [EXTRACTED]
   components/ui/button.tsx → lib/utils.ts
 
-## Communities (38 total, 6 thin omitted)
+## Communities (40 total, 9 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
@@ -73,7 +75,7 @@ Nodes (49): boot(), cdnScriptFor(), collectProps(), compileAttr(), compileTempla
 
 ### Community 1 - "Community 1"
 Cohesion: 0.04
-Nodes (37): 10. Inventario, 11. Vistas derivadas, 12. Tareas, 13. Adjuntos, 15. Notificaciones, 17. Sincronización sin conexión, 18. Orden de migraciones, 19. Lo que este esquema aún no incluye (+29 more)
+Nodes (47): 10. Integraciones y Funcionalidades de Terceros, 12. Alcance y Fases (Roadmap), 13. Riesgos, Dudas y Decisiones Pendientes, 14. Próximos Pasos, 1. Resumen Ejecutivo, 2. Objetivo del Negocio, 3.1 Dueño / administrador, 3.2 Ayudante / operador (1 o 2 personas) (+39 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.06
@@ -104,93 +106,89 @@ Cohesion: 0.12
 Nodes (17): 7. Flujos principales, vista por vista, code:block10 (V15 → sección Estados → V22), code:block11 (V17 o V10 → casilla "Ver archivados" → desarchivar), code:block4 (V16 o V3 → V5 (nuevo pedido) → V4 (detalle)), code:block5 (V16 → V9 (gasto del stand, antes de salir)), code:block6 (V16 o V17 → V18 (tarea con lista de verificación de la horna), code:block7 (V2 (alerta de insumo bajo mínimo) → V11 (detalle del insumo)), code:block8 (V11 → pestaña Movimientos → V23 filtrada por ese ítem) (+9 more)
 
 ### Community 9 - "Community 9"
+Cohesion: 0.14
+Nodes (11): 10. Inventario, 12. Tareas, 17. Sincronización sin conexión, 19. Lo que este esquema aún no incluye, 1. Alcance y advertencia, 20. Lista de verificación antes de producción, 2. Cómo se traducen los principios, 3. Convenciones (+3 more)
+
+### Community 10 - "Community 10"
 Cohesion: 0.29
 Nodes (5): user, ThemeToggle(), cn(), Button(), buttonVariants
 
-### Community 10 - "Community 10"
+### Community 11 - "Community 11"
 Cohesion: 0.18
 Nodes (10): 1. Base del proyecto, 2. Tema y UI base, 3. Estructura de carpetas, 4. Supabase local, 5. Arnés de pruebas, 6. OpenSpec, 7. Graphify, 8. Integración continua (+2 more)
 
-### Community 11 - "Community 11"
-Cohesion: 0.2
-Nodes (10): 8. Flujo de Usuario, Flujo A — Pedido de sublimación, de principio a fin, Flujo B — Pieza de alfarería, de la arcilla a la feria, Flujo C — Primeros encargos de 3D, Flujo D — Pedido de llaveros y falta de filamento, Flujo E — Día de feria, Flujo F — "Este número no cuadra", Flujo G — Recuperar algo archivado por error (+2 more)
-
 ### Community 12 - "Community 12"
-Cohesion: 0.22
-Nodes (8): 14. Próximos Pasos, 1. Resumen Ejecutivo, 4. Tipo de Producto Digital, 9. Necesidad de Datos y Persistencia, Consecuencias de diseño, Justificación, Kamay — Documento de Especificación de Producto, Reglas de datos que el negocio necesita
-
-### Community 13 - "Community 13"
 Cohesion: 0.22
 Nodes (9): 16. Seguridad a nivel de fila (RLS), Bitácora: inalterable de verdad, Cómo se ocultan los costos al ayudante, code:sql (alter table orders enable row level security;), code:sql (create policy "tasks: ayudante ve su línea o lo asignado"), code:sql (alter table activity_log enable row level security;), Ejemplo de política más fina — tareas del ayudante, Matriz de acceso (+1 more)
 
-### Community 14 - "Community 14"
+### Community 13 - "Community 13"
 Cohesion: 0.22
 Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-01 · Andamiaje del proyecto y disciplina de trabajo, Modified Capabilities, New Capabilities, What Changes, Why
 
-### Community 15 - "Community 15"
-Cohesion: 0.25
-Nodes (8): 12. Alcance y Fases (Roadmap), Fase 0 — Cimientos *(no negociable, va primero)*, Fase 1 — MVP: el ciclo del dinero, Fase 2 — Tareas: el trabajo propio, Fase 3 — Inventario suave, activos y reportes, Fase 4 — Bitácora completa y tareas conectadas, Fase 5 — Precisión y producción, Fase 6 — Cara al cliente y expansión
-
-### Community 16 - "Community 16"
+### Community 14 - "Community 14"
 Cohesion: 0.25
 Nodes (7): 14. Bitácora de actividad, Agrupación de ruido, code:sql (create or replace function log_activity()), code:sql (create trigger audit after insert or update on orders), code:sql (-- Tarea programada mensual (pg_cron): exportar y luego resu), El trigger genérico, Retención
 
-### Community 17 - "Community 17"
+### Community 15 - "Community 15"
 Cohesion: 0.25
 Nodes (7): Context, Decisions, Design — KAM-01 · Andamiaje del proyecto, Goals / Non-Goals, Migration Plan, Open Questions, Risks / Trade-offs
 
-### Community 18 - "Community 18"
+### Community 16 - "Community 16"
 Cohesion: 0.33
 Nodes (4): geistMono, geistSans, metadata, ThemeProvider()
 
-### Community 19 - "Community 19"
+### Community 17 - "Community 17"
 Cohesion: 0.29
 Nodes (7): 11. Consideraciones de Buenas Prácticas, Facilidad de uso, Mantenibilidad — la lección de la versión anterior, Notificaciones sin fatiga, Rendimiento, Seguridad y privacidad, SEO
 
-### Community 20 - "Community 20"
+### Community 18 - "Community 18"
 Cohesion: 0.4
 Nodes (4): code:bash (npm run dev), Deploy on Vercel, Getting Started, Learn More
 
-### Community 21 - "Community 21"
+### Community 19 - "Community 19"
 Cohesion: 0.4
-Nodes (5): 10. Integraciones y Funcionalidades de Terceros, Deliberadamente evitado, Deseables después, Necesarias, Puerta de conexión con otras plataformas *(preparación futura)*
+Nodes (3): 9. Pedidos y ventas, Cobros y pagos, Una decisión que conviene revisar
 
-### Community 22 - "Community 22"
+### Community 20 - "Community 20"
+Cohesion: 0.4
+Nodes (4): 6. Configuración, code:sql (-- Líneas de negocio: Sublimación, Impresión 3D, Alfarería, ), code:sql (create or replace function resolve_statuses(org uuid, line u), Estados — la tabla que sostiene la flexibilidad
+
+### Community 21 - "Community 21"
 Cohesion: 0.4
 Nodes (4): Convenciones no negociables, Kamay — Constitución del proyecto, Pruebas, Stack
 
 ### Community 23 - "Community 23"
 Cohesion: 0.5
-Nodes (4): 2. Objetivo del Negocio, Cómo se mide el éxito, Objetivo principal, Objetivos secundarios
+Nodes (3): 13. Adjuntos, code:sql (create policy "storage: solo la propia organización"), Storage
 
 ### Community 24 - "Community 24"
 Cohesion: 0.5
-Nodes (4): 5. Propuesta de Valor y Tono de Marca, Diferenciadores frente a la versión anterior, Propuesta de valor interna, Tono y personalidad
+Nodes (4): 18. Orden de migraciones, code:block25 (001_extensions_and_helpers    -- pgcrypto, is_member(), is_o), code:sql (-- Líneas), Semilla de Geeko Store
 
 ### Community 25 - "Community 25"
 Cohesion: 0.5
-Nodes (4): 13. Riesgos, Dudas y Decisiones Pendientes, Decisiones abiertas (no bloqueantes), Decisiones ya resueltas, Riesgos
+Nodes (4): 5. Identidad y multi-tenant, code:sql (-- Organizaciones (tenants)), code:sql (create or replace function is_member(org uuid)), Funciones auxiliares de seguridad
 
 ### Community 26 - "Community 26"
-Cohesion: 0.5
-Nodes (4): 3.1 Dueño / administrador, 3.2 Ayudante / operador (1 o 2 personas), 3.3 Organizaciones futuras, 3. Público Objetivo
+Cohesion: 0.67
+Nodes (3): 7. Directorio y catálogo, code:sql (-- Contactos: proveedores, clientes, o ambos), code:sql (-- Ítems: insumos, productos y activos en una sola tabla, di)
 
 ## Knowledge Gaps
-- **244 isolated node(s):** `config`, `eslintConfig`, `nextConfig`, `geistSans`, `geistMono` (+239 more)
+- **245 isolated node(s):** `config`, `eslintConfig`, `nextConfig`, `geistSans`, `geistMono` (+240 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Kamay — Documento de Especificación de Producto` connect `Community 12` to `Community 3`, `Community 6`, `Community 11`, `Community 15`, `Community 19`, `Community 21`, `Community 23`, `Community 24`, `Community 25`, `Community 26`?**
+- **Why does `Kamay — Documento de Especificación de Producto` connect `Community 1` to `Community 17`, `Community 3`, `Community 6`?**
   _High betweenness centrality (0.051) - this node is a cross-community bridge._
-- **Why does `6. Funcionalidades Clave` connect `Community 3` to `Community 12`?**
+- **Why does `6. Funcionalidades Clave` connect `Community 3` to `Community 1`?**
   _High betweenness centrality (0.028) - this node is a cross-community bridge._
-- **Why does `7. Mapa de Vistas / Pantallas` connect `Community 6` to `Community 12`?**
+- **Why does `7. Mapa de Vistas / Pantallas` connect `Community 6` to `Community 1`?**
   _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **What connects `config`, `eslintConfig`, `nextConfig` to the rest of the system?**
-  _244 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _245 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.06 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**

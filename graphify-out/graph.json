@@ -27,7 +27,7 @@
       "source_file": "next-env.d.ts",
       "source_location": "L1",
       "id": "next_env_d_ts",
-      "community": 33,
+      "community": 35,
       "norm_label": "next-env.d.ts"
     },
     {
@@ -36,7 +36,7 @@
       "source_file": "playwright.config.ts",
       "source_location": "L1",
       "id": "playwright_config_ts",
-      "community": 34,
+      "community": 36,
       "norm_label": "playwright.config.ts"
     },
     {
@@ -45,7 +45,7 @@
       "source_file": "vitest.config.ts",
       "source_location": "L1",
       "id": "vitest_config_ts",
-      "community": 35,
+      "community": 37,
       "norm_label": "vitest.config.ts"
     },
     {
@@ -90,7 +90,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L1",
       "id": "app_layout_tsx",
-      "community": 18,
+      "community": 16,
       "norm_label": "layout.tsx"
     },
     {
@@ -99,7 +99,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L7",
       "id": "app_layout_geistsans",
-      "community": 18,
+      "community": 16,
       "norm_label": "geistsans"
     },
     {
@@ -108,7 +108,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L12",
       "id": "app_layout_geistmono",
-      "community": 18,
+      "community": 16,
       "norm_label": "geistmono"
     },
     {
@@ -117,7 +117,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L17",
       "id": "app_layout_metadata",
-      "community": 18,
+      "community": 16,
       "norm_label": "metadata"
     },
     {
@@ -126,7 +126,7 @@
       "source_file": "app/layout.tsx",
       "source_location": "L22",
       "id": "app_layout_rootlayout",
-      "community": 18,
+      "community": 16,
       "norm_label": "rootlayout()"
     },
     {
@@ -135,7 +135,7 @@
       "source_file": "app/page.tsx",
       "source_location": "L1",
       "id": "app_page_tsx",
-      "community": 9,
+      "community": 10,
       "norm_label": "page.tsx"
     },
     {
@@ -144,7 +144,7 @@
       "source_file": "app/page.tsx",
       "source_location": "L3",
       "id": "app_page_home",
-      "community": 9,
+      "community": 10,
       "norm_label": "home()"
     },
     {
@@ -738,16 +738,34 @@
       "source_file": "tests/integration/harness.test.ts",
       "source_location": "L1",
       "id": "tests_integration_harness_test_ts",
-      "community": 30,
+      "community": 22,
       "norm_label": "harness.test.ts"
+    },
+    {
+      "label": "localSupabaseEnv()",
+      "file_type": "code",
+      "source_file": "tests/integration/harness.test.ts",
+      "source_location": "L9",
+      "id": "integration_harness_test_localsupabaseenv",
+      "community": 22,
+      "norm_label": "localsupabaseenv()"
+    },
+    {
+      "label": "{ url, secretKey }",
+      "file_type": "code",
+      "source_file": "tests/integration/harness.test.ts",
+      "source_location": "L26",
+      "id": "integration_harness_test_url_secretkey",
+      "community": 22,
+      "norm_label": "{ url, secretkey }"
     },
     {
       "label": "supabase",
       "file_type": "code",
       "source_file": "tests/integration/harness.test.ts",
-      "source_location": "L12",
+      "source_location": "L27",
       "id": "integration_harness_test_supabase",
-      "community": 30,
+      "community": 22,
       "norm_label": "supabase"
     },
     {
@@ -756,7 +774,7 @@
       "source_file": "tests/setup/unit.ts",
       "source_location": "L1",
       "id": "tests_setup_unit_ts",
-      "community": 36,
+      "community": 38,
       "norm_label": "unit.ts"
     },
     {
@@ -765,7 +783,7 @@
       "source_file": "tests/e2e/theme.spec.ts",
       "source_location": "L1",
       "id": "tests_e2e_theme_spec_ts",
-      "community": 31,
+      "community": 30,
       "norm_label": "theme.spec.ts"
     },
     {
@@ -774,7 +792,7 @@
       "source_file": "tests/e2e/theme.spec.ts",
       "source_location": "L6",
       "id": "e2e_theme_spec_toggle",
-      "community": 31,
+      "community": 30,
       "norm_label": "toggle"
     },
     {
@@ -783,7 +801,7 @@
       "source_file": "components/theme-toggle.test.tsx",
       "source_location": "L1",
       "id": "components_theme_toggle_test_tsx",
-      "community": 9,
+      "community": 10,
       "norm_label": "theme-toggle.test.tsx"
     },
     {
@@ -792,7 +810,7 @@
       "source_file": "components/theme-toggle.test.tsx",
       "source_location": "L10",
       "id": "components_theme_toggle_test_user",
-      "community": 9,
+      "community": 10,
       "norm_label": "user"
     },
     {
@@ -801,7 +819,7 @@
       "source_file": "components/theme-toggle.tsx",
       "source_location": "L1",
       "id": "components_theme_toggle_tsx",
-      "community": 9,
+      "community": 10,
       "norm_label": "theme-toggle.tsx"
     },
     {
@@ -810,7 +828,7 @@
       "source_file": "components/theme-toggle.tsx",
       "source_location": "L8",
       "id": "components_theme_toggle_themetoggle",
-      "community": 9,
+      "community": 10,
       "norm_label": "themetoggle()"
     },
     {
@@ -819,7 +837,7 @@
       "source_file": "components/ui/button.tsx",
       "source_location": "L1",
       "id": "components_ui_button_tsx",
-      "community": 9,
+      "community": 10,
       "norm_label": "button.tsx"
     },
     {
@@ -828,7 +846,7 @@
       "source_file": "components/ui/button.tsx",
       "source_location": "L7",
       "id": "ui_button_buttonvariants",
-      "community": 9,
+      "community": 10,
       "norm_label": "buttonvariants"
     },
     {
@@ -837,7 +855,7 @@
       "source_file": "components/ui/button.tsx",
       "source_location": "L44",
       "id": "ui_button_button",
-      "community": 9,
+      "community": 10,
       "norm_label": "button()"
     },
     {
@@ -846,7 +864,7 @@
       "source_file": "components/providers/theme-provider.tsx",
       "source_location": "L1",
       "id": "components_providers_theme_provider_tsx",
-      "community": 18,
+      "community": 16,
       "norm_label": "theme-provider.tsx"
     },
     {
@@ -855,7 +873,7 @@
       "source_file": "components/providers/theme-provider.tsx",
       "source_location": "L5",
       "id": "providers_theme_provider_themeprovider",
-      "community": 18,
+      "community": 16,
       "norm_label": "themeprovider()"
     },
     {
@@ -864,7 +882,7 @@
       "source_file": "lib/utils.ts",
       "source_location": "L1",
       "id": "lib_utils_ts",
-      "community": 9,
+      "community": 10,
       "norm_label": "utils.ts"
     },
     {
@@ -873,7 +891,7 @@
       "source_file": "lib/utils.ts",
       "source_location": "L4",
       "id": "lib_utils_cn",
-      "community": 9,
+      "community": 10,
       "norm_label": "cn()"
     },
     {
@@ -882,7 +900,7 @@
       "source_file": "README.md",
       "source_location": "L1",
       "id": "readme_md",
-      "community": 20,
+      "community": 18,
       "norm_label": "readme.md"
     },
     {
@@ -891,7 +909,7 @@
       "source_file": "README.md",
       "source_location": "L3",
       "id": "kamay_app_readme_getting_started",
-      "community": 20,
+      "community": 18,
       "norm_label": "getting started"
     },
     {
@@ -900,7 +918,7 @@
       "source_file": "README.md",
       "source_location": "L7",
       "id": "kamay_app_readme_codeblock_1",
-      "community": 20,
+      "community": 18,
       "norm_label": "code:bash (npm run dev)"
     },
     {
@@ -909,7 +927,7 @@
       "source_file": "README.md",
       "source_location": "L23",
       "id": "kamay_app_readme_learn_more",
-      "community": 20,
+      "community": 18,
       "norm_label": "learn more"
     },
     {
@@ -918,7 +936,7 @@
       "source_file": "README.md",
       "source_location": "L32",
       "id": "kamay_app_readme_deploy_on_vercel",
-      "community": 20,
+      "community": 18,
       "norm_label": "deploy on vercel"
     },
     {
@@ -927,7 +945,7 @@
       "source_file": "AGENTS.md",
       "source_location": "L1",
       "id": "agents_md",
-      "community": 32,
+      "community": 31,
       "norm_label": "agents.md"
     },
     {
@@ -936,7 +954,7 @@
       "source_file": "AGENTS.md",
       "source_location": "L3",
       "id": "kamay_app_agents_this_is_not_the_next_js_you_know",
-      "community": 32,
+      "community": 31,
       "norm_label": "this is not the next.js you know"
     },
     {
@@ -945,7 +963,7 @@
       "source_file": "CLAUDE.md",
       "source_location": "L1",
       "id": "claude_md",
-      "community": 37,
+      "community": 39,
       "norm_label": "claude.md"
     },
     {
@@ -1629,7 +1647,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L1",
       "id": "specs_prd_kamay_especificacion_producto_v6_md",
-      "community": 12,
+      "community": 1,
       "norm_label": "kamay-especificacion-producto-v6.md"
     },
     {
@@ -1638,7 +1656,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L1",
       "id": "prd_kamay_especificacion_producto_v6_kamay_documento_de_especificaci_n_de_producto",
-      "community": 12,
+      "community": 1,
       "norm_label": "kamay \u2014 documento de especificacion de producto"
     },
     {
@@ -1647,7 +1665,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L10",
       "id": "prd_kamay_especificacion_producto_v6_1_resumen_ejecutivo",
-      "community": 12,
+      "community": 1,
       "norm_label": "1. resumen ejecutivo"
     },
     {
@@ -1656,7 +1674,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L38",
       "id": "prd_kamay_especificacion_producto_v6_2_objetivo_del_negocio",
-      "community": 23,
+      "community": 1,
       "norm_label": "2. objetivo del negocio"
     },
     {
@@ -1665,7 +1683,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L40",
       "id": "prd_kamay_especificacion_producto_v6_objetivo_principal",
-      "community": 23,
+      "community": 1,
       "norm_label": "objetivo principal"
     },
     {
@@ -1674,7 +1692,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L51",
       "id": "prd_kamay_especificacion_producto_v6_objetivos_secundarios",
-      "community": 23,
+      "community": 1,
       "norm_label": "objetivos secundarios"
     },
     {
@@ -1683,7 +1701,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L58",
       "id": "prd_kamay_especificacion_producto_v6_c_mo_se_mide_el_xito",
-      "community": 23,
+      "community": 1,
       "norm_label": "como se mide el exito"
     },
     {
@@ -1692,7 +1710,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L77",
       "id": "prd_kamay_especificacion_producto_v6_3_p_blico_objetivo",
-      "community": 26,
+      "community": 1,
       "norm_label": "3. publico objetivo"
     },
     {
@@ -1701,7 +1719,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L79",
       "id": "prd_kamay_especificacion_producto_v6_3_1_due_o_administrador",
-      "community": 26,
+      "community": 1,
       "norm_label": "3.1 dueno / administrador"
     },
     {
@@ -1710,7 +1728,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L86",
       "id": "prd_kamay_especificacion_producto_v6_3_2_ayudante_operador_1_o_2_personas",
-      "community": 26,
+      "community": 1,
       "norm_label": "3.2 ayudante / operador (1 o 2 personas)"
     },
     {
@@ -1719,7 +1737,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L93",
       "id": "prd_kamay_especificacion_producto_v6_3_3_organizaciones_futuras",
-      "community": 26,
+      "community": 1,
       "norm_label": "3.3 organizaciones futuras"
     },
     {
@@ -1728,7 +1746,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L99",
       "id": "prd_kamay_especificacion_producto_v6_4_tipo_de_producto_digital",
-      "community": 12,
+      "community": 1,
       "norm_label": "4. tipo de producto digital"
     },
     {
@@ -1737,7 +1755,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L103",
       "id": "prd_kamay_especificacion_producto_v6_justificaci_n",
-      "community": 12,
+      "community": 1,
       "norm_label": "justificacion"
     },
     {
@@ -1746,7 +1764,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L110",
       "id": "prd_kamay_especificacion_producto_v6_consecuencias_de_dise_o",
-      "community": 12,
+      "community": 1,
       "norm_label": "consecuencias de diseno"
     },
     {
@@ -1755,7 +1773,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L117",
       "id": "prd_kamay_especificacion_producto_v6_5_propuesta_de_valor_y_tono_de_marca",
-      "community": 24,
+      "community": 1,
       "norm_label": "5. propuesta de valor y tono de marca"
     },
     {
@@ -1764,7 +1782,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L119",
       "id": "prd_kamay_especificacion_producto_v6_propuesta_de_valor_interna",
-      "community": 24,
+      "community": 1,
       "norm_label": "propuesta de valor interna"
     },
     {
@@ -1773,7 +1791,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L122",
       "id": "prd_kamay_especificacion_producto_v6_diferenciadores_frente_a_la_versi_n_anterior",
-      "community": 24,
+      "community": 1,
       "norm_label": "diferenciadores frente a la version anterior"
     },
     {
@@ -1782,7 +1800,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L134",
       "id": "prd_kamay_especificacion_producto_v6_tono_y_personalidad",
-      "community": 24,
+      "community": 1,
       "norm_label": "tono y personalidad"
     },
     {
@@ -2286,7 +2304,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L525",
       "id": "prd_kamay_especificacion_producto_v6_8_flujo_de_usuario",
-      "community": 11,
+      "community": 1,
       "norm_label": "8. flujo de usuario"
     },
     {
@@ -2295,7 +2313,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L527",
       "id": "prd_kamay_especificacion_producto_v6_flujo_a_pedido_de_sublimaci_n_de_principio_a_fin",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo a \u2014 pedido de sublimacion, de principio a fin"
     },
     {
@@ -2304,7 +2322,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L536",
       "id": "prd_kamay_especificacion_producto_v6_flujo_b_pieza_de_alfarer_a_de_la_arcilla_a_la_feria",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo b \u2014 pieza de alfareria, de la arcilla a la feria"
     },
     {
@@ -2313,7 +2331,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L542",
       "id": "prd_kamay_especificacion_producto_v6_flujo_c_primeros_encargos_de_3d",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo c \u2014 primeros encargos de 3d"
     },
     {
@@ -2322,7 +2340,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L548",
       "id": "prd_kamay_especificacion_producto_v6_flujo_d_pedido_de_llaveros_y_falta_de_filamento",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo d \u2014 pedido de llaveros y falta de filamento"
     },
     {
@@ -2331,7 +2349,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L554",
       "id": "prd_kamay_especificacion_producto_v6_flujo_e_d_a_de_feria",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo e \u2014 dia de feria"
     },
     {
@@ -2340,7 +2358,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L559",
       "id": "prd_kamay_especificacion_producto_v6_flujo_f_este_n_mero_no_cuadra",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo f \u2014 \"este numero no cuadra\""
     },
     {
@@ -2349,7 +2367,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L564",
       "id": "prd_kamay_especificacion_producto_v6_flujo_g_recuperar_algo_archivado_por_error",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo g \u2014 recuperar algo archivado por error"
     },
     {
@@ -2358,7 +2376,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L569",
       "id": "prd_kamay_especificacion_producto_v6_flujo_h_cierre_de_mes",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo h \u2014 cierre de mes"
     },
     {
@@ -2367,7 +2385,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L572",
       "id": "prd_kamay_especificacion_producto_v6_flujo_i_nueva_organizaci_n",
-      "community": 11,
+      "community": 1,
       "norm_label": "flujo i \u2014 nueva organizacion"
     },
     {
@@ -2376,7 +2394,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L577",
       "id": "prd_kamay_especificacion_producto_v6_9_necesidad_de_datos_y_persistencia",
-      "community": 12,
+      "community": 1,
       "norm_label": "9. necesidad de datos y persistencia"
     },
     {
@@ -2385,7 +2403,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L595",
       "id": "prd_kamay_especificacion_producto_v6_reglas_de_datos_que_el_negocio_necesita",
-      "community": 12,
+      "community": 1,
       "norm_label": "reglas de datos que el negocio necesita"
     },
     {
@@ -2394,7 +2412,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L611",
       "id": "prd_kamay_especificacion_producto_v6_10_integraciones_y_funcionalidades_de_terceros",
-      "community": 21,
+      "community": 1,
       "norm_label": "10. integraciones y funcionalidades de terceros"
     },
     {
@@ -2403,7 +2421,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L613",
       "id": "prd_kamay_especificacion_producto_v6_necesarias",
-      "community": 21,
+      "community": 1,
       "norm_label": "necesarias"
     },
     {
@@ -2412,7 +2430,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L621",
       "id": "prd_kamay_especificacion_producto_v6_deseables_despu_s",
-      "community": 21,
+      "community": 1,
       "norm_label": "deseables despues"
     },
     {
@@ -2421,7 +2439,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L624",
       "id": "prd_kamay_especificacion_producto_v6_puerta_de_conexi_n_con_otras_plataformas_preparaci_n_futura",
-      "community": 21,
+      "community": 1,
       "norm_label": "puerta de conexion con otras plataformas *(preparacion futura)*"
     },
     {
@@ -2430,7 +2448,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L628",
       "id": "prd_kamay_especificacion_producto_v6_deliberadamente_evitado",
-      "community": 21,
+      "community": 1,
       "norm_label": "deliberadamente evitado"
     },
     {
@@ -2439,7 +2457,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L633",
       "id": "prd_kamay_especificacion_producto_v6_11_consideraciones_de_buenas_pr_cticas",
-      "community": 19,
+      "community": 17,
       "norm_label": "11. consideraciones de buenas practicas"
     },
     {
@@ -2448,7 +2466,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L635",
       "id": "prd_kamay_especificacion_producto_v6_facilidad_de_uso",
-      "community": 19,
+      "community": 17,
       "norm_label": "facilidad de uso"
     },
     {
@@ -2457,7 +2475,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L645",
       "id": "prd_kamay_especificacion_producto_v6_notificaciones_sin_fatiga",
-      "community": 19,
+      "community": 17,
       "norm_label": "notificaciones sin fatiga"
     },
     {
@@ -2466,7 +2484,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L648",
       "id": "prd_kamay_especificacion_producto_v6_rendimiento",
-      "community": 19,
+      "community": 17,
       "norm_label": "rendimiento"
     },
     {
@@ -2475,7 +2493,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L655",
       "id": "prd_kamay_especificacion_producto_v6_seguridad_y_privacidad",
-      "community": 19,
+      "community": 17,
       "norm_label": "seguridad y privacidad"
     },
     {
@@ -2484,7 +2502,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L662",
       "id": "prd_kamay_especificacion_producto_v6_seo",
-      "community": 19,
+      "community": 17,
       "norm_label": "seo"
     },
     {
@@ -2493,7 +2511,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L665",
       "id": "prd_kamay_especificacion_producto_v6_mantenibilidad_la_lecci_n_de_la_versi_n_anterior",
-      "community": 19,
+      "community": 17,
       "norm_label": "mantenibilidad \u2014 la leccion de la version anterior"
     },
     {
@@ -2502,7 +2520,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L678",
       "id": "prd_kamay_especificacion_producto_v6_12_alcance_y_fases_roadmap",
-      "community": 15,
+      "community": 1,
       "norm_label": "12. alcance y fases (roadmap)"
     },
     {
@@ -2511,7 +2529,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L680",
       "id": "prd_kamay_especificacion_producto_v6_fase_0_cimientos_no_negociable_va_primero",
-      "community": 15,
+      "community": 1,
       "norm_label": "fase 0 \u2014 cimientos *(no negociable, va primero)*"
     },
     {
@@ -2520,7 +2538,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L685",
       "id": "prd_kamay_especificacion_producto_v6_fase_1_mvp_el_ciclo_del_dinero",
-      "community": 15,
+      "community": 1,
       "norm_label": "fase 1 \u2014 mvp: el ciclo del dinero"
     },
     {
@@ -2529,7 +2547,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L689",
       "id": "prd_kamay_especificacion_producto_v6_fase_2_tareas_el_trabajo_propio",
-      "community": 15,
+      "community": 1,
       "norm_label": "fase 2 \u2014 tareas: el trabajo propio"
     },
     {
@@ -2538,7 +2556,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L693",
       "id": "prd_kamay_especificacion_producto_v6_fase_3_inventario_suave_activos_y_reportes",
-      "community": 15,
+      "community": 1,
       "norm_label": "fase 3 \u2014 inventario suave, activos y reportes"
     },
     {
@@ -2547,7 +2565,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L696",
       "id": "prd_kamay_especificacion_producto_v6_fase_4_bit_cora_completa_y_tareas_conectadas",
-      "community": 15,
+      "community": 1,
       "norm_label": "fase 4 \u2014 bitacora completa y tareas conectadas"
     },
     {
@@ -2556,7 +2574,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L700",
       "id": "prd_kamay_especificacion_producto_v6_fase_5_precisi_n_y_producci_n",
-      "community": 15,
+      "community": 1,
       "norm_label": "fase 5 \u2014 precision y produccion"
     },
     {
@@ -2565,7 +2583,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L703",
       "id": "prd_kamay_especificacion_producto_v6_fase_6_cara_al_cliente_y_expansi_n",
-      "community": 15,
+      "community": 1,
       "norm_label": "fase 6 \u2014 cara al cliente y expansion"
     },
     {
@@ -2574,7 +2592,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L712",
       "id": "prd_kamay_especificacion_producto_v6_13_riesgos_dudas_y_decisiones_pendientes",
-      "community": 25,
+      "community": 1,
       "norm_label": "13. riesgos, dudas y decisiones pendientes"
     },
     {
@@ -2583,7 +2601,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L714",
       "id": "prd_kamay_especificacion_producto_v6_riesgos",
-      "community": 25,
+      "community": 1,
       "norm_label": "riesgos"
     },
     {
@@ -2592,7 +2610,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L733",
       "id": "prd_kamay_especificacion_producto_v6_decisiones_ya_resueltas",
-      "community": 25,
+      "community": 1,
       "norm_label": "decisiones ya resueltas"
     },
     {
@@ -2601,7 +2619,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L743",
       "id": "prd_kamay_especificacion_producto_v6_decisiones_abiertas_no_bloqueantes",
-      "community": 25,
+      "community": 1,
       "norm_label": "decisiones abiertas (no bloqueantes)"
     },
     {
@@ -2610,7 +2628,7 @@
       "source_file": "specs/PRD/kamay-especificacion-producto-v6.md",
       "source_location": "L758",
       "id": "prd_kamay_especificacion_producto_v6_14_pr_ximos_pasos",
-      "community": 12,
+      "community": 1,
       "norm_label": "14. proximos pasos"
     },
     {
@@ -2619,7 +2637,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L1",
       "id": "specs_prd_kamay_esquema_base_de_datos_supabase_md",
-      "community": 1,
+      "community": 9,
       "norm_label": "kamay-esquema-base-de-datos-supabase.md"
     },
     {
@@ -2628,7 +2646,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L1",
       "id": "prd_kamay_esquema_base_de_datos_supabase_kamay_esquema_de_base_de_datos_supabase_postgresql",
-      "community": 1,
+      "community": 9,
       "norm_label": "kamay \u2014 esquema de base de datos (supabase / postgresql)"
     },
     {
@@ -2637,7 +2655,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L9",
       "id": "prd_kamay_esquema_base_de_datos_supabase_1_alcance_y_advertencia",
-      "community": 1,
+      "community": 9,
       "norm_label": "1. alcance y advertencia"
     },
     {
@@ -2646,7 +2664,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L19",
       "id": "prd_kamay_esquema_base_de_datos_supabase_2_c_mo_se_traducen_los_principios",
-      "community": 1,
+      "community": 9,
       "norm_label": "2. como se traducen los principios"
     },
     {
@@ -2655,7 +2673,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L34",
       "id": "prd_kamay_esquema_base_de_datos_supabase_3_convenciones",
-      "community": 1,
+      "community": 9,
       "norm_label": "3. convenciones"
     },
     {
@@ -2664,7 +2682,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L50",
       "id": "prd_kamay_esquema_base_de_datos_supabase_4_mapa_de_entidades",
-      "community": 1,
+      "community": 34,
       "norm_label": "4. mapa de entidades"
     },
     {
@@ -2673,7 +2691,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L52",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_1",
-      "community": 1,
+      "community": 34,
       "norm_label": "code:mermaid (erdiagram)"
     },
     {
@@ -2682,7 +2700,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L90",
       "id": "prd_kamay_esquema_base_de_datos_supabase_5_identidad_y_multi_tenant",
-      "community": 1,
+      "community": 25,
       "norm_label": "5. identidad y multi-tenant"
     },
     {
@@ -2691,7 +2709,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L94",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_2",
-      "community": 1,
+      "community": 25,
       "norm_label": "code:sql (-- organizaciones (tenants))"
     },
     {
@@ -2700,7 +2718,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L123",
       "id": "prd_kamay_esquema_base_de_datos_supabase_funciones_auxiliares_de_seguridad",
-      "community": 1,
+      "community": 25,
       "norm_label": "funciones auxiliares de seguridad"
     },
     {
@@ -2709,7 +2727,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L127",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_3",
-      "community": 1,
+      "community": 25,
       "norm_label": "code:sql (create or replace function is_member(org uuid))"
     },
     {
@@ -2718,7 +2736,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L154",
       "id": "prd_kamay_esquema_base_de_datos_supabase_6_configuraci_n",
-      "community": 1,
+      "community": 20,
       "norm_label": "6. configuracion"
     },
     {
@@ -2727,7 +2745,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L156",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_4",
-      "community": 1,
+      "community": 20,
       "norm_label": "code:sql (-- lineas de negocio: sublimacion, impresion 3d, alfareria, )"
     },
     {
@@ -2736,7 +2754,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L202",
       "id": "prd_kamay_esquema_base_de_datos_supabase_estados_la_tabla_que_sostiene_la_flexibilidad",
-      "community": 1,
+      "community": 20,
       "norm_label": "estados \u2014 la tabla que sostiene la flexibilidad"
     },
     {
@@ -2745,7 +2763,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L204",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_5",
-      "community": 1,
+      "community": 20,
       "norm_label": "code:sql (create table statuses ()"
     },
     {
@@ -2754,7 +2772,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L232",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_6",
-      "community": 1,
+      "community": 20,
       "norm_label": "code:sql (create or replace function resolve_statuses(org uuid, line u)"
     },
     {
@@ -2763,7 +2781,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L252",
       "id": "prd_kamay_esquema_base_de_datos_supabase_7_directorio_y_cat_logo",
-      "community": 1,
+      "community": 26,
       "norm_label": "7. directorio y catalogo"
     },
     {
@@ -2772,7 +2790,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L254",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_7",
-      "community": 1,
+      "community": 26,
       "norm_label": "code:sql (-- contactos: proveedores, clientes, o ambos)"
     },
     {
@@ -2781,7 +2799,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L277",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_8",
-      "community": 1,
+      "community": 26,
       "norm_label": "code:sql (-- items: insumos, productos y activos en una sola tabla, di)"
     },
     {
@@ -2790,7 +2808,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L323",
       "id": "prd_kamay_esquema_base_de_datos_supabase_8_egresos",
-      "community": 1,
+      "community": 9,
       "norm_label": "8. egresos"
     },
     {
@@ -2799,7 +2817,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L325",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_9",
-      "community": 1,
+      "community": 9,
       "norm_label": "code:sql (-- una sola bandeja: compras (traen material) y gastos (no t)"
     },
     {
@@ -2808,7 +2826,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L372",
       "id": "prd_kamay_esquema_base_de_datos_supabase_9_pedidos_y_ventas",
-      "community": 1,
+      "community": 19,
       "norm_label": "9. pedidos y ventas"
     },
     {
@@ -2817,7 +2835,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L374",
       "id": "prd_kamay_esquema_base_de_datos_supabase_una_decisi_n_que_conviene_revisar",
-      "community": 1,
+      "community": 19,
       "norm_label": "una decision que conviene revisar"
     },
     {
@@ -2826,7 +2844,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L382",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_10",
-      "community": 1,
+      "community": 19,
       "norm_label": "code:sql (create table orders ()"
     },
     {
@@ -2835,7 +2853,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L430",
       "id": "prd_kamay_esquema_base_de_datos_supabase_cobros_y_pagos",
-      "community": 1,
+      "community": 19,
       "norm_label": "cobros y pagos"
     },
     {
@@ -2844,7 +2862,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L432",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_11",
-      "community": 1,
+      "community": 19,
       "norm_label": "code:sql (create table payments ()"
     },
     {
@@ -2853,7 +2871,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L462",
       "id": "prd_kamay_esquema_base_de_datos_supabase_10_inventario",
-      "community": 1,
+      "community": 9,
       "norm_label": "10. inventario"
     },
     {
@@ -2862,7 +2880,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L464",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_12",
-      "community": 1,
+      "community": 9,
       "norm_label": "code:sql (create table inventory_movements ()"
     },
     {
@@ -2871,7 +2889,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L498",
       "id": "prd_kamay_esquema_base_de_datos_supabase_11_vistas_derivadas",
-      "community": 1,
+      "community": 33,
       "norm_label": "11. vistas derivadas"
     },
     {
@@ -2880,7 +2898,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L502",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_13",
-      "community": 1,
+      "community": 33,
       "norm_label": "code:sql (-- saldo actual por item)"
     },
     {
@@ -2889,7 +2907,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L568",
       "id": "prd_kamay_esquema_base_de_datos_supabase_12_tareas",
-      "community": 1,
+      "community": 9,
       "norm_label": "12. tareas"
     },
     {
@@ -2898,7 +2916,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L570",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_14",
-      "community": 1,
+      "community": 9,
       "norm_label": "code:sql (create table tasks ()"
     },
     {
@@ -2907,7 +2925,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L636",
       "id": "prd_kamay_esquema_base_de_datos_supabase_13_adjuntos",
-      "community": 1,
+      "community": 23,
       "norm_label": "13. adjuntos"
     },
     {
@@ -2916,7 +2934,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L638",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_15",
-      "community": 1,
+      "community": 23,
       "norm_label": "code:sql (create table attachments ()"
     },
     {
@@ -2925,7 +2943,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L658",
       "id": "prd_kamay_esquema_base_de_datos_supabase_storage",
-      "community": 1,
+      "community": 23,
       "norm_label": "storage"
     },
     {
@@ -2934,7 +2952,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L669",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_16",
-      "community": 1,
+      "community": 23,
       "norm_label": "code:sql (create policy \"storage: solo la propia organizacion\")"
     },
     {
@@ -2943,7 +2961,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L682",
       "id": "prd_kamay_esquema_base_de_datos_supabase_14_bit_cora_de_actividad",
-      "community": 16,
+      "community": 14,
       "norm_label": "14. bitacora de actividad"
     },
     {
@@ -2952,7 +2970,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L684",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_17",
-      "community": 16,
+      "community": 14,
       "norm_label": "code:sql (create table activity_log ()"
     },
     {
@@ -2961,7 +2979,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L706",
       "id": "prd_kamay_esquema_base_de_datos_supabase_el_trigger_gen_rico",
-      "community": 16,
+      "community": 14,
       "norm_label": "el trigger generico"
     },
     {
@@ -2970,7 +2988,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L708",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_18",
-      "community": 16,
+      "community": 14,
       "norm_label": "code:sql (create or replace function log_activity())"
     },
     {
@@ -2979,7 +2997,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L758",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_19",
-      "community": 16,
+      "community": 14,
       "norm_label": "code:sql (create trigger audit after insert or update on orders)"
     },
     {
@@ -2988,7 +3006,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L765",
       "id": "prd_kamay_esquema_base_de_datos_supabase_agrupaci_n_de_ruido",
-      "community": 16,
+      "community": 14,
       "norm_label": "agrupacion de ruido"
     },
     {
@@ -2997,7 +3015,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L769",
       "id": "prd_kamay_esquema_base_de_datos_supabase_retenci_n",
-      "community": 16,
+      "community": 14,
       "norm_label": "retencion"
     },
     {
@@ -3006,7 +3024,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L771",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_20",
-      "community": 16,
+      "community": 14,
       "norm_label": "code:sql (-- tarea programada mensual (pg_cron): exportar y luego resu)"
     },
     {
@@ -3015,7 +3033,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L783",
       "id": "prd_kamay_esquema_base_de_datos_supabase_15_notificaciones",
-      "community": 1,
+      "community": 32,
       "norm_label": "15. notificaciones"
     },
     {
@@ -3024,7 +3042,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L785",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_21",
-      "community": 1,
+      "community": 32,
       "norm_label": "code:sql (create table notifications ()"
     },
     {
@@ -3033,7 +3051,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L808",
       "id": "prd_kamay_esquema_base_de_datos_supabase_16_seguridad_a_nivel_de_fila_rls",
-      "community": 13,
+      "community": 12,
       "norm_label": "16. seguridad a nivel de fila (rls)"
     },
     {
@@ -3042,7 +3060,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L810",
       "id": "prd_kamay_esquema_base_de_datos_supabase_patr_n_general",
-      "community": 13,
+      "community": 12,
       "norm_label": "patron general"
     },
     {
@@ -3051,7 +3069,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L814",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_22",
-      "community": 13,
+      "community": 12,
       "norm_label": "code:sql (alter table orders enable row level security;)"
     },
     {
@@ -3060,7 +3078,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L835",
       "id": "prd_kamay_esquema_base_de_datos_supabase_matriz_de_acceso",
-      "community": 13,
+      "community": 12,
       "norm_label": "matriz de acceso"
     },
     {
@@ -3069,7 +3087,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L853",
       "id": "prd_kamay_esquema_base_de_datos_supabase_c_mo_se_ocultan_los_costos_al_ayudante",
-      "community": 13,
+      "community": 12,
       "norm_label": "como se ocultan los costos al ayudante"
     },
     {
@@ -3078,7 +3096,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L864",
       "id": "prd_kamay_esquema_base_de_datos_supabase_ejemplo_de_pol_tica_m_s_fina_tareas_del_ayudante",
-      "community": 13,
+      "community": 12,
       "norm_label": "ejemplo de politica mas fina \u2014 tareas del ayudante"
     },
     {
@@ -3087,7 +3105,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L866",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_23",
-      "community": 13,
+      "community": 12,
       "norm_label": "code:sql (create policy \"tasks: ayudante ve su linea o lo asignado\")"
     },
     {
@@ -3096,7 +3114,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L883",
       "id": "prd_kamay_esquema_base_de_datos_supabase_bit_cora_inalterable_de_verdad",
-      "community": 13,
+      "community": 12,
       "norm_label": "bitacora: inalterable de verdad"
     },
     {
@@ -3105,7 +3123,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L885",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_24",
-      "community": 13,
+      "community": 12,
       "norm_label": "code:sql (alter table activity_log enable row level security;)"
     },
     {
@@ -3114,7 +3132,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L901",
       "id": "prd_kamay_esquema_base_de_datos_supabase_17_sincronizaci_n_sin_conexi_n",
-      "community": 1,
+      "community": 9,
       "norm_label": "17. sincronizacion sin conexion"
     },
     {
@@ -3123,7 +3141,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L914",
       "id": "prd_kamay_esquema_base_de_datos_supabase_18_orden_de_migraciones",
-      "community": 1,
+      "community": 24,
       "norm_label": "18. orden de migraciones"
     },
     {
@@ -3132,7 +3150,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L916",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_25",
-      "community": 1,
+      "community": 24,
       "norm_label": "code:block25 (001_extensions_and_helpers    -- pgcrypto, is_member(), is_o)"
     },
     {
@@ -3141,7 +3159,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L940",
       "id": "prd_kamay_esquema_base_de_datos_supabase_semilla_de_geeko_store",
-      "community": 1,
+      "community": 24,
       "norm_label": "semilla de geeko store"
     },
     {
@@ -3150,7 +3168,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L942",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_26",
-      "community": 1,
+      "community": 24,
       "norm_label": "code:sql (-- lineas)"
     },
     {
@@ -3159,7 +3177,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L977",
       "id": "prd_kamay_esquema_base_de_datos_supabase_19_lo_que_este_esquema_a_n_no_incluye",
-      "community": 1,
+      "community": 9,
       "norm_label": "19. lo que este esquema aun no incluye"
     },
     {
@@ -3168,7 +3186,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L990",
       "id": "prd_kamay_esquema_base_de_datos_supabase_20_lista_de_verificaci_n_antes_de_producci_n",
-      "community": 1,
+      "community": 9,
       "norm_label": "20. lista de verificacion antes de produccion"
     },
     {
@@ -3492,7 +3510,7 @@
       "source_file": "openspec/project.md",
       "source_location": "L1",
       "id": "openspec_project_md",
-      "community": 22,
+      "community": 21,
       "norm_label": "project.md"
     },
     {
@@ -3501,7 +3519,7 @@
       "source_file": "openspec/project.md",
       "source_location": "L1",
       "id": "openspec_project_kamay_constituci_n_del_proyecto",
-      "community": 22,
+      "community": 21,
       "norm_label": "kamay \u2014 constitucion del proyecto"
     },
     {
@@ -3510,7 +3528,7 @@
       "source_file": "openspec/project.md",
       "source_location": "L5",
       "id": "openspec_project_stack",
-      "community": 22,
+      "community": 21,
       "norm_label": "stack"
     },
     {
@@ -3519,7 +3537,7 @@
       "source_file": "openspec/project.md",
       "source_location": "L9",
       "id": "openspec_project_convenciones_no_negociables",
-      "community": 22,
+      "community": 21,
       "norm_label": "convenciones no negociables"
     },
     {
@@ -3528,7 +3546,7 @@
       "source_file": "openspec/project.md",
       "source_location": "L24",
       "id": "openspec_project_pruebas",
-      "community": 22,
+      "community": 21,
       "norm_label": "pruebas"
     },
     {
@@ -3537,7 +3555,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L1",
       "id": "openspec_changes_kam_01_project_scaffolding_tasks_md",
-      "community": 10,
+      "community": 11,
       "norm_label": "tasks.md"
     },
     {
@@ -3546,7 +3564,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L1",
       "id": "kam_01_project_scaffolding_tasks_tasks_kam_01_andamiaje_del_proyecto",
-      "community": 10,
+      "community": 11,
       "norm_label": "tasks \u2014 kam-01 \u00b7 andamiaje del proyecto"
     },
     {
@@ -3555,7 +3573,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L5",
       "id": "kam_01_project_scaffolding_tasks_1_base_del_proyecto",
-      "community": 10,
+      "community": 11,
       "norm_label": "1. base del proyecto"
     },
     {
@@ -3564,7 +3582,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L11",
       "id": "kam_01_project_scaffolding_tasks_2_tema_y_ui_base",
-      "community": 10,
+      "community": 11,
       "norm_label": "2. tema y ui base"
     },
     {
@@ -3573,7 +3591,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L17",
       "id": "kam_01_project_scaffolding_tasks_3_estructura_de_carpetas",
-      "community": 10,
+      "community": 11,
       "norm_label": "3. estructura de carpetas"
     },
     {
@@ -3582,7 +3600,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L21",
       "id": "kam_01_project_scaffolding_tasks_4_supabase_local",
-      "community": 10,
+      "community": 11,
       "norm_label": "4. supabase local"
     },
     {
@@ -3591,7 +3609,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L27",
       "id": "kam_01_project_scaffolding_tasks_5_arn_s_de_pruebas",
-      "community": 10,
+      "community": 11,
       "norm_label": "5. arnes de pruebas"
     },
     {
@@ -3600,7 +3618,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L37",
       "id": "kam_01_project_scaffolding_tasks_6_openspec",
-      "community": 10,
+      "community": 11,
       "norm_label": "6. openspec"
     },
     {
@@ -3609,7 +3627,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L42",
       "id": "kam_01_project_scaffolding_tasks_7_graphify",
-      "community": 10,
+      "community": 11,
       "norm_label": "7. graphify"
     },
     {
@@ -3618,7 +3636,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L47",
       "id": "kam_01_project_scaffolding_tasks_8_integraci_n_continua",
-      "community": 10,
+      "community": 11,
       "norm_label": "8. integracion continua"
     },
     {
@@ -3627,7 +3645,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/tasks.md",
       "source_location": "L53",
       "id": "kam_01_project_scaffolding_tasks_9_cierre",
-      "community": 10,
+      "community": 11,
       "norm_label": "9. cierre"
     },
     {
@@ -3636,7 +3654,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/design.md",
       "source_location": "L1",
       "id": "openspec_changes_kam_01_project_scaffolding_design_md",
-      "community": 17,
+      "community": 15,
       "norm_label": "design.md"
     },
     {
@@ -3645,7 +3663,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/design.md",
       "source_location": "L1",
       "id": "kam_01_project_scaffolding_design_design_kam_01_andamiaje_del_proyecto",
-      "community": 17,
+      "community": 15,
       "norm_label": "design \u2014 kam-01 \u00b7 andamiaje del proyecto"
     },
     {
@@ -3654,7 +3672,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/design.md",
       "source_location": "L3",
       "id": "kam_01_project_scaffolding_design_context",
-      "community": 17,
+      "community": 15,
       "norm_label": "context"
     },
     {
@@ -3663,7 +3681,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/design.md",
       "source_location": "L7",
       "id": "kam_01_project_scaffolding_design_goals_non_goals",
-      "community": 17,
+      "community": 15,
       "norm_label": "goals / non-goals"
     },
     {
@@ -3672,7 +3690,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/design.md",
       "source_location": "L18",
       "id": "kam_01_project_scaffolding_design_decisions",
-      "community": 17,
+      "community": 15,
       "norm_label": "decisions"
     },
     {
@@ -3681,7 +3699,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/design.md",
       "source_location": "L38",
       "id": "kam_01_project_scaffolding_design_risks_trade_offs",
-      "community": 17,
+      "community": 15,
       "norm_label": "risks / trade-offs"
     },
     {
@@ -3690,7 +3708,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/design.md",
       "source_location": "L45",
       "id": "kam_01_project_scaffolding_design_migration_plan",
-      "community": 17,
+      "community": 15,
       "norm_label": "migration plan"
     },
     {
@@ -3699,7 +3717,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/design.md",
       "source_location": "L49",
       "id": "kam_01_project_scaffolding_design_open_questions",
-      "community": 17,
+      "community": 15,
       "norm_label": "open questions"
     },
     {
@@ -3708,7 +3726,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L1",
       "id": "openspec_changes_kam_01_project_scaffolding_proposal_md",
-      "community": 14,
+      "community": 13,
       "norm_label": "proposal.md"
     },
     {
@@ -3717,7 +3735,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L1",
       "id": "kam_01_project_scaffolding_proposal_kam_01_andamiaje_del_proyecto_y_disciplina_de_trabajo",
-      "community": 14,
+      "community": 13,
       "norm_label": "kam-01 \u00b7 andamiaje del proyecto y disciplina de trabajo"
     },
     {
@@ -3726,7 +3744,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L5",
       "id": "kam_01_project_scaffolding_proposal_why",
-      "community": 14,
+      "community": 13,
       "norm_label": "why"
     },
     {
@@ -3735,7 +3753,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L9",
       "id": "kam_01_project_scaffolding_proposal_what_changes",
-      "community": 14,
+      "community": 13,
       "norm_label": "what changes"
     },
     {
@@ -3744,7 +3762,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L20",
       "id": "kam_01_project_scaffolding_proposal_capabilities",
-      "community": 14,
+      "community": 13,
       "norm_label": "capabilities"
     },
     {
@@ -3753,7 +3771,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L22",
       "id": "kam_01_project_scaffolding_proposal_new_capabilities",
-      "community": 14,
+      "community": 13,
       "norm_label": "new capabilities"
     },
     {
@@ -3762,7 +3780,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L26",
       "id": "kam_01_project_scaffolding_proposal_modified_capabilities",
-      "community": 14,
+      "community": 13,
       "norm_label": "modified capabilities"
     },
     {
@@ -3771,7 +3789,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L30",
       "id": "kam_01_project_scaffolding_proposal_impact",
-      "community": 14,
+      "community": 13,
       "norm_label": "impact"
     },
     {
@@ -3780,7 +3798,7 @@
       "source_file": "openspec/changes/kam-01-project-scaffolding/proposal.md",
       "source_location": "L37",
       "id": "kam_01_project_scaffolding_proposal_fuera_de_alcance",
-      "community": 14,
+      "community": 13,
       "norm_label": "fuera de alcance"
     },
     {
@@ -5382,6 +5400,26 @@
       "confidence_score": 1.0,
       "source": "kamay_gestio_n_operativa_support_loadreactumd",
       "target": "kamay_gestio_n_operativa_support_loadscript"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/harness.test.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "tests_integration_harness_test_ts",
+      "target": "integration_harness_test_localsupabaseenv",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/harness.test.ts",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "tests_integration_harness_test_ts",
+      "target": "integration_harness_test_url_secretkey",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -8883,5 +8921,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "526c621c9db36d0070199e4b3d25de07b8774e9e"
+  "built_at_commit": "785d21b450640b6a515dffc2a64d1378ce69bdd1"
 }

@@ -199,6 +199,39 @@ create table units (
 );
 ```
 
+### Invitaciones — cómo entra alguien al equipo
+
+No hay registro público: las cuentas se crean por invitación. El dueño genera un enlace de un solo uso y lo entrega por su medio habitual; quien lo abre crea su cuenta y queda con la membresía que el dueño le asignó.
+
+```sql
+create table invitations (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id),
+  email           text not null,
+  role            text not null check (role in ('owner','assistant')),
+  token_hash      bytea not null,           -- sha256 del token; el token en claro nunca se guarda
+  expires_at      timestamptz not null,
+  accepted_at     timestamptz,
+  invited_by      uuid references auth.users(id),
+  created_at      timestamptz not null default now(),
+  archived_at     timestamptz               -- revocar es archivar
+);
+
+-- Una sola invitación pendiente por correo y organización.
+create unique index on invitations (organization_id, lower(email))
+  where accepted_at is null and archived_at is null;
+```
+
+La aceptación es una función `security definer`, no una política: quien acepta todavía no es miembro, así que ninguna política de `memberships` podría dejarlo insertarse a sí mismo.
+
+```sql
+-- Valida token, caducidad y correo; crea la membresía y marca la invitación.
+-- Todos los fallos devuelven el mismo error: la ruta no debe delatar
+-- qué invitaciones existen.
+create function accept_invitation(p_token text) returns uuid
+  language plpgsql security definer set search_path = public as $$ … $$;
+```
+
 ### Estados — la tabla que sostiene la flexibilidad
 
 ```sql
@@ -849,6 +882,7 @@ create policy "orders: editar si es miembro"
 | `attachments` | Según el registro padre | Todo |
 | `activity_log` | **Sin acceso** | Solo lectura |
 | `memberships` | Leer solo su propia fila | Todo |
+| `invitations` | **Sin acceso** | Todo |
 
 ### Cómo se ocultan los costos al ayudante
 

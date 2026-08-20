@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; background: #ffffff; font-family: Geist, ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #18181b; } a:hover { color: #52525b; }
+</style>
+</helmet>
+<div style="min-width: 1440px; min-height: 100vh; display: flex; flex-direction: column; background: #fafafa; color: #09090b;">
+
+  <header style="flex: none; height: 56px; padding: 0 16px; border-bottom: 1px solid #e4e4e7; background: #ffffff; display: flex; align-items: center; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 8px; flex: none;">
+      <span style="width: 26px; height: 26px; border-radius: 6px; background: #18181b; color: #fafafa; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;">G</span>
+      <span style="font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">Geeko Store</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 2px; padding: 3px; background: #f4f4f5; border-radius: 8px; flex: none;">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: #ffffff; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(9,9,11,0.06);">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #a1a1aa;"></span>Todas
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #2563eb;"></span>Sublimación
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #7c3aed;"></span>Impresión 3D
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #ea580c;"></span>Alfarería
+      </button>
+    </div>
+    <span style="flex: 1;"></span>
+    <div style="position: relative; display: flex; align-items: center; flex: none;">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" style="position: absolute; left: 9px; pointer-events: none;"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input type="text" placeholder="Buscar tarea o cliente" style="width: 240px; height: 34px; padding: 0 10px 0 30px; border: 1px solid #e4e4e7; border-radius: 8px; background: #ffffff; color: #09090b; font-family: inherit; font-size: 13px; outline: none;" />
+    </div>
+    <button type="button" style="position: relative; width: 34px; height: 34px; border: 1px solid #e4e4e7; background: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none;" style-hover="background: #f4f4f5;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#09090b" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"></path><path d="M10.5 20a2 2 0 003 0"></path></svg>
+      <span style="position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #dc2626; color: #ffffff; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center;">{{ notificaciones }}</span>
+    </button>
+    <div style="display: flex; align-items: center; gap: 8px; flex: none;">
+      <span style="width: 32px; height: 32px; border-radius: 999px; background: #f4f4f5; border: 1px solid #e4e4e7; color: #52525b; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">DZ</span>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </div>
+  </header>
+
+  <div style="flex: none; height: 48px; padding: 0 16px; border-bottom: 1px solid #e4e4e7; background: #fafafa; display: flex; align-items: center; gap: 8px;">
+    <button type="button" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">
+      <span style="width: 7px; height: 7px; border-radius: 999px; background: #a1a1aa;"></span>Todas las líneas<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">
+      Responsable<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">
+      Etiqueta<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid #e4e4e7; background: #ffffff; color: #09090b; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="background: #f4f4f5;">
+      Vencimiento<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+
+    <span style="flex: 1;"></span>
+
+    <div style="display: flex; align-items: center; gap: 2px; padding: 3px; background: #f4f4f5; border-radius: 8px;">
+      <sc-for list="{{ vistas }}" as="v" hint-placeholder-count="3">
+        <sc-if value="{{ v.activa }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ v.set }}" style="height: 26px; padding: 0 10px; border: none; background: #ffffff; color: #09090b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(9,9,11,0.06);">{{ v.nombre }}</button>
+        </sc-if>
+        <sc-if value="{{ v.inactiva }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ v.set }}" style="height: 26px; padding: 0 10px; border: none; background: none; color: #52525b; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;" style-hover="color: #09090b;">{{ v.nombre }}</button>
+        </sc-if>
+      </sc-for>
+    </div>
+
+    <button type="button" style="height: 32px; padding: 0 12px; border: none; background: #18181b; color: #fafafa; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="background: #27272a;">+ Nueva tarea</button>
+  </div>
+
+  <div style="flex: none; padding: 10px 16px 0 16px; display: flex; align-items: center; gap: 7px;">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7L4 11l4 4"></path><path d="M16 7l4 4-4 4"></path><path d="M4 11h16"></path></svg>
+    <span style="font-size: 12px; color: #52525b;">Las tarjetas se arrastran en ambos sentidos. Devolver una tarea de <strong style="font-weight: 600;">En revisión</strong> a <strong style="font-weight: 600;">Por hacer</strong> es parte normal del trabajo.</span>
+  </div>
+
+  <div style="flex: 1; padding: 12px 16px 16px 16px;">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: start; min-height: 600px;">
+      <sc-for list="{{ columnas }}" as="col" hint-placeholder-count="4">
+        <section style="display: flex; flex-direction: column; gap: 8px; padding: 8px; background: #f4f4f5; border: 1px dashed #e4e4e7; border-radius: 10px; min-height: 560px;">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 2px 4px;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L5 11l4 4"></path><path d="M15 7l4 4-4 4"></path></svg>
+            <span style="font-size: 13px; font-weight: 600; letter-spacing: -0.01em;">{{ col.nombre }}</span>
+            <span style="min-width: 20px; height: 20px; padding: 0 6px; border-radius: 6px; background: #e4e4e7; color: #52525b; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center;">{{ col.total }}</span>
+            <span style="flex: 1;"></span>
+            <button type="button" style="width: 24px; height: 24px; border: 1px solid #e4e4e7; background: #ffffff; color: #52525b; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: inherit; font-size: 14px; line-height: 1;" style-hover="background: #ffffff; color: #09090b;">+</button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{ col.tareas }}" as="t" hint-placeholder-count="3">
+              <article style="position: relative; overflow: hidden; padding: 10px 10px 10px 13px; background: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; display: flex; flex-direction: column; gap: 7px; cursor: grab;" style-hover="border-color: #d4d4d8;">
+                <sc-if value="{{ t.esSublimacion }}" hint-placeholder-val="{{ true }}">
+                  <span style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2563eb;"></span>
+                </sc-if>
+                <sc-if value="{{ t.es3d }}" hint-placeholder-val="{{ false }}">
+                  <span style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #7c3aed;"></span>
+                </sc-if>
+                <sc-if value="{{ t.esAlfareria }}" hint-placeholder-val="{{ false }}">
+                  <span style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #ea580c;"></span>
+                </sc-if>
+                <sc-if value="{{ t.esGeneral }}" hint-placeholder-val="{{ false }}">
+                  <span style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #a1a1aa;"></span>
+                </sc-if>
+
+                <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: #71717a; letter-spacing: 0.02em;">{{ t.linea }}</span>
+                <span style="font-size: 13px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; text-wrap: pretty;">{{ t.titulo }}</span>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <sc-if value="{{ t.vencido }}" hint-placeholder-val="{{ false }}">
+                    <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #dc2626;">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>{{ t.fecha }}
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ t.hoy }}" hint-placeholder-val="{{ false }}">
+                    <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #b45309;">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>{{ t.fecha }}
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ t.futuro }}" hint-placeholder-val="{{ true }}">
+                    <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: #71717a;">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>{{ t.fecha }}
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ t.sinFecha }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size: 12px; font-weight: 500; color: #a1a1aa;">Sin fecha</span>
+                  </sc-if>
+                  <span style="flex: 1;"></span>
+                  <span style="width: 22px; height: 22px; border-radius: 999px; background: #f4f4f5; border: 1px solid #e4e4e7; color: #52525b; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none;">{{ t.responsable }}</span>
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                  <sc-for list="{{ t.etiquetas }}" as="e" hint-placeholder-count="1">
+                    <span style="height: 19px; padding: 0 6px; border-radius: 5px; background: #f4f4f5; color: #52525b; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; font-weight: 500; display: flex; align-items: center;">{{ e.nombre }}</span>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ t.tieneIconos }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; align-items: center; gap: 10px; padding-top: 6px; border-top: 1px solid #f4f4f5;">
+                    <sc-if value="{{ t.tieneAdjuntos }}" hint-placeholder-val="{{ false }}">
+                      <span style="display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; color: #52525b;">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#52525b" stroke-width="1.8" stroke-linecap="round"><path d="M20 10l-8.5 8.5a4 4 0 01-5.7-5.7l8-8a2.6 2.6 0 013.7 3.7l-7.7 7.7"></path></svg>{{ t.adjuntos }}
+                      </span>
+                    </sc-if>
+                    <sc-if value="{{ t.tieneVinculos }}" hint-placeholder-val="{{ false }}">
+                      <span style="display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; color: #52525b;">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#52525b" stroke-width="1.8" stroke-linecap="round"><path d="M10 13a4 4 0 006 .5l2-2a4 4 0 00-5.7-5.7L11 7"></path><path d="M14 11a4 4 0 00-6-.5l-2 2A4 4 0 0011.7 18l1.3-1.2"></path></svg>{{ t.vinculos }}
+                      </span>
+                    </sc-if>
+                    <sc-if value="{{ t.entregable }}" hint-placeholder-val="{{ false }}">
+                      <span style="display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; color: #52525b;">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#52525b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg>Entregable
+                      </span>
+                    </sc-if>
+                  </div>
+                </sc-if>
+              </article>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;notificaciones&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:4,&quot;min&quot;:0,&quot;max&quot;:99,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = { vista: "Tablero" };
+
+  tareas = [
+    { col: "Por hacer", linea: "SUBLIMACIÓN", titulo: "Diseñar arte pedido #142", fecha: "20 ago", sem: "futuro", resp: "MC", etiquetas: ["pedido-142", "diseño"], adjuntos: 2, entregable: true },
+    { col: "Por hacer", linea: "IMPRESIÓN 3D", titulo: "Revisar filamento para llaveros", sem: "sin", resp: "JT", etiquetas: ["insumos"], vinculos: 1 },
+    { col: "Por hacer", linea: "GENERAL", titulo: "Buscar proveedores de bolsos sublimables", fecha: "26 ago", sem: "futuro", resp: "DZ", etiquetas: ["compras"], vinculos: 3 },
+    { col: "Haciendo", linea: "ALFARERÍA", titulo: "Set de 6 tazas artesanales - hornada 07", fecha: "19 ago", sem: "hoy", resp: "JT", etiquetas: ["hornada-07"], adjuntos: 1, entregable: true },
+    { col: "Haciendo", linea: "SUBLIMACIÓN", titulo: "Sublimar 16 mousepads gamer XL", fecha: "18 ago", sem: "vencido", resp: "MC", etiquetas: ["pedido-138"], entregable: true },
+    { col: "Haciendo", linea: "GENERAL", titulo: "Cargar gastos de feria de agosto", fecha: "19 ago", sem: "hoy", resp: "DZ", etiquetas: ["feria-agosto"], adjuntos: 5 },
+    { col: "En revisión", linea: "IMPRESIÓN 3D", titulo: "Ajustar tolerancias del soporte de celular", fecha: "21 ago", sem: "futuro", resp: "JT", etiquetas: ["prototipo"], adjuntos: 2, vinculos: 1 },
+    { col: "En revisión", linea: "ALFARERÍA", titulo: "Revisar esmaltado de macetas colgantes", fecha: "17 ago", sem: "vencido", resp: "MC", etiquetas: ["hornada-06"] },
+    { col: "Hecho", linea: "SUBLIMACIÓN", titulo: "Entregar 40 tazas blancas a Farmacia Bolivia", fecha: "15 ago", sem: "futuro", resp: "MC", etiquetas: ["pedido-131"] },
+    { col: "Hecho", linea: "GENERAL", titulo: "Pagar alquiler del taller", fecha: "15 ago", sem: "futuro", resp: "DZ", etiquetas: ["fijos"], adjuntos: 1 }
+  ];
+
+  orden = ["Por hacer", "Haciendo", "En revisión", "Hecho"];
+
+  renderVals() {
+    const mapa = (t) => ({
+      linea: t.linea, titulo: t.titulo, fecha: t.fecha || "",
+      esSublimacion: t.linea === "SUBLIMACIÓN", es3d: t.linea === "IMPRESIÓN 3D",
+      esAlfareria: t.linea === "ALFARERÍA", esGeneral: t.linea === "GENERAL",
+      vencido: t.sem === "vencido", hoy: t.sem === "hoy", futuro: t.sem === "futuro", sinFecha: t.sem === "sin",
+      responsable: t.resp,
+      etiquetas: (t.etiquetas || []).map(nombre => ({ nombre })),
+      tieneAdjuntos: !!t.adjuntos, adjuntos: t.adjuntos || 0,
+      tieneVinculos: !!t.vinculos, vinculos: t.vinculos || 0,
+      entregable: !!t.entregable,
+      tieneIconos: !!(t.adjuntos || t.vinculos || t.entregable)
+    });
+
+    return {
+      notificaciones: this.props.notificaciones ?? 4,
+      columnas: this.orden.map(nombre => {
+        const lista = this.tareas.filter(t => t.col === nombre);
+        return { nombre, total: lista.length, tareas: lista.map(mapa) };
+      }),
+      vistas: ["Tablero", "Lista", "Calendario"].map(n => ({
+        nombre: n, activa: this.state.vista === n, inactiva: this.state.vista !== n,
+        set: () => this.setState({ vista: n })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

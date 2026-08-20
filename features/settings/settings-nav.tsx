@@ -15,6 +15,7 @@ export const SETTINGS_SECTIONS = [
   { href: "/settings/channels", label: "Canales" },
   { href: "/settings/categories", label: "Categorías" },
   { href: "/settings/units", label: "Unidades" },
+  { href: "/settings/statuses", label: "Estados" },
   { href: "/settings/members", label: "Usuarios y roles" },
 ] as const;
 

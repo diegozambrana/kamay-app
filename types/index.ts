@@ -49,6 +49,38 @@ export type BusinessLine = {
   archivedAt: string | null;
 };
 
+export const STATUS_FLOWS = ["order", "task"] as const;
+
+export type StatusFlow = (typeof STATUS_FLOWS)[number];
+
+/**
+ * El contrato estable de un estado. Los nombres son configurables por
+ * organización y por línea: ninguna condición del código usa `name`.
+ */
+export const STATUS_KINDS = [
+  "initial",
+  "in_progress",
+  "waiting",
+  "final",
+  "cancelled",
+] as const;
+
+export type StatusKind = (typeof STATUS_KINDS)[number];
+
+export type Status = {
+  id: string;
+  organizationId: string;
+  /** `null` = juego de la organización; valor = juego propio de esa línea. */
+  businessLineId: string | null;
+  flow: StatusFlow;
+  name: string;
+  kind: StatusKind;
+  color: LineColor;
+  position: number;
+  isQueue: boolean;
+  archivedAt: string | null;
+};
+
 export type SalesChannel = {
   id: string;
   organizationId: string;

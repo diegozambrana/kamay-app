@@ -47,10 +47,10 @@
 ## 8. Integración continua
 
 - [x] 8.1 Crear `.github/workflows/ci.yml` con la secuencia `lint → typecheck → test:unit → supabase start → test:integration (pgTAP) → build → test:e2e`, usando `supabase/setup-cli`
-- [ ] 8.2 Abrir un pull request de prueba sano y comprobar que el pipeline termina en verde — verifica el escenario **"CI passes on a healthy pull request"**
-- [ ] 8.3 En el mismo PR, introducir deliberadamente un error de tipos, comprobar que CI falla en `typecheck` y revertirlo — verifica el escenario **"CI fails on a broken typecheck"**
+- [x] 8.2 Abrir un pull request de prueba sano y comprobar que el pipeline termina en verde — verifica el escenario **"CI passes on a healthy pull request"**
+- [x] 8.3 En el mismo PR, introducir deliberadamente un error de tipos, comprobar que CI falla en `typecheck` y revertirlo — verifica el escenario **"CI fails on a broken typecheck"**
 
 ## 9. Cierre
 
-- [ ] 9.1 Repasar los criterios de aceptación 1–7 de KAM-01 en `specs/PRD/kamay-backlog.md` contra el estado real del repositorio
-- [ ] 9.2 Confirmar que no se creó ninguna pantalla de producto, tabla de negocio ni dato (fuera de alcance)
+- [x] 9.1 Repasar los criterios de aceptación 1–7 de KAM-01 en `specs/PRD/kamay-backlog.md` contra el estado real del repositorio
+- [x] 9.2 Confirmar que no se creó ninguna pantalla de producto, tabla de negocio ni dato (fuera de alcance)

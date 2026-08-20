@@ -2682,7 +2682,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L50",
       "id": "prd_kamay_esquema_base_de_datos_supabase_4_mapa_de_entidades",
-      "community": 9,
+      "community": 33,
       "norm_label": "4. mapa de entidades"
     },
     {
@@ -2691,7 +2691,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L52",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_1",
-      "community": 9,
+      "community": 33,
       "norm_label": "code:mermaid (erdiagram)"
     },
     {
@@ -2700,7 +2700,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L90",
       "id": "prd_kamay_esquema_base_de_datos_supabase_5_identidad_y_multi_tenant",
-      "community": 24,
+      "community": 23,
       "norm_label": "5. identidad y multi-tenant"
     },
     {
@@ -2709,7 +2709,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L94",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_2",
-      "community": 24,
+      "community": 23,
       "norm_label": "code:sql (-- organizaciones (tenants))"
     },
     {
@@ -2718,7 +2718,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L123",
       "id": "prd_kamay_esquema_base_de_datos_supabase_funciones_auxiliares_de_seguridad",
-      "community": 24,
+      "community": 23,
       "norm_label": "funciones auxiliares de seguridad"
     },
     {
@@ -2727,7 +2727,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L127",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_3",
-      "community": 24,
+      "community": 23,
       "norm_label": "code:sql (create or replace function is_member(org uuid))"
     },
     {
@@ -2736,7 +2736,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L154",
       "id": "prd_kamay_esquema_base_de_datos_supabase_6_configuraci_n",
-      "community": 20,
+      "community": 19,
       "norm_label": "6. configuracion"
     },
     {
@@ -2745,7 +2745,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L156",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_4",
-      "community": 20,
+      "community": 19,
       "norm_label": "code:sql (-- lineas de negocio: sublimacion, impresion 3d, alfareria, )"
     },
     {
@@ -2754,7 +2754,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L202",
       "id": "prd_kamay_esquema_base_de_datos_supabase_estados_la_tabla_que_sostiene_la_flexibilidad",
-      "community": 20,
+      "community": 19,
       "norm_label": "estados \u2014 la tabla que sostiene la flexibilidad"
     },
     {
@@ -2763,7 +2763,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L204",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_5",
-      "community": 20,
+      "community": 19,
       "norm_label": "code:sql (create table statuses ()"
     },
     {
@@ -2772,7 +2772,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L232",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_6",
-      "community": 20,
+      "community": 19,
       "norm_label": "code:sql (create or replace function resolve_statuses(org uuid, line u)"
     },
     {
@@ -2808,7 +2808,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L323",
       "id": "prd_kamay_esquema_base_de_datos_supabase_8_egresos",
-      "community": 33,
+      "community": 34,
       "norm_label": "8. egresos"
     },
     {
@@ -2817,7 +2817,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L325",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_9",
-      "community": 33,
+      "community": 34,
       "norm_label": "code:sql (-- una sola bandeja: compras (traen material) y gastos (no t)"
     },
     {
@@ -2826,7 +2826,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L372",
       "id": "prd_kamay_esquema_base_de_datos_supabase_9_pedidos_y_ventas",
-      "community": 19,
+      "community": 20,
       "norm_label": "9. pedidos y ventas"
     },
     {
@@ -2835,7 +2835,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L374",
       "id": "prd_kamay_esquema_base_de_datos_supabase_una_decisi_n_que_conviene_revisar",
-      "community": 19,
+      "community": 20,
       "norm_label": "una decision que conviene revisar"
     },
     {
@@ -2844,7 +2844,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L382",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_10",
-      "community": 19,
+      "community": 20,
       "norm_label": "code:sql (create table orders ()"
     },
     {
@@ -2853,7 +2853,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L430",
       "id": "prd_kamay_esquema_base_de_datos_supabase_cobros_y_pagos",
-      "community": 19,
+      "community": 20,
       "norm_label": "cobros y pagos"
     },
     {
@@ -2862,7 +2862,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L432",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_11",
-      "community": 19,
+      "community": 20,
       "norm_label": "code:sql (create table payments ()"
     },
     {
@@ -2907,7 +2907,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L568",
       "id": "prd_kamay_esquema_base_de_datos_supabase_12_tareas",
-      "community": 34,
+      "community": 9,
       "norm_label": "12. tareas"
     },
     {
@@ -2916,7 +2916,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L570",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_14",
-      "community": 34,
+      "community": 9,
       "norm_label": "code:sql (create table tasks ()"
     },
     {
@@ -2925,7 +2925,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L636",
       "id": "prd_kamay_esquema_base_de_datos_supabase_13_adjuntos",
-      "community": 23,
+      "community": 24,
       "norm_label": "13. adjuntos"
     },
     {
@@ -2934,7 +2934,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L638",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_15",
-      "community": 23,
+      "community": 24,
       "norm_label": "code:sql (create table attachments ()"
     },
     {
@@ -2943,7 +2943,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L658",
       "id": "prd_kamay_esquema_base_de_datos_supabase_storage",
-      "community": 23,
+      "community": 24,
       "norm_label": "storage"
     },
     {
@@ -2952,7 +2952,7 @@
       "source_file": "specs/PRD/kamay-esquema-base-de-datos-supabase.md",
       "source_location": "L669",
       "id": "prd_kamay_esquema_base_de_datos_supabase_codeblock_16",
-      "community": 23,
+      "community": 24,
       "norm_label": "code:sql (create policy \"storage: solo la propia organizacion\")"
     },
     {
@@ -4007,6 +4007,15 @@
       "id": "project_foundation_spec_scenario_ci_fails_on_a_broken_typecheck",
       "community": 7,
       "norm_label": "scenario: ci fails on a broken typecheck"
+    },
+    {
+      "label": "typecheck-canary.ts",
+      "file_type": "code",
+      "source_file": "lib/typecheck-canary.ts",
+      "source_location": "L1",
+      "community": 40,
+      "norm_label": "typecheck-canary.ts",
+      "id": "lib_typecheck_canary_ts"
     }
   ],
   "links": [
@@ -8921,5 +8930,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "cb64a384eab3f1387741230cff6958225c8ccd79"
+  "built_at_commit": "a8642c46d5eae307939df2d059ec7116ad4a8c79"
 }

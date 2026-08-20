@@ -5,12 +5,12 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 445 nodes · 484 edges · 40 communities (31 shown, 9 thin omitted)
+- 446 nodes · 484 edges · 41 communities (32 shown, 9 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cb64a384`
+- Built from commit: `a8642c46`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -67,7 +67,7 @@
 - `Button()` --calls--> `cn()`  [EXTRACTED]
   components/ui/button.tsx → lib/utils.ts
 
-## Communities (40 total, 9 thin omitted)
+## Communities (41 total, 9 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
@@ -107,7 +107,7 @@ Nodes (17): 7. Flujos principales, vista por vista, code:block10 (V15 → secci�
 
 ### Community 9 - "Community 9"
 Cohesion: 0.14
-Nodes (11): 10. Inventario, 15. Notificaciones, 17. Sincronización sin conexión, 19. Lo que este esquema aún no incluye, 1. Alcance y advertencia, 20. Lista de verificación antes de producción, 2. Cómo se traducen los principios, 3. Convenciones (+3 more)
+Nodes (10): 10. Inventario, 12. Tareas, 15. Notificaciones, 17. Sincronización sin conexión, 19. Lo que este esquema aún no incluye, 1. Alcance y advertencia, 20. Lista de verificación antes de producción, 2. Cómo se traducen los principios (+2 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.29
@@ -147,11 +147,11 @@ Nodes (4): code:bash (npm run dev), Deploy on Vercel, Getting Started, Learn Mor
 
 ### Community 19 - "Community 19"
 Cohesion: 0.4
-Nodes (3): 9. Pedidos y ventas, Cobros y pagos, Una decisión que conviene revisar
+Nodes (4): 6. Configuración, code:sql (-- Líneas de negocio: Sublimación, Impresión 3D, Alfarería, ), code:sql (create or replace function resolve_statuses(org uuid, line u), Estados — la tabla que sostiene la flexibilidad
 
 ### Community 20 - "Community 20"
 Cohesion: 0.4
-Nodes (4): 6. Configuración, code:sql (-- Líneas de negocio: Sublimación, Impresión 3D, Alfarería, ), code:sql (create or replace function resolve_statuses(org uuid, line u), Estados — la tabla que sostiene la flexibilidad
+Nodes (3): 9. Pedidos y ventas, Cobros y pagos, Una decisión que conviene revisar
 
 ### Community 21 - "Community 21"
 Cohesion: 0.4
@@ -159,11 +159,11 @@ Nodes (4): Convenciones no negociables, Kamay — Constitución del proyecto, Pr
 
 ### Community 23 - "Community 23"
 Cohesion: 0.5
-Nodes (3): 13. Adjuntos, code:sql (create policy "storage: solo la propia organización"), Storage
+Nodes (4): 5. Identidad y multi-tenant, code:sql (-- Organizaciones (tenants)), code:sql (create or replace function is_member(org uuid)), Funciones auxiliares de seguridad
 
 ### Community 24 - "Community 24"
 Cohesion: 0.5
-Nodes (4): 5. Identidad y multi-tenant, code:sql (-- Organizaciones (tenants)), code:sql (create or replace function is_member(org uuid)), Funciones auxiliares de seguridad
+Nodes (3): 13. Adjuntos, code:sql (create policy "storage: solo la propia organización"), Storage
 
 ### Community 25 - "Community 25"
 Cohesion: 0.5

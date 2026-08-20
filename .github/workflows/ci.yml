@@ -31,10 +31,27 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Versión fija: "latest" resuelve vía la API de GitHub sin autenticar
+          # y falla por rate limit en los runners compartidos.
+          version: 2.115.0
 
       - name: Start Supabase
         run: supabase start
+
+      - name: Variables de entorno de Supabase
+        # El build y los e2e necesitan las llaves del stack local (en dev viven
+        # en .env.local). Los nombres cambian entre versiones del CLI:
+        # ANON_KEY/SERVICE_ROLE_KEY (antiguas) vs PUBLISHABLE_KEY/SECRET_KEY.
+        run: |
+          supabase status -o env > /tmp/supabase.env
+          get() { { grep -E "^$1=" /tmp/supabase.env || true; } | head -n1 | cut -d= -f2- | tr -d '"'; }
+          ANON="$(get PUBLISHABLE_KEY)"; [ -n "$ANON" ] || ANON="$(get ANON_KEY)"
+          SERVICE="$(get SECRET_KEY)"; [ -n "$SERVICE" ] || SERVICE="$(get SERVICE_ROLE_KEY)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(get API_URL)"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE"
+          } >> "$GITHUB_ENV"
 
       - name: Integration tests (app)
         run: npm run test:integration

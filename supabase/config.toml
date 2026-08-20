@@ -151,9 +151,9 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+site_url = "http://localhost:3010"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = ["http://localhost:3010/**", "http://127.0.0.1:3010/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to the local API URL (http://127.0.0.1:<port>/auth/v1).
@@ -166,7 +166,8 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
-enable_signup = true
+# Kamay no tiene registro público: las cuentas se crean por invitación (KAM-02, D7).
+enable_signup = false
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
@@ -201,6 +202,9 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
+# Debe quedar en true: en el CLI este flag habilita el proveedor de email completo
+# (inicio de sesión y recuperación). El registro público ya está bloqueado por
+# el `enable_signup = false` global de [auth].
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
@@ -225,6 +229,11 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+# Recuperación de contraseña: el enlace lleva a /auth/confirm con token_hash (KAM-02, D8).
+[auth.email.template.recovery]
+subject = "Restablece tu contraseña de Kamay"
+content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

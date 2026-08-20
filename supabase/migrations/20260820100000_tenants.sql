@@ -28,6 +28,12 @@ create table memberships (
 
 create index on memberships (user_id) where archived_at is null;
 
+-- Privilegios explícitos: las imágenes recientes de Supabase ya no otorgan
+-- privilegios por defecto a `authenticated`. Quien restringe es RLS:
+-- DELETE queda concedido a nivel de tabla pero sin política, afecta cero filas.
+grant select, insert, update, delete on organizations, memberships to authenticated;
+grant all on organizations, memberships to service_role;
+
 -- Security helper functions: the basis of every RLS policy in the system.
 create or replace function is_member(org uuid)
 returns boolean

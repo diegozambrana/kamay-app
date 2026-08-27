@@ -23,8 +23,13 @@ export class FakeQuery {
   update = (...args: unknown[]) => this.record("update", ...args);
   eq = (...args: unknown[]) => this.record("eq", ...args);
   is = (...args: unknown[]) => this.record("is", ...args);
+  like = (...args: unknown[]) => this.record("like", ...args);
+  in = (...args: unknown[]) => this.record("in", ...args);
+  ilike = (...args: unknown[]) => this.record("ilike", ...args);
   order = (...args: unknown[]) => this.record("order", ...args);
+  limit = (...args: unknown[]) => this.record("limit", ...args);
   single = (...args: unknown[]) => this.record("single", ...args);
+  maybeSingle = (...args: unknown[]) => this.record("maybeSingle", ...args);
   overrideTypes = () => this;
 
   then<T>(resolve: (value: FakeResult) => T) {
@@ -73,6 +78,35 @@ export class FakeClient {
     const result = this.next();
     this.rpcCalls.push({ name, params });
     return result;
+  };
+
+  /**
+   * Storage falso: registra qué se subió, se firmó y se retiró, que es lo que
+   * un servicio de adjuntos no puede equivocarse (la ruta y el bucket).
+   */
+  readonly storageCalls: { bucket: string; method: string; args: unknown[] }[] =
+    [];
+
+  storageResults: {
+    upload?: { error: { message: string } | null };
+    signed?: { data: { path: string; signedUrl: string }[] | null; error: unknown };
+  } = {};
+
+  storage = {
+    from: (bucket: string) => ({
+      upload: async (...args: unknown[]) => {
+        this.storageCalls.push({ bucket, method: "upload", args });
+        return this.storageResults.upload ?? { error: null };
+      },
+      remove: async (...args: unknown[]) => {
+        this.storageCalls.push({ bucket, method: "remove", args });
+        return { error: null };
+      },
+      createSignedUrls: async (...args: unknown[]) => {
+        this.storageCalls.push({ bucket, method: "createSignedUrls", args });
+        return this.storageResults.signed ?? { data: [], error: null };
+      },
+    }),
   };
 
   asSupabase() {

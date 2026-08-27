@@ -15,6 +15,14 @@ describe("navEntriesFor", () => {
     expect(hrefs).toContain("/dashboard");
   });
 
+  it("catálogo y contactos son de la navegación base: los ven ambos roles", () => {
+    for (const role of ["owner", "assistant"] as const) {
+      const hrefs = navEntriesFor(role).map((entry) => entry.href);
+      expect(hrefs).toContain("/catalog");
+      expect(hrefs).toContain("/contacts");
+    }
+  });
+
   it("sin membresía no se ofrece nada", () => {
     expect(navEntriesFor(null)).toEqual([]);
     expect(navEntriesFor(undefined)).toEqual([]);

@@ -123,3 +123,37 @@ insert into statuses (id, organization_id, business_line_id, flow, name, kind, i
   ('70000000-0000-0000-0000-000000000035', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', 'order', 'Listo para entrega', 'waiting',     false, 5),
   ('70000000-0000-0000-0000-000000000036', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', 'order', 'Entregado',          'final',       false, 6),
   ('70000000-0000-0000-0000-000000000037', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', 'order', 'Cancelado',          'cancelled',   false, 7);
+
+-- ── Catálogo y directorio (KAM-06) ────────────────────────────────────────
+-- Lo mínimo para ejercitar V10, V11 y V13 sin capturar nada a mano: los tres
+-- tipos de ítem, uno compartido entre líneas, uno con variantes, y los tres
+-- casos de rol de contacto. "Taza para sublimación" lleva tilde a propósito:
+-- es el caso de la búsqueda tolerante a acentos.
+
+insert into contacts (id, organization_id, name, phone, email, is_supplier, is_customer, notes) values
+  ('80000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'Distribuidora Andina',  '+591 70000001', 'ventas@andina.test',  true,  false, 'Tazas y planchas, entrega en 3 días.'),
+  ('80000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 'María Céspedes',        '+591 70000002', null,                  false, true,  'Compra recuerdos para cumpleaños.'),
+  ('80000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'Taller Ñawi',           '+591 70000003', 'hola@nawi.test',      true,  true,  'Nos compra filamento y nos vende arcilla.'),
+  ('80000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', 'Colegio San Andrés',    '+591 70000004', null,                  false, true,  'Pedidos grandes en septiembre.');
+
+-- Insumos: los dos primeros de Sublimación, el tercero de Alfarería.
+insert into items (id, organization_id, business_line_id, kind, name, description, unit_id, category, sale_price, min_stock) values
+  ('90000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000001', 'supply', 'Taza para sublimación',  'Taza blanca con recubrimiento.',     '60000000-0000-0000-0000-000000000001', 'Sustratos', null,  12),
+  ('90000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000001', 'supply', 'Papel de transferencia', 'Resma A4 para sublimación.',         '60000000-0000-0000-0000-000000000001', 'Sustratos', null, 100),
+  ('90000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'supply', 'Arcilla roja',           'Arcilla local, saco de 25 kg.',      '60000000-0000-0000-0000-000000000002', 'Materia prima', null, 25),
+  -- Compartido: la caja sirve a las tres líneas, así que no tiene línea.
+  ('90000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', null,                                   'supply', 'Caja de cartón',         'Embalaje para entregas.',            '60000000-0000-0000-0000-000000000001', 'Embalaje',  null,  40);
+
+-- Productos: el primero es el que tiene variantes.
+insert into items (id, organization_id, business_line_id, kind, name, description, unit_id, category, sale_price) values
+  ('90000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000001', 'product', 'Taza personalizada', 'Taza sublimada con diseño del cliente.', '60000000-0000-0000-0000-000000000001', 'Regalos',    45),
+  ('90000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'product', 'Maceta de barro',    'Torneada a mano.',                       '60000000-0000-0000-0000-000000000001', 'Decoración', 60);
+
+-- Activos: los datos de costo y recuperación llegan con KAM-19.
+insert into items (id, organization_id, business_line_id, kind, name, description, unit_id) values
+  ('90000000-0000-0000-0000-000000000021', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000001', 'asset', 'Prensa de tazas',   'Prensa térmica de 6 tazas.', '60000000-0000-0000-0000-000000000001'),
+  ('90000000-0000-0000-0000-000000000022', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', 'asset', 'Impresora 3D Ender', 'Compra 2025, en uso diario.', '60000000-0000-0000-0000-000000000001');
+
+insert into item_variants (id, organization_id, item_id, name, attributes, sale_price) values
+  ('91000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000011', '11oz', '{"capacidad":"11oz"}'::jsonb, 45),
+  ('91000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000011', '15oz', '{"capacidad":"15oz"}'::jsonb, 55);

@@ -129,3 +129,92 @@ export type MemberRow = Membership & {
 export const ALL_LINES = "all" as const;
 
 export type ActiveLine = typeof ALL_LINES | string;
+
+/** Tipo de ítem del catálogo. Insumos, productos y activos comparten tabla. */
+export const ITEM_KINDS = ["supply", "product", "asset"] as const;
+
+export type ItemKind = (typeof ITEM_KINDS)[number];
+
+export type Item = {
+  id: string;
+  organizationId: string;
+  /** `null` = compartido entre todas las líneas. */
+  businessLineId: string | null;
+  kind: ItemKind;
+  name: string;
+  description: string | null;
+  unitId: string | null;
+  category: string | null;
+  /** Precio de venta referencial. Nunca un costo: el costo vive en el egreso. */
+  salePrice: number | null;
+  /** Solo aplica a insumos; el saldo con el que se compara llega en KAM-18. */
+  minStock: number | null;
+  archivedAt: string | null;
+};
+
+export type ItemVariant = {
+  id: string;
+  organizationId: string;
+  itemId: string;
+  name: string;
+  attributes: Record<string, unknown>;
+  salePrice: number | null;
+  archivedAt: string | null;
+};
+
+export type Contact = {
+  id: string;
+  organizationId: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  isSupplier: boolean;
+  isCustomer: boolean;
+  notes: string | null;
+  archivedAt: string | null;
+};
+
+/** Filtro de rol del directorio (V13). "Todos" es la ausencia de filtro. */
+export const CONTACT_ROLE_FILTERS = ["all", "supplier", "customer"] as const;
+
+export type ContactRoleFilter = (typeof CONTACT_ROLE_FILTERS)[number];
+
+/** Un evento de la bitácora tal como lo muestra el historial de V11. */
+export type ActivityEntry = {
+  id: number;
+  action: "created" | "updated" | "status_changed" | "archived" | "unarchived";
+  actorId: string | null;
+  actorLabel: string | null;
+  changes: Record<string, unknown> | null;
+  occurredAt: string;
+};
+
+/** Registros a los que se puede adjuntar un archivo (esquema §13). */
+export const ATTACHMENT_ENTITY_TYPES = [
+  "task",
+  "order",
+  "expense",
+  "item",
+  "contact",
+] as const;
+
+export type AttachmentEntityType = (typeof ATTACHMENT_ENTITY_TYPES)[number];
+
+export type Attachment = {
+  id: string;
+  organizationId: string;
+  entityType: AttachmentEntityType;
+  entityId: string;
+  bucket: string;
+  /** Empieza siempre con el `organization_id`: lo verifica la política de Storage. */
+  storagePath: string;
+  fileName: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  createdAt: string;
+  archivedAt: string | null;
+};
+
+/** El bucket de las fotos del catálogo (esquema §13). */
+export const ITEM_PHOTOS_BUCKET = "item-photos";

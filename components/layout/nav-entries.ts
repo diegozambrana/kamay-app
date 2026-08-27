@@ -9,11 +9,15 @@ export type NavEntry = {
 
 /**
  * Entradas del menú principal (mapa de navegación §4.1). Cada tarea añade las
- * suyas; hoy existen el panel, el registro rápido y la configuración.
+ * suyas; hoy existen el panel, el registro rápido, el catálogo, los contactos
+ * y la configuración. Catálogo y Contactos son de la navegación base: ambos
+ * roles trabajan con ellos.
  */
 export const NAV_ENTRIES: NavEntry[] = [
   { href: "/dashboard", label: "Panel", roles: ["owner", "assistant"] },
   { href: "/quick", label: "Registrar", roles: ["owner", "assistant"] },
+  { href: "/catalog", label: "Catálogo", roles: ["owner", "assistant"] },
+  { href: "/contacts", label: "Contactos", roles: ["owner", "assistant"] },
   { href: "/settings", label: "Configuración", roles: ["owner"] },
 ];
 

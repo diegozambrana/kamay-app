@@ -8,6 +8,7 @@ import { moveOrderToStatus } from "@/actions/orders";
 import { MainContainer } from "@/components/layout/main-container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -37,6 +38,8 @@ import type {
   Status,
   StatusKind,
 } from "@/types";
+
+import { CancelOrderButton } from "./cancel-order-button";
 
 const DELIVERY_LABELS = { pickup: "Recojo", delivery: "Delivery" } as const;
 
@@ -135,25 +138,43 @@ export function OrderDetail({
         </Link>
       }
       action={
-        <div className="w-56">
-          {/* El destino sale del juego de la línea de este pedido; el servidor
-              lo vuelve a comprobar antes de escribir (design.md D6). */}
-          <Select
-            value={order.statusId}
-            onValueChange={changeStatus}
-            disabled={pending || Boolean(order.archivedAt)}
-          >
-            <SelectTrigger aria-label="Estado" data-testid="status-select">
-              <SelectValue placeholder={statusName} />
-            </SelectTrigger>
-            <SelectContent>
-              {statuses.map((status) => (
-                <SelectItem key={status.id} value={status.id}>
-                  {status.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-56">
+            {/* El destino sale del juego de la línea de este pedido; el
+                servidor lo vuelve a comprobar antes de escribir (D6). */}
+            <Select
+              value={order.statusId}
+              onValueChange={changeStatus}
+              disabled={pending || Boolean(order.archivedAt)}
+            >
+              <SelectTrigger aria-label="Estado" data-testid="status-select">
+                <SelectValue placeholder={statusName} />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses.map((status) => (
+                  <SelectItem key={status.id} value={status.id}>
+                    {status.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Un pedido archivado está congelado: ni se edita ni se cancela.
+              Lo garantiza la base; aquí simplemente no se ofrece. */}
+          {!order.archivedAt && (
+            <>
+              <Button asChild variant="outline" data-testid="edit-order">
+                <Link href={`/orders/${order.id}/edit`}>Editar</Link>
+              </Button>
+
+              <CancelOrderButton
+                orderId={order.id}
+                statuses={statuses}
+                currentKind={statusKind}
+              />
+            </>
+          )}
         </div>
       }
     >
@@ -246,7 +267,7 @@ export function OrderDetail({
             <CardTitle>Datos</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
-            <Detail label="Cliente">
+            <Detail label="Cliente" testId="detail-contact">
               {contact ? (
                 <Link href="/contacts" className="hover:underline">
                   {contact.name}
@@ -255,11 +276,13 @@ export function OrderDetail({
                 <span className="text-muted-foreground">Sin cliente</span>
               )}
             </Detail>
-            <Detail label="Canal">{channelName ?? "—"}</Detail>
-            <Detail label="Modo de entrega">
+            <Detail label="Canal" testId="detail-channel">
+              {channelName ?? "—"}
+            </Detail>
+            <Detail label="Modo de entrega" testId="detail-delivery">
               {order.deliveryMode ? DELIVERY_LABELS[order.deliveryMode] : "—"}
             </Detail>
-            <Detail label="Fecha comprometida">
+            <Detail label="Fecha comprometida" testId="detail-due-date">
               <span className={cn(overdue && "text-destructive")}>
                 {order.dueDate ?? "—"}
               </span>
@@ -352,15 +375,17 @@ export function OrderDetail({
 
 function Detail({
   label,
+  testId,
   children,
 }: {
   label: string;
+  testId?: string;
   children: React.ReactNode;
 }) {
   return (
     <div>
       <p className="text-muted-foreground">{label}</p>
-      <p>{children}</p>
+      <p data-testid={testId}>{children}</p>
     </div>
   );
 }

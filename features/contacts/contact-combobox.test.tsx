@@ -100,7 +100,8 @@ describe("ContactCombobox", () => {
     );
 
     await user.type(screen.getByLabelText("Contacto"), "Nuevo Taller");
-    await user.click(screen.getByRole("button", { name: /Crear/ }));
+    await user.click(screen.getByRole("button", { name: /Crear «Nuevo Taller»/ }));
+    await user.click(screen.getByRole("button", { name: "Crear" }));
 
     expect(createContactInline).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -127,5 +128,109 @@ describe("ContactCombobox", () => {
     expect(screen.getByTestId("contact-options")).not.toHaveTextContent(
       "Antiguo Proveedor",
     );
+  });
+});
+
+// ── Creación al vuelo con teléfono (KAM-08) ───────────────────────────────
+
+describe("ContactCombobox · creación al vuelo con teléfono", () => {
+  async function openCreateStep(name: string) {
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("Contacto"), name);
+    await user.click(screen.getByRole("button", { name: new RegExp(`Crear «${name}»`) }));
+    return user;
+  }
+
+  it("pide nombre y teléfono sin abandonar el formulario", async () => {
+    render(<ContactCombobox contacts={[]} role="customer" onSelect={vi.fn()} />);
+    await openCreateStep("Nuevo Taller");
+
+    const step = screen.getByTestId("contact-create-step");
+    expect(step).toBeInTheDocument();
+    expect(screen.getByLabelText("Nombre")).toHaveValue("Nuevo Taller");
+    expect(screen.getByLabelText("Teléfono")).toBeInTheDocument();
+    // Todavía no se guardó nada: el paso solo abre el formulario mínimo.
+    expect(createContactInline).not.toHaveBeenCalled();
+  });
+
+  it("envía el teléfono que se escribió", async () => {
+    render(<ContactCombobox contacts={[]} role="customer" onSelect={vi.fn()} />);
+    const user = await openCreateStep("Nuevo Taller");
+
+    await user.type(screen.getByLabelText("Teléfono"), "77712345");
+    await user.click(screen.getByRole("button", { name: "Crear" }));
+
+    expect(createContactInline).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Nuevo Taller", phone: "77712345" }),
+    );
+  });
+
+  it("sin teléfono manda el vacío, que el esquema convierte en ausencia de dato", async () => {
+    render(<ContactCombobox contacts={[]} role="customer" onSelect={vi.fn()} />);
+    const user = await openCreateStep("Nuevo Taller");
+
+    await user.click(screen.getByRole("button", { name: "Crear" }));
+
+    expect(createContactInline).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Nuevo Taller", phone: "" }),
+    );
+  });
+
+  it("desde un buscador de clientes, el contacto nace cliente", async () => {
+    render(<ContactCombobox contacts={[]} role="customer" onSelect={vi.fn()} />);
+    const user = await openCreateStep("Marisol Quispe");
+
+    await user.click(screen.getByRole("button", { name: "Crear" }));
+
+    expect(createContactInline).toHaveBeenCalledWith(
+      expect.objectContaining({ isCustomer: true, isSupplier: false }),
+    );
+  });
+
+  it("«Cancelar» vuelve a la lista sin guardar nada", async () => {
+    render(<ContactCombobox contacts={[]} role="customer" onSelect={vi.fn()} />);
+    const user = await openCreateStep("Nuevo Taller");
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByTestId("contact-create-step")).toBeNull();
+    expect(createContactInline).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: /Crear «Nuevo Taller»/ }),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * Lo que motiva la creación al vuelo: no perder el pedido a medio escribir.
+   * El envoltorio imita el formulario de V5 con líneas y nota ya rellenadas.
+   */
+  it("el formulario en curso conserva lo que ya tenía", async () => {
+    function FormularioDePrueba() {
+      return (
+        <form>
+          <label htmlFor="nota">Nota</label>
+          <textarea id="nota" defaultValue="" />
+          <ul>
+            <li>3 × Taza personalizada</li>
+            <li>1 × Taza grande</li>
+          </ul>
+          <ContactCombobox contacts={[]} role="customer" onSelect={vi.fn()} />
+        </form>
+      );
+    }
+
+    render(<FormularioDePrueba />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText("Nota"), "Diseño por WhatsApp");
+    await user.type(screen.getByLabelText("Contacto"), "Marisol");
+    await user.click(screen.getByRole("button", { name: /Crear «Marisol»/ }));
+    await user.type(screen.getByLabelText("Teléfono"), "77712345");
+    await user.click(screen.getByRole("button", { name: "Crear" }));
+
+    expect(createContactInline).toHaveBeenCalled();
+    expect(screen.getByLabelText("Nota")).toHaveValue("Diseño por WhatsApp");
+    expect(screen.getByText("3 × Taza personalizada")).toBeInTheDocument();
+    expect(screen.getByText("1 × Taza grande")).toBeInTheDocument();
   });
 });

@@ -1,6 +1,12 @@
 "use client";
 
-import { CalendarDaysIcon, LayoutGridIcon, ListIcon } from "lucide-react";
+import {
+  CalendarDaysIcon,
+  LayoutGridIcon,
+  ListIcon,
+  PlusIcon,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -68,8 +74,9 @@ export function OrdersScreen({
       title="Pedidos"
       description="El trabajo comprometido con clientes."
       action={
-        /* El conmutador solo cambia `view`: los demás filtros siguen en la
-           dirección, así que sobreviven al cambio. */
+        <div className="flex flex-wrap items-center gap-2">
+        {/* El conmutador solo cambia `view`: los demás filtros siguen en la
+           dirección, así que sobreviven al cambio. */}
         <ToggleGroup
           type="single"
           value={view}
@@ -87,6 +94,14 @@ export function OrdersScreen({
             <CalendarDaysIcon className="size-4" aria-hidden /> Calendario
           </ToggleGroupItem>
         </ToggleGroup>
+
+        {/* Ambos roles registran pedidos (matriz de acceso §16). */}
+        <Button asChild data-testid="new-order">
+          <Link href="/orders/new">
+            <PlusIcon className="size-4" aria-hidden /> Nuevo pedido
+          </Link>
+        </Button>
+        </div>
       }
     >
       <div className="flex flex-col gap-4">

@@ -269,6 +269,11 @@ export type OrderItem = {
    * la historia (esquema §2).
    */
   unitPrice: number;
+  /**
+   * Quitar una línea al editar el pedido la archiva; nunca se borra
+   * (convención nº 3). Las archivadas no suman al total ni se muestran.
+   */
+  archivedAt: string | null;
 };
 
 /**

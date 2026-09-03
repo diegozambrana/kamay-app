@@ -272,13 +272,23 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     await page.getByLabel("Buscar o crear").fill(name);
     await page.getByRole("button", { name: `Crear «${name}»` }).click();
 
+    // Desde KAM-08 la creación al vuelo pide también el teléfono, en el mismo
+    // paso y sin abandonar la pantalla.
+    await expect(page.getByTestId("contact-create-step")).toBeVisible();
+    await page.getByLabel("Teléfono").fill("+591 70055555");
+    await page.getByRole("button", { name: "Crear", exact: true }).click();
+
     // Queda seleccionado en el panel derecho, listo para completar sus datos.
     await expect(page.getByTestId("contact-detail")).toContainText(name);
 
-    // Y existe de verdad: aparece en el directorio con su rol.
+    // Y existe de verdad: aparece en el directorio con su rol y su teléfono.
     await page.goto(`/contacts?q=${encodeURIComponent(name)}`);
     await expect(
       page.getByTestId("contact-row").filter({ hasText: name }),
     ).toHaveCount(1);
+    await page.getByTestId("contact-row").filter({ hasText: name }).click();
+    await expect(page.getByTestId("contact-detail")).toContainText(
+      "+591 70055555",
+    );
   });
 });

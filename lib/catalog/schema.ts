@@ -91,11 +91,19 @@ export const contactFormSchema = z
 
 export type ContactFormValues = z.infer<typeof contactFormSchema>;
 
-/** Creación al vuelo desde un buscador: lo mínimo para poder seleccionarlo. */
+/**
+ * Creación al vuelo desde un buscador: lo mínimo para poder seleccionarlo.
+ *
+ * El teléfono es opcional pero se pide en el mismo paso desde KAM-08: al
+ * registrar un pedido, el número del cliente es justo el dato que hace falta
+ * a continuación, y volver al directorio a completarlo rompe el ritmo del
+ * alta. El resto de los datos siguen completándose después.
+ */
 export const quickContactSchema = z
   .object({
     id: z.guid(),
     name,
+    phone: optionalText,
     isSupplier: z.boolean(),
     isCustomer: z.boolean(),
   })

@@ -11,10 +11,11 @@ type OrderItemRow = {
   description: string | null;
   quantity: number | string;
   unit_price: number | string;
+  archived_at: string | null;
 };
 
 const COLUMNS =
-  "id, organization_id, order_id, item_id, variant_id, description, quantity, unit_price";
+  "id, organization_id, order_id, item_id, variant_id, description, quantity, unit_price, archived_at";
 
 /** Una línea con lo que el detalle necesita mostrar sin más consultas. */
 export type OrderItemWithNames = OrderItem & {
@@ -34,6 +35,11 @@ function toNumber(value: number | string): number {
  * Acceso a `order_items`. El precio de la línea es el que se registró: este
  * servicio nunca lo relee del catálogo, porque un cambio de precio no puede
  * reescribir la historia (esquema §2).
+ *
+ * Todas las lecturas excluyen las líneas archivadas: quitar una línea al
+ * editar el pedido la archiva en vez de borrarla (convención nº 3), y una
+ * línea archivada no debe aparecer ni en el detalle ni en el resumen de la
+ * tarjeta ni sumar al total.
  */
 export class OrderItemService {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -49,6 +55,9 @@ export class OrderItemService {
       .select(`${COLUMNS}, items(name), item_variants(name)`)
       .eq("organization_id", organizationId)
       .eq("order_id", orderId)
+      // Quitar una línea al editar la archiva (KAM-08): sigue existiendo con
+      // su historia, pero ni se muestra ni suma al total.
+      .is("archived_at", null)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -73,6 +82,7 @@ export class OrderItemService {
         description: row.description,
         quantity,
         unitPrice,
+        archivedAt: row.archived_at,
         itemName: row.items?.name ?? null,
         variantName: row.item_variants?.name ?? null,
         lineTotal: quantity * unitPrice,
@@ -96,6 +106,7 @@ export class OrderItemService {
       .select("order_id, description, quantity, items(name)")
       .eq("organization_id", organizationId)
       .in("order_id", orderIds)
+      .is("archived_at", null)
       .order("created_at", { ascending: true });
 
     if (error) {

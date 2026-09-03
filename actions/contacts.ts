@@ -112,7 +112,9 @@ export async function setContactArchived(
  * el formulario en curso.
  */
 export async function createContactInline(
-  input: z.infer<typeof quickContactSchema>,
+  // `z.input`: el teléfono llega del campo como texto, y es el esquema quien
+  // convierte el vacío en ausencia de dato.
+  input: z.input<typeof quickContactSchema>,
 ): Promise<ContactResult> {
   const parsed = quickContactSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
@@ -126,7 +128,9 @@ export async function createContactInline(
       parsed.data.id,
       {
         name: parsed.data.name,
-        phone: null,
+        // El teléfono se pide en el mismo paso desde KAM-08: al registrar un
+        // pedido es el dato que hace falta a continuación.
+        phone: parsed.data.phone,
         email: null,
         address: null,
         notes: null,

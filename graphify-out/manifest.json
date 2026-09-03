@@ -496,8 +496,8 @@
     "hash": "4ba9d01d3062f9adaf391030ae3aa259"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/seed_geeko.test.sql": {
-    "mtime": 1788454432.8574724,
-    "hash": "9841de2e5493b6857068583811220483"
+    "mtime": 1788457027.9985201,
+    "hash": "4c6df7553c65c85d08ff0a78bfd2c1ed"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/harness.test.sql": {
     "mtime": 1787195559.0671725,
@@ -1096,8 +1096,8 @@
     "hash": "aaf78adfb5117159b35f125306061686"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/catalog-directory/spec.md": {
-    "mtime": 1787798511.9573164,
-    "hash": "007e23fd281b7cef5881f79861c7d90e"
+    "mtime": 1788468611.2466228,
+    "hash": "9e14b970c8fa66f228979e4335a465ae"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/project-foundation/spec.md": {
     "mtime": 1787197009.632019,
@@ -1124,8 +1124,8 @@
     "hash": "73a0d09d73bca3f9f783f0b3f4a8bec2"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/orders/spec.md": {
-    "mtime": 1787798912.7064342,
-    "hash": "7803bf562dccaee02c83df8d41a053d9"
+    "mtime": 1788468611.2459726,
+    "hash": "ddd6d33bb7081c18d919238340cdbfd2"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-03-activity-log/tasks.md": {
     "mtime": 1787230405.2808964,
@@ -1235,6 +1235,26 @@
     "mtime": 1787246835.7976024,
     "hash": "15049447c69307903cd3a5678ee4e1fd"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-03-kam-08-orders-create-edit/tasks.md": {
+    "mtime": 1788457213.6579566,
+    "hash": "ad8e3bc09d7e7363460ea5de0f0d9b14"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-03-kam-08-orders-create-edit/design.md": {
+    "mtime": 1788449430.140666,
+    "hash": "b90dd743575a442b06155303abe3fab8"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-03-kam-08-orders-create-edit/proposal.md": {
+    "mtime": 1788449160.6486874,
+    "hash": "ccfeb45dbe942b48fc45e84343ef70ae"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-03-kam-08-orders-create-edit/specs/catalog-directory/spec.md": {
+    "mtime": 1788449315.635672,
+    "hash": "4ac00e1f4c78c2aaaaffea1993e29ca7"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-03-kam-08-orders-create-edit/specs/orders/spec.md": {
+    "mtime": 1788449315.633267,
+    "hash": "fdc95995ba9f9b1386d94349ed62eb88"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-02-auth-orgs-isolation/tasks.md": {
     "mtime": 1787226977.4698489,
     "hash": "7af9172c33db5ff075b4f669ec97f811"
@@ -1294,26 +1314,6 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-09-expenses-purchases-costs/specs/expenses/spec.md": {
     "mtime": 1788449460.0505207,
     "hash": "789db3239359f4c11620f677322f0b3e"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-08-orders-create-edit/tasks.md": {
-    "mtime": 1788456929.263271,
-    "hash": "2aa0253b25e5e06395e7ab685d4df89c"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-08-orders-create-edit/design.md": {
-    "mtime": 1788449430.140666,
-    "hash": "b90dd743575a442b06155303abe3fab8"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-08-orders-create-edit/proposal.md": {
-    "mtime": 1788449160.6486874,
-    "hash": "ccfeb45dbe942b48fc45e84343ef70ae"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-08-orders-create-edit/specs/catalog-directory/spec.md": {
-    "mtime": 1788449315.635672,
-    "hash": "4ac00e1f4c78c2aaaaffea1993e29ca7"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-08-orders-create-edit/specs/orders/spec.md": {
-    "mtime": 1788449315.633267,
-    "hash": "fdc95995ba9f9b1386d94349ed62eb88"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/public/file.svg": {
     "mtime": 1787193856.6466262,

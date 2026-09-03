@@ -5,12 +5,12 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3201 nodes · 5735 edges · 257 communities (243 shown, 14 thin omitted)
+- 3201 nodes · 5735 edges · 258 communities (244 shown, 14 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `db732901`
+- Built from commit: `767ba259`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -261,8 +261,9 @@
 - [[_COMMUNITY_Community 243|Community 243]]
 - [[_COMMUNITY_Community 244|Community 244]]
 - [[_COMMUNITY_Community 245|Community 245]]
-- [[_COMMUNITY_Community 248|Community 248]]
-- [[_COMMUNITY_Community 251|Community 251]]
+- [[_COMMUNITY_Community 246|Community 246]]
+- [[_COMMUNITY_Community 249|Community 249]]
+- [[_COMMUNITY_Community 252|Community 252]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 170 edges
@@ -279,40 +280,40 @@
 ## Surprising Connections (you probably didn't know these)
 - `GeneralSettingsPage()` --calls--> `getOwnerContext()`  [EXTRACTED]
   app/(app)/settings/general/page.tsx → lib/auth/session-context.ts
+- `UnitsSettingsPage()` --calls--> `getOwnerContext()`  [EXTRACTED]
+  app/(app)/settings/units/page.tsx → lib/auth/session-context.ts
 - `MembersSettingsPage()` --calls--> `getOwnerContext()`  [EXTRACTED]
   app/(app)/settings/members/page.tsx → lib/auth/session-context.ts
 - `StatusesSettingsPage()` --calls--> `getOwnerContext()`  [EXTRACTED]
   app/(app)/settings/statuses/page.tsx → lib/auth/session-context.ts
-- `CategoriesSettingsPage()` --calls--> `getOwnerContext()`  [EXTRACTED]
-  app/(app)/settings/categories/page.tsx → lib/auth/session-context.ts
-- `ChannelsSettingsPage()` --calls--> `getOwnerContext()`  [EXTRACTED]
-  app/(app)/settings/channels/page.tsx → lib/auth/session-context.ts
+- `LinesSettingsPage()` --calls--> `getOwnerContext()`  [EXTRACTED]
+  app/(app)/settings/lines/page.tsx → lib/auth/session-context.ts
 
-## Communities (257 total, 14 thin omitted)
+## Communities (258 total, 14 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.05
-Nodes (66): LineOption(), LineSelector(), ItemThumbnail(), cn(), Avatar(), AvatarBadge(), AvatarFallback(), AvatarGroup() (+58 more)
-
-### Community 1 - "Community 1"
-Cohesion: 0.06
-Nodes (48): ContactCombobox(), ContactComboboxRole, CategoryChips(), CostForm(), occurredAtForDate(), lineIssuesOf(), PurchaseForm(), LastCostHint (+40 more)
-
-### Community 2 - "Community 2"
-Cohesion: 0.09
-Nodes (46): FormValues, schema, LineColorClasses, ACTION_LABELS, VariantsList(), ExpenseCard(), ACTION_LABELS, DetailBody() (+38 more)
-
-### Community 3 - "Community 3"
 Cohesion: 0.06
 Nodes (49): boot(), cdnScriptFor(), collectProps(), compileAttr(), compileTemplate(), contentKey(), createComponentFactory(), createExternalModules() (+41 more)
 
-### Community 4 - "Community 4"
+### Community 1 - "Community 1"
+Cohesion: 0.06
+Nodes (52): LineOption(), LineSelector(), ItemThumbnail(), useIsMobile(), cn(), AlertAction(), Avatar(), AvatarBadge() (+44 more)
+
+### Community 2 - "Community 2"
 Cohesion: 0.06
 Nodes (36): user, ThemeToggle(), AppSidebar(), nav, pathname, Header(), MobileContextBar(), CAPTURE_ROUTES (+28 more)
 
-### Community 5 - "Community 5"
+### Community 3 - "Community 3"
+Cohesion: 0.1
+Nodes (38): ItemFormDialog(), ItemForm(), ITEM_KIND_LABELS, ITEM_KIND_SINGULAR, VariantFormDialog(), ContactComboboxRole, ListView(), View (+30 more)
+
+### Community 4 - "Community 4"
 Cohesion: 0.05
 Nodes (39): ACCEPTED_TYPES, ActionResult, archiveExpense(), attachReceipt(), createExpense(), CreateExpenseResult, createPurchase(), revalidateExpenses() (+31 more)
+
+### Community 5 - "Community 5"
+Cohesion: 0.1
+Nodes (33): FormValues, schema, ACTION_LABELS, ItemPhoto, ItemPhotos(), VariantsList(), ROLE_FILTER_LABELS, metadata (+25 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.07
@@ -323,104 +324,104 @@ Cohesion: 0.06
 Nodes (35): ACCEPTED_TYPES, browserCodec, compressImage(), CompressOptions, EXTENSIONS, ImageCodec, ImageSize, isAcceptedImage() (+27 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.06
-Nodes (32): acceptInvitation(), archiveMembership(), changeMemberRole(), inviteMember(), InviteResult, inviteSchema, MemberActionResult, membershipSchema (+24 more)
+Cohesion: 0.11
+Nodes (34): LineColorClasses, ExpenseCard(), ACTION_LABELS, DetailBody(), ExpenseDetail(), ExpenseDetailData, KIND_LABELS, LineBadge() (+26 more)
 
 ### Community 9 - "Community 9"
+Cohesion: 0.12
+Nodes (30): selectBusinessLine(), AppLayout(), getSessionContext(), findActiveLine(), preselectedLineId(), resolveActiveLine(), ajena, ALFARERIA (+22 more)
+
+### Community 10 - "Community 10"
+Cohesion: 0.07
+Nodes (34): DataTable(), DataTableAction, DataTableColumn, DataTableProps, DEFAULT_ROW_ACTIONS, columns, onAction, Row (+26 more)
+
+### Community 11 - "Community 11"
 Cohesion: 0.04
 Nodes (44): 10. Diferencias por rol, 11. Adaptación móvil por vista, 12. Estados transversales, 13. Diagrama para visualizar, 14. Lista de verificación de navegación, 1. Para qué sirve este documento, 2.1 El dispositivo define el punto de partida, 2.2 El selector de línea es contexto, no un filtro más (+36 more)
 
-### Community 10 - "Community 10"
-Cohesion: 0.09
-Nodes (29): CLASSES, isLineColor(), LINE_COLOR_LABELS, STATUS_KIND_LABELS, metadata, StatusesSettingsPage(), setIsComplete(), statusFlowSchema (+21 more)
-
-### Community 11 - "Community 11"
-Cohesion: 0.14
-Nodes (27): ItemFormDialog(), ItemForm(), ITEM_KIND_LABELS, ITEM_KIND_SINGULAR, AssignableOrder, ListView(), View, BusinessLine (+19 more)
-
 ### Community 12 - "Community 12"
-Cohesion: 0.11
-Nodes (32): ActionResult, archiveConfigurationItem(), archiveSchema, createBusinessLine(), createExpenseCategory(), createSalesChannel(), createUnit(), entities (+24 more)
+Cohesion: 0.1
+Nodes (33): ActionResult, applyOrganizationStatuses(), archiveSchema, archiveStatus(), createOwnStatusSet(), createStatus(), id, reorderSchema (+25 more)
 
 ### Community 13 - "Community 13"
+Cohesion: 0.08
+Nodes (30): ContactCombobox(), CostForm(), occurredAtForDate(), lineIssuesOf(), PurchaseForm(), LastCostHint, PurchaseEditorLine, PurchaseLineErrors (+22 more)
+
+### Community 14 - "Community 14"
 Cohesion: 0.07
 Nodes (35): ADDED Requirements, configurable-statuses Specification, Purpose, Requirement: Aislamiento y permisos de la tabla de estados, Requirement: Archivar un estado en uso exige reasignación, Requirement: Comparación por tipo, nunca por nombre, Requirement: Integridad del juego — al menos un inicial y un final, Requirement: Los cambios de configuración no reescriben la historia (+27 more)
 
-### Community 14 - "Community 14"
-Cohesion: 0.13
-Nodes (25): ItemPhoto, ItemPhotos(), DataTable(), DataTableAction, DataTableColumn, DataTableProps, DEFAULT_ROW_ACTIONS, columns (+17 more)
-
 ### Community 15 - "Community 15"
+Cohesion: 0.1
+Nodes (27): CategoryChips(), AssignableOrder, ReceiptField(), DueDateField(), { onChange, user }, DELIVERY_LABELS, lineIssuesOf(), OrderAttachmentView (+19 more)
+
+### Community 16 - "Community 16"
+Cohesion: 0.07
+Nodes (17): AttachmentRow, AttachmentService, NewAttachment, SalesChannelRow, SalesChannelService, metadata, OrderItemRow, OrderItemService (+9 more)
+
+### Community 17 - "Community 17"
 Cohesion: 0.07
 Nodes (33): ADDED Requirements, org-configuration Specification, Purpose, Requirement: A new business line is usable immediately, Requirement: Archiving hides a line from new work without erasing its history, Requirement: Configuration tables exist with the canonical shape, Requirement: Exactly one shared business line exists and cannot be archived, Requirement: Geeko Store is seeded with its real lines and channels (+25 more)
 
-### Community 16 - "Community 16"
-Cohesion: 0.15
-Nodes (21): AppLayout(), preselectedLineId(), resolveActiveLine(), CatalogPage(), metadata, BusinessLineRow, BusinessLineService, lineCookieName() (+13 more)
-
-### Community 17 - "Community 17"
+### Community 18 - "Community 18"
 Cohesion: 0.06
 Nodes (34): Cómo usar este backlog, Convención de criterios de aceptación, Definición de terminado (aplica a todas las tareas), FASE 0 · Cimientos, FASE 1 · El ciclo del dinero, FASE 2 · Tareas, FASE 3 · Control y análisis, FASE 4 · Conexión y auditoría (+26 more)
 
-### Community 18 - "Community 18"
-Cohesion: 0.11
-Nodes (15): selectBusinessLine(), getSessionContext(), SessionContext, AttachmentRow, AttachmentService, NewAttachment, SalesChannelRow, SalesChannelService (+7 more)
-
 ### Community 19 - "Community 19"
-Cohesion: 0.11
-Nodes (18): ROLE_FILTER_LABELS, metadata, ReceiptField(), FileDropzone(), FileDropzoneProps, FilePreview(), isImage(), formatFileSize() (+10 more)
+Cohesion: 0.09
+Nodes (21): acceptInvitation(), archiveMembership(), changeMemberRole(), inviteMember(), InviteResult, inviteSchema, MemberActionResult, membershipSchema (+13 more)
 
 ### Community 20 - "Community 20"
+Cohesion: 0.15
+Nodes (29): archiveConfigurationItem(), archiveSchema, createBusinessLine(), createExpenseCategory(), createSalesChannel(), createUnit(), entities, Entity (+21 more)
+
+### Community 21 - "Community 21"
 Cohesion: 0.07
 Nodes (29): Base de datos (migraciones), code:mermaid (flowchart LR), code:block2 (lint → typecheck → test:unit → supabase start → test:integra), code:block3 (openspec/), code:bash (pipx install graphifyy          # o: uv tool install graphif), code:bash (npm run dev              # desarrollo (puerto 3010)), Convenciones que conviene preservar, Datos de prueba (+21 more)
 
-### Community 21 - "Community 21"
+### Community 22 - "Community 22"
 Cohesion: 0.08
 Nodes (25): ADDED Requirements, MODIFIED Requirements, Purpose, Requirement: Authenticated shell frames every app screen, Requirement: Password recovery is available, Requirement: Session is refreshed on every request, Requirement: Sign-in lands on the device-appropriate home, Requirement: Unauthenticated access is redirected to login (+17 more)
 
-### Community 22 - "Community 22"
+### Community 23 - "Community 23"
+Cohesion: 0.09
+Nodes (17): archive(), list(), listActive(), listAll(), patch(), [archivePayload], channelRow, client (+9 more)
+
+### Community 24 - "Community 24"
 Cohesion: 0.09
 Nodes (25): ADDED Requirements, Purpose, Requirement: Accepting a valid invitation creates the membership, Requirement: Invitations are stored per organization with a single-use token, Requirement: Inviting a user never requires elevated privileges, Requirement: Only the owner manages invitations, and no one reads another organization's, Requirement: The owner archives a membership and the access stops, Requirement: The owner changes the role of an existing membership (+17 more)
 
-### Community 23 - "Community 23"
+### Community 25 - "Community 25"
+Cohesion: 0.11
+Nodes (16): client, contactRow, inserted, itemRow, productRow, ItemFilters, ItemRow, toNumber() (+8 more)
+
+### Community 26 - "Community 26"
 Cohesion: 0.1
 Nodes (24): ADDED Requirements, project-foundation Specification, Purpose, Requirement: Application shell boots with theme switching, Requirement: Continuous integration enforces the pipeline, Requirement: Knowledge graph is versioned and self-updating, Requirement: Local Supabase environment is reproducible, Requirement: OpenSpec project conventions are recorded (+16 more)
 
-### Community 24 - "Community 24"
+### Community 27 - "Community 27"
 Cohesion: 0.1
 Nodes (24): activity-log Specification, ADDED Requirements, Purpose, Requirement: Action kind is derived from the nature of the change, Requirement: Activity log table stores every audited event, Requirement: Every INSERT on an audited table produces a created event, Requirement: Existing tables are audited and future tables must opt in at creation, Requirement: Successive edits by the same author are merged (+16 more)
 
-### Community 25 - "Community 25"
+### Community 28 - "Community 28"
 Cohesion: 0.11
-Nodes (11): StatusInput, StatusRow, StatusService, DEFAULT_STATUS_SETS, defaultSetAsJson(), DefaultStatus, kinds, positions (+3 more)
+Nodes (21): StatusInput, StatusRow, MembershipRow, DEFAULT_STATUS_SETS, DefaultStatus, kinds, positions, Attachment (+13 more)
 
-### Community 26 - "Community 26"
+### Community 29 - "Community 29"
 Cohesion: 0.09
 Nodes (17): amount, archivedRow, buffer, detail, entry, expenseUrl, nav, papel (+9 more)
 
-### Community 27 - "Community 27"
-Cohesion: 0.17
-Nodes (21): ActionResult, applyOrganizationStatuses(), archiveSchema, archiveStatus(), createOwnStatusSet(), createStatus(), id, reorderSchema (+13 more)
-
-### Community 28 - "Community 28"
-Cohesion: 0.17
-Nodes (18): VariantFormDialog(), Alert(), AlertAction(), AlertDescription(), AlertTitle(), alertVariants, Dialog(), DialogClose() (+10 more)
-
-### Community 29 - "Community 29"
+### Community 30 - "Community 30"
 Cohesion: 0.11
 Nodes (22): id, MoveOrderInput, moveOrderSchema, numeric, optionalDeliveryMode, optionalDueDate, optionalId, optionalText (+14 more)
 
-### Community 30 - "Community 30"
+### Community 31 - "Community 31"
 Cohesion: 0.11
 Nodes (10): OrderFilters, OrderRow, OrderService, OrderWithTotal, toNumber(), OrderFormValues, OrderLineValues, DeliveryMode (+2 more)
 
-### Community 31 - "Community 31"
+### Community 32 - "Community 32"
 Cohesion: 0.08
 Nodes (24): 7. Mapa de Vistas / Pantallas, V10 · Catálogo, V11 · Detalle de ítem, V12 · Activos, V13 · Contactos, V14 · Reportes, V15 · Configuración de la organización, V16 · Registro rápido (móvil) (+16 more)
-
-### Community 32 - "Community 32"
-Cohesion: 0.13
-Nodes (13): client, contactRow, inserted, itemRow, productRow, ItemFilters, ItemRow, ItemVariantService (+5 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.11
@@ -451,36 +452,36 @@ Cohesion: 0.1
 Nodes (16): archived, archivedRow, confirm, contactForm, contactName, detail, form, itemForm (+8 more)
 
 ### Community 40 - "Community 40"
-Cohesion: 0.19
-Nodes (13): ExpenseCategoryRow, ExpenseCategoryService, ExpensesPage(), metadata, currentMonthRange(), DateRange, isCivilDate(), pad() (+5 more)
+Cohesion: 0.1
+Nodes (19): code:block1 (resolveActiveLine(cookieValue, activeLines) → { id: string, ), Context, D10 · El color es un token, no una clase de Tailwind, D11 · La semilla añade Geeko Store; no reemplaza las organizaciones de prueba, D12 · Pruebas, D1 · Dos migraciones nuevas, no una, D2 · El invariante de la línea compartida se garantiza con índice + trigger, D3 · RLS de configuración: lectura de miembro, escritura de dueño, más grants explícitos (+11 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.1
 Nodes (19): code:block1 (resolveActiveLine(cookieValue, activeLines) → { id: string, ), Context, D10 · El color es un token, no una clase de Tailwind, D11 · La semilla añade Geeko Store; no reemplaza las organizaciones de prueba, D12 · Pruebas, D1 · Dos migraciones nuevas, no una, D2 · El invariante de la línea compartida se garantiza con índice + trigger, D3 · RLS de configuración: lectura de miembro, escritura de dueño, más grants explícitos (+11 more)
 
 ### Community 42 - "Community 42"
-Cohesion: 0.1
-Nodes (19): code:block1 (resolveActiveLine(cookieValue, activeLines) → { id: string, ), Context, D10 · El color es un token, no una clase de Tailwind, D11 · La semilla añade Geeko Store; no reemplaza las organizaciones de prueba, D12 · Pruebas, D1 · Dos migraciones nuevas, no una, D2 · El invariante de la línea compartida se garantiza con índice + trigger, D3 · RLS de configuración: lectura de miembro, escritura de dueño, más grants explícitos (+11 more)
+Cohesion: 0.14
+Nodes (6): StatusService, defaultSetAsJson(), metadata, StatusesSettingsPage(), statusFlowSchema, StatusesSection()
 
 ### Community 43 - "Community 43"
 Cohesion: 0.16
 Nodes (17): reorderQueue(), BoardColumn(), Midpoint, Queueable, queuePositions(), renormalize(), reorderedIds(), sortByArrival() (+9 more)
 
 ### Community 44 - "Community 44"
+Cohesion: 0.21
+Nodes (16): ActionResult, archiveAttachmentSchema, archiveSchema, archiveVariantSchema, createItem(), createItemVariant(), id, revalidateCatalog() (+8 more)
+
+### Community 45 - "Community 45"
 Cohesion: 0.12
 Nodes (14): OrderFormState, CHANNELS, CLIENTA, { container, user }, defaults(), grande, LINES, primero (+6 more)
 
-### Community 45 - "Community 45"
-Cohesion: 0.24
-Nodes (16): ActionResult, archiveAttachmentSchema, archiveSchema, archiveVariantSchema, createItem(), createItemVariant(), id, revalidateCatalog() (+8 more)
-
 ### Community 46 - "Community 46"
-Cohesion: 0.15
-Nodes (15): contactFormSchema, ContactFormValues, hasARole(), itemFormSchema, itemKindSchema, itemVariantFormSchema, name, optionalAmount (+7 more)
+Cohesion: 0.12
+Nodes (17): 6.1 Modelo conceptual — el contrato del sistema, 6.4 Bitácora de actividad, 6.5 Archivado en lugar de eliminación *(decisión tomada)*, 6.6 Imprescindibles (núcleo), 6.7 Deseables (fases posteriores), 6.8 Fuera de alcance, 6. Funcionalidades Clave, Distinción importante (+9 more)
 
 ### Community 47 - "Community 47"
 Cohesion: 0.12
-Nodes (16): 14. Próximos Pasos, 1. Resumen Ejecutivo, 2. Objetivo del Negocio, 4. Tipo de Producto Digital, 5. Propuesta de Valor y Tono de Marca, 9. Necesidad de Datos y Persistencia, Cómo se mide el éxito, Consecuencias de diseño (+8 more)
+Nodes (16): 13. Riesgos, Dudas y Decisiones Pendientes, 14. Próximos Pasos, 1. Resumen Ejecutivo, 2. Objetivo del Negocio, 4. Tipo de Producto Digital, 9. Necesidad de Datos y Persistencia, Cómo se mide el éxito, Consecuencias de diseño (+8 more)
 
 ### Community 48 - "Community 48"
 Cohesion: 0.15
@@ -491,184 +492,184 @@ Cohesion: 0.21
 Nodes (11): useBoardStore, BoardOrder, BoardView(), DraggableCard(), CalendarView(), DELIVERY_LABELS, OrderCard(), OrderCardData (+3 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.14
-Nodes (11): OrderItemRow, OrderItemService, OrderItemWithNames, toNumber(), client, formValues, orderRow, { p_items } (+3 more)
+Cohesion: 0.15
+Nodes (14): contactFormSchema, ContactFormValues, hasARole(), itemFormSchema, itemKindSchema, itemVariantFormSchema, name, optionalAmount (+6 more)
 
 ### Community 51 - "Community 51"
 Cohesion: 0.12
-Nodes (16): 6.1 Modelo conceptual — el contrato del sistema, 6.3 Módulo de Tareas, 6.5 Archivado en lugar de eliminación *(decisión tomada)*, 6.6 Imprescindibles (núcleo), 6.7 Deseables (fases posteriores), 6.8 Fuera de alcance, 6. Funcionalidades Clave, Contenido de una tarea (+8 more)
+Nodes (15): Context, D1 · Una sola migración de tenant con sus dos pruebas pgTAP, D2 · Escrituras en tablas de tenant: solo dueño, D3 · Sesión con `@supabase/ssr` y middleware mínimo, D4 · Retorno a la ruta original vía parámetro `next`, D5 · Aterrizaje por dispositivo con user-agent en el servidor, D6 · Organización activa en cookie + `OrganizationProvider`, D7 · Sin registro público, cuentas por semilla (+7 more)
 
 ### Community 52 - "Community 52"
 Cohesion: 0.12
-Nodes (15): Context, D1 · Una sola migración de tenant con sus dos pruebas pgTAP, D2 · Escrituras en tablas de tenant: solo dueño, D3 · Sesión con `@supabase/ssr` y middleware mínimo, D4 · Retorno a la ruta original vía parámetro `next`, D5 · Aterrizaje por dispositivo con user-agent en el servidor, D6 · Organización activa en cookie + `OrganizationProvider`, D7 · Sin registro público, cuentas por semilla (+7 more)
+Nodes (15): 1. El permiso partido se implementa con trigger, no con política, 2. La edición de archivados se bloquea en el mismo trigger, 3. Acentos: `unaccent` en la base, la misma normalización en el cliente, 4. Un solo servicio por tabla, sin lógica de negocio en las acciones, 5. El buscador de contactos es un componente, no una pantalla, 6. Las tres pantallas son páginas delgadas sobre un `DataTable` común, 7. La semilla vive en la migración, 7. La semilla vive en `supabase/seed.sql` (+7 more)
 
 ### Community 53 - "Community 53"
 Cohesion: 0.12
-Nodes (15): 1. El permiso partido se implementa con trigger, no con política, 2. La edición de archivados se bloquea en el mismo trigger, 3. Acentos: `unaccent` en la base, la misma normalización en el cliente, 4. Un solo servicio por tabla, sin lógica de negocio en las acciones, 5. El buscador de contactos es un componente, no una pantalla, 6. Las tres pantallas son páginas delgadas sobre un `DataTable` común, 7. La semilla vive en la migración, 7. La semilla vive en `supabase/seed.sql` (+7 more)
-
-### Community 54 - "Community 54"
-Cohesion: 0.12
 Nodes (15): Context, D1 · Una sola migración de tenant con sus dos pruebas pgTAP, D2 · Escrituras en tablas de tenant: solo dueño, D3 · Sesión con `@supabase/ssr` y middleware mínimo, D4 · Retorno a la ruta original vía parámetro `next`, D5 · Aterrizaje por dispositivo con user-agent en el servidor, D6 · Organización activa en cookie + `OrganizationProvider`, D7 · Sin registro público, cuentas por semilla (+7 more)
 
-### Community 55 - "Community 55"
+### Community 54 - "Community 54"
 Cohesion: 0.14
 Nodes (10): CatalogScreen(), ContactsScreen(), roleSummary(), andina, archivado, push, user, { result } (+2 more)
 
-### Community 56 - "Community 56"
+### Community 55 - "Community 55"
 Cohesion: 0.3
 Nodes (12): ActionResult, archiveOrder(), createOrder(), CreateOrderResult, moveOrderToStatus(), revalidateOrders(), setArchived(), setOrderAttachmentArchived() (+4 more)
 
-### Community 57 - "Community 57"
-Cohesion: 0.17
-Nodes (10): findActiveLine(), ajena, ALFARERIA, SUBLIMACION, BusinessLineProvider(), BusinessLineState, LINE, useBusinessLineStore (+2 more)
-
-### Community 58 - "Community 58"
-Cohesion: 0.16
-Nodes (10): ADDED Requirements, MODIFIED Requirements, Purpose, Requirement: Tarjeta del tablero, Scenario: Abrir el detalle, Scenario: Datos opcionales ausentes, Scenario: La señal de pago no depende del estado del pedido, Scenario: Pedido con modo de entrega (+2 more)
-
-### Community 59 - "Community 59"
-Cohesion: 0.13
-Nodes (14): orders Specification, Requirement: Cliente creado al vuelo desde el pedido, Requirement: Confirmación antes de descartar, Requirement: Modelo de pedido con cliente obligatorio, Requirements, Scenario: Creación con nombre y teléfono, Scenario: El contacto es un cliente, Scenario: El formulario conserva lo escrito (+6 more)
-
-### Community 60 - "Community 60"
+### Community 56 - "Community 56"
 Cohesion: 0.13
 Nodes (14): Context, D1 · Una migración única `..._activity_log.sql`, D2 · Resolución de `organization_id` dentro del trigger, D3 · Fusión de ruido dentro del propio trigger, D4 · `security definer` + revocación de privilegios, D5 · Diff con `jsonb_each` e ignorados fijos, D6 · `origin` desde cabecera, tolerante a ausencia, D7 · Procedimiento documentado para tablas futuras (+6 more)
 
-### Community 61 - "Community 61"
+### Community 57 - "Community 57"
 Cohesion: 0.13
 Nodes (14): Context, D1 · Con la línea «Todas» activa, el kanban pide elegir una línea; lista y calendario sí cruzan, D2 · `code` lo asigna un trigger que bloquea la fila de la organización, D3 · `order_totals` nace sin `paid`, D4 · `queued_at` lo mantiene un trigger; reordenar lo reescribe con el punto medio, D5 · La alerta de retraso es una función pura, no una columna, D6 · Actualización optimista con un store de Zustand y reversión explícita, D7 · Archivar reutiliza `enforce_archive_rules()`; los adjuntos reutilizan `attachments` (+6 more)
 
-### Community 62 - "Community 62"
+### Community 58 - "Community 58"
 Cohesion: 0.13
 Nodes (14): 1. El permiso partido se implementa con trigger, no con política, 2. La edición de archivados se bloquea en el mismo trigger, 3. Acentos: `unaccent` en la base, la misma normalización en el cliente, 4. Un solo servicio por tabla, sin lógica de negocio en las acciones, 5. El buscador de contactos es un componente, no una pantalla, 6. Las tres pantallas son páginas delgadas sobre un `DataTable` común, 7. La semilla vive en `supabase/seed.sql`, code:block1 (if new.archived_at is distinct from old.archived_at and not ) (+6 more)
 
-### Community 63 - "Community 63"
+### Community 59 - "Community 59"
 Cohesion: 0.13
 Nodes (14): 1. Las cuatro invariantes viven en la base, no en Zod, 2. `paid` entra en las vistas existentes con `create or replace view`, no en vistas nuevas, 3. El saldo se deriva en la lectura; el estado de pago, en una función pura de `lib/`, 4. Anular es archivar el original, no insertar un movimiento negativo, 5. El permiso partido del ayudante se escribe en la política `INSERT`, no en el componente, 6. `UPDATE` solo para el dueño y solo sobre `archived_at`, 7. Dos vistas separadas para Por cobrar y Por pagar, 8. Actualización optimista solo en el saldo, no en la lista de cobros (+6 more)
 
-### Community 64 - "Community 64"
+### Community 60 - "Community 60"
 Cohesion: 0.13
 Nodes (14): Context, D1 · Con la línea «Todas» activa, el kanban pide elegir una línea; lista y calendario sí cruzan, D2 · `code` lo asigna un trigger que bloquea la fila de la organización, D3 · `order_totals` nace sin `paid`, D4 · `queued_at` lo mantiene un trigger; reordenar lo reescribe con el punto medio, D5 · La alerta de retraso es una función pura, no una columna, D6 · Actualización optimista con un store de Zustand y reversión explícita, D7 · Archivar reutiliza `enforce_archive_rules()`; los adjuntos reutilizan `attachments` (+6 more)
 
-### Community 65 - "Community 65"
+### Community 61 - "Community 61"
 Cohesion: 0.13
 Nodes (14): Context, D1 · Una migración única `..._activity_log.sql`, D2 · Resolución de `organization_id` dentro del trigger, D3 · Fusión de ruido dentro del propio trigger, D4 · `security definer` + revocación de privilegios, D5 · Diff con `jsonb_each` e ignorados fijos, D6 · `origin` desde cabecera, tolerante a ausencia, D7 · Procedimiento documentado para tablas futuras (+6 more)
 
-### Community 66 - "Community 66"
-Cohesion: 0.15
-Nodes (9): [archivePayload], channelRow, client, lineRow, [payload], service, [unarchivePayload], UnitRow (+1 more)
+### Community 62 - "Community 62"
+Cohesion: 0.23
+Nodes (9): ActionResult, ConfigEntity, ConfigItem, ConfigList(), NamedItem, UnitsSection(), Label(), metadata (+1 more)
 
-### Community 67 - "Community 67"
+### Community 63 - "Community 63"
+Cohesion: 0.32
+Nodes (11): ExpensesPage(), metadata, currentMonthRange(), DateRange, isCivilDate(), pad(), resolvePeriod(), startOfDayInTimezone() (+3 more)
+
+### Community 64 - "Community 64"
 Cohesion: 0.14
 Nodes (14): Requirement: Aislamiento, roles y archivado de pedidos, Requirement: Edición de pedido, Scenario: Cambiar fecha y agregar una línea, Scenario: El ayudante edita, Scenario: El ayudante edita, Scenario: El ayudante intenta archivar, Scenario: El pedido archivado conserva su historia, Scenario: El pedido archivado no se edita (+6 more)
 
-### Community 68 - "Community 68"
-Cohesion: 0.21
-Nodes (7): updateGeneralSettings(), GeneralSettingsPage(), metadata, OrganizationRow, OrganizationService, toEntity(), GeneralForm()
-
-### Community 69 - "Community 69"
+### Community 65 - "Community 65"
 Cohesion: 0.15
 Nodes (8): cantidad, CATALOGO, { onAdd, user }, { onRemove, user }, precio, TAZA, TAZA_CON_VARIANTES, { user }
 
-### Community 70 - "Community 70"
+### Community 66 - "Community 66"
 Cohesion: 0.15
 Nodes (10): aviso, cola, despues, enEspera, enProceso, filas, noCola, primera (+2 more)
 
-### Community 71 - "Community 71"
+### Community 67 - "Community 67"
+Cohesion: 0.19
+Nodes (7): SessionContext, ExpenseItemRow, ExpenseItemService, ExpenseItemWithNames, loadExpenseDetail(), ExpenseDetailPage(), ExpenseItem
+
+### Community 68 - "Community 68"
 Cohesion: 0.15
 Nodes (12): 10. Pruebas de extremo a extremo, 11. Cierre, 1. Base de datos, 2. Pruebas de base de datos (pgTAP), 3. Lógica pura y tipos, 4. Servicios, 5. Server Actions, 6. Buscador de contactos (V13 y V5) (+4 more)
 
-### Community 72 - "Community 72"
+### Community 69 - "Community 69"
 Cohesion: 0.15
 Nodes (13): Requirement: Aislamiento, roles y archivado de pagos, Requirement: El ayudante cobra pero no paga, Scenario: Bitácora, Scenario: El ayudante consulta pagos, Scenario: El ayudante intenta archivar, Scenario: El ayudante intenta registrar un pago, Scenario: El ayudante intenta registrar un pago de salida, Scenario: El ayudante no ve el egreso de todos modos (+5 more)
 
-### Community 73 - "Community 73"
+### Community 70 - "Community 70"
 Cohesion: 0.15
 Nodes (12): 10. Pruebas de extremo a extremo, 11. Cierre, 1. Base de datos, 2. Pruebas de base de datos (pgTAP), 3. Lógica pura y tipos, 4. Servicios, 5. Server Actions, 6. Buscador de contactos (V13 y V5) (+4 more)
 
-### Community 74 - "Community 74"
+### Community 71 - "Community 71"
 Cohesion: 0.23
-Nodes (9): ActionResult, archiveSchema, ContactResult, createContact(), createContactInline(), id, revalidateContacts(), setContactArchived() (+1 more)
+Nodes (6): GeneralSettingsPage(), metadata, OrganizationRow, OrganizationService, toEntity(), GeneralForm()
 
-### Community 75 - "Community 75"
+### Community 72 - "Community 72"
 Cohesion: 0.2
 Nodes (8): archivedCost, archivedPurchase, client, params, purchaseRow, ItemLastCost, ItemLastCostService, toNumber()
 
-### Community 77 - "Community 77"
+### Community 73 - "Community 73"
 Cohesion: 0.21
-Nodes (12): 11. Vistas derivadas, 13. Adjuntos, 14. Bitácora de actividad, Agrupación de ruido, code:sql (-- Saldo actual por ítem), code:sql (create table attachments (), code:sql (create policy "storage: solo la propia organización"), code:sql (create table activity_log () (+4 more)
+Nodes (12): 12. Tareas, 13. Adjuntos, 14. Bitácora de actividad, Agrupación de ruido, code:sql (create table tasks (), code:sql (create table attachments (), code:sql (create policy "storage: solo la propia organización"), code:sql (create table activity_log () (+4 more)
 
-### Community 78 - "Community 78"
+### Community 74 - "Community 74"
+Cohesion: 0.18
+Nodes (10): ADDED Requirements, Purpose, Requirement: Cliente creado al vuelo desde el pedido, Requirement: Entradas al alta y a la edición, Scenario: Creación con nombre y teléfono, Scenario: Desde el detalle, Scenario: Desde el tablero, Scenario: El contacto es un cliente (+2 more)
+
+### Community 75 - "Community 75"
 Cohesion: 0.17
 Nodes (11): 1. Modelo conceptual, 2. Migración de configuración, 3. Migración de invitaciones y membresías, 4. Semilla de Geeko Store, 5. Servicios y tipos, 6. Contexto de línea, 7. Pantalla de configuración, 8. Usuarios y roles (+3 more)
 
-### Community 79 - "Community 79"
+### Community 76 - "Community 76"
 Cohesion: 0.17
 Nodes (11): 10. Cierre, 1. Base de datos, 2. Pruebas de base de datos (pgTAP), 3. Lógica pura y tipos, 4. Servicios, 5. Server Actions, 6. Acceso y navegación, 7. Bandeja V7 y detalle (+3 more)
 
-### Community 80 - "Community 80"
+### Community 77 - "Community 77"
+Cohesion: 0.29
+Nodes (7): CLASSES, isLineColor(), LINE_COLOR_LABELS, LinesSettingsPage(), metadata, BusinessLinesSection(), LINE_COLORS
+
+### Community 78 - "Community 78"
 Cohesion: 0.18
 Nodes (7): CATEGORIES, createExpense, LINES, ORDERS, push, refresh, user
 
-### Community 81 - "Community 81"
+### Community 79 - "Community 79"
+Cohesion: 0.25
+Nodes (10): ActionResult, archiveSchema, ContactResult, createContact(), createContactInline(), id, revalidateContacts(), setContactArchived() (+2 more)
+
+### Community 80 - "Community 80"
 Cohesion: 0.18
 Nodes (7): AMBOS, ANDINA, CLIENTA, CREATED, onSelect, step, user
 
 ### Community 82 - "Community 82"
 Cohesion: 0.18
-Nodes (10): 1. Base del proyecto, 2. Tema y UI base, 3. Estructura de carpetas, 4. Supabase local, 5. Arnés de pruebas, 6. OpenSpec, 7. Graphify, 8. Integración continua (+2 more)
+Nodes (8): MODIFIED Requirements, Requirement: Tarjeta del tablero, Scenario: Abrir el detalle, Scenario: Datos opcionales ausentes, Scenario: La señal de pago no depende del estado del pedido, Scenario: Pedido con modo de entrega, Scenario: Señal de pago de un pedido con anticipo, Scenario: Señal de pago de un pedido saldado
 
 ### Community 83 - "Community 83"
 Cohesion: 0.18
-Nodes (10): 1. Base de datos, 2. Pruebas de base de datos (pgTAP), 3. Lógica pura y tipos, 4. Servicios, 5. Server Actions, 6. Tablero V3, 7. Detalle V4, 8. Pruebas de interfaz y de extremo a extremo (+2 more)
+Nodes (10): orders Specification, Requirement: Confirmación antes de descartar, Requirement: Modelo de pedido con cliente obligatorio, Requirements, Scenario: Modo de entrega fuera del dominio, Scenario: Pedido sin cliente, Scenario: Salir con datos escritos, Scenario: Salir sin cambios (+2 more)
 
 ### Community 84 - "Community 84"
 Cohesion: 0.18
-Nodes (10): 1. Base de datos, 2. Pruebas de base de datos (pgTAP), 3. Lógica pura y tipos, 4. Servicios, 5. Server Actions, 6. Tablero V3, 7. Detalle V4, 8. Pruebas de interfaz y de extremo a extremo (+2 more)
+Nodes (10): 1. Base del proyecto, 2. Tema y UI base, 3. Estructura de carpetas, 4. Supabase local, 5. Arnés de pruebas, 6. OpenSpec, 7. Graphify, 8. Integración continua (+2 more)
 
 ### Community 85 - "Community 85"
 Cohesion: 0.18
-Nodes (10): 1. Modelo conceptual, 2. Migración de configuración, 3. Migración de invitaciones y membresías, 4. Semilla de Geeko Store, 5. Servicios y tipos, 6. Contexto de línea, 7. Pantalla de configuración, 8. Usuarios y roles (+2 more)
+Nodes (10): 1. Base de datos, 2. Pruebas de base de datos (pgTAP), 3. Lógica pura y tipos, 4. Servicios, 5. Server Actions, 6. Tablero V3, 7. Detalle V4, 8. Pruebas de interfaz y de extremo a extremo (+2 more)
 
 ### Community 86 - "Community 86"
 Cohesion: 0.18
-Nodes (10): 1. Base del proyecto, 2. Tema y UI base, 3. Estructura de carpetas, 4. Supabase local, 5. Arnés de pruebas, 6. OpenSpec, 7. Graphify, 8. Integración continua (+2 more)
+Nodes (10): 1. Base de datos, 2. Pruebas de base de datos (pgTAP), 3. Lógica pura y tipos, 4. Servicios, 5. Server Actions, 6. Tablero V3, 7. Detalle V4, 8. Pruebas de interfaz y de extremo a extremo (+2 more)
 
 ### Community 87 - "Community 87"
+Cohesion: 0.18
+Nodes (10): 1. Modelo conceptual, 2. Migración de configuración, 3. Migración de invitaciones y membresías, 4. Semilla de Geeko Store, 5. Servicios y tipos, 6. Contexto de línea, 7. Pantalla de configuración, 8. Usuarios y roles (+2 more)
+
+### Community 88 - "Community 88"
+Cohesion: 0.18
+Nodes (10): 1. Base del proyecto, 2. Tema y UI base, 3. Estructura de carpetas, 4. Supabase local, 5. Arnés de pruebas, 6. OpenSpec, 7. Graphify, 8. Integración continua (+2 more)
+
+### Community 89 - "Community 89"
 Cohesion: 0.2
 Nodes (7): createContactInline, createPurchase, LINES, push, SUPPLIERS, SUPPLIES, user
 
-### Community 88 - "Community 88"
+### Community 90 - "Community 90"
 Cohesion: 0.22
 Nodes (7): BoardState, displayedPlacement(), enCola, otra, pedido, { pending, pendingQueue }, state
 
-### Community 89 - "Community 89"
+### Community 91 - "Community 91"
 Cohesion: 0.22
 Nodes (7): ItemDetail(), item(), LINE, renderDetail(), UNIT, { unmount }, user
 
-### Community 90 - "Community 90"
+### Community 92 - "Community 92"
 Cohesion: 0.2
 Nodes (10): 8. Flujo de Usuario, Flujo A — Pedido de sublimación, de principio a fin, Flujo B — Pieza de alfarería, de la arcilla a la feria, Flujo C — Primeros encargos de 3D, Flujo D — Pedido de llaveros y falta de filamento, Flujo E — Día de feria, Flujo F — "Este número no cuadra", Flujo G — Recuperar algo archivado por error (+2 more)
 
-### Community 91 - "Community 91"
-Cohesion: 0.2
-Nodes (10): 15. Notificaciones, 18. Orden de migraciones, code:sql (create trigger audit after insert or update on orders), code:sql (create table notifications (), code:sql (create policy "tasks: ayudante ve su línea o lo asignado"), code:sql (alter table activity_log enable row level security;), code:block27 (001_extensions_and_helpers    -- pgcrypto, is_member(), is_o), code:sql (-- Líneas) (+2 more)
-
-### Community 92 - "Community 92"
+### Community 93 - "Community 93"
 Cohesion: 0.2
 Nodes (9): 17. Sincronización sin conexión, 19. Lo que este esquema aún no incluye, 1. Alcance y advertencia, 20. Lista de verificación antes de producción, 2. Cómo se traducen los principios, 3. Convenciones, 4. Mapa de entidades, code:mermaid (erDiagram) (+1 more)
 
-### Community 93 - "Community 93"
-Cohesion: 0.2
-Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: page.waitForURL: Test timeout of 30000ms exceeded.), code:yaml (- generic [active] [ref=f1e1]:), code:ts (1   | import { expect, test, type Page } from "@playwright/t), Error details, Instructions, Page snapshot, Test info (+1 more)
-
 ### Community 94 - "Community 94"
 Cohesion: 0.2
-Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: page.waitForURL: Test timeout of 30000ms exceeded.), code:yaml (- generic [active] [ref=e1]:), code:ts (1   | import { expect, test, type Locator, type Page } from ), Error details, Instructions, Page snapshot, Test info (+1 more)
+Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: page.waitForURL: Test timeout of 30000ms exceeded.), code:yaml (- generic [active] [ref=f1e1]:), code:ts (1   | import { expect, test, type Page } from "@playwright/t), Error details, Instructions, Page snapshot, Test info (+1 more)
 
 ### Community 95 - "Community 95"
 Cohesion: 0.2
-Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: page.waitForURL: Test timeout of 30000ms exceeded.), code:yaml (- generic [active] [ref=f1e1]:), code:ts (1   | import { expect, test, type Page } from "@playwright/t), Error details, Instructions, Page snapshot, Test info (+1 more)
+Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: page.waitForURL: Test timeout of 30000ms exceeded.), code:yaml (- generic [active] [ref=e1]:), code:ts (1   | import { expect, test, type Locator, type Page } from ), Error details, Instructions, Page snapshot, Test info (+1 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.2
@@ -680,35 +681,35 @@ Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: 
 
 ### Community 98 - "Community 98"
 Cohesion: 0.2
-Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: page.waitForURL: Test timeout of 30000ms exceeded.), code:yaml (- generic [ref=f1e1]:), code:ts (1   | import { expect, test, type Page } from "@playwright/t), Error details, Instructions, Page snapshot, Test info (+1 more)
+Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: page.waitForURL: Test timeout of 30000ms exceeded.), code:yaml (- generic [active] [ref=f1e1]:), code:ts (1   | import { expect, test, type Page } from "@playwright/t), Error details, Instructions, Page snapshot, Test info (+1 more)
 
 ### Community 99 - "Community 99"
 Cohesion: 0.2
-Nodes (9): 1. Base de datos, 2. Pruebas pgTAP (`supabase/tests/catalog.test.sql`), 3. Búsqueda, esquemas y servicios, 4. Server Actions, 5. Pantalla V10 · Catálogo (`features/catalog/` + `app/(app)/catalog/`), 6. Pantalla V11 · Detalle de ítem (`app/(app)/catalog/[id]/`), 7. Pantalla V13 · Contactos y buscador reutilizable (`features/contacts/`), 8. E2E y cierre (+1 more)
+Nodes (9): code:block1 (Test timeout of 30000ms exceeded.), code:block2 (Error: page.waitForURL: Test timeout of 30000ms exceeded.), code:yaml (- generic [ref=f1e1]:), code:ts (1   | import { expect, test, type Page } from "@playwright/t), Error details, Instructions, Page snapshot, Test info (+1 more)
 
 ### Community 100 - "Community 100"
 Cohesion: 0.2
-Nodes (9): 0. Requisito previo, 1. Migración de base de datos, 2. Pruebas pgTAP de la migración, 3. Reglas puras y pruebas unitarias, 4. Servicio y acciones de servidor, 5. Interfaz: cobros en pedidos, 6. Interfaz: pagos en egresos e indicadores, 7. Semilla y verificación de extremo a extremo (+1 more)
+Nodes (9): 1. Base de datos, 2. Pruebas pgTAP (`supabase/tests/catalog.test.sql`), 3. Búsqueda, esquemas y servicios, 4. Server Actions, 5. Pantalla V10 · Catálogo (`features/catalog/` + `app/(app)/catalog/`), 6. Pantalla V11 · Detalle de ítem (`app/(app)/catalog/[id]/`), 7. Pantalla V13 · Contactos y buscador reutilizable (`features/contacts/`), 8. E2E y cierre (+1 more)
 
 ### Community 101 - "Community 101"
 Cohesion: 0.2
-Nodes (9): 1. Base de datos, 2. Pruebas pgTAP (`supabase/tests/catalog.test.sql`), 3. Búsqueda, esquemas y servicios, 4. Server Actions, 5. Pantalla V10 · Catálogo (`features/catalog/` + `app/(app)/catalog/`), 6. Pantalla V11 · Detalle de ítem (`app/(app)/catalog/[id]/`), 7. Pantalla V13 · Contactos y buscador reutilizable (`features/contacts/`), 8. E2E y cierre (+1 more)
+Nodes (9): 0. Requisito previo, 1. Migración de base de datos, 2. Pruebas pgTAP de la migración, 3. Reglas puras y pruebas unitarias, 4. Servicio y acciones de servidor, 5. Interfaz: cobros en pedidos, 6. Interfaz: pagos en egresos e indicadores, 7. Semilla y verificación de extremo a extremo (+1 more)
 
 ### Community 102 - "Community 102"
-Cohesion: 0.22
-Nodes (3): detalle, medida, opciones
+Cohesion: 0.2
+Nodes (9): 1. Base de datos, 2. Pruebas pgTAP (`supabase/tests/catalog.test.sql`), 3. Búsqueda, esquemas y servicios, 4. Server Actions, 5. Pantalla V10 · Catálogo (`features/catalog/` + `app/(app)/catalog/`), 6. Pantalla V11 · Detalle de ítem (`app/(app)/catalog/[id]/`), 7. Pantalla V13 · Contactos y buscador reutilizable (`features/contacts/`), 8. E2E y cierre (+1 more)
 
 ### Community 103 - "Community 103"
 Cohesion: 0.22
-Nodes (6): handle, initialRow, list, renamed, row, target
+Nodes (3): detalle, medida, opciones
 
 ### Community 104 - "Community 104"
 Cohesion: 0.22
-Nodes (6): CatalogRow, LINE, push, UNIT, { unmount }, user
+Nodes (6): handle, initialRow, list, renamed, row, target
 
 ### Community 105 - "Community 105"
-Cohesion: 0.33
-Nodes (6): archive(), list(), listActive(), listAll(), patch(), unarchive()
+Cohesion: 0.22
+Nodes (6): CatalogRow, LINE, push, UNIT, { unmount }, user
 
 ### Community 106 - "Community 106"
 Cohesion: 0.31
@@ -716,23 +717,23 @@ Nodes (9): 6. Configuración, 7. Directorio y catálogo, code:sql (-- Líneas de
 
 ### Community 107 - "Community 107"
 Cohesion: 0.22
-Nodes (8): code:block1 (Error: expect(locator).toHaveCount(expected) failed), code:yaml (- generic [active]:), code:ts (1   | import { expect, test, type Page } from "@playwright/t), Error details, Instructions, Page snapshot, Test info, Test source
+Nodes (9): 15. Notificaciones, 18. Orden de migraciones, code:sql (create trigger audit after insert or update on orders), code:sql (create table notifications (), code:sql (create policy "tasks: ayudante ve su línea o lo asignado"), code:block27 (001_extensions_and_helpers    -- pgcrypto, is_member(), is_o), code:sql (-- Líneas), Ejemplo de política más fina — tareas del ayudante (+1 more)
 
 ### Community 108 - "Community 108"
 Cohesion: 0.22
-Nodes (8): code:block1 (Error: expect(locator).toHaveCount(expected) failed), code:yaml (- generic [active]:), code:ts (9   |   await page.goto("/auth/login");), Error details, Instructions, Page snapshot, Test info, Test source
+Nodes (8): code:block1 (Error: expect(locator).toHaveCount(expected) failed), code:yaml (- generic [active]:), code:ts (1   | import { expect, test, type Page } from "@playwright/t), Error details, Instructions, Page snapshot, Test info, Test source
 
 ### Community 109 - "Community 109"
 Cohesion: 0.22
-Nodes (8): code:block1 (Error: expect(locator).toHaveCount(expected) failed), code:yaml (- generic [active]:), code:ts (48  |     const itemUrl = page.url();), Error details, Instructions, Page snapshot, Test info, Test source
+Nodes (8): code:block1 (Error: expect(locator).toHaveCount(expected) failed), code:yaml (- generic [active]:), code:ts (9   |   await page.goto("/auth/login");), Error details, Instructions, Page snapshot, Test info, Test source
 
 ### Community 110 - "Community 110"
 Cohesion: 0.22
-Nodes (8): code:block1 (Error: expect(locator).toHaveCount(expected) failed), code:yaml (- generic [active]:), code:ts (113 |       .getByTestId("contact-detail")), Error details, Instructions, Page snapshot, Test info, Test source
+Nodes (8): code:block1 (Error: expect(locator).toHaveCount(expected) failed), code:yaml (- generic [active]:), code:ts (48  |     const itemUrl = page.url();), Error details, Instructions, Page snapshot, Test info, Test source
 
 ### Community 111 - "Community 111"
 Cohesion: 0.22
-Nodes (9): Requirement: Detalle del pedido, Scenario: Acciones de edición y cancelación, Scenario: Bloque de cobros y saldo, Scenario: Cambio de estado desde el detalle, Scenario: Historial, Scenario: Imagen de referencia, Scenario: Pedido archivado, Scenario: Pedido completo (+1 more)
+Nodes (8): code:block1 (Error: expect(locator).toHaveCount(expected) failed), code:yaml (- generic [active]:), code:ts (113 |       .getByTestId("contact-detail")), Error details, Instructions, Page snapshot, Test info, Test source
 
 ### Community 112 - "Community 112"
 Cohesion: 0.22
@@ -740,63 +741,63 @@ Nodes (9): Requirement: El total del pedido se deriva, nunca se almacena, Scenar
 
 ### Community 113 - "Community 113"
 Cohesion: 0.22
-Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-01 · Andamiaje del proyecto y disciplina de trabajo, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (9): Requirement: Detalle del pedido, Scenario: Acciones de edición y cancelación, Scenario: Bloque de cobros y saldo, Scenario: Cambio de estado desde el detalle, Scenario: Historial, Scenario: Imagen de referencia, Scenario: Pedido archivado, Scenario: Pedido completo (+1 more)
 
 ### Community 114 - "Community 114"
 Cohesion: 0.22
-Nodes (8): 1. Base de datos: modelo de tenant, 2. Pruebas pgTAP (deltas `tenant-isolation`), 3. Clientes Supabase y middleware, 4. Pantallas de autenticación (V1), 5. Cascarón autenticado, 6. Pruebas e2e (delta `user-auth`), 7. Cierre, KAM-02 · Tareas
+Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-01 · Andamiaje del proyecto y disciplina de trabajo, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 115 - "Community 115"
 Cohesion: 0.22
-Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-02 · Autenticación, organizaciones y aislamiento, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (8): 1. Base de datos: modelo de tenant, 2. Pruebas pgTAP (deltas `tenant-isolation`), 3. Clientes Supabase y middleware, 4. Pantallas de autenticación (V1), 5. Cascarón autenticado, 6. Pruebas e2e (delta `user-auth`), 7. Cierre, KAM-02 · Tareas
 
 ### Community 116 - "Community 116"
 Cohesion: 0.22
-Nodes (9): Requirement: Bandeja de egresos (V7), Scenario: Abrir el detalle, Scenario: Archivados ocultos por defecto, Scenario: Filtro por proveedor, Scenario: Filtro por tipo, Scenario: La línea activa filtra, Scenario: Móvil, Scenario: Periodo por defecto y totales (+1 more)
+Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-02 · Autenticación, organizaciones y aislamiento, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 117 - "Community 117"
 Cohesion: 0.22
-Nodes (8): ADDED Requirements, Purpose, Requirement: Pista del último precio en el formulario de compra, Requirement: Semilla de egresos de Geeko Store, Scenario: Insumo comprado antes, Scenario: Insumo nuevo, Scenario: La pista no cambia el valor, Scenario: Reinicio local
+Nodes (8): ADDED Requirements, Purpose, Requirement: Líneas de compra con precio propio, Requirement: Semilla de egresos de Geeko Store, Scenario: Cantidad no positiva, Scenario: El precio de una compra posterior no reescribe la anterior, Scenario: Precio negativo, Scenario: Reinicio local
 
 ### Community 118 - "Community 118"
 Cohesion: 0.22
-Nodes (8): 1. Base de datos: modelo de tenant, 2. Pruebas pgTAP (deltas `tenant-isolation`), 3. Clientes Supabase y middleware, 4. Pantallas de autenticación (V1), 5. Cascarón autenticado, 6. Pruebas e2e (delta `user-auth`), 7. Cierre, KAM-02 · Tareas
+Nodes (9): Requirement: Bandeja de egresos (V7), Scenario: Abrir el detalle, Scenario: Archivados ocultos por defecto, Scenario: Filtro por proveedor, Scenario: Filtro por tipo, Scenario: La línea activa filtra, Scenario: Móvil, Scenario: Periodo por defecto y totales (+1 more)
 
 ### Community 119 - "Community 119"
 Cohesion: 0.22
-Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-02 · Autenticación, organizaciones y aislamiento, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (8): 1. Base de datos: modelo de tenant, 2. Pruebas pgTAP (deltas `tenant-isolation`), 3. Clientes Supabase y middleware, 4. Pantallas de autenticación (V1), 5. Cascarón autenticado, 6. Pruebas e2e (delta `user-auth`), 7. Cierre, KAM-02 · Tareas
 
 ### Community 120 - "Community 120"
 Cohesion: 0.22
-Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-01 · Andamiaje del proyecto y disciplina de trabajo, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-02 · Autenticación, organizaciones y aislamiento, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 121 - "Community 121"
-Cohesion: 0.25
-Nodes (5): general, name, nav, option, row
+Cohesion: 0.22
+Nodes (8): Capabilities, Fuera de alcance, Impact, KAM-01 · Andamiaje del proyecto y disciplina de trabajo, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 122 - "Community 122"
 Cohesion: 0.25
-Nodes (6): onChange, pdf, photo, preview, { unmount }, user
+Nodes (5): general, name, nav, option, row
 
 ### Community 123 - "Community 123"
 Cohesion: 0.25
-Nodes (7): client, first, inserted, orgRow, params, second, statusRow
+Nodes (6): onChange, pdf, photo, preview, { unmount }, user
 
 ### Community 124 - "Community 124"
 Cohesion: 0.25
-Nodes (4): ExpenseItemRow, ExpenseItemService, ExpenseItemWithNames, ExpenseItem
+Nodes (7): client, first, inserted, orgRow, params, second, statusRow
 
 ### Community 125 - "Community 125"
-Cohesion: 0.25
-Nodes (8): 12. Alcance y Fases (Roadmap), Fase 0 — Cimientos *(no negociable, va primero)*, Fase 1 — MVP: el ciclo del dinero, Fase 2 — Tareas: el trabajo propio, Fase 3 — Inventario suave, activos y reportes, Fase 4 — Bitácora completa y tareas conectadas, Fase 5 — Precisión y producción, Fase 6 — Cara al cliente y expansión
+Cohesion: 0.36
+Nodes (5): BusinessLineProvider(), BusinessLineState, LINE, useBusinessLineStore, ActiveLine
 
 ### Community 126 - "Community 126"
 Cohesion: 0.25
-Nodes (8): 6.4 Bitácora de actividad, Distinción importante, Dos formas de verla — una sola fuente, Qué guarda cada evento, Qué problema resuelve, Qué se registra, Reglas irrenunciables, Retención *(decisión tomada)*
+Nodes (8): 12. Alcance y Fases (Roadmap), Fase 0 — Cimientos *(no negociable, va primero)*, Fase 1 — MVP: el ciclo del dinero, Fase 2 — Tareas: el trabajo propio, Fase 3 — Inventario suave, activos y reportes, Fase 4 — Bitácora completa y tareas conectadas, Fase 5 — Precisión y producción, Fase 6 — Cara al cliente y expansión
 
 ### Community 127 - "Community 127"
-Cohesion: 0.25
-Nodes (8): 8. Egresos, 9. Pedidos y ventas, Cobros y pagos, code:sql (-- Ítems: insumos, productos y activos en una sola tabla, di), code:sql (-- Una sola bandeja: compras (traen material) y gastos (no t), code:sql (create table payments (), code:sql (-- Contactos: proveedores, clientes, o ambos), Una decisión que conviene revisar
+Cohesion: 0.29
+Nodes (8): 16. Seguridad a nivel de fila (RLS), Bitácora: inalterable de verdad, Cómo se ocultan los costos al ayudante, code:sql (-- Tarea programada mensual (pg_cron): exportar y luego resu), code:sql (alter table orders enable row level security;), code:sql (alter table activity_log enable row level security;), Matriz de acceso, Patrón general
 
 ### Community 128 - "Community 128"
 Cohesion: 0.25
@@ -820,119 +821,119 @@ Nodes (7): code:block1 (Error: expect(locator).toContainText(expected) failed), 
 
 ### Community 133 - "Community 133"
 Cohesion: 0.25
-Nodes (7): catalog-directory Specification, Requirement: Catálogo y contactos accesibles desde la navegación base, Requirement: Pantalla de contactos (V13), Requirements, Scenario: El ayudante llega al catálogo, Scenario: Filtro por rol, Scenario: Selección sin abandonar la pantalla
+Nodes (6): MODIFIED Requirements, Requirement: Creación de contactos al vuelo, Scenario: Con teléfono, Scenario: El contacto creado queda seleccionado, Scenario: Nombre inexistente ofrece crearlo, Scenario: Sin teléfono
 
 ### Community 134 - "Community 134"
 Cohesion: 0.25
-Nodes (6): MODIFIED Requirements, Requirement: Creación de contactos al vuelo, Scenario: Con teléfono, Scenario: El contacto creado queda seleccionado, Scenario: Nombre inexistente ofrece crearlo, Scenario: Sin teléfono
+Nodes (7): Capabilities, Impact, KAM-03 · Bitácora desde el primer día, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 135 - "Community 135"
-Cohesion: 0.29
-Nodes (6): ADDED Requirements, Purpose, Requirement: El catálogo no almacena nada derivado, Requirement: Un registro archivado no se edita sin desarchivarlo, Scenario: Inspección de las columnas del catálogo, Scenario: Intento de editar un registro archivado
+Cohesion: 0.25
+Nodes (7): Context, Decisions, Goals / Non-Goals, KAM-05 · Diseño, Migration Plan, Open Questions, Risks / Trade-offs
 
 ### Community 136 - "Community 136"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-03 · Bitácora desde el primer día, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-05 · Estados configurables por línea, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 137 - "Community 137"
 Cohesion: 0.25
-Nodes (7): Context, Decisions, Goals / Non-Goals, KAM-05 · Diseño, Migration Plan, Open Questions, Risks / Trade-offs
+Nodes (7): Capabilities, Impact, KAM-04 · Configuración de la organización y semilla, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 138 - "Community 138"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-05 · Estados configurables por línea, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Context, Decisions, Design — KAM-01 · Andamiaje del proyecto, Goals / Non-Goals, Migration Plan, Open Questions, Risks / Trade-offs
 
 ### Community 139 - "Community 139"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-04 · Configuración de la organización y semilla, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-07 · Pedidos: tablero y detalle, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 140 - "Community 140"
 Cohesion: 0.25
-Nodes (7): Context, Decisions, Design — KAM-01 · Andamiaje del proyecto, Goals / Non-Goals, Migration Plan, Open Questions, Risks / Trade-offs
+Nodes (7): Capabilities, Impact, KAM-06 · Catálogo y directorio, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 141 - "Community 141"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-07 · Pedidos: tablero y detalle, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-08 · Alta y edición de pedidos, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 142 - "Community 142"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-06 · Catálogo y directorio, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-10 · Cobros y pagos, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 143 - "Community 143"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-08 · Alta y edición de pedidos, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-09 · Egresos: compras y gastos, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 144 - "Community 144"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-10 · Cobros y pagos, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-08 · Alta y edición de pedidos, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 145 - "Community 145"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-09 · Egresos: compras y gastos, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-07 · Pedidos: tablero y detalle, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 146 - "Community 146"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-08 · Alta y edición de pedidos, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-06 · Catálogo y directorio, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 147 - "Community 147"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-07 · Pedidos: tablero y detalle, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Context, Decisions, Goals / Non-Goals, KAM-05 · Diseño, Migration Plan, Open Questions, Risks / Trade-offs
 
 ### Community 148 - "Community 148"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-06 · Catálogo y directorio, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-05 · Estados configurables por línea, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 149 - "Community 149"
 Cohesion: 0.25
-Nodes (7): Context, Decisions, Goals / Non-Goals, KAM-05 · Diseño, Migration Plan, Open Questions, Risks / Trade-offs
+Nodes (7): Capabilities, Impact, KAM-04 · Configuración de la organización y semilla, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 150 - "Community 150"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-05 · Estados configurables por línea, Modified Capabilities, New Capabilities, What Changes, Why
+Nodes (7): Capabilities, Impact, KAM-03 · Bitácora desde el primer día, Modified Capabilities, New Capabilities, What Changes, Why
 
 ### Community 151 - "Community 151"
 Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-04 · Configuración de la organización y semilla, Modified Capabilities, New Capabilities, What Changes, Why
-
-### Community 152 - "Community 152"
-Cohesion: 0.25
-Nodes (7): Capabilities, Impact, KAM-03 · Bitácora desde el primer día, Modified Capabilities, New Capabilities, What Changes, Why
-
-### Community 153 - "Community 153"
-Cohesion: 0.25
 Nodes (7): Context, Decisions, Design — KAM-01 · Andamiaje del proyecto, Goals / Non-Goals, Migration Plan, Open Questions, Risks / Trade-offs
 
-### Community 154 - "Community 154"
+### Community 152 - "Community 152"
 Cohesion: 0.33
 Nodes (4): geistMono, geistSans, metadata, ThemeProvider()
 
-### Community 155 - "Community 155"
+### Community 153 - "Community 153"
 Cohesion: 0.29
 Nodes (4): CANCELADO, REGISTRADO, renombrado, user
 
-### Community 156 - "Community 156"
+### Community 154 - "Community 154"
 Cohesion: 0.29
 Nodes (5): cookieValues, getUser, listActiveForUser, USER, value
 
-### Community 157 - "Community 157"
+### Community 155 - "Community 155"
 Cohesion: 0.29
 Nodes (6): client, failing, input, invitationRow, [payload], service
 
-### Community 158 - "Community 158"
+### Community 156 - "Community 156"
+Cohesion: 0.29
+Nodes (7): 6.3 Módulo de Tareas, Contenido de una tarea, Entregables, La regla que evita el desorden, Lo que este módulo NO hará, Vínculos, Vistas y avisos
+
+### Community 157 - "Community 157"
 Cohesion: 0.29
 Nodes (7): 6.2 Estados y flujos de trabajo, Cómo descubrir los estados de una línea nueva, Flujo A — Sublimación (definido), Flujo B — Alfarería (provisional, y probablemente no necesite tablero), Flujo C — Impresión 3D (provisional, a confirmar con la práctica), La regla que evita que la flexibilidad rompa el sistema, Resumen comparativo
 
-### Community 159 - "Community 159"
+### Community 158 - "Community 158"
 Cohesion: 0.29
 Nodes (7): 11. Consideraciones de Buenas Prácticas, Facilidad de uso, Mantenibilidad — la lección de la versión anterior, Notificaciones sin fatiga, Rendimiento, Seguridad y privacidad, SEO
 
+### Community 159 - "Community 159"
+Cohesion: 0.29
+Nodes (7): 11. Vistas derivadas, 8. Egresos, Cobros y pagos, code:sql (-- Una sola bandeja: compras (traen material) y gastos (no t), code:sql (create table payments (), code:sql (-- Saldo actual por ítem), code:sql (-- Contactos: proveedores, clientes, o ambos)
+
 ### Community 160 - "Community 160"
-Cohesion: 0.33
-Nodes (7): 16. Seguridad a nivel de fila (RLS), Bitácora: inalterable de verdad, Cómo se ocultan los costos al ayudante, code:sql (-- Tarea programada mensual (pg_cron): exportar y luego resu), code:sql (alter table orders enable row level security;), Matriz de acceso, Patrón general
+Cohesion: 0.29
+Nodes (4): Cómo auditar una tabla nueva, Migraciones, Prueba obligatoria, Qué se audita y qué no
 
 ### Community 161 - "Community 161"
 Cohesion: 0.29
-Nodes (4): Cómo auditar una tabla nueva, Migraciones, Prueba obligatoria, Qué se audita y qué no
+Nodes (6): catalog-directory Specification, Requirement: Catálogo y contactos accesibles desde la navegación base, Requirement: El catálogo no almacena nada derivado, Requirements, Scenario: El ayudante llega al catálogo, Scenario: Inspección de las columnas del catálogo
 
 ### Community 162 - "Community 162"
 Cohesion: 0.29
@@ -944,19 +945,19 @@ Nodes (6): 1. Base de datos, 2. Pruebas pgTAP (`supabase/tests/status_integrity.
 
 ### Community 164 - "Community 164"
 Cohesion: 0.29
-Nodes (7): Requirement: Aislamiento, roles y archivado de egresos, Scenario: Desarchivar, Scenario: El ayudante consulta egresos, Scenario: El ayudante intenta registrar, Scenario: El egreso archivado conserva su historia, Scenario: Intento de borrado, Scenario: Miembro de otra organización
+Nodes (7): Requirement: El total del egreso se deriva, nunca se almacena, Scenario: Coincide con la suma manual, Scenario: Compra sin líneas registrada por semilla, Scenario: Compra sin pagos, Scenario: Ninguna columna almacena el derivado, Scenario: Total de un gasto, Scenario: Total de una compra con líneas
 
 ### Community 165 - "Community 165"
 Cohesion: 0.29
-Nodes (7): Requirement: Formulario de gasto (V9), Scenario: Asignar a un pedido, Scenario: Gasto mínimo en cinco interacciones o menos, Scenario: Línea activa concreta, Scenario: Línea activa "Todas", Scenario: Sin categoría, Scenario: Sin monto
+Nodes (7): Requirement: Modelo de egreso con dos tipos en una sola tabla, Scenario: Compra con monto propio, Scenario: Compra sin proveedor, Scenario: Egreso sin línea de negocio, Scenario: Gasto sin categoría, Scenario: Gasto sin monto, Scenario: Identificador y fecha del hecho fijados por el cliente
 
 ### Community 166 - "Community 166"
 Cohesion: 0.29
-Nodes (7): Requirement: Modelo de egreso con dos tipos en una sola tabla, Scenario: Compra con monto propio, Scenario: Compra sin proveedor, Scenario: Egreso sin línea de negocio, Scenario: Gasto sin categoría, Scenario: Gasto sin monto, Scenario: Identificador y fecha del hecho fijados por el cliente
+Nodes (7): Requirement: Formulario de gasto (V9), Scenario: Asignar a un pedido, Scenario: Gasto mínimo en cinco interacciones o menos, Scenario: Línea activa concreta, Scenario: Línea activa "Todas", Scenario: Sin categoría, Scenario: Sin monto
 
 ### Community 167 - "Community 167"
 Cohesion: 0.29
-Nodes (7): Requirement: El total del egreso se deriva, nunca se almacena, Scenario: Coincide con la suma manual, Scenario: Compra sin líneas registrada por semilla, Scenario: Compra sin pagos, Scenario: Ninguna columna almacena el derivado, Scenario: Total de un gasto, Scenario: Total de una compra con líneas
+Nodes (7): Requirement: Aislamiento, roles y archivado de egresos, Scenario: Desarchivar, Scenario: El ayudante consulta egresos, Scenario: El ayudante intenta registrar, Scenario: El egreso archivado conserva su historia, Scenario: Intento de borrado, Scenario: Miembro de otra organización
 
 ### Community 168 - "Community 168"
 Cohesion: 0.33
@@ -978,53 +979,53 @@ Nodes (4): Cómo auditar una tabla nueva, Migraciones, Prueba obligatoria, Qué 
 Cohesion: 0.33
 Nodes (5): add, back, remove, { rerender }, user
 
-### Community 173 - "Community 173"
+### Community 174 - "Community 174"
 Cohesion: 0.33
 Nodes (5): client, inserted, newPhoto, path, row
 
 ### Community 175 - "Community 175"
 Cohesion: 0.33
-Nodes (6): Requirement: Cancelación de pedido, Scenario: Cancelar con confirmación, Scenario: Línea sin estado de cancelación, Scenario: Rechazar la confirmación, Scenario: Renombrar el estado no cambia la cancelación, Scenario: Ya cancelado
+Nodes (6): 10. Inventario, 9. Pedidos y ventas, code:sql (-- Ítems: insumos, productos y activos en una sola tabla, di), code:sql (create table orders (), code:sql (create table inventory_movements (), Una decisión que conviene revisar
 
 ### Community 176 - "Community 176"
-Cohesion: 0.33
-Nodes (6): Requirement: Mínimos obligatorios del pedido, Scenario: Alta mínima, Scenario: El servidor no confía en el formulario, Scenario: Línea con cantidad cero, Scenario: Sin cliente, Scenario: Sin líneas
+Cohesion: 0.4
+Nodes (4): ADDED Requirements, Purpose, Requirement: Un registro archivado no se edita sin desarchivarlo, Scenario: Intento de editar un registro archivado
 
 ### Community 177 - "Community 177"
 Cohesion: 0.33
-Nodes (6): Requirement: El alta es una sola operación y el estado inicial lo asigna la base, Scenario: Alta registrada en la bitácora, Scenario: La base rechaza el alta sin líneas, Scenario: Nace en el estado inicial de su línea, Scenario: Renombrar el estado inicial no cambia el comportamiento, Scenario: Un fallo deja todo como estaba
+Nodes (6): Requirement: La alerta de retraso se decide por el tipo de estado, Scenario: Ninguna comparación por nombre, Scenario: Sin fecha comprometida, Scenario: Vencido y en espera, Scenario: Vencido y en proceso, Scenario: Vencido y terminado
 
 ### Community 178 - "Community 178"
 Cohesion: 0.33
-Nodes (6): Requirement: La alerta de retraso se decide por el tipo de estado, Scenario: Ninguna comparación por nombre, Scenario: Sin fecha comprometida, Scenario: Vencido y en espera, Scenario: Vencido y en proceso, Scenario: Vencido y terminado
+Nodes (6): Requirement: El alta es una sola operación y el estado inicial lo asigna la base, Scenario: Alta registrada en la bitácora, Scenario: La base rechaza el alta sin líneas, Scenario: Nace en el estado inicial de su línea, Scenario: Renombrar el estado inicial no cambia el comportamiento, Scenario: Un fallo deja todo como estaba
 
 ### Community 179 - "Community 179"
 Cohesion: 0.33
-Nodes (5): 1. Migración de la bitácora, 2. Pruebas pgTAP, 3. Procedimiento para tablas futuras, 4. Cierre, KAM-03 · Tareas — Bitácora desde el primer día
+Nodes (6): Requirement: Cancelación de pedido, Scenario: Cancelar con confirmación, Scenario: Línea sin estado de cancelación, Scenario: Rechazar la confirmación, Scenario: Renombrar el estado no cambia la cancelación, Scenario: Ya cancelado
 
 ### Community 180 - "Community 180"
 Cohesion: 0.33
-Nodes (6): Requirement: El estado de pago se deriva de los pagos registrados, Scenario: El estado no se guarda, Scenario: Monto parcial fuera de rango, Scenario: Registrado como pagado, Scenario: Registrado como parcial, Scenario: Registrado como pendiente
+Nodes (6): Requirement: Mínimos obligatorios del pedido, Scenario: Alta mínima, Scenario: El servidor no confía en el formulario, Scenario: Línea con cantidad cero, Scenario: Sin cliente, Scenario: Sin líneas
 
 ### Community 181 - "Community 181"
 Cohesion: 0.33
-Nodes (6): Requirement: Comprobante comprimido en el cliente y subido en segundo plano, Scenario: El guardado no espera, Scenario: Formato no admitido, Scenario: Foto de 8 MB, Scenario: La subida falla, Scenario: Solo la propia organización ve el comprobante
+Nodes (5): 1. Migración de la bitácora, 2. Pruebas pgTAP, 3. Procedimiento para tablas futuras, 4. Cierre, KAM-03 · Tareas — Bitácora desde el primer día
 
 ### Community 182 - "Community 182"
 Cohesion: 0.33
-Nodes (6): Requirement: Detalle del egreso, Scenario: Compra completa, Scenario: Compra completa, Scenario: Enlace directo, Scenario: Gasto asignado a un pedido, Scenario: Historial
+Nodes (6): Requirement: Formulario de compra (V8), Scenario: Compra completa, Scenario: El total sigue a las filas, Scenario: Proveedor nuevo al vuelo, Scenario: Quitar una fila, Scenario: Sin proveedor
 
 ### Community 183 - "Community 183"
 Cohesion: 0.33
-Nodes (6): Requirement: Formulario de compra (V8), Scenario: Compra completa, Scenario: El total sigue a las filas, Scenario: Proveedor nuevo al vuelo, Scenario: Quitar una fila, Scenario: Sin proveedor
+Nodes (6): Requirement: Detalle del egreso, Scenario: Compra completa, Scenario: Compra completa, Scenario: Enlace directo, Scenario: Gasto asignado a un pedido, Scenario: Historial
 
 ### Community 184 - "Community 184"
 Cohesion: 0.33
-Nodes (6): Requirement: Un pago apunta a exactamente un destino con dirección coherente, Scenario: Dirección incoherente con el destino, Scenario: Dos destinos, Scenario: Monto no positivo, Scenario: Pago válido a un egreso, Scenario: Sin destino
+Nodes (6): Requirement: Comprobante comprimido en el cliente y subido en segundo plano, Scenario: El guardado no espera, Scenario: Formato no admitido, Scenario: Foto de 8 MB, Scenario: La subida falla, Scenario: Solo la propia organización ve el comprobante
 
 ### Community 185 - "Community 185"
 Cohesion: 0.33
-Nodes (6): Requirement: El estado de pago se deriva, no se edita, Scenario: No hay control para fijarlo, Scenario: Pedido con anticipo, Scenario: Pedido de total cero, Scenario: Pedido saldado, Scenario: Pedido sin cobros
+Nodes (6): Requirement: El estado de pago se deriva de los pagos registrados, Scenario: El estado no se guarda, Scenario: Monto parcial fuera de rango, Scenario: Registrado como pagado, Scenario: Registrado como parcial, Scenario: Registrado como pendiente
 
 ### Community 186 - "Community 186"
 Cohesion: 0.33
@@ -1032,67 +1033,67 @@ Nodes (6): Requirement: Indicadores agregados Por cobrar y Por pagar, Scenario: 
 
 ### Community 187 - "Community 187"
 Cohesion: 0.33
-Nodes (6): Requirement: Modelo de movimiento de dinero, Scenario: Método ausente, Scenario: Método fuera del dominio, Scenario: Monto cero, Scenario: Monto negativo, Scenario: Movimiento válido
+Nodes (6): Requirement: Un pago apunta a exactamente un destino con dirección coherente, Scenario: Dirección incoherente con el destino, Scenario: Dos destinos, Scenario: Monto no positivo, Scenario: Pago válido a un egreso, Scenario: Sin destino
 
 ### Community 188 - "Community 188"
 Cohesion: 0.33
+Nodes (6): Requirement: El estado de pago se deriva, no se edita, Scenario: No hay control para fijarlo, Scenario: Pedido con anticipo, Scenario: Pedido de total cero, Scenario: Pedido saldado, Scenario: Pedido sin cobros
+
+### Community 189 - "Community 189"
+Cohesion: 0.33
+Nodes (6): Requirement: Modelo de movimiento de dinero, Scenario: Método ausente, Scenario: Método fuera del dominio, Scenario: Monto cero, Scenario: Monto negativo, Scenario: Movimiento válido
+
+### Community 190 - "Community 190"
+Cohesion: 0.33
 Nodes (5): 1. Migración de la bitácora, 2. Pruebas pgTAP, 3. Procedimiento para tablas futuras, 4. Cierre, KAM-03 · Tareas — Bitácora desde el primer día
 
-### Community 191 - "Community 191"
+### Community 193 - "Community 193"
 Cohesion: 0.6
 Nodes (3): DUE_DATE_SHORTCUTS, DueDateShortcut, shiftDate()
 
-### Community 192 - "Community 192"
-Cohesion: 0.4
-Nodes (4): Call, FakeResult, query, result
-
-### Community 193 - "Community 193"
+### Community 194 - "Community 194"
 Cohesion: 0.4
 Nodes (4): client, failing, [payload], row
 
-### Community 194 - "Community 194"
-Cohesion: 0.4
-Nodes (4): code:bash (npm run dev), Deploy on Vercel, Getting Started, Learn More
-
 ### Community 195 - "Community 195"
 Cohesion: 0.4
-Nodes (5): 10. Integraciones y Funcionalidades de Terceros, Deliberadamente evitado, Deseables después, Necesarias, Puerta de conexión con otras plataformas *(preparación futura)*
+Nodes (4): Call, FakeResult, query, result
 
 ### Community 196 - "Community 196"
 Cohesion: 0.4
-Nodes (5): 10. Inventario, 12. Tareas, code:sql (create table orders (), code:sql (create table inventory_movements (), code:sql (create table tasks ()
+Nodes (4): code:bash (npm run dev), Deploy on Vercel, Getting Started, Learn More
 
 ### Community 197 - "Community 197"
 Cohesion: 0.4
-Nodes (4): Convenciones no negociables, Kamay — Constitución del proyecto, Pruebas, Stack
+Nodes (5): 10. Integraciones y Funcionalidades de Terceros, Deliberadamente evitado, Deseables después, Necesarias, Puerta de conexión con otras plataformas *(preparación futura)*
 
 ### Community 198 - "Community 198"
 Cohesion: 0.4
-Nodes (5): Requirement: El ayudante crea y edita, pero no archiva, Scenario: El ayudante crea y edita, Scenario: El ayudante intenta archivar, Scenario: El ayudante intenta desarchivar, Scenario: El dueño archiva
+Nodes (4): Convenciones no negociables, Kamay — Constitución del proyecto, Pruebas, Stack
 
 ### Community 199 - "Community 199"
 Cohesion: 0.4
-Nodes (5): Requirement: La búsqueda por nombre tolera acentos y mayúsculas, Scenario: Buscar con tilde lo que está sin tilde, Scenario: Buscar sin tilde lo que está con tilde, Scenario: La búsqueda no devuelve archivados, Scenario: Mayúsculas indiferentes
+Nodes (5): Requirement: El ayudante crea y edita, pero no archiva, Scenario: El ayudante crea y edita, Scenario: El ayudante intenta archivar, Scenario: El ayudante intenta desarchivar, Scenario: El dueño archiva
 
 ### Community 200 - "Community 200"
 Cohesion: 0.4
-Nodes (5): Requirement: Las columnas del tablero salen del juego de estados de la línea, Scenario: Línea con juego propio de seis estados, Scenario: Línea con juego propio de tres estados, Scenario: Línea sin juego propio, Scenario: Un estado se renombra
+Nodes (5): Requirement: La búsqueda por nombre tolera acentos y mayúsculas, Scenario: Buscar con tilde lo que está sin tilde, Scenario: Buscar sin tilde lo que está con tilde, Scenario: La búsqueda no devuelve archivados, Scenario: Mayúsculas indiferentes
 
 ### Community 201 - "Community 201"
 Cohesion: 0.4
-Nodes (5): Requirement: Numeración visible por organización sin duplicados, Scenario: El número no se reutiliza, Scenario: Inserciones simultáneas, Scenario: Numeración independiente entre organizaciones, Scenario: Primer pedido de una organización
+Nodes (5): Requirement: Mover un pedido de estado, Scenario: Arrastre exitoso, Scenario: Destino fuera del juego de la línea, Scenario: El servidor rechaza el movimiento, Scenario: La tarjeta no espera al servidor
 
 ### Community 202 - "Community 202"
 Cohesion: 0.4
-Nodes (5): Requirement: Vistas alternativas y filtros del tablero, Scenario: Los filtros sobreviven al cambio de vista, Scenario: Pedido archivado oculto por defecto, Scenario: Ver archivados, Scenario: Vista de calendario
+Nodes (5): Requirement: Formulario de nuevo pedido (V5), Scenario: Ambos roles, Scenario: Línea activa preseleccionada, Scenario: Pantalla completa en móvil, Scenario: «Todas» exige elegir línea
 
 ### Community 203 - "Community 203"
 Cohesion: 0.4
-Nodes (5): Requirement: Adjuntos del pedido, Scenario: Alta con imagen de referencia, Scenario: Archivo demasiado pesado, Scenario: La subida falla pero el pedido queda, Scenario: Quitar un adjunto desde la edición
+Nodes (5): Requirement: Vistas alternativas y filtros del tablero, Scenario: Los filtros sobreviven al cambio de vista, Scenario: Pedido archivado oculto por defecto, Scenario: Ver archivados, Scenario: Vista de calendario
 
 ### Community 204 - "Community 204"
 Cohesion: 0.4
-Nodes (5): Requirement: Mover un pedido de estado, Scenario: Arrastre exitoso, Scenario: Destino fuera del juego de la línea, Scenario: El servidor rechaza el movimiento, Scenario: La tarjeta no espera al servidor
+Nodes (5): Requirement: La columna en cola se ordena por llegada y muestra posición, Scenario: Columna que no es cola, Scenario: Entrada a la cola, Scenario: Salida y regreso a la cola, Scenario: Tres pedidos en cola
 
 ### Community 205 - "Community 205"
 Cohesion: 0.4
@@ -1100,19 +1101,19 @@ Nodes (5): Requirement: Las líneas de pedido se archivan, nunca se borran, Scen
 
 ### Community 206 - "Community 206"
 Cohesion: 0.4
-Nodes (5): Requirement: Formulario de nuevo pedido (V5), Scenario: Ambos roles, Scenario: Línea activa preseleccionada, Scenario: Pantalla completa en móvil, Scenario: «Todas» exige elegir línea
+Nodes (5): Requirement: Las columnas del tablero salen del juego de estados de la línea, Scenario: Línea con juego propio de seis estados, Scenario: Línea con juego propio de tres estados, Scenario: Línea sin juego propio, Scenario: Un estado se renombra
 
 ### Community 207 - "Community 207"
 Cohesion: 0.4
-Nodes (5): Requirement: La columna en cola se ordena por llegada y muestra posición, Scenario: Columna que no es cola, Scenario: Entrada a la cola, Scenario: Salida y regreso a la cola, Scenario: Tres pedidos en cola
+Nodes (5): Requirement: Adjuntos del pedido, Scenario: Alta con imagen de referencia, Scenario: Archivo demasiado pesado, Scenario: La subida falla pero el pedido queda, Scenario: Quitar un adjunto desde la edición
 
 ### Community 208 - "Community 208"
 Cohesion: 0.4
-Nodes (5): Requirement: El último costo de un ítem se deriva de sus compras, Scenario: Comprado dos veces, Scenario: El ayudante no obtiene costos, Scenario: La compra archivada no cuenta, Scenario: Nunca comprado
+Nodes (5): Requirement: Numeración visible por organización sin duplicados, Scenario: El número no se reutiliza, Scenario: Inserciones simultáneas, Scenario: Numeración independiente entre organizaciones, Scenario: Primer pedido de una organización
 
 ### Community 209 - "Community 209"
 Cohesion: 0.4
-Nodes (5): Requirement: Anular un cobro mediante movimiento inverso, Scenario: Ambos hechos quedan registrados, Scenario: Anulación devuelve el saldo, Scenario: La fila no se borra, Scenario: Un movimiento archivado no se edita
+Nodes (5): Requirement: El último costo de un ítem se deriva de sus compras, Scenario: Comprado dos veces, Scenario: El ayudante no obtiene costos, Scenario: La compra archivada no cuenta, Scenario: Nunca comprado
 
 ### Community 210 - "Community 210"
 Cohesion: 0.4
@@ -1120,31 +1121,31 @@ Nodes (5): Requirement: Un movimiento apunta exactamente a un destino, Scenario:
 
 ### Community 211 - "Community 211"
 Cohesion: 0.4
-Nodes (5): Requirement: La dirección se deduce del destino y la base de datos la impone, Scenario: Cobro de pedido, Scenario: Dirección contraria sobre un egreso, Scenario: Dirección contraria sobre un pedido, Scenario: Pago de egreso
+Nodes (5): Requirement: Un movimiento registrado no se edita, Scenario: Archivar sí está permitido, Scenario: Corrección por la vía prevista, Scenario: Intento de cambiar el destino, Scenario: Intento de corregir el importe
 
 ### Community 212 - "Community 212"
 Cohesion: 0.4
-Nodes (5): Requirement: Un movimiento registrado no se edita, Scenario: Archivar sí está permitido, Scenario: Corrección por la vía prevista, Scenario: Intento de cambiar el destino, Scenario: Intento de corregir el importe
+Nodes (5): Requirement: La dirección se deduce del destino y la base de datos la impone, Scenario: Cobro de pedido, Scenario: Dirección contraria sobre un egreso, Scenario: Dirección contraria sobre un pedido, Scenario: Pago de egreso
 
 ### Community 213 - "Community 213"
 Cohesion: 0.4
-Nodes (5): Requirement: Registrar un cobro desde el detalle del pedido, Scenario: Anticipo parcial, Scenario: Cobro del saldo completo, Scenario: El cobro queda en la bitácora, Scenario: Monto vacío o no positivo
+Nodes (5): Requirement: Anular un cobro mediante movimiento inverso, Scenario: Ambos hechos quedan registrados, Scenario: Anulación devuelve el saldo, Scenario: La fila no se borra, Scenario: Un movimiento archivado no se edita
 
-### Community 217 - "Community 217"
-Cohesion: 0.5
-Nodes (4): 13. Riesgos, Dudas y Decisiones Pendientes, Decisiones abiertas (no bloqueantes), Decisiones ya resueltas, Riesgos
+### Community 214 - "Community 214"
+Cohesion: 0.4
+Nodes (5): Requirement: Registrar un cobro desde el detalle del pedido, Scenario: Anticipo parcial, Scenario: Cobro del saldo completo, Scenario: El cobro queda en la bitácora, Scenario: Monto vacío o no positivo
 
 ### Community 218 - "Community 218"
 Cohesion: 0.5
-Nodes (4): 3.1 Dueño / administrador, 3.2 Ayudante / operador (1 o 2 personas), 3.3 Organizaciones futuras, 3. Público Objetivo
+Nodes (4): 5. Propuesta de Valor y Tono de Marca, Diferenciadores frente a la versión anterior, Propuesta de valor interna, Tono y personalidad
 
 ### Community 219 - "Community 219"
 Cohesion: 0.5
-Nodes (4): 5. Identidad y multi-tenant, code:sql (-- Organizaciones (tenants)), code:sql (create or replace function is_member(org uuid)), Funciones auxiliares de seguridad
+Nodes (4): 3.1 Dueño / administrador, 3.2 Ayudante / operador (1 o 2 personas), 3.3 Organizaciones futuras, 3. Público Objetivo
 
 ### Community 220 - "Community 220"
 Cohesion: 0.5
-Nodes (4): Requirement: Tablas del catálogo y el directorio con la forma canónica, Scenario: Mismo nombre de variante en ítems distintos, Scenario: Tipo de ítem fuera del juego permitido, Scenario: Variante duplicada dentro del mismo ítem
+Nodes (4): 5. Identidad y multi-tenant, code:sql (-- Organizaciones (tenants)), code:sql (create or replace function is_member(org uuid)), Funciones auxiliares de seguridad
 
 ### Community 221 - "Community 221"
 Cohesion: 0.5
@@ -1156,7 +1157,7 @@ Nodes (4): Requirement: Pantalla de catálogo (V10), Scenario: Fila que abre el 
 
 ### Community 223 - "Community 223"
 Cohesion: 0.5
-Nodes (4): Requirement: Archivar retira de listados y buscadores sin borrar la historia, Scenario: La referencia histórica sobrevive al archivado, Scenario: Nadie borra, Scenario: Ítem archivado fuera de los listados
+Nodes (4): Requirement: Tablas del catálogo y el directorio con la forma canónica, Scenario: Mismo nombre de variante en ítems distintos, Scenario: Tipo de ítem fuera del juego permitido, Scenario: Variante duplicada dentro del mismo ítem
 
 ### Community 224 - "Community 224"
 Cohesion: 0.5
@@ -1168,7 +1169,7 @@ Nodes (4): Requirement: Pantalla de detalle de ítem (V11), Scenario: Historial 
 
 ### Community 226 - "Community 226"
 Cohesion: 0.5
-Nodes (4): Requirement: Reordenar la cola renumera al resto, Scenario: El orden persiste, Scenario: Se adelanta un pedido, Scenario: Se retrasa un pedido
+Nodes (4): Requirement: Archivar retira de listados y buscadores sin borrar la historia, Scenario: La referencia histórica sobrevive al archivado, Scenario: Nadie borra, Scenario: Ítem archivado fuera de los listados
 
 ### Community 227 - "Community 227"
 Cohesion: 0.5
@@ -1176,47 +1177,47 @@ Nodes (4): Requirement: Líneas de pedido con precio propio, Scenario: Cantidad 
 
 ### Community 228 - "Community 228"
 Cohesion: 0.5
-Nodes (4): Requirement: Guardar y Guardar y crear otro, Scenario: El pedido guardado existe, Scenario: Guardar lleva al detalle, Scenario: Guardar y crear otro conserva línea y canal
+Nodes (4): Requirement: Fecha comprometida con atajos, Scenario: Atajo «Mañana», Scenario: Borrar la fecha, Scenario: Sin fecha
 
 ### Community 229 - "Community 229"
 Cohesion: 0.5
-Nodes (4): Requirement: Fecha comprometida con atajos, Scenario: Atajo «Mañana», Scenario: Borrar la fecha, Scenario: Sin fecha
+Nodes (4): Requirement: Reordenar la cola renumera al resto, Scenario: El orden persiste, Scenario: Se adelanta un pedido, Scenario: Se retrasa un pedido
 
 ### Community 230 - "Community 230"
 Cohesion: 0.5
-Nodes (4): Requirement: Entradas al alta y a la edición, Scenario: Desde el detalle, Scenario: Desde el tablero, Scenario: Volver conserva la vista
+Nodes (4): Requirement: Guardar y Guardar y crear otro, Scenario: El pedido guardado existe, Scenario: Guardar lleva al detalle, Scenario: Guardar y crear otro conserva línea y canal
 
 ### Community 231 - "Community 231"
 Cohesion: 0.5
-Nodes (4): Requirement: Líneas de compra con precio propio, Scenario: Cantidad no positiva, Scenario: El precio de una compra posterior no reescribe la anterior, Scenario: Precio negativo
+Nodes (4): Requirement: Una compra necesita al menos una línea, Scenario: Guardado atómico, Scenario: Intento contra la operación de guardado, Scenario: Intento desde el formulario
 
 ### Community 232 - "Community 232"
 Cohesion: 0.5
-Nodes (4): Requirement: Una compra necesita al menos una línea, Scenario: Guardado atómico, Scenario: Intento contra la operación de guardado, Scenario: Intento desde el formulario
+Nodes (4): Requirement: Un gasto de la línea General queda disponible para el reparto posterior, Scenario: Filtrado por "Todas", Scenario: Filtrado por una línea concreta, Scenario: Gasto en General
 
 ### Community 233 - "Community 233"
 Cohesion: 0.5
-Nodes (4): Requirement: Un gasto de la línea General queda disponible para el reparto posterior, Scenario: Filtrado por "Todas", Scenario: Filtrado por una línea concreta, Scenario: Gasto en General
+Nodes (4): Requirement: Egresos solo en el menú del dueño y redirección por dirección directa, Scenario: Ayudante por dirección directa, Scenario: Menú del ayudante, Scenario: Menú del dueño
 
 ### Community 234 - "Community 234"
 Cohesion: 0.5
-Nodes (4): Requirement: Egresos solo en el menú del dueño y redirección por dirección directa, Scenario: Ayudante por dirección directa, Scenario: Menú del ayudante, Scenario: Menú del dueño
+Nodes (4): Requirement: Pista del último precio en el formulario de compra, Scenario: Insumo comprado antes, Scenario: Insumo nuevo, Scenario: La pista no cambia el valor
 
 ### Community 235 - "Community 235"
 Cohesion: 0.5
-Nodes (4): Requirement: Los pagos alimentan los totales derivados, Scenario: Dos pagos, Scenario: Pago archivado, Scenario: Sin pagos
+Nodes (4): Requirement: El sobrepago se advierte pero se permite, Scenario: Advertencia antes de confirmar, Scenario: El importe no se recorta, Scenario: Sobrepago confirmado
 
 ### Community 236 - "Community 236"
 Cohesion: 0.5
-Nodes (4): Requirement: Aislamiento por organización de los movimientos, Scenario: Crear en organización ajena, Scenario: Destino de otra organización, Scenario: Movimientos de otra organización
+Nodes (4): Requirement: Los pagos alimentan los totales derivados, Scenario: Dos pagos, Scenario: Pago archivado, Scenario: Sin pagos
 
 ### Community 237 - "Community 237"
 Cohesion: 0.5
-Nodes (4): Requirement: El sobrepago se advierte pero se permite, Scenario: Advertencia antes de confirmar, Scenario: El importe no se recorta, Scenario: Sobrepago confirmado
+Nodes (4): Requirement: Aislamiento por organización de los movimientos, Scenario: Crear en organización ajena, Scenario: Destino de otra organización, Scenario: Movimientos de otra organización
 
 ### Community 240 - "Community 240"
 Cohesion: 0.67
-Nodes (3): Requirement: Aislamiento entre organizaciones del catálogo y el directorio, Scenario: Alta y cambio quedan en la bitácora, Scenario: Otra organización no ve nada
+Nodes (3): Requirement: Pantalla de contactos (V13), Scenario: Filtro por rol, Scenario: Selección sin abandonar la pantalla
 
 ### Community 241 - "Community 241"
 Cohesion: 0.67
@@ -1226,6 +1227,10 @@ Nodes (3): Requirement: Semilla de catálogo y directorio de Geeko Store, Scenar
 Cohesion: 0.67
 Nodes (3): Requirement: Desarchivar devuelve el registro intacto, Scenario: Desarchivar desde el filtro, Scenario: El filtro no mezcla
 
+### Community 243 - "Community 243"
+Cohesion: 0.67
+Nodes (3): Requirement: Aislamiento entre organizaciones del catálogo y el directorio, Scenario: Alta y cambio quedan en la bitácora, Scenario: Otra organización no ve nada
+
 ## Knowledge Gaps
 - **1593 isolated node(s):** `config`, `config`, `eslintConfig`, `nextConfig`, `ATTACHMENT_ENTITY_TYPES` (+1588 more)
   These have ≤1 connection - possible missing edges or undocumented components.
@@ -1234,17 +1239,17 @@ Nodes (3): Requirement: Desarchivar devuelve el registro intacto, Scenario: Desa
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `Community 0` to `Community 1`, `Community 2`, `Community 4`, `Community 6`, `Community 10`, `Community 11`, `Community 43`, `Community 14`, `Community 49`, `Community 19`, `Community 28`?**
+- **Why does `cn()` connect `Community 1` to `Community 2`, `Community 3`, `Community 5`, `Community 6`, `Community 8`, `Community 10`, `Community 43`, `Community 12`, `Community 77`, `Community 15`, `Community 49`, `Community 62`?**
   _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Why does `OrderService` connect `Community 30` to `Community 16`, `Community 18`, `Community 56`, `Community 50`?**
+- **Why does `OrderService` connect `Community 31` to `Community 16`, `Community 9`, `Community 67`, `Community 55`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Why does `ItemService` connect `Community 76` to `Community 32`, `Community 38`, `Community 45`, `Community 16`, `Community 18`?**
+- **Why does `ItemService` connect `Community 81` to `Community 38`, `Community 9`, `Community 44`, `Community 16`, `Community 25`?**
   _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **What connects `config`, `config`, `eslintConfig` to the rest of the system?**
   _1593 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.06 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.09 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06 - nodes in this community are weakly interconnected._

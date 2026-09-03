@@ -202,6 +202,13 @@ revoke insert, update on orders, order_items from anon;
 revoke insert, update on orders, order_items from service_role;
 grant select on orders, order_items to service_role;
 
+-- `order_totals` es la primera vista del proyecto. Las tablas heredan el
+-- privilegio de lectura de `authenticated` de la imagen de Supabase (los
+-- `grant` de arriba son redundantes con eso, y están ahí para que el
+-- privilegio quede documentado); una vista nueva no lo hereda igual en todos
+-- los entornos, así que aquí el `grant` sí es el que decide.
+grant select on order_totals to authenticated, service_role;
+
 alter table orders enable row level security;
 alter table order_items enable row level security;
 

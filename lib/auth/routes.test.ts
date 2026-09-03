@@ -15,10 +15,25 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/settings/lines")).toBe(true);
   });
 
+  it("covers every section of the (app) group", () => {
+    // Cada sección del grupo autenticado tiene que estar aquí: si falta, el
+    // proxy deja pasar la petición y la única defensa es el layout.
+    expect(isProtectedPath("/orders")).toBe(true);
+    expect(isProtectedPath("/orders/a0000000-0000-0000-0000-000000000001")).toBe(
+      true,
+    );
+    expect(isProtectedPath("/catalog")).toBe(true);
+    expect(isProtectedPath("/catalog/90000000-0000-0000-0000-000000000011")).toBe(
+      true,
+    );
+    expect(isProtectedPath("/contacts")).toBe(true);
+  });
+
   it("leaves public routes unprotected", () => {
     expect(isProtectedPath("/")).toBe(false);
     expect(isProtectedPath("/auth/login")).toBe(false);
     expect(isProtectedPath("/dashboardish")).toBe(false);
+    expect(isProtectedPath("/orders-archive")).toBe(false);
   });
 });
 

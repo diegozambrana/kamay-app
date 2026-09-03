@@ -460,6 +460,11 @@ graphify .               # reconstruir el grafo tras cambios de esquema
 openspec view            # estado de los cambios en curso
 ```
 
+El stack local usa el bloque de puertos 544xx en lugar del 543xx por defecto del CLI, para
+convivir con otro proyecto Supabase en la misma máquina: API `54421`, Postgres `54422`,
+Studio `54423`, Mailpit `54424`, analytics `54427`. Los puertos viven en `supabase/config.toml`;
+`supabase status -o env` es la fuente de verdad para scripts y CI.
+
 ---
 
 _Actualizar este archivo al introducir nuevos dominios, límites de autenticación, áreas de base de datos o topología de despliegue._

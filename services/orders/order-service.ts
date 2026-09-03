@@ -1,0 +1,263 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type {
+  ActivityEntry,
+  DeliveryMode,
+  Order,
+  OrderKind,
+} from "@/types";
+
+type OrderRow = {
+  id: string;
+  organization_id: string;
+  business_line_id: string;
+  kind: string;
+  code: number;
+  contact_id: string | null;
+  status_id: string;
+  sales_channel_id: string | null;
+  delivery_mode: string | null;
+  due_date: string | null;
+  occurred_at: string;
+  queued_at: string | null;
+  notes: string | null;
+  archived_at: string | null;
+};
+
+const COLUMNS =
+  "id, organization_id, business_line_id, kind, code, contact_id, status_id, " +
+  "sales_channel_id, delivery_mode, due_date, occurred_at, queued_at, notes, archived_at";
+
+export type OrderFilters = {
+  businessLineId?: string | null;
+  statusId?: string;
+  /** Busca por número de pedido o por nombre del cliente. */
+  search?: string;
+  includeArchived?: boolean;
+};
+
+/** Un pedido con el total que trae la vista, nunca una columna de la tabla. */
+export type OrderWithTotal = Order & { total: number };
+
+/** `numeric` llega como texto desde PostgREST: no se pierde precisión. */
+function toNumber(value: number | string | null | undefined): number {
+  if (value === null || value === undefined) return 0;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/**
+ * Acceso a `orders`. Ninguna consulta a Supabase vive fuera de aquí, y todas
+ * filtran por `organization_id` explícitamente aunque RLS ya lo haga
+ * (convención nº 2).
+ *
+ * Dos reglas las decide la base y este servicio solo las pide: quién puede
+ * archivar (`enforce_archive_rules`) y cuándo se fija `queued_at` (el trigger
+ * de la cola). El total viene de `order_totals` y jamás de una columna.
+ */
+export class OrderService {
+  constructor(private readonly supabase: SupabaseClient) {}
+
+  private toEntity(row: OrderRow): Order {
+    return {
+      id: row.id,
+      organizationId: row.organization_id,
+      businessLineId: row.business_line_id,
+      kind: row.kind as OrderKind,
+      code: row.code,
+      contactId: row.contact_id,
+      statusId: row.status_id,
+      salesChannelId: row.sales_channel_id,
+      deliveryMode: row.delivery_mode as DeliveryMode | null,
+      dueDate: row.due_date,
+      occurredAt: row.occurred_at,
+      queuedAt: row.queued_at,
+      notes: row.notes,
+      archivedAt: row.archived_at,
+    };
+  }
+
+  /**
+   * Los totales de un conjunto de pedidos, en una sola consulta a la vista.
+   * Un pedido ausente de la vista (archivado) cuenta como 0.
+   */
+  private async totalsFor(orderIds: string[]): Promise<Map<string, number>> {
+    if (orderIds.length === 0) return new Map();
+
+    const { data, error } = await this.supabase
+      .from("order_totals")
+      .select("order_id, total")
+      .in("order_id", orderIds);
+
+    if (error) {
+      throw new Error(`No se pudieron calcular los totales: ${error.message}`);
+    }
+
+    const totals = new Map<string, number>();
+    for (const row of (data ?? []) as { order_id: string; total: number | string }[]) {
+      totals.set(row.order_id, toNumber(row.total));
+    }
+    return totals;
+  }
+
+  async list(
+    organizationId: string,
+    filters: OrderFilters = {},
+  ): Promise<OrderWithTotal[]> {
+    let query = this.supabase
+      .from("orders")
+      .select(COLUMNS)
+      .eq("organization_id", organizationId)
+      // El tablero es de pedidos; la venta directa tiene su propio flujo
+      // (V6, KAM-12) y no debe aparecer aquí.
+      .eq("kind", "order");
+
+    if (filters.businessLineId) {
+      query = query.eq("business_line_id", filters.businessLineId);
+    }
+    if (filters.statusId) query = query.eq("status_id", filters.statusId);
+
+    // Lo archivado no aparece salvo que se pida: es la regla de todo listado.
+    if (!filters.includeArchived) query = query.is("archived_at", null);
+
+    const { data, error } = await query.order("occurred_at", { ascending: false });
+
+    if (error) {
+      throw new Error(`No se pudieron cargar los pedidos: ${error.message}`);
+    }
+
+    const orders = (data ?? []).map((row) => this.toEntity(row as unknown as OrderRow));
+    const totals = await this.totalsFor(orders.map((order) => order.id));
+
+    return orders.map((order) => ({
+      ...order,
+      total: totals.get(order.id) ?? 0,
+    }));
+  }
+
+  async getById(
+    organizationId: string,
+    id: string,
+  ): Promise<OrderWithTotal | null> {
+    const { data, error } = await this.supabase
+      .from("orders")
+      .select(COLUMNS)
+      .eq("organization_id", organizationId)
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`No se pudo cargar el pedido: ${error.message}`);
+    }
+    if (!data) return null;
+
+    const order = this.toEntity(data as unknown as OrderRow);
+    const totals = await this.totalsFor([order.id]);
+
+    return { ...order, total: totals.get(order.id) ?? 0 };
+  }
+
+  /**
+   * Cambia el estado. `queued_at` lo ajusta el trigger de la base según el
+   * `is_queue` del destino: no se toca desde aquí, para que el tablero, el
+   * detalle y KAM-08 no puedan divergir.
+   */
+  async moveToStatus(
+    organizationId: string,
+    id: string,
+    statusId: string,
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from("orders")
+      .update({ status_id: statusId, updated_at: new Date().toISOString() })
+      .eq("organization_id", organizationId)
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`No se pudo mover el pedido: ${error.message}`);
+    }
+  }
+
+  /**
+   * Reescribe la llegada de un pedido a la cola. Es la única escritura
+   * directa de `queued_at`; el trigger no la pisa porque solo actúa cuando
+   * cambia `status_id` (design.md D4).
+   */
+  async setQueuedAt(
+    organizationId: string,
+    id: string,
+    queuedAt: string,
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from("orders")
+      .update({ queued_at: queuedAt, updated_at: new Date().toISOString() })
+      .eq("organization_id", organizationId)
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`No se pudo reordenar la cola: ${error.message}`);
+    }
+  }
+
+  /** Reescribe varias llegadas de una vez, al renormalizar la columna. */
+  async setManyQueuedAt(
+    organizationId: string,
+    entries: ReadonlyMap<string, string>,
+  ): Promise<void> {
+    for (const [id, queuedAt] of entries) {
+      await this.setQueuedAt(organizationId, id, queuedAt);
+    }
+  }
+
+  /**
+   * Archivar y desarchivar. Quién puede hacerlo lo decide el trigger
+   * `enforce_archive_rules`: aquí solo se pide, y el error de la base sube
+   * tal cual para que la acción lo traduzca.
+   */
+  async setArchived(
+    organizationId: string,
+    id: string,
+    archived: boolean,
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from("orders")
+      .update({
+        archived_at: archived ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("organization_id", organizationId)
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  /**
+   * El historial del pedido. Un solo historial (convención nº 7): todo lo que
+   * muestre "qué pasó aquí" lee de `activity_log` y de ninguna otra fuente.
+   * La bitácora solo es legible por el dueño; para el ayudante devuelve vacío
+   * por RLS.
+   */
+  async history(organizationId: string, id: string): Promise<ActivityEntry[]> {
+    const { data, error } = await this.supabase
+      .from("activity_log")
+      .select("id, action, actor_id, actor_label, changes, occurred_at")
+      .eq("organization_id", organizationId)
+      .eq("table_name", "orders")
+      .eq("record_id", id)
+      .order("occurred_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      throw new Error(`No se pudo cargar el historial: ${error.message}`);
+    }
+
+    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+      id: row.id as number,
+      action: row.action as ActivityEntry["action"],
+      actorId: (row.actor_id as string | null) ?? null,
+      actorLabel: (row.actor_label as string | null) ?? null,
+      changes: (row.changes as Record<string, unknown> | null) ?? null,
+      occurredAt: row.occurred_at as string,
+    }));
+  }
+}

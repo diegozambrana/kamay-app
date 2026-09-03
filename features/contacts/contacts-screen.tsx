@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { setContactArchived } from "@/actions/contacts";
+import { MainContainer } from "@/components/layout/main-container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,13 +101,11 @@ export function ContactsScreen({
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Contactos</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Proveedores y clientes del negocio.
-        </p>
-      </div>
+    <MainContainer
+      title="Contactos"
+      description="Proveedores y clientes del negocio."
+    >
+      <div className="flex flex-col gap-4">
 
       {error && (
         <Alert variant="destructive">
@@ -310,6 +309,7 @@ export function ContactsScreen({
           contact={current}
         />
       )}
-    </section>
+      </div>
+    </MainContainer>
   );
 }

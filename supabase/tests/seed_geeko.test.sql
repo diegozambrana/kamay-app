@@ -8,7 +8,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(7);
+select plan(12);
 
 -- ── Scenario: Reset leaves Geeko Store ready ──────────────────────────────
 
@@ -60,6 +60,56 @@ select ok(
   (select count(*) from memberships
     where organization_id = '10000000-0000-0000-0000-000000000001') >= 3,
   'semilla: Taller Kamay conserva sus membresías');
+
+-- ── Scenario: La semilla contiene los casos límite de los pedidos ─────────
+-- Hasta KAM-08 no hay pantalla de alta: el tablero y las pruebas e2e viven
+-- de la semilla. Si un cambio futuro la altera, estas aserciones fallan en
+-- vez de dejar las pruebas de pedidos verdes sobre datos que ya no existen
+-- (design.md, riesgo anotado).
+
+select is(
+  (select count(*)::int from orders o
+     join statuses s on s.id = o.status_id
+    where o.organization_id = '10000000-0000-0000-0000-000000000003'
+      and s.is_queue and o.archived_at is null
+      and o.business_line_id = '30000000-0000-0000-0000-000000000001'),
+  3, 'semilla: tres pedidos en la columna En cola de Sublimación');
+
+-- El orden de llegada es el INVERSO al de fecha comprometida, para que la
+-- prueba de la cola discrimine entre ordenar por una y por la otra.
+select results_eq(
+  $$ select code from orders o
+       join statuses s on s.id = o.status_id
+      where o.organization_id = '10000000-0000-0000-0000-000000000003'
+        and s.is_queue and o.archived_at is null
+        and o.business_line_id = '30000000-0000-0000-0000-000000000001'
+      order by o.queued_at asc $$,
+  $$ values (1), (2), (3) $$,
+  'semilla: la cola llega en orden 1, 2, 3 y sus fechas van al revés');
+
+select ok(
+  (select bool_and(a.due_date > b.due_date)
+     from orders a, orders b
+    where a.code = 1 and b.code = 3
+      and a.organization_id = '10000000-0000-0000-0000-000000000003'
+      and b.organization_id = '10000000-0000-0000-0000-000000000003'),
+  'semilla: el primero de la cola es el que se compromete más tarde');
+
+select ok(
+  exists (select 1 from orders o
+            join statuses s on s.id = o.status_id
+           where o.organization_id = '10000000-0000-0000-0000-000000000003'
+             and o.due_date < current_date and s.kind = 'waiting'
+             and o.archived_at is null),
+  'semilla: hay un pedido vencido en un estado de espera (no debe alertar)');
+
+select ok(
+  exists (select 1 from orders o
+            join statuses s on s.id = o.status_id
+           where o.organization_id = '10000000-0000-0000-0000-000000000003'
+             and o.due_date < current_date and s.kind = 'in_progress'
+             and o.archived_at is null),
+  'semilla: hay un pedido vencido en proceso (sí debe alertar)');
 
 select * from finish();
 

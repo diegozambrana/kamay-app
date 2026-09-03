@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { MainContainer } from "@/components/layout/main-container";
 import { SettingsNav } from "@/features/settings/settings-nav";
 import { getOwnerContext } from "@/lib/auth/session-context";
 import { defaultLandingPath } from "@/lib/auth/routes";
@@ -26,15 +27,16 @@ export default async function SettingsLayout({
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
-      <h1 className="text-2xl font-semibold">Configuración</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {context.membership.organization.name}
-      </p>
-
-      <SettingsNav />
-
-      <div className="mt-6">{children}</div>
-    </div>
+    <MainContainer
+      title="Configuración"
+      description={context.membership.organization.name}
+    >
+      {/* Las secciones son pestañas aquí y no entradas del menú lateral: en
+          el menú serían un segundo juego de enlaces con los mismos nombres. */}
+      <div className="mx-auto w-full max-w-4xl">
+        <SettingsNav />
+        <div className="mt-6">{children}</div>
+      </div>
+    </MainContainer>
   );
 }

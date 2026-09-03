@@ -11,6 +11,7 @@ import {
   type DataTableAction,
   type DataTableColumn,
 } from "@/components/data-table/data-table";
+import { MainContainer } from "@/components/layout/main-container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -196,13 +197,11 @@ export function CatalogScreen({
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Catálogo</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Lo que compras, lo que vendes y las máquinas con las que trabajas.
-        </p>
-      </div>
+    <MainContainer
+      title="Catálogo"
+      description="Lo que compras, lo que vendes y las máquinas con las que trabajas."
+    >
+      <div className="flex flex-col gap-4">
 
       <ToggleGroup
         type="single"
@@ -323,6 +322,7 @@ export function CatalogScreen({
           description: `No hay ${ITEM_KIND_LABELS[kind].toLowerCase()} que coincidan con los filtros.`,
         }}
       />
-    </section>
+      </div>
+    </MainContainer>
   );
 }

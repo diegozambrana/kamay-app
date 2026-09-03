@@ -73,6 +73,31 @@ export class StatusService {
   }
 
   /**
+   * Todos los estados de un flujo en la organización, sin resolver alcance y
+   * sin ocultar lo archivado. Es lo que necesita el tablero para saber el
+   * `kind` y el nombre del estado de cada pedido cuando la línea activa es
+   * "Todas" —o cuando un pedido antiguo quedó en un estado ya archivado—,
+   * sin disparar una resolución por línea.
+   */
+  async listAllForFlow(
+    organizationId: string,
+    flow: StatusFlow,
+  ): Promise<Status[]> {
+    const { data, error } = await this.supabase
+      .from("statuses")
+      .select(COLUMNS)
+      .eq("organization_id", organizationId)
+      .eq("flow", flow)
+      .order("position");
+
+    if (error) {
+      throw new Error(`No se pudieron cargar los estados: ${error.message}`);
+    }
+
+    return ((data ?? []) as StatusRow[]).map((row) => this.toEntity(row));
+  }
+
+  /**
    * Lectura administrativa de V22: exactamente el juego del alcance pedido
    * (organización o línea), sin resolución y sin ocultar lo archivado.
    */

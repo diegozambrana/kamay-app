@@ -218,3 +218,73 @@ export type Attachment = {
 
 /** El bucket de las fotos del catálogo (esquema §13). */
 export const ITEM_PHOTOS_BUCKET = "item-photos";
+
+/** El bucket de los adjuntos de pedidos y tareas (esquema §13). */
+export const ATTACHMENTS_BUCKET = "attachments";
+
+/**
+ * Pedido y venta directa comparten tabla (esquema §9): en el flujo de trabajo
+ * son distintos, en almacenamiento comparten cliente, líneas, precios y
+ * cobros. La interfaz mantiene los dos flujos separados.
+ */
+export const ORDER_KINDS = ["order", "direct_sale"] as const;
+
+export type OrderKind = (typeof ORDER_KINDS)[number];
+
+export const DELIVERY_MODES = ["pickup", "delivery"] as const;
+
+export type DeliveryMode = (typeof DELIVERY_MODES)[number];
+
+export type Order = {
+  id: string;
+  organizationId: string;
+  businessLineId: string;
+  kind: OrderKind;
+  /** Número visible (#142), único dentro de la organización. Lo asigna la base. */
+  code: number;
+  /** Opcional solo en la venta directa: un pedido siempre tiene cliente. */
+  contactId: string | null;
+  statusId: string;
+  salesChannelId: string | null;
+  deliveryMode: DeliveryMode | null;
+  dueDate: string | null;
+  occurredAt: string;
+  /** Momento de entrada a la columna de cola; `null` fuera de ella. */
+  queuedAt: string | null;
+  notes: string | null;
+  archivedAt: string | null;
+};
+
+export type OrderItem = {
+  id: string;
+  organizationId: string;
+  orderId: string;
+  itemId: string | null;
+  variantId: string | null;
+  /** Personalización libre: "Foto de la familia, fondo azul". */
+  description: string | null;
+  quantity: number;
+  /**
+   * El precio vive aquí, no en el catálogo: un cambio de precio no reescribe
+   * la historia (esquema §2).
+   */
+  unitPrice: number;
+};
+
+/**
+ * El total nunca se almacena (convención nº 4): llega de la vista
+ * `order_totals`, que lo suma desde las líneas. `paid` se añadirá con los
+ * cobros (KAM-10).
+ */
+export type OrderTotals = {
+  orderId: string;
+  total: number;
+};
+
+/** Un pedido con lo que el tablero y el detalle necesitan mostrar. */
+export type OrderWithContext = Order & {
+  contactName: string | null;
+  statusKind: StatusKind;
+  lineColor: LineColor;
+  total: number;
+};

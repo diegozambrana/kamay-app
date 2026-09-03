@@ -16,7 +16,17 @@ import { ALL_LINES } from "@/types";
  * es el contexto que acompaña al usuario por todas las secciones, así que vive
  * en la barra superior y no dentro de ninguna pantalla.
  */
-export function LineSelector() {
+export function LineSelector({
+  /**
+   * El selector se rinde dos veces —menú lateral en escritorio, tira de
+   * contexto en móvil— y solo una es visible a la vez. Cada instancia
+   * necesita su propio identificador: con el mismo, cualquier consulta por
+   * `testId` encontraría dos coincidencias.
+   */
+  testId = "line-selector",
+}: {
+  testId?: string;
+} = {}) {
   const lines = useBusinessLineStore((state) => state.lines);
   const activeLine = useBusinessLineStore((state) => state.activeLine);
   const setActiveLine = useBusinessLineStore((state) => state.setActiveLine);
@@ -41,7 +51,7 @@ export function LineSelector() {
         <Button
           variant="outline"
           size="sm"
-          data-testid="line-selector"
+          data-testid={testId}
           aria-label="Línea de negocio"
           disabled={pending}
         >

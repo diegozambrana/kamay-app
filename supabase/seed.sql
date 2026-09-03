@@ -300,3 +300,95 @@ insert into attachments (
    'order', 'a0000000-0000-0000-0000-000000000001', 'attachments',
    '10000000-0000-0000-0000-000000000003/order/a0000000-0000-0000-0000-000000000001/referencia.jpg',
    'referencia.jpg', 'image/jpeg', 184320);
+
+-- ── Egresos (KAM-09) ──────────────────────────────────────────────────────
+-- Compras y gastos de Geeko Store para ejercitar V7, V8 y V9 y para que las
+-- pruebas tengan materia; `seed_geeko.test.sql` vigila que sigan estando:
+--
+--   · una compra con varias líneas, para el total derivado;
+--   · "Taza para sublimación" comprada DOS veces a precios distintos, con la
+--     más reciente por `occurred_at` (9.20) registrada ANTES que la otra
+--     (8.50, anotada tarde y fechada atrás) — así `item_last_cost` solo
+--     acierta si decide por la fecha del hecho y no por el orden de registro;
+--   · un gasto en la línea General, que queda sin repartir;
+--   · un gasto asignado a un pedido;
+--   · una compra archivada, que no cuenta ni para el total ni para el último
+--     costo.
+--
+-- `created_at` se fija explícitamente donde el orden de registro importa.
+-- Los egresos no llevan `created_by`: la semilla corre como `postgres`.
+
+insert into expenses (
+  id, organization_id, business_line_id, kind, contact_id, expense_category_id,
+  order_id, amount, occurred_at, created_at, note
+) values
+  -- Compra con dos líneas (50 × 8.50 + 2 × 95 = 615). Fechada hace 20 días
+  -- pero registrada ayer: la taza a 8.50 NO es el último costo.
+  ('b0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'purchase', '80000000-0000-0000-0000-000000000001',
+   null, null, null, now() - interval '20 days', now() - interval '1 day',
+   'Reposición de tazas y papel. Factura pendiente de archivar.'),
+
+  -- La compra más reciente de la taza (9.20), registrada el mismo día.
+  ('b0000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'purchase', '80000000-0000-0000-0000-000000000003',
+   null, null, null, now() - interval '3 days', now() - interval '3 days',
+   null),
+
+  -- Alfarería: arcilla.
+  ('b0000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'purchase', '80000000-0000-0000-0000-000000000003',
+   null, null, null, now() - interval '8 days', now() - interval '8 days',
+   'Cuatro sacos para la hornada 07.'),
+
+  -- Gasto en General: no pertenece a ninguna línea concreta y se queda ahí
+  -- para el reparto proporcional de los reportes (§6.1).
+  ('b0000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000004', 'expense', null,
+   '50000000-0000-0000-0000-000000000002', null, 120, now() - interval '6 days', now() - interval '6 days',
+   'Internet del taller, mes en curso.'),
+
+  -- Gasto asignado al pedido #1.
+  ('b0000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'expense', null,
+   '50000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', 35,
+   now() - interval '2 days', now() - interval '2 days',
+   'Taxi para llevar las tazas del pedido #1.'),
+
+  -- Impresión 3D: herramienta.
+  ('b0000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000002', 'expense', null,
+   '50000000-0000-0000-0000-000000000004', null, 260, now() - interval '12 days', now() - interval '12 days',
+   'Boquillas de repuesto para la Ender.');
+
+-- Archivada aparte: `enforce_archive_rules` congela la fila en cuanto
+-- `archived_at` deja de ser nulo, así que se inserta ya archivada. Su taza a
+-- 7.90 no puede ser el último costo.
+insert into expenses (
+  id, organization_id, business_line_id, kind, contact_id, occurred_at, created_at,
+  note, archived_at
+) values
+  ('b0000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'purchase', '80000000-0000-0000-0000-000000000001',
+   now() - interval '45 days', now() - interval '45 days',
+   'Registrada dos veces por error; se archiva la repetida.',
+   now() - interval '40 days');
+
+insert into expense_items (id, organization_id, expense_id, item_id, variant_id, quantity, unit_price) values
+  ('b1000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000001', null, 50, 8.50),
+  ('b1000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002', null,  2, 95),
+  ('b1000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000002', '90000000-0000-0000-0000-000000000001', null, 30, 9.20),
+  ('b1000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000003', null,  4, 38),
+  ('b1000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000007', '90000000-0000-0000-0000-000000000001', null, 20, 7.90);
+
+-- Comprobante del gasto de internet: la fila de `attachments` existe aunque el
+-- objeto no esté en el bucket, igual que la imagen de referencia del pedido
+-- #1. El detalle debe rendirla sin romperse.
+insert into attachments (
+  id, organization_id, entity_type, entity_id, bucket, storage_path,
+  file_name, mime_type, size_bytes
+) values
+  ('b2000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003',
+   'expense', 'b0000000-0000-0000-0000-000000000004', 'receipts',
+   '10000000-0000-0000-0000-000000000003/expense/b0000000-0000-0000-0000-000000000004/factura-internet.jpg',
+   'factura-internet.jpg', 'image/jpeg', 96512);

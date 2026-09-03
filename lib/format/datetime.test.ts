@@ -26,3 +26,12 @@ describe("formatDateTime", () => {
     );
   });
 });
+
+describe("formatDate", () => {
+  it("escribe solo día/mes/año en la zona de la organización", async () => {
+    const { formatDate } = await import("./datetime");
+    // Las 02:30 UTC del 2 de septiembre son todavía el 1 en La Paz (UTC-4).
+    expect(formatDate("2026-09-02T02:30:00.000Z", "America/La_Paz")).toBe("01/09/2026");
+    expect(formatDate("2026-09-02T02:30:00.000Z", "UTC")).toBe("02/09/2026");
+  });
+});

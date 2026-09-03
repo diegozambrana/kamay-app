@@ -27,6 +27,11 @@ describe("isProtectedPath", () => {
       true,
     );
     expect(isProtectedPath("/contacts")).toBe(true);
+    expect(isProtectedPath("/expenses")).toBe(true);
+    expect(isProtectedPath("/expenses/costs/new")).toBe(true);
+    expect(isProtectedPath("/expenses/b0000000-0000-0000-0000-000000000001")).toBe(
+      true,
+    );
   });
 
   it("leaves public routes unprotected", () => {

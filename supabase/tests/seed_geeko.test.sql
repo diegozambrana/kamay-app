@@ -8,7 +8,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(13);
+select plan(19);
 
 -- ── Scenario: Reset leaves Geeko Store ready ──────────────────────────────
 
@@ -125,6 +125,47 @@ select is(
                  and 'a1000000-0000-0000-0000-000000000099'
       and archived_at is not null),
   0, 'semilla: ninguna línea de pedido de la semilla nace archivada');
+
+-- ── Scenario: La semilla contiene los egresos de KAM-09 ───────────────────
+-- Acotado a los identificadores fijos, como arriba: las pruebas e2e registran
+-- egresos en esta misma organización.
+
+select is(
+  (select count(*)::int from expenses
+    where id between 'b0000000-0000-0000-0000-000000000001'
+                 and 'b0000000-0000-0000-0000-000000000099'),
+  7, 'semilla: Geeko Store tiene sus siete egresos');
+
+select is(
+  (select count(*)::int from expense_items
+    where expense_id = 'b0000000-0000-0000-0000-000000000001'),
+  2, 'semilla: la primera compra tiene varias líneas (50 × 8.50 + 2 × 95 = 615)');
+
+-- La compra más reciente por `occurred_at` (9.20) se registró ANTES que la
+-- fechada atrás (8.50): `item_last_cost` solo acierta por fecha del hecho.
+select is(
+  (select last_cost from item_last_cost
+    where item_id = '90000000-0000-0000-0000-000000000001'),
+  9.20::numeric(14,2),
+  'semilla: la taza comprada dos veces tiene 9.20 como último costo');
+
+select ok(
+  (select a.created_at > b.created_at and a.occurred_at < b.occurred_at
+     from expenses a, expenses b
+    where a.id = 'b0000000-0000-0000-0000-000000000001'
+      and b.id = 'b0000000-0000-0000-0000-000000000002'),
+  'semilla: la compra fechada atrás se registró después (discrimina occurred_at de created_at)');
+
+select is(
+  (select l.is_shared from expenses e join business_lines l on l.id = e.business_line_id
+    where e.id = 'b0000000-0000-0000-0000-000000000004'),
+  true, 'semilla: hay un gasto en la línea General');
+
+select ok(
+  exists (select 1 from expenses
+           where id = 'b0000000-0000-0000-0000-000000000005'
+             and order_id = 'a0000000-0000-0000-0000-000000000001'),
+  'semilla: hay un gasto asignado al pedido #1');
 
 select * from finish();
 

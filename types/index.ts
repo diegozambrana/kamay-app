@@ -293,3 +293,59 @@ export type OrderWithContext = Order & {
   lineColor: LineColor;
   total: number;
 };
+
+/**
+ * Egreso: compra (trae ítems) o gasto (no trae nada). Un solo concepto del
+ * modelo 6.1 y una sola bandeja (V7); comparten tabla como pedido y venta
+ * directa.
+ */
+export const EXPENSE_KINDS = ["purchase", "expense"] as const;
+
+export type ExpenseKind = (typeof EXPENSE_KINDS)[number];
+
+export type Expense = {
+  id: string;
+  organizationId: string;
+  businessLineId: string;
+  kind: ExpenseKind;
+  /** Proveedor. Obligatorio en la compra, ausente en el gasto. */
+  contactId: string | null;
+  /** Categoría. Obligatoria en el gasto, ausente en la compra. */
+  expenseCategoryId: string | null;
+  /** Gasto asignado a un pedido concreto (V9, "asignar a un pedido"). */
+  orderId: string | null;
+  /**
+   * Solo los gastos llevan monto propio: la compra suma sus líneas y el total
+   * llega de la vista `expense_totals` (convención nº 4).
+   */
+  amount: number | null;
+  occurredAt: string;
+  note: string | null;
+  archivedAt: string | null;
+};
+
+export type ExpenseItem = {
+  id: string;
+  organizationId: string;
+  expenseId: string;
+  itemId: string;
+  variantId: string | null;
+  quantity: number;
+  /**
+   * El precio que se pagó. Vive aquí y no en el catálogo: es lo que hace
+   * posible el último costo conocido sin reescribir la historia (esquema §2).
+   */
+  unitPrice: number;
+};
+
+/**
+ * El total nunca se almacena (convención nº 4): llega de la vista
+ * `expense_totals`. `paid` se añadirá con los pagos (KAM-10).
+ */
+export type ExpenseTotals = {
+  expenseId: string;
+  total: number;
+};
+
+/** El bucket de los comprobantes de compra y gasto (esquema §13). */
+export const RECEIPTS_BUCKET = "receipts";

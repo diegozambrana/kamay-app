@@ -25,6 +25,10 @@ export class FakeQuery {
   is = (...args: unknown[]) => this.record("is", ...args);
   like = (...args: unknown[]) => this.record("like", ...args);
   in = (...args: unknown[]) => this.record("in", ...args);
+  gte = (...args: unknown[]) => this.record("gte", ...args);
+  gt = (...args: unknown[]) => this.record("gt", ...args);
+  lte = (...args: unknown[]) => this.record("lte", ...args);
+  lt = (...args: unknown[]) => this.record("lt", ...args);
   ilike = (...args: unknown[]) => this.record("ilike", ...args);
   order = (...args: unknown[]) => this.record("order", ...args);
   limit = (...args: unknown[]) => this.record("limit", ...args);

@@ -15,6 +15,15 @@ describe("navEntriesFor", () => {
     expect(hrefs).toContain("/dashboard");
   });
 
+  it("egresos es del grupo Dinero: el dueño lo ve y el ayudante no", () => {
+    // Lo que un rol no puede ver no aparece en el menú (mapa §10): los
+    // costos viven en `expenses`, sin acceso para el ayudante.
+    expect(navEntriesFor("owner").map((entry) => entry.href)).toContain("/expenses");
+    expect(navEntriesFor("assistant").map((entry) => entry.href)).not.toContain(
+      "/expenses",
+    );
+  });
+
   it("pedidos, catálogo y contactos son de la navegación base: los ven ambos roles", () => {
     for (const role of ["owner", "assistant"] as const) {
       const hrefs = navEntriesFor(role).map((entry) => entry.href);

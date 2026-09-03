@@ -118,16 +118,30 @@ export class ItemService {
   async listProductsWithVariants(
     organizationId: string,
   ): Promise<(Item & { variants: ItemVariant[] })[]> {
+    return this.listKindWithVariants(organizationId, "product");
+  }
+
+  /** Los insumos con sus variantes: lo que ofrece el formulario de compra (V8). */
+  async listSuppliesWithVariants(
+    organizationId: string,
+  ): Promise<(Item & { variants: ItemVariant[] })[]> {
+    return this.listKindWithVariants(organizationId, "supply");
+  }
+
+  private async listKindWithVariants(
+    organizationId: string,
+    kind: ItemKind,
+  ): Promise<(Item & { variants: ItemVariant[] })[]> {
     const { data, error } = await this.supabase
       .from("items")
       .select(`${COLUMNS}, item_variants(${VARIANT_COLUMNS})`)
       .eq("organization_id", organizationId)
-      .eq("kind", "product")
+      .eq("kind", kind)
       .is("archived_at", null)
       .order("name", { ascending: true });
 
     if (error) {
-      throw new Error(`No se pudieron cargar los productos: ${error.message}`);
+      throw new Error(`No se pudieron cargar los ítems: ${error.message}`);
     }
 
     return (data ?? []).map((raw) => {

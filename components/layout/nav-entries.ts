@@ -3,6 +3,7 @@ import {
   LayoutDashboardIcon,
   PackageIcon,
   PlusCircleIcon,
+  ReceiptIcon,
   SettingsIcon,
   UsersIcon,
   type LucideIcon,
@@ -21,9 +22,10 @@ export type NavEntry = {
 
 /**
  * Entradas del menú principal (mapa de navegación §4.1). Cada tarea añade las
- * suyas; hoy existen el panel, el registro rápido, los pedidos, el catálogo,
- * los contactos y la configuración. Pedidos, catálogo y contactos son de la
- * navegación base: ambos roles trabajan con ellos (matriz de acceso §16).
+ * suyas; hoy existen el panel, el registro rápido, los pedidos, los egresos,
+ * el catálogo, los contactos y la configuración. Pedidos, catálogo y contactos
+ * son de la navegación base: ambos roles trabajan con ellos (matriz de acceso
+ * §16); egresos y configuración son del dueño.
  */
 export const NAV_ENTRIES: NavEntry[] = [
   {
@@ -43,6 +45,14 @@ export const NAV_ENTRIES: NavEntry[] = [
     label: "Pedidos",
     icon: ClipboardListIcon,
     roles: ["owner", "assistant"],
+  },
+  {
+    // Grupo "Dinero" del mapa §4.1: solo el dueño. Los costos viven en
+    // `expenses`, tabla sin política de lectura para el ayudante (§16).
+    href: "/expenses",
+    label: "Egresos",
+    icon: ReceiptIcon,
+    roles: ["owner"],
   },
   {
     href: "/catalog",

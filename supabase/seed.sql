@@ -157,3 +157,146 @@ insert into items (id, organization_id, business_line_id, kind, name, descriptio
 insert into item_variants (id, organization_id, item_id, name, attributes, sale_price) values
   ('91000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000011', '11oz', '{"capacidad":"11oz"}'::jsonb, 45),
   ('91000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000011', '15oz', '{"capacidad":"15oz"}'::jsonb, 55);
+
+-- ── Pedidos (KAM-07) ──────────────────────────────────────────────────────
+-- Hasta KAM-08 no hay pantalla de alta, así que el tablero y las pruebas
+-- viven de aquí. Se siembran a propósito los casos límite que los criterios
+-- exigen, y `seed_geeko.test.sql` verifica que sigan estando:
+--
+--   · tres en la columna En cola de Sublimación, con `queued_at` en orden
+--     INVERSO a `due_date` — así el criterio 6 ("numerados por llegada, no
+--     por fecha comprometida") solo pasa si el orden es el correcto;
+--   · uno vencido en un estado `waiting` (no debe alertar) y otro vencido en
+--     `in_progress` (sí debe alertar);
+--   · uno vencido en `final` (tampoco alerta) y uno sin fecha comprometida;
+--   · uno archivado, para el filtro "Ver archivados";
+--   · pedidos de Alfarería, para comprobar que sus tres columnas no arrastran
+--     ni rastro de las seis de Sublimación.
+--
+-- `code` y `queued_at` se fijan explícitamente: los triggers los respetan
+-- cuando vienen dados, y las pruebas necesitan valores estables.
+
+insert into orders (
+  id, organization_id, business_line_id, kind, code, contact_id, status_id,
+  sales_channel_id, delivery_mode, due_date, occurred_at, queued_at, notes
+) values
+  -- Los tres de la cola. Llega primero el #1, pero se compromete el último:
+  -- si algún día el tablero ordenara por `due_date`, saldrían al revés.
+  ('a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'order', 1,
+   '80000000-0000-0000-0000-000000000002', '70000000-0000-0000-0000-000000000013',
+   '40000000-0000-0000-0000-000000000003', 'pickup',
+   current_date + 9, now() - interval '3 days', now() - interval '3 days',
+   'Tazas para cumpleaños. Diseño enviado por WhatsApp.'),
+
+  ('a0000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'order', 2,
+   '80000000-0000-0000-0000-000000000004', '70000000-0000-0000-0000-000000000013',
+   '40000000-0000-0000-0000-000000000003', 'delivery',
+   current_date + 5, now() - interval '2 days', now() - interval '2 days',
+   'Pedido del colegio. Confirmar cantidad exacta antes de imprimir.'),
+
+  ('a0000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'order', 3,
+   '80000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000013',
+   '40000000-0000-0000-0000-000000000002', 'pickup',
+   current_date + 2, now() - interval '1 day', now() - interval '1 day',
+   null),
+
+  -- Vencido en `waiting` (Listo para entrega): NO alerta. Es el caso del
+  -- criterio 4 — el trabajo está hecho, la espera es del cliente.
+  ('a0000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'order', 4,
+   '80000000-0000-0000-0000-000000000002', '70000000-0000-0000-0000-000000000015',
+   '40000000-0000-0000-0000-000000000004', 'pickup',
+   current_date - 4, now() - interval '12 days', null,
+   'Avisado por teléfono, pasa a recoger esta semana.'),
+
+  -- Vencido en `in_progress` (En diseño): SÍ alerta. Criterio 5.
+  ('a0000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'order', 5,
+   '80000000-0000-0000-0000-000000000004', '70000000-0000-0000-0000-000000000012',
+   '40000000-0000-0000-0000-000000000003', 'delivery',
+   current_date - 2, now() - interval '10 days', null,
+   'Falta que aprueben el arte.'),
+
+  -- Vencido en `final` (Entregado): tampoco alerta.
+  ('a0000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'order', 6,
+   '80000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000016',
+   '40000000-0000-0000-0000-000000000002', 'delivery',
+   current_date - 7, now() - interval '20 days', null,
+   null),
+
+  -- Sin fecha comprometida: no alerta aunque esté en proceso.
+  ('a0000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'order', 7,
+   '80000000-0000-0000-0000-000000000002', '70000000-0000-0000-0000-000000000014',
+   null, null,
+   null, now() - interval '5 days', null,
+   'Sin fecha: la clienta dijo "cuando puedan".'),
+
+  -- Alfarería: sus tres columnas, ninguna de Sublimación.
+  ('a0000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'order', 8,
+   '80000000-0000-0000-0000-000000000004', '70000000-0000-0000-0000-000000000021',
+   '40000000-0000-0000-0000-000000000003', 'pickup',
+   current_date + 14, now() - interval '4 days', null,
+   'Macetas para el patio del colegio.'),
+
+  ('a0000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'order', 9,
+   '80000000-0000-0000-0000-000000000002', '70000000-0000-0000-0000-000000000022',
+   '40000000-0000-0000-0000-000000000001', 'pickup',
+   current_date + 1, now() - interval '6 days', null,
+   null),
+
+  -- Impresión 3D, en su propia cola.
+  ('a0000000-0000-0000-0000-000000000021', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000002', 'order', 10,
+   '80000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000032',
+   '40000000-0000-0000-0000-000000000002', 'delivery',
+   current_date + 6, now() - interval '2 days', now() - interval '2 days',
+   'Repuesto impreso en PLA negro.');
+
+-- Archivado aparte: `enforce_archive_rules` congela la fila en cuanto
+-- `archived_at` deja de ser nulo, así que se inserta ya archivado.
+insert into orders (
+  id, organization_id, business_line_id, kind, code, contact_id, status_id,
+  sales_channel_id, delivery_mode, due_date, occurred_at, notes, archived_at
+) values
+  ('a0000000-0000-0000-0000-000000000031', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'order', 11,
+   '80000000-0000-0000-0000-000000000002', '70000000-0000-0000-0000-000000000017',
+   '40000000-0000-0000-0000-000000000003', 'pickup',
+   current_date - 30, now() - interval '40 days',
+   'Cancelado por la clienta; se archiva para no ensuciar el tablero.',
+   now() - interval '30 days');
+
+-- Líneas. El pedido #1 lleva dos para que su total sea comprobable
+-- (3 × 45 + 1 × 55 = 190) y el #7 ninguna, para el caso "pedido sin líneas,
+-- total 0 y no nulo".
+insert into order_items (id, organization_id, order_id, item_id, variant_id, description, quantity, unit_price) values
+  ('a1000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000011', '91000000-0000-0000-0000-000000000001', 'Foto de la familia, fondo azul', 3, 45),
+  ('a1000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000011', '91000000-0000-0000-0000-000000000002', 'La grande, con el nombre',       1, 55),
+  ('a1000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000002', '90000000-0000-0000-0000-000000000011', '91000000-0000-0000-0000-000000000001', 'Escudo del colegio',            30, 40),
+  ('a1000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000011', null,                                   null,                             2, 45),
+  ('a1000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000004', '90000000-0000-0000-0000-000000000011', '91000000-0000-0000-0000-000000000002', null,                             6, 55),
+  ('a1000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000005', '90000000-0000-0000-0000-000000000011', null,                                   'Arte pendiente de aprobación',  12, 45),
+  ('a1000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000006', '90000000-0000-0000-0000-000000000011', null,                                   null,                             4, 45),
+  ('a1000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000011', '90000000-0000-0000-0000-000000000012', null,                                   'Cinco medianas, esmalte mate',   5, 60),
+  ('a1000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000012', '90000000-0000-0000-0000-000000000012', null,                                   null,                             2, 60),
+  ('a1000000-0000-0000-0000-000000000021', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000021', null,                                   null,                                   'Pieza a medida según plano',     1, 120),
+  ('a1000000-0000-0000-0000-000000000031', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000031', '90000000-0000-0000-0000-000000000011', null,                                   null,                             2, 45);
+
+-- Imagen de referencia del pedido #1: la fila de `attachments` existe aunque
+-- el objeto no esté en el bucket. El detalle debe rendirla sin romperse, y
+-- es lo que ejercita `entity_type = 'order'` (KAM-08 trae la subida).
+insert into attachments (
+  id, organization_id, entity_type, entity_id, bucket, storage_path,
+  file_name, mime_type, size_bytes
+) values
+  ('a2000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003',
+   'order', 'a0000000-0000-0000-0000-000000000001', 'attachments',
+   '10000000-0000-0000-0000-000000000003/order/a0000000-0000-0000-0000-000000000001/referencia.jpg',
+   'referencia.jpg', 'image/jpeg', 184320);

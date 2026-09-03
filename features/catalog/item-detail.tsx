@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { setItemArchived } from "@/actions/catalog";
+import { MainContainer } from "@/components/layout/main-container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -98,26 +99,26 @@ export function ItemDetail({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/catalog">
-            <ArrowLeftIcon data-icon="inline-start" />
-            Catálogo
-          </Link>
-        </Button>
-
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold">{item.name}</h1>
+    <MainContainer
+      title={
+        <span className="flex flex-wrap items-center gap-3">
+          <span>{item.name}</span>
           <Badge variant="outline">{ITEM_KIND_SINGULAR[item.kind]}</Badge>
           {isArchived && (
             <Badge variant="secondary" data-testid="item-archived-badge">
               Archivado
             </Badge>
           )}
-        </div>
-      </div>
-
+        </span>
+      }
+      description={
+        <Link href="/catalog" className="inline-flex items-center gap-1 hover:text-foreground">
+          <ArrowLeftIcon className="size-4" aria-hidden />
+          Catálogo
+        </Link>
+      }
+    >
+      <div className="flex flex-col gap-6">
       {error && (
         <Alert variant="destructive">
           <AlertTitle>No se pudo completar la acción</AlertTitle>
@@ -279,6 +280,7 @@ export function ItemDetail({
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </MainContainer>
   );
 }

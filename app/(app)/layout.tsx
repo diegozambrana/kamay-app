@@ -1,9 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
-import { MainContainer } from "@/components/layout/main-container";
+import { MobileContextBar } from "@/components/layout/mobile-context-bar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { BusinessLineProvider } from "@/components/providers/business-line-provider";
 import { OrganizationProvider } from "@/components/providers/organization-provider";
 import { UserProvider } from "@/components/providers/user-provider";
@@ -69,6 +72,9 @@ export default async function AppLayout({
     lines,
   );
 
+  // Ausente = desplegado, que es el valor por defecto de shadcn.
+  const sidebarOpen = cookieStore.get("sidebar_state")?.value !== "false";
+
   return (
     <UserProvider
       user={{ id: user.id, email: user.email ?? "" }}
@@ -84,11 +90,31 @@ export default async function AppLayout({
         memberships={memberships}
       >
         <BusinessLineProvider lines={lines} activeLine={activeLine}>
-          <div className="flex min-h-dvh flex-col">
-            <Header />
-            <MainContainer>{children}</MainContainer>
-            <MobileNav />
-          </div>
+          {/* `SidebarProvider` es el shell: dispone menú y contenido en fila
+              y guarda el plegado en cookie. Cada página rinde su propio
+              `MainContainer`, que es quien pone el encabezado y el padding. */}
+          {/* Los rótulos del menú plegado son tooltips de Radix, y esta
+              versión de `SidebarProvider` no trae su proveedor incorporado. */}
+          <TooltipProvider delayDuration={0}>
+            {/* El plegado lo escribe el cliente en `sidebar_state`, pero
+                quien decide el primer render es el servidor: sin esto el menú
+                aparecería desplegado y se plegaría de golpe tras hidratar. */}
+            <SidebarProvider defaultOpen={sidebarOpen}>
+              <AppSidebar />
+              {/* `min-w-0`: sin él, un contenido interno más ancho que la
+                  ventana (el tablero, por ejemplo) empuja este contenedor —
+                  que es un ítem flex— más allá del viewport en vez de dejar
+                  que su propio `overflow-x-auto` lo absorba. El síntoma es
+                  que la barra superior, al ser hermana en el mismo desborde,
+                  se mueve con el scroll horizontal en vez de quedarse fija. */}
+              <SidebarInset className="min-w-0">
+                <Header />
+                <MobileContextBar />
+                {children}
+                <MobileNav />
+              </SidebarInset>
+            </SidebarProvider>
+          </TooltipProvider>
         </BusinessLineProvider>
       </OrganizationProvider>
     </UserProvider>

@@ -6,7 +6,7 @@ const OWNER = "owner@kamay.test"; // una sola organización
 const MULTI = "multi@kamay.test"; // dos organizaciones
 const RECOVERY = "recovery@kamay.test"; // solo para la prueba de recuperación
 
-const MAILPIT = "http://127.0.0.1:54324";
+const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54424";
 
 async function login(page: Page, email: string, password = PASSWORD) {
   await page.goto("/auth/login");

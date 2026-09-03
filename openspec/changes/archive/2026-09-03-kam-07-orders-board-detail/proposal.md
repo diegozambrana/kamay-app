@@ -38,9 +38,9 @@ _(ninguna — `activity-log` ya obliga a auditar toda tabla nueva, `tenant-isola
 ## Impact
 
 - **Base de datos:** una migración nueva `YYYYMMDDHHMMSS_orders.sql` (dos tablas, índices, trigger de numeración, vista `order_totals`, trigger `audit`, RLS). No se edita ninguna migración existente. Ampliación de `supabase/seed.sql` con pedidos de Geeko Store.
-- **Almacenamiento:** un bucket de Supabase Storage para las imágenes de referencia del pedido, con política por organización.
+- **Almacenamiento:** ninguno nuevo. Las imágenes de referencia son filas de `attachments` con `entity_type = 'order'` —valor que su `check` ya admite— en el bucket `attachments` que creó KAM-06.
 - **Código de aplicación:** `services/orders/order-service.ts` y `order-item-service.ts`; Server Actions en `actions/orders.ts`; `features/orders/` con tablero, tarjeta, vistas lista y calendario, y detalle; rutas delgadas en `app/(app)/orders/` y `app/(app)/orders/[id]/`.
-- **Dependencia de arrastre:** el tablero necesita una biblioteca de arrastre accesible; la elección y su justificación quedan en `design.md`.
+- **Dependencia de arrastre:** ninguna nueva. `@dnd-kit/core` y `@dnd-kit/sortable` ya están en `package.json`, usados para reordenar estados en V22.
 - **Pruebas:** unitarias (cálculo de total, lógica de alerta de retraso por `kind`, orden y renumeración de cola), pgTAP (numeración sin duplicados bajo inserciones simultáneas, RLS, ausencia de `DELETE`), e2e `order-flow.spec.ts` (recorrer un pedido por todos sus estados).
 - **Grafo:** regenerar `graphify .` tras la migración (convención nº 6).
-- **Dependencias:** **requiere KAM-06 (catálogo y directorio) implementada primero** — `orders.contact_id` referencia `contacts(id)` y `order_items.item_id` referencia `items(id)`, y ninguna de esas tablas existe todavía. Este cambio no puede aplicarse antes de que KAM-06 esté fusionada. KAM-05 (estados configurables) ya está archivada y disponible.
+- **Dependencias:** KAM-05 (estados configurables) y KAM-06 (catálogo y directorio) están ambas fusionadas, así que las referencias `orders.contact_id → contacts(id)` y `order_items.item_id → items(id)` ya son posibles. KAM-06 trajo además la tabla `attachments` y el bucket `attachments`, que este cambio reutiliza en vez de crear.

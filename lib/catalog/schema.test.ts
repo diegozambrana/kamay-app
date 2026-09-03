@@ -106,3 +106,41 @@ describe("hasARole", () => {
     expect(hasARole({ isSupplier: false, isCustomer: true })).toBe(true);
   });
 });
+
+describe("quickContactSchema · teléfono (KAM-08)", () => {
+  const quick = {
+    id: "00000000-0000-4000-8000-000000000001",
+    name: "Marisol Quispe",
+    isSupplier: false,
+    isCustomer: true,
+  };
+
+  it("guarda el teléfono cuando llega", () => {
+    const parsed = quickContactSchema.safeParse({ ...quick, phone: "77712345" });
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.phone).toBe("77712345");
+  });
+
+  it("un teléfono ausente o vacío es ausencia de dato, no cadena vacía", () => {
+    expect(quickContactSchema.safeParse(quick).data?.phone).toBeNull();
+    expect(
+      quickContactSchema.safeParse({ ...quick, phone: "" }).data?.phone,
+    ).toBeNull();
+    expect(
+      quickContactSchema.safeParse({ ...quick, phone: "   " }).data?.phone,
+    ).toBeNull();
+  });
+
+  it("sigue exigiendo nombre y al menos un rol", () => {
+    expect(
+      quickContactSchema.safeParse({ ...quick, name: "", phone: "777" }).success,
+    ).toBe(false);
+    expect(
+      quickContactSchema.safeParse({
+        ...quick,
+        isCustomer: false,
+        phone: "777",
+      }).success,
+    ).toBe(false);
+  });
+});

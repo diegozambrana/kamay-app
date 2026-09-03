@@ -42,3 +42,67 @@ describe("orderErrorMessage", () => {
     );
   });
 });
+
+describe("orderErrorMessage · alta y edición (KAM-08)", () => {
+  it("traduce el rechazo del pedido sin líneas", () => {
+    expect(
+      orderErrorMessage(
+        new Error("Un pedido necesita al menos una línea"),
+        "No se pudo guardar el pedido.",
+      ),
+    ).toBe("Un pedido necesita al menos una línea.");
+  });
+
+  it("traduce la comprobación de organización de create_order", () => {
+    expect(
+      orderErrorMessage(
+        new Error("No perteneces a esa organización"),
+        "No se pudo guardar el pedido.",
+      ),
+    ).toBe("Ese pedido no pertenece a tu organización.");
+  });
+
+  it("traduce el pedido que ya no está a la vista", () => {
+    expect(
+      orderErrorMessage(
+        new Error("Ese pedido ya no está a tu alcance"),
+        "No se pudo guardar.",
+      ),
+    ).toBe("Ese pedido ya no está a tu alcance.");
+  });
+
+  it("traduce la línea sin estado inicial configurado", () => {
+    expect(
+      orderErrorMessage(
+        new Error("La línea no tiene un estado inicial configurado"),
+        "No se pudo guardar.",
+      ),
+    ).toBe(
+      "Esa línea no tiene un estado inicial configurado. Revísalo en Configuración.",
+    );
+  });
+
+  it("traduce los checks de cantidad y precio de una línea", () => {
+    expect(
+      orderErrorMessage(
+        new Error('violates check constraint "order_items_quantity_check"'),
+        "No se pudo guardar.",
+      ),
+    ).toBe("La cantidad de una línea tiene que ser mayor que cero.");
+    expect(
+      orderErrorMessage(
+        new Error('violates check constraint "order_items_unit_price_check"'),
+        "No se pudo guardar.",
+      ),
+    ).toBe("El precio de una línea no puede ser negativo.");
+  });
+
+  it("sigue traduciendo el archivado, que ahora también rechaza la edición", () => {
+    expect(
+      orderErrorMessage(
+        new Error("Un registro archivado no se puede editar: desarchívalo primero"),
+        "No se pudo guardar el pedido.",
+      ),
+    ).toBe("Este pedido está archivado: desarchívalo antes de editarlo.");
+  });
+});

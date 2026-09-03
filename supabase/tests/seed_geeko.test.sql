@@ -8,7 +8,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(12);
+select plan(13);
 
 -- ── Scenario: Reset leaves Geeko Store ready ──────────────────────────────
 
@@ -110,6 +110,21 @@ select ok(
              and o.due_date < current_date and s.kind = 'in_progress'
              and o.archived_at is null),
   'semilla: hay un pedido vencido en proceso (sí debe alertar)');
+
+-- KAM-08 · las líneas de la semilla nacen vigentes. El total del pedido #1
+-- (190) lo afirman las pruebas e2e de KAM-07, y desde que las líneas se
+-- pueden archivar ese total dejaría de cuadrar en silencio si alguna llegara
+-- archivada por la semilla.
+-- Acotado a los identificadores fijos de la semilla, como las aserciones de
+-- líneas de negocio de arriba: las pruebas e2e editan pedidos en esta misma
+-- organización y archivan líneas suyas, y lo que aquí se verifica es lo que
+-- dejó `supabase db reset`, no lo que haya después.
+select is(
+  (select count(*)::int from order_items
+    where id between 'a1000000-0000-0000-0000-000000000001'
+                 and 'a1000000-0000-0000-0000-000000000099'
+      and archived_at is not null),
+  0, 'semilla: ninguna línea de pedido de la semilla nace archivada');
 
 select * from finish();
 

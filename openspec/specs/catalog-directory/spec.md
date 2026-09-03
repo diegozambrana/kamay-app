@@ -4,7 +4,7 @@
 
 Registra qué compra, qué vende y con quién trata la organización —ítems, variantes y contactos— como base común de toda operación posterior, sin que el catálogo almacene jamás un dato derivado ni pierda la historia al archivar.
 
-> Origen: `specs/PRD/kamay-backlog.md` — KAM-06; `specs/PRD/kamay-esquema-base-de-datos-supabase.md` §7, §16, § Matriz de acceso; `specs/PRD/kamay-especificacion-producto-v6.md` — V10, V11, V13 y §6.5 (archivado); `specs/PRD/kamay-mapa-navegacion-ui.md` — navegación base.
+> Origen: `specs/PRD/kamay-backlog.md` — KAM-06 y KAM-08 (creación al vuelo con teléfono); `specs/PRD/kamay-esquema-base-de-datos-supabase.md` §7, §16, § Matriz de acceso; `specs/PRD/kamay-especificacion-producto-v6.md` — V10, V11, V13 y §6.5 (archivado); `specs/PRD/kamay-mapa-navegacion-ui.md` — navegación base.
 
 ## Requirements
 
@@ -232,7 +232,7 @@ Los contactos SHALL presentarse como una página de dos paneles: a la izquierda 
 
 ### Requirement: Creación de contactos al vuelo
 
-Todo buscador de contactos de la aplicación SHALL permitir crear el contacto sin abandonar el formulario en curso cuando el nombre escrito no existe. La creación al vuelo SHALL exigir el nombre y al menos un rol, SHALL dejar el contacto recién creado seleccionado, y el resto de sus datos SHALL poder completarse después desde el directorio.
+Todo buscador de contactos de la aplicación SHALL permitir crear el contacto sin abandonar el formulario en curso cuando el nombre escrito no existe. La creación al vuelo SHALL exigir el nombre y al menos un rol, SHALL admitir el teléfono como dato opcional en ese mismo paso, SHALL dejar el contacto recién creado seleccionado, y el resto de sus datos SHALL poder completarse después desde el directorio.
 
 #### Scenario: Nombre inexistente ofrece crearlo
 
@@ -243,6 +243,16 @@ Todo buscador de contactos de la aplicación SHALL permitir crear el contacto si
 
 - **WHEN** el usuario crea el contacto desde el buscador indicando su rol
 - **THEN** el contacto se guarda, queda seleccionado en el campo y el formulario en curso conserva lo que ya tenía
+
+#### Scenario: Con teléfono
+
+- **WHEN** el usuario crea el contacto desde el buscador indicando además un teléfono
+- **THEN** el contacto se guarda con ese teléfono y aparece así en el directorio
+
+#### Scenario: Sin teléfono
+
+- **WHEN** el usuario crea el contacto desde el buscador sin indicar teléfono
+- **THEN** el contacto se guarda igualmente, con el teléfono vacío
 
 ### Requirement: Catálogo y contactos accesibles desde la navegación base
 

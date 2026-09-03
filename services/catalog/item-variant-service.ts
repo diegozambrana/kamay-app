@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ItemVariantFormValues } from "@/lib/catalog/schema";
 import type { ItemVariant } from "@/types";
 
-type VariantRow = {
+export type VariantRow = {
   id: string;
   organization_id: string;
   item_id: string;
@@ -16,10 +16,30 @@ type VariantRow = {
 const COLUMNS =
   "id, organization_id, item_id, name, attributes, sale_price, archived_at";
 
+/** Las mismas columnas, para quien traiga las variantes incrustadas. */
+export const VARIANT_COLUMNS = COLUMNS;
+
 function toNumber(value: number | string | null): number | null {
   if (value === null) return null;
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * Una fila de `item_variants` como entidad. Exportada porque el buscador de
+ * productos del formulario de pedido (KAM-08) trae las variantes incrustadas
+ * en la consulta de `items`, y las dos rutas deben mapear igual.
+ */
+export function variantFromRow(row: VariantRow): ItemVariant {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    itemId: row.item_id,
+    name: row.name,
+    attributes: row.attributes ?? {},
+    salePrice: toNumber(row.sale_price),
+    archivedAt: row.archived_at,
+  };
 }
 
 /** Acceso a `item_variants`. Las variantes se listan siempre por su ítem. */
@@ -27,15 +47,7 @@ export class ItemVariantService {
   constructor(private readonly supabase: SupabaseClient) {}
 
   private toEntity(row: VariantRow): ItemVariant {
-    return {
-      id: row.id,
-      organizationId: row.organization_id,
-      itemId: row.item_id,
-      name: row.name,
-      attributes: row.attributes ?? {},
-      salePrice: toNumber(row.sale_price),
-      archivedAt: row.archived_at,
-    };
+    return variantFromRow(row);
   }
 
   async listForItem(

@@ -8,5 +8,15 @@
  */
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-/** Tipos de imagen que acepta el bucket `item-photos`. */
-export const ITEM_PHOTO_ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
+/**
+ * Máximo de adjuntos por registro: la otra mitad de la misma regla de
+ * crecimiento. La comparte todo lo que adjunta —fotos de ítem, imágenes de
+ * referencia de un pedido— porque el límite es del registro, no del tipo.
+ */
+export const MAX_ATTACHMENTS_PER_RECORD = 20;
+
+/** Tipos de imagen que aceptan los buckets de imágenes. */
+export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
+
+/** Nombre con el que KAM-06 lo estrenó en la foto del ítem. */
+export const ITEM_PHOTO_ACCEPT = IMAGE_ACCEPT;

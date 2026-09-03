@@ -2,7 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { ItemFormValues } from "@/lib/catalog/schema";
 import { normalizeForSearch } from "@/lib/search/normalize";
-import type { ActivityEntry, Item, ItemKind } from "@/types";
+import {
+  VARIANT_COLUMNS,
+  variantFromRow,
+  type VariantRow,
+} from "@/services/catalog/item-variant-service";
+import type { ActivityEntry, Item, ItemKind, ItemVariant } from "@/types";
 
 type ItemRow = {
   id: string;
@@ -94,6 +99,50 @@ export class ItemService {
     }
 
     return (data ?? []).map((row) => this.toEntity(row as ItemRow));
+  }
+
+  /**
+   * Los productos vigentes con sus variantes vigentes, en una sola consulta:
+   * es lo que alimenta el buscador del formulario de pedido (V5). Una
+   * petición por producto para traer sus variantes sería una cascada, y el
+   * formulario las necesita todas a la vez para poder filtrar en memoria.
+   *
+   * Solo `product`: un insumo no se vende y un activo tampoco. Es una
+   * decisión de interfaz y no de datos — `order_items.item_id` admite
+   * cualquier ítem.
+   *
+   * Las variantes archivadas se descartan aquí y no en la consulta porque un
+   * filtro sobre un recurso incrustado filtraría el producto padre, y un
+   * producto no debe desaparecer del buscador por tener una variante vieja.
+   */
+  async listProductsWithVariants(
+    organizationId: string,
+  ): Promise<(Item & { variants: ItemVariant[] })[]> {
+    const { data, error } = await this.supabase
+      .from("items")
+      .select(`${COLUMNS}, item_variants(${VARIANT_COLUMNS})`)
+      .eq("organization_id", organizationId)
+      .eq("kind", "product")
+      .is("archived_at", null)
+      .order("name", { ascending: true });
+
+    if (error) {
+      throw new Error(`No se pudieron cargar los productos: ${error.message}`);
+    }
+
+    return (data ?? []).map((raw) => {
+      const row = raw as unknown as ItemRow & {
+        item_variants: VariantRow[] | null;
+      };
+
+      return {
+        ...this.toEntity(row),
+        variants: (row.item_variants ?? [])
+          .filter((variant) => variant.archived_at === null)
+          .map(variantFromRow)
+          .sort((a, b) => a.name.localeCompare(b.name, "es")),
+      };
+    });
   }
 
   async findById(organizationId: string, id: string): Promise<Item | null> {

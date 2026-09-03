@@ -1,11 +1,29 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { OrderFormValues, OrderLineValues } from "@/lib/orders/schema";
 import type {
   ActivityEntry,
   DeliveryMode,
   Order,
   OrderKind,
 } from "@/types";
+
+/**
+ * Una línea como la esperan `create_order` y `update_order`: nombres de
+ * columna, porque el jsonb entra directo en el `insert` de la base.
+ */
+function toItemPayload(line: OrderLineValues) {
+  return {
+    id: line.id,
+    item_id: line.itemId,
+    variant_id: line.variantId,
+    description: line.description,
+    quantity: line.quantity,
+    // El precio que se registró. El catálogo puede cambiar después y esta
+    // línea no se entera (esquema §2).
+    unit_price: line.unitPrice,
+  };
+}
 
 type OrderRow = {
   id: string;
@@ -158,9 +176,70 @@ export class OrderService {
   }
 
   /**
+   * Alta del pedido (V5). Una sola llamada: `create_order` inserta el pedido
+   * y todas sus líneas en la misma transacción y resuelve el estado inicial
+   * desde el juego de la línea (design.md D1 y D3).
+   *
+   * Por eso aquí no se envía `status_id` —ni existe en el formulario—: si el
+   * alta fuera dos inserciones encadenadas, un fallo a mitad dejaría un
+   * pedido sin líneas que nadie podría borrar.
+   */
+  async create(
+    organizationId: string,
+    values: OrderFormValues,
+  ): Promise<string> {
+    const { data, error } = await this.supabase.rpc("create_order", {
+      p_order: {
+        // Identificador generado en el cliente (convención nº 9).
+        id: values.id,
+        organization_id: organizationId,
+        business_line_id: values.businessLineId,
+        contact_id: values.contactId,
+        sales_channel_id: values.salesChannelId,
+        delivery_mode: values.deliveryMode,
+        due_date: values.dueDate,
+        occurred_at: values.occurredAt,
+        notes: values.notes,
+      },
+      p_items: values.items.map(toItemPayload),
+    });
+
+    // El mensaje de la base ya está escrito para una persona; se envuelve en
+    // un `Error` para que la acción pueda traducirlo.
+    if (error) throw new Error(error.message);
+
+    return (data as string | null) ?? values.id;
+  }
+
+  /**
+   * Edición del pedido y de sus líneas, también en una sola transacción.
+   *
+   * `p_items` es la lista completa de líneas vigentes, no un diferencial: lo
+   * que no viaje se archiva (design.md D2). Ni la línea de negocio ni el
+   * estado se envían — cambiar la línea cambiaría el flujo del pedido, y el
+   * estado tiene su propia vía.
+   */
+  async update(organizationId: string, values: OrderFormValues): Promise<void> {
+    const { error } = await this.supabase.rpc("update_order", {
+      p_order: {
+        id: values.id,
+        organization_id: organizationId,
+        contact_id: values.contactId,
+        sales_channel_id: values.salesChannelId,
+        delivery_mode: values.deliveryMode,
+        due_date: values.dueDate,
+        notes: values.notes,
+      },
+      p_items: values.items.map(toItemPayload),
+    });
+
+    if (error) throw new Error(error.message);
+  }
+
+  /**
    * Cambia el estado. `queued_at` lo ajusta el trigger de la base según el
    * `is_queue` del destino: no se toca desde aquí, para que el tablero, el
-   * detalle y KAM-08 no puedan divergir.
+   * detalle y el formulario no puedan divergir.
    */
   async moveToStatus(
     organizationId: string,

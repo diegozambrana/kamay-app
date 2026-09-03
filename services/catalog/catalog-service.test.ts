@@ -199,3 +199,113 @@ describe("ContactService", () => {
     expect(contact).toMatchObject({ isSupplier: true, isCustomer: true });
   });
 });
+
+describe("ItemService.listProductsWithVariants", () => {
+  const productRow = {
+    ...itemRow,
+    kind: "product",
+    sale_price: "45.00",
+  };
+
+  it("pide solo productos vigentes de la organización", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+    await new ItemService(client.asSupabase()).listProductsWithVariants(ORG);
+
+    const query = client.queries[0];
+    expect(client.tables[0]).toBe("items");
+    expect(query.has("eq", "organization_id", ORG)).toBe(true);
+    expect(query.has("eq", "kind", "product")).toBe(true);
+    expect(query.has("is", "archived_at", null)).toBe(true);
+  });
+
+  it("trae las variantes incrustadas y descarta las archivadas", async () => {
+    const client = new FakeClient([
+      {
+        data: [
+          {
+            ...productRow,
+            item_variants: [
+              {
+                id: "44444444-4444-4444-4444-444444444444",
+                organization_id: ORG,
+                item_id: ITEM,
+                name: "15oz",
+                attributes: null,
+                sale_price: "55.00",
+                archived_at: null,
+              },
+              {
+                id: "55555555-5555-5555-5555-555555555555",
+                organization_id: ORG,
+                item_id: ITEM,
+                name: "11oz",
+                attributes: null,
+                sale_price: "45.00",
+                archived_at: "2026-01-01T00:00:00.000Z",
+              },
+            ],
+          },
+        ],
+        error: null,
+      },
+    ]);
+
+    const [product] = await new ItemService(
+      client.asSupabase(),
+    ).listProductsWithVariants(ORG);
+
+    expect(product.salePrice).toBe(45);
+    expect(product.variants).toHaveLength(1);
+    expect(product.variants[0].name).toBe("15oz");
+    expect(product.variants[0].salePrice).toBe(55);
+  });
+
+  /**
+   * Un producto con todas sus variantes archivadas sigue siendo vendible: el
+   * filtro es de variantes, no del producto padre.
+   */
+  it("un producto sin variantes vigentes se sigue ofreciendo", async () => {
+    const client = new FakeClient([
+      { data: [{ ...productRow, item_variants: [] }], error: null },
+    ]);
+
+    const products = await new ItemService(
+      client.asSupabase(),
+    ).listProductsWithVariants(ORG);
+
+    expect(products).toHaveLength(1);
+    expect(products[0].variants).toEqual([]);
+  });
+
+  it("ordena las variantes por nombre", async () => {
+    const variant = (id: string, name: string) => ({
+      id,
+      organization_id: ORG,
+      item_id: ITEM,
+      name,
+      attributes: null,
+      sale_price: null,
+      archived_at: null,
+    });
+    const client = new FakeClient([
+      {
+        data: [
+          {
+            ...productRow,
+            item_variants: [
+              variant("44444444-4444-4444-4444-444444444444", "Roja"),
+              variant("55555555-5555-5555-5555-555555555555", "Azul"),
+            ],
+          },
+        ],
+        error: null,
+      },
+    ]);
+
+    const [product] = await new ItemService(
+      client.asSupabase(),
+    ).listProductsWithVariants(ORG);
+
+    expect(product.variants.map((v) => v.name)).toEqual(["Azul", "Roja"]);
+  });
+});

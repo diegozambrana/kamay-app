@@ -220,3 +220,170 @@ describe("OrderItemService", () => {
     expect(client.queries[0].has("eq", "organization_id", ORG)).toBe(true);
   });
 });
+
+// ── Alta y edición (KAM-08) ───────────────────────────────────────────────
+
+const CONTACT = "55555555-5555-5555-5555-555555555555";
+const ITEM = "77777777-7777-7777-7777-777777777777";
+const LINE_ID = "88888888-8888-8888-8888-888888888888";
+
+const formValues = {
+  id: ORDER,
+  businessLineId: LINE,
+  contactId: CONTACT,
+  salesChannelId: null,
+  deliveryMode: "delivery" as const,
+  dueDate: "2026-12-24",
+  notes: "Diseño enviado por WhatsApp",
+  occurredAt: "2026-09-03T12:00:00.000Z",
+  items: [
+    {
+      id: LINE_ID,
+      itemId: ITEM,
+      variantId: null,
+      description: null,
+      quantity: 3,
+      unitPrice: 45,
+    },
+  ],
+};
+
+describe("OrderService.create", () => {
+  it("llama a create_order con la organización explícita y el pedido completo", async () => {
+    const client = new FakeClient([{ data: ORDER, error: null }]);
+    const id = await new OrderService(client.asSupabase()).create(ORG, formValues);
+
+    expect(id).toBe(ORDER);
+    expect(client.rpcCalls[0].name).toBe("create_order");
+
+    const params = client.rpcCalls[0].params as {
+      p_order: Record<string, unknown>;
+      p_items: Record<string, unknown>[];
+    };
+    // Convención nº 2: la organización viaja explícita aunque RLS ya filtre.
+    expect(params.p_order.organization_id).toBe(ORG);
+    expect(params.p_order.id).toBe(ORDER);
+    expect(params.p_order.business_line_id).toBe(LINE);
+    expect(params.p_order.contact_id).toBe(CONTACT);
+    expect(params.p_order.due_date).toBe("2026-12-24");
+    expect(params.p_order.delivery_mode).toBe("delivery");
+    expect(params.p_order.occurred_at).toBe("2026-09-03T12:00:00.000Z");
+  });
+
+  /** El estado inicial lo decide la base desde el juego de la línea (D3). */
+  it("no envía status_id ni code: los decide la base", async () => {
+    const client = new FakeClient([{ data: ORDER, error: null }]);
+    await new OrderService(client.asSupabase()).create(ORG, formValues);
+
+    const { p_order } = client.rpcCalls[0].params as {
+      p_order: Record<string, unknown>;
+    };
+    expect(p_order).not.toHaveProperty("status_id");
+    expect(p_order).not.toHaveProperty("code");
+    expect(p_order).not.toHaveProperty("archived_at");
+  });
+
+  it("manda las líneas con nombres de columna y su propio precio", async () => {
+    const client = new FakeClient([{ data: ORDER, error: null }]);
+    await new OrderService(client.asSupabase()).create(ORG, formValues);
+
+    const { p_items } = client.rpcCalls[0].params as {
+      p_items: Record<string, unknown>[];
+    };
+    expect(p_items).toEqual([
+      {
+        id: LINE_ID,
+        item_id: ITEM,
+        variant_id: null,
+        description: null,
+        quantity: 3,
+        unit_price: 45,
+      },
+    ]);
+  });
+
+  it("envuelve el error de la base en un Error para que la acción lo traduzca", async () => {
+    const client = new FakeClient([
+      { data: null, error: { message: "Un pedido necesita al menos una línea" } },
+    ]);
+
+    await expect(
+      new OrderService(client.asSupabase()).create(ORG, formValues),
+    ).rejects.toThrow("Un pedido necesita al menos una línea");
+  });
+});
+
+describe("OrderService.update", () => {
+  it("llama a update_order con la lista completa de líneas vigentes", async () => {
+    const client = new FakeClient([{ data: null, error: null }]);
+    await new OrderService(client.asSupabase()).update(ORG, {
+      ...formValues,
+      items: [
+        ...formValues.items,
+        {
+          id: "99999999-9999-9999-9999-999999999999",
+          itemId: null,
+          variantId: null,
+          description: "Pieza a medida",
+          quantity: 1,
+          unitPrice: 120,
+        },
+      ],
+    });
+
+    expect(client.rpcCalls[0].name).toBe("update_order");
+    const params = client.rpcCalls[0].params as {
+      p_order: Record<string, unknown>;
+      p_items: Record<string, unknown>[];
+    };
+    expect(params.p_order.organization_id).toBe(ORG);
+    expect(params.p_order.id).toBe(ORDER);
+    // Es la lista completa, no un diferencial: lo que no viaje se archiva.
+    expect(params.p_items.map((item) => item.id)).toEqual([
+      LINE_ID,
+      "99999999-9999-9999-9999-999999999999",
+    ]);
+  });
+
+  it("no envía la línea de negocio ni el estado: no se editan", async () => {
+    const client = new FakeClient([{ data: null, error: null }]);
+    await new OrderService(client.asSupabase()).update(ORG, formValues);
+
+    const { p_order } = client.rpcCalls[0].params as {
+      p_order: Record<string, unknown>;
+    };
+    expect(p_order).not.toHaveProperty("business_line_id");
+    expect(p_order).not.toHaveProperty("status_id");
+  });
+
+  it("sube el rechazo del pedido archivado", async () => {
+    const client = new FakeClient([
+      {
+        data: null,
+        error: {
+          message: "Un registro archivado no se puede editar: desarchívalo primero",
+        },
+      },
+    ]);
+
+    await expect(
+      new OrderService(client.asSupabase()).update(ORG, formValues),
+    ).rejects.toThrow("Un registro archivado no se puede editar");
+  });
+});
+
+describe("OrderItemService · líneas archivadas", () => {
+  it("el detalle no pide las líneas archivadas", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+    await new OrderItemService(client.asSupabase()).listByOrder(ORG, ORDER);
+
+    expect(client.queries[0].has("is", "archived_at", null)).toBe(true);
+  });
+
+  it("el resumen de la tarjeta tampoco las cuenta", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+    await new OrderItemService(client.asSupabase()).summariesFor(ORG, [ORDER]);
+
+    expect(client.queries[0].has("is", "archived_at", null)).toBe(true);
+  });
+});

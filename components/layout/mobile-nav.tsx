@@ -8,6 +8,18 @@ import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 
 /**
+ * Rutas de captura: formularios que en el celular son pantalla completa
+ * (mapa de navegación §2.3). Ahí la barra inferior estorba —tapa las
+ * acciones de guardar y ofrece salidas que se saltarían la confirmación de
+ * descarte—, así que no se rinde. KAM-09 añadirá las suyas.
+ */
+const CAPTURE_ROUTES = [/^\/orders\/new$/, /^\/orders\/[^/]+\/edit$/];
+
+function isCaptureRoute(pathname: string): boolean {
+  return CAPTURE_ROUTES.some((route) => route.test(pathname));
+}
+
+/**
  * Barra inferior móvil: las mismas entradas del menú lateral, filtradas por
  * el mismo rol — `nav-entries.ts` es la única fuente de ambos.
  *
@@ -17,6 +29,8 @@ import { useUserStore } from "@/stores/user-store";
 export function MobileNav() {
   const role = useUserStore((state) => state.membership?.role);
   const pathname = usePathname();
+
+  if (isCaptureRoute(pathname)) return null;
 
   const entries = navEntriesFor(role);
 

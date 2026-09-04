@@ -101,13 +101,41 @@ describe("ExpenseService.list", () => {
     const client = new FakeClient([
       { data: [archivedCost], error: null },
       { data: [], error: null },
+      { data: [], error: null },
     ]);
     const [expense] = await new ExpenseService(client.asSupabase()).list(ORG, {
       includeArchived: true,
     });
 
     expect(expense.total).toBe(120);
-    expect(client.tables).toEqual(["expenses", "expense_totals"]);
+    expect(expense.paid).toBe(0);
+    // Lo archivado tampoco está en la vista para `paid`: se suma aparte con
+    // la misma regla —solo movimientos vigentes— para que un egreso archivado
+    // no aparezca como si nunca se hubiera pagado (KAM-10).
+    expect(client.tables).toEqual(["expenses", "expense_totals", "payments"]);
+  });
+
+  it("un egreso archivado conserva lo que se le pagó", async () => {
+    const archivedCost = {
+      ...purchaseRow,
+      kind: "expense",
+      contact_id: null,
+      expense_category_id: CATEGORY,
+      amount: "120.00",
+      archived_at: "2026-09-02T10:00:00.000Z",
+    };
+    const client = new FakeClient([
+      { data: [archivedCost], error: null },
+      { data: [], error: null },
+      { data: [{ expense_id: EXPENSE, amount: "50.00" }], error: null },
+    ]);
+    const [expense] = await new ExpenseService(client.asSupabase()).list(ORG, {
+      includeArchived: true,
+    });
+
+    expect(expense.paid).toBe(50);
+    // Los movimientos anulados no cuentan, igual que en la vista.
+    expect(client.queries[2].has("is", "archived_at", null)).toBe(true);
   });
 
   it("una compra archivada suma sus líneas con el mismo cálculo que la vista", async () => {

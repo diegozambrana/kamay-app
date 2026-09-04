@@ -4,7 +4,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(17);
+select plan(18);
 
 -- ── Helpers: simular usuarios autenticados ────────────────────────────────
 
@@ -47,6 +47,26 @@ insert into memberships (organization_id, user_id, role, archived_at) values
   ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000a3', 'owner', now()),
   ('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000b1', 'owner', null);
 
+-- Un cobro de la organización B, con lo justo para que exista: línea,
+-- estado inicial, cliente y pedido (KAM-10).
+insert into business_lines (id, organization_id, name, position) values
+  ('00000000-0000-0000-0000-0000000000bb', '00000000-0000-0000-0000-00000000000b', 'Sublimación', 1);
+
+insert into statuses (id, organization_id, business_line_id, flow, name, kind, position) values
+  ('00000000-0000-0000-0000-0000000000bc', '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000bb', 'order', 'Registrado', 'initial', 1);
+
+insert into contacts (id, organization_id, name, is_customer) values
+  ('00000000-0000-0000-0000-0000000000bd', '00000000-0000-0000-0000-00000000000b', 'Cliente B', true);
+
+insert into orders (id, organization_id, business_line_id, kind, contact_id, status_id) values
+  ('00000000-0000-0000-0000-0000000000be', '00000000-0000-0000-0000-00000000000b',
+   '00000000-0000-0000-0000-0000000000bb', 'order',
+   '00000000-0000-0000-0000-0000000000bd', '00000000-0000-0000-0000-0000000000bc');
+
+insert into payments (id, organization_id, direction, order_id, amount) values
+  ('00000000-0000-0000-0000-0000000000bf', '00000000-0000-0000-0000-00000000000b', 'in',
+   '00000000-0000-0000-0000-0000000000be', 40);
+
 -- ── Funciones de membresía ────────────────────────────────────────────────
 
 -- Scenario: Active member is recognized
@@ -85,6 +105,9 @@ select is(
 select is(
   (select count(*)::int from memberships where organization_id = '00000000-0000-0000-0000-00000000000b'),
   0, 'memberships: cero filas de la organización B');
+select is(
+  (select count(*)::int from payments where organization_id = '00000000-0000-0000-0000-00000000000b'),
+  0, 'payments: cero movimientos de dinero de la organización B');
 
 -- ── Escrituras entre organizaciones ───────────────────────────────────────
 

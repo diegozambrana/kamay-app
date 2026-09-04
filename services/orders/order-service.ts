@@ -54,8 +54,16 @@ export type OrderFilters = {
   includeArchived?: boolean;
 };
 
-/** Un pedido con el total que trae la vista, nunca una columna de la tabla. */
-export type OrderWithTotal = Order & { total: number };
+type OrderTotals = { total: number; paid: number };
+
+/** Un pedido fuera de la vista —archivado— no tiene total ni cobrado. */
+const NO_MONEY: OrderTotals = { total: 0, paid: 0 };
+
+/**
+ * Un pedido con el total y lo cobrado que trae la vista, nunca columnas de la
+ * tabla. El saldo no viaja: se deriva al leer con `lib/payments/balance.ts`.
+ */
+export type OrderWithTotal = Order & { total: number; paid: number };
 
 /** `numeric` llega como texto desde PostgREST: no se pierde precisión. */
 function toNumber(value: number | string | null | undefined): number {
@@ -96,24 +104,31 @@ export class OrderService {
   }
 
   /**
-   * Los totales de un conjunto de pedidos, en una sola consulta a la vista.
-   * Un pedido ausente de la vista (archivado) cuenta como 0.
+   * Total y cobrado de un conjunto de pedidos, en una sola consulta a la
+   * vista. Un pedido ausente de la vista (archivado) cuenta como 0.
+   *
+   * `paid` viaja aquí y no en una consulta aparte para que la señal de pago
+   * de la tarjeta no cueste una consulta por tarjeta (KAM-10).
    */
-  private async totalsFor(orderIds: string[]): Promise<Map<string, number>> {
+  private async totalsFor(orderIds: string[]): Promise<Map<string, OrderTotals>> {
     if (orderIds.length === 0) return new Map();
 
     const { data, error } = await this.supabase
       .from("order_totals")
-      .select("order_id, total")
+      .select("order_id, total, paid")
       .in("order_id", orderIds);
 
     if (error) {
       throw new Error(`No se pudieron calcular los totales: ${error.message}`);
     }
 
-    const totals = new Map<string, number>();
-    for (const row of (data ?? []) as { order_id: string; total: number | string }[]) {
-      totals.set(row.order_id, toNumber(row.total));
+    const totals = new Map<string, OrderTotals>();
+    for (const row of (data ?? []) as {
+      order_id: string;
+      total: number | string;
+      paid: number | string;
+    }[]) {
+      totals.set(row.order_id, { total: toNumber(row.total), paid: toNumber(row.paid) });
     }
     return totals;
   }
@@ -149,7 +164,7 @@ export class OrderService {
 
     return orders.map((order) => ({
       ...order,
-      total: totals.get(order.id) ?? 0,
+      ...(totals.get(order.id) ?? NO_MONEY),
     }));
   }
 
@@ -172,7 +187,7 @@ export class OrderService {
     const order = this.toEntity(data as unknown as OrderRow);
     const totals = await this.totalsFor([order.id]);
 
-    return { ...order, total: totals.get(order.id) ?? 0 };
+    return { ...order, ...(totals.get(order.id) ?? NO_MONEY) };
   }
 
   /**

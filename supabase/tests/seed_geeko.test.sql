@@ -8,7 +8,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(19);
+select plan(25);
 
 -- ── Scenario: Reset leaves Geeko Store ready ──────────────────────────────
 
@@ -166,6 +166,48 @@ select ok(
            where id = 'b0000000-0000-0000-0000-000000000005'
              and order_id = 'a0000000-0000-0000-0000-000000000001'),
   'semilla: hay un gasto asignado al pedido #1');
+
+-- ── Cobros y pagos (KAM-10) ───────────────────────────────────────────────
+-- Los cinco casos que el bloque de cobros, la señal de pago y los indicadores
+-- necesitan. Se comprueban por su saldo derivado, no por la fila del cobro:
+-- es lo que las pantallas leen realmente.
+
+select is(
+  (select total - paid from order_totals
+    where order_id = 'a0000000-0000-0000-0000-000000000001'),
+  130::numeric,
+  'semilla: el pedido #1 tiene un anticipo de 60 sobre 190 → saldo 130');
+
+select is(
+  (select total - paid from order_totals
+    where order_id = 'a0000000-0000-0000-0000-000000000003'),
+  0::numeric,
+  'semilla: el pedido #3 está saldado al céntimo');
+
+select is(
+  (select total - paid from order_totals
+    where order_id = 'a0000000-0000-0000-0000-000000000012'),
+  -30::numeric,
+  'semilla: el pedido #12 está sobrepagado y su saldo queda negativo y visible');
+
+-- El cobro anulado sigue existiendo —no se borró— y no cuenta en `paid`.
+select ok(
+  exists (select 1 from payments
+           where id = 'c0000000-0000-0000-0000-000000000011'
+             and archived_at is not null),
+  'semilla: el cobro anulado del pedido #4 sigue registrado, archivado');
+
+select is(
+  (select paid from order_totals
+    where order_id = 'a0000000-0000-0000-0000-000000000004'),
+  130::numeric,
+  'semilla: el anulado no cuenta — el pedido #4 tiene 130 cobrados, no 230');
+
+select is(
+  (select total - paid from expense_totals
+    where expense_id = 'b0000000-0000-0000-0000-000000000004'),
+  70::numeric,
+  'semilla: el gasto de internet está pagado en parte → saldo por pagar 70');
 
 select * from finish();
 

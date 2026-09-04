@@ -8,6 +8,7 @@ import { ExpenseCategoryService } from "@/services/configuration/expense-categor
 import { ExpenseItemService } from "@/services/expenses/expense-item-service";
 import { ExpenseService } from "@/services/expenses/expense-service";
 import { OrderService } from "@/services/orders/order-service";
+import { PaymentService } from "@/services/payments/payment-service";
 
 import type { ExpenseDetailData } from "./expense-detail";
 
@@ -26,7 +27,16 @@ export async function loadExpenseDetail(
   const expense = await expenses.getById(organizationId, id);
   if (!expense) return null;
 
-  const [lines, supplier, categories, businessLines, order, receipts, history] =
+  const [
+    lines,
+    supplier,
+    categories,
+    businessLines,
+    order,
+    receipts,
+    payments,
+    history,
+  ] =
     await Promise.all([
       expense.kind === "purchase"
         ? new ExpenseItemService(supabase).listByExpense(organizationId, expense.id)
@@ -42,6 +52,9 @@ export async function loadExpenseDetail(
       new AttachmentService(supabase).listForEntities(organizationId, "expense", [
         expense.id,
       ]),
+      // Movimientos del egreso, anulados incluidos: el bloque los muestra
+      // tachados. Lo que cuenta en `paid` lo decide la vista, no esta lista.
+      new PaymentService(supabase).listForExpense(organizationId, expense.id),
       expenses.history(organizationId, expense.id),
     ]);
 
@@ -64,6 +77,7 @@ export async function loadExpenseDetail(
       sizeBytes: receipt.sizeBytes,
       url: signed.get(receipt.id) ?? null,
     })),
+    payments,
     history,
   };
 }

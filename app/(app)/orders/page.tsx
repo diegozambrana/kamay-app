@@ -11,6 +11,7 @@ import { ContactService } from "@/services/catalog/contact-service";
 import { StatusService } from "@/services/configuration/status-service";
 import { OrderItemService } from "@/services/orders/order-item-service";
 import { OrderService } from "@/services/orders/order-service";
+import { PaymentService } from "@/services/payments/payment-service";
 import { ALL_LINES, type Status } from "@/types";
 
 export const metadata = { title: "Pedidos · Kamay" };
@@ -91,6 +92,12 @@ export default async function OrdersPage({
     orders.map((order) => order.id),
   );
 
+  // Por cobrar por línea: un agregado derivado en la vista, nunca una suma
+  // guardada. La cabecera muestra el de la línea activa.
+  const receivables = await new PaymentService(context.supabase).receivables(
+    context.organizationId,
+  );
+
   return (
     <OrdersScreen
       orders={orders.map((order) => ({
@@ -106,6 +113,7 @@ export default async function OrdersPage({
       allStatuses={allStatuses}
       lines={lines}
       activeLineId={activeLineId}
+      receivables={receivables}
       view={view}
       search={search}
       includeArchived={includeArchived}

@@ -10,13 +10,14 @@ import { SalesChannelService } from "@/services/configuration/sales-channel-serv
 import { StatusService } from "@/services/configuration/status-service";
 import { OrderItemService } from "@/services/orders/order-item-service";
 import { OrderService } from "@/services/orders/order-service";
+import { PaymentService } from "@/services/payments/payment-service";
 
 export const metadata = { title: "Pedido · Kamay" };
 
 /**
- * V4 · Detalle de pedido. Las líneas, el total derivado, las imágenes de
- * referencia y el historial. Lo que depende de `payments` —cobros y saldo—
- * llega en KAM-10, y la rentabilidad en KAM-20.
+ * V4 · Detalle de pedido. Las líneas, el total y el saldo derivados, los
+ * cobros, las imágenes de referencia y el historial. La rentabilidad llega
+ * en KAM-20.
  */
 export default async function OrderDetailPage({
   params,
@@ -72,6 +73,13 @@ export default async function OrderDetailPage({
   ]);
   const signed = await attachments.signedUrls(files);
 
+  // Los movimientos del pedido, anulados incluidos: el bloque los muestra
+  // tachados. Lo que cuenta en `paid` lo decide la vista, no esta lista.
+  const payments = await new PaymentService(context.supabase).listForOrder(
+    context.organizationId,
+    order.id,
+  );
+
   // Un solo historial (convención nº 7): sale de `activity_log`. Para el
   // ayudante llega vacío por RLS, y el bloque no se muestra.
   const history = await orders.history(context.organizationId, order.id);
@@ -99,6 +107,10 @@ export default async function OrderDetailPage({
         fileName: file.fileName,
         url: signed.get(file.id) ?? null,
       }))}
+      payments={payments}
+      // Anular es del dueño (`enforce_archive_rules`): al ayudante ni se le
+      // ofrece, y si lo intentara la base lo rechazaría igual.
+      canVoidPayments={context.membership.role === "owner"}
       history={history}
       today={todayInTimezone(context.membership.organization.timezone)}
       timezone={context.membership.organization.timezone}

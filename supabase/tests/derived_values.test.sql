@@ -102,15 +102,15 @@ select ok(
     where organization_id = '10000000-0000-0000-0000-000000000003') >= 5,
   'expense_totals: la semilla de Geeko Store aporta egresos a la comprobación');
 
--- La vista sale en el orden canónico de columnas: KAM-10 la redefine con
--- `create or replace view` añadiendo `paid` al final, y eso solo funciona si
--- las existentes no cambian de sitio.
+-- La vista sale en el orden canónico de columnas. KAM-10 la redefinió con
+-- `create or replace view` añadiendo `paid` AL FINAL, que es lo único que ese
+-- comando permite: las existentes no pueden cambiar de sitio ni de tipo.
 select is(
   (select string_agg(column_name::text, ',' order by ordinal_position)
      from information_schema.columns
     where table_schema = 'public' and table_name = 'expense_totals'),
-  'expense_id,organization_id,business_line_id,kind,occurred_at,total',
-  'expense_totals: columnas en el orden canónico, sin paid (KAM-10 la añade)');
+  'expense_id,organization_id,business_line_id,kind,occurred_at,total,paid',
+  'expense_totals: columnas en el orden canónico, con paid al final');
 
 -- ── Scenario: Comprado dos veces (decide occurred_at, no el registro) ─────
 

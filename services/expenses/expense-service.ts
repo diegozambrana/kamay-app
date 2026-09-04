@@ -37,8 +37,16 @@ export type ExpenseFilters = {
   includeArchived?: boolean;
 };
 
-/** Un egreso con el total que trae la vista, nunca una columna de la tabla. */
-export type ExpenseWithTotal = Expense & { total: number };
+/**
+ * Un egreso con el total y lo pagado que trae la vista, nunca columnas de la
+ * tabla. El saldo no viaja: se deriva al leer con `lib/payments/balance.ts`.
+ */
+export type ExpenseWithTotal = Expense & { total: number; paid: number };
+
+type ExpenseTotals = { total: number; paid: number };
+
+/** Un egreso fuera de la vista —archivado— parte de cero y se completa. */
+const NO_MONEY: ExpenseTotals = { total: 0, paid: 0 };
 
 /** `numeric` llega como texto desde PostgREST: no se pierde precisión. */
 function toNumber(value: number | string | null | undefined): number {
@@ -96,13 +104,13 @@ export class ExpenseService {
    * La vista excluye lo archivado: para esas filas, que solo aparecen con
    * "Ver archivados", el total se arma aparte con el mismo cálculo.
    */
-  private async totalsFor(expenses: Expense[]): Promise<Map<string, number>> {
-    const totals = new Map<string, number>();
+  private async totalsFor(expenses: Expense[]): Promise<Map<string, ExpenseTotals>> {
+    const totals = new Map<string, ExpenseTotals>();
     if (expenses.length === 0) return totals;
 
     const { data, error } = await this.supabase
       .from("expense_totals")
-      .select("expense_id, total")
+      .select("expense_id, total, paid")
       .in(
         "expense_id",
         expenses.map((expense) => expense.id),
@@ -112,17 +120,29 @@ export class ExpenseService {
       throw new Error(`No se pudieron calcular los totales: ${error.message}`);
     }
 
-    for (const row of (data ?? []) as { expense_id: string; total: number | string }[]) {
-      totals.set(row.expense_id, toNumber(row.total));
+    for (const row of (data ?? []) as {
+      expense_id: string;
+      total: number | string;
+      paid: number | string;
+    }[]) {
+      totals.set(row.expense_id, {
+        total: toNumber(row.total),
+        paid: toNumber(row.paid),
+      });
     }
 
     // Lo archivado no está en la vista. Un gasto archivado es su monto; una
     // compra archivada, la suma de sus líneas.
+    const archived: string[] = [];
     const archivedPurchases: string[] = [];
     for (const expense of expenses) {
       if (!expense.archivedAt || totals.has(expense.id)) continue;
-      if (expense.kind === "expense") totals.set(expense.id, expense.amount ?? 0);
-      else archivedPurchases.push(expense.id);
+      archived.push(expense.id);
+      if (expense.kind === "expense") {
+        totals.set(expense.id, { total: expense.amount ?? 0, paid: 0 });
+      } else {
+        archivedPurchases.push(expense.id);
+      }
     }
 
     if (archivedPurchases.length > 0) {
@@ -135,17 +155,44 @@ export class ExpenseService {
         throw new Error(`No se pudieron calcular los totales: ${linesError.message}`);
       }
 
-      for (const id of archivedPurchases) totals.set(id, 0);
+      for (const id of archivedPurchases) totals.set(id, { ...NO_MONEY });
       for (const line of (lines ?? []) as {
         expense_id: string;
         quantity: number | string;
         unit_price: number | string;
       }[]) {
-        totals.set(
-          line.expense_id,
-          (totals.get(line.expense_id) ?? 0) +
-            toNumber(line.quantity) * toNumber(line.unit_price),
-        );
+        const current = totals.get(line.expense_id) ?? { ...NO_MONEY };
+        totals.set(line.expense_id, {
+          ...current,
+          total:
+            current.total + toNumber(line.quantity) * toNumber(line.unit_price),
+        });
+      }
+    }
+
+    // Lo pagado de un egreso archivado tampoco está en la vista. Se suma con
+    // la misma regla —solo movimientos vigentes— para que el saldo de un
+    // egreso archivado no aparezca como si nunca se hubiera pagado.
+    if (archived.length > 0) {
+      const { data: paidRows, error: paidError } = await this.supabase
+        .from("payments")
+        .select("expense_id, amount")
+        .in("expense_id", archived)
+        .is("archived_at", null);
+
+      if (paidError) {
+        throw new Error(`No se pudieron calcular los totales: ${paidError.message}`);
+      }
+
+      for (const row of (paidRows ?? []) as {
+        expense_id: string;
+        amount: number | string;
+      }[]) {
+        const current = totals.get(row.expense_id) ?? { ...NO_MONEY };
+        totals.set(row.expense_id, {
+          ...current,
+          paid: current.paid + toNumber(row.amount),
+        });
       }
     }
 
@@ -188,7 +235,7 @@ export class ExpenseService {
 
     return expenses.map((expense) => ({
       ...expense,
-      total: totals.get(expense.id) ?? 0,
+      ...(totals.get(expense.id) ?? NO_MONEY),
     }));
   }
 
@@ -211,7 +258,7 @@ export class ExpenseService {
     const expense = this.toEntity(data as unknown as ExpenseRow);
     const totals = await this.totalsFor([expense]);
 
-    return { ...expense, total: totals.get(expense.id) ?? 0 };
+    return { ...expense, ...(totals.get(expense.id) ?? NO_MONEY) };
   }
 
   /**

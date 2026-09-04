@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { PaymentStatusBadge } from "@/features/payments/payment-status-badge";
 import { formatDate } from "@/lib/format/datetime";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,7 @@ export function ExpenseCard({
               {KIND_LABELS[row.kind]}
             </Badge>
             {row.archivedAt && <Badge variant="outline">Archivado</Badge>}
+            <PaymentStatusBadge total={row.total} paid={row.paid} />
           </span>
           <span className="font-medium tabular-nums" data-testid="row-total">
             {row.total.toFixed(2)}

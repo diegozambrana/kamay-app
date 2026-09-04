@@ -4,7 +4,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(4);
+select plan(5);
 
 create function pg_temp.login(uid uuid) returns void
 language plpgsql as $$
@@ -49,6 +49,14 @@ select lives_ok(
 select lives_ok(
   $$ delete from organizations $$,
   'organizations: DELETE del dueño no falla, pero no tiene política');
+
+-- `payments` va un paso más allá que el resto: además de no tener política
+-- `DELETE`, tiene el privilegio revocado, así que el borrado ni siquiera
+-- llega a ejecutarse. Un movimiento de dinero no se borra jamás (KAM-10).
+select throws_ok(
+  $$ delete from payments $$,
+  '42501', null,
+  'payments: DELETE ni se ejecuta — el privilegio está revocado');
 
 select pg_temp.logout();
 

@@ -17,6 +17,7 @@ import { ContactService } from "@/services/catalog/contact-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
 import { ExpenseService } from "@/services/expenses/expense-service";
+import { PaymentService } from "@/services/payments/payment-service";
 import { ALL_LINES, EXPENSE_KINDS, type ExpenseKind } from "@/types";
 
 export const metadata = { title: "Egresos · Kamay" };
@@ -105,6 +106,11 @@ export default async function ExpensesPage({
   // nunca en una columna ni en un store (convención nº 4).
   const summary = summarize(rows.filter((row) => row.archivedAt === null));
 
+  // Por pagar por línea: mismo mecanismo que Por cobrar en el tablero.
+  const payables = await new PaymentService(context.supabase).payables(
+    context.organizationId,
+  );
+
   const selected = params.selected
     ? await loadExpenseDetail(context, params.selected)
     : null;
@@ -115,6 +121,8 @@ export default async function ExpensesPage({
       summary={summary}
       suppliers={contacts.filter((contact) => contact.archivedAt === null)}
       categories={categories.filter((category) => category.archivedAt === null)}
+      activeLineId={activeLineId}
+      payables={payables}
       filters={{
         kind,
         contactId: params.contact ?? "",

@@ -392,3 +392,64 @@ insert into attachments (
    'expense', 'b0000000-0000-0000-0000-000000000004', 'receipts',
    '10000000-0000-0000-0000-000000000003/expense/b0000000-0000-0000-0000-000000000004/factura-internet.jpg',
    'factura-internet.jpg', 'image/jpeg', 96512);
+
+-- ── Cobros y pagos (KAM-10) ───────────────────────────────────────────────
+-- Los casos que el bloque de cobros, la señal de pago de la tarjeta y los
+-- indicadores necesitan para tener materia; `seed_geeko.test.sql` vigila que
+-- sigan estando:
+--
+--   · el pedido #1 (total 190) con un anticipo de 60 → saldo 130, parcial;
+--   · el pedido #3 (total 90) saldado al céntimo → pagado;
+--   · el pedido #12 (total 120) con 150 cobrados → saldo −30, sobrepagado, y
+--     aportando CERO al indicador Por cobrar sin restarle a los demás;
+--   · el pedido #4 (total 330) con un cobro anulado y otro vigente → el
+--     anulado no cuenta y el saldo lo refleja;
+--   · el gasto de internet (120) pagado en parte → saldo por pagar 70.
+--
+-- Los movimientos no llevan `created_by`: la semilla corre como `postgres`.
+-- El anulado se inserta YA archivado: `enforce_archive_rules` congela la fila
+-- en cuanto `archived_at` deja de ser nulo, igual que en pedidos y egresos.
+
+insert into payments (
+  id, organization_id, direction, order_id, amount, method, occurred_at, note
+) values
+  -- Anticipo del pedido #1: 60 de 190.
+  ('c0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000001', 60, 'cash',
+   now() - interval '3 days', 'Adelanto al confirmar el diseño.'),
+
+  -- Pedido #3 saldado: 90 de 90.
+  ('c0000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000003', 90, 'transfer',
+   now() - interval '1 day', 'Pagado completo al recoger.'),
+
+  -- Pedido #12 sobrepagado: 150 sobre un total de 120. El saldo queda en −30
+  -- y se ve; el indicador no lo compensa contra otros pedidos.
+  ('c0000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000012', 150, 'cash',
+   now() - interval '2 days', 'La clienta redondeó hacia arriba.'),
+
+  -- Pedido #4: el cobro que sí cuenta.
+  ('c0000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000004', 130, 'cash',
+   now() - interval '4 days', null);
+
+insert into payments (
+  id, organization_id, direction, expense_id, amount, method, occurred_at, note
+) values
+  -- Gasto de internet pagado en parte: 50 de 120.
+  ('c0000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000003',
+   'out', 'b0000000-0000-0000-0000-000000000004', 50, 'transfer',
+   now() - interval '5 days', 'Primera cuota del mes.');
+
+-- El cobro anulado del pedido #4: registrado por error y corregido por la vía
+-- prevista —anular y volver a registrar—, no editando el importe. Sigue
+-- visible en el detalle, tachado, y no cuenta en `paid`.
+insert into payments (
+  id, organization_id, direction, order_id, amount, method, occurred_at, note,
+  archived_at
+) values
+  ('c0000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000004', 100, 'cash',
+   now() - interval '5 days', 'Anotado en el pedido equivocado.',
+   now() - interval '4 days');

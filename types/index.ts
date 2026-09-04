@@ -340,11 +340,54 @@ export type ExpenseItem = {
 
 /**
  * El total nunca se almacena (convención nº 4): llega de la vista
- * `expense_totals`. `paid` se añadirá con los pagos (KAM-10).
+ * `expense_totals`, y con él lo pagado.
  */
 export type ExpenseTotals = {
   expenseId: string;
   total: number;
+  paid: number;
+};
+
+export const PAYMENT_DIRECTIONS = ["in", "out"] as const;
+
+/** `in` es un cobro contra un pedido; `out`, un pago contra un egreso. */
+export type PaymentDirection = (typeof PAYMENT_DIRECTIONS)[number];
+
+export const PAYMENT_METHODS = ["cash", "transfer", "other"] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+/**
+ * Estado de pago derivado de `total` y `paid`. No es una columna ni un campo
+ * editable: se calcula al leer, en `lib/payments/balance.ts`.
+ */
+export type PaymentStatus = "pending" | "partial" | "paid" | "overpaid";
+
+/**
+ * Un movimiento real de dinero. Apunta a un pedido o a un egreso, nunca a los
+ * dos, y su dirección la impone la base (esquema § Cobros y pagos).
+ *
+ * Es un hecho inmutable: se anula archivándolo, jamás se edita ni se borra.
+ */
+export type Payment = {
+  id: string;
+  organizationId: string;
+  direction: PaymentDirection;
+  orderId: string | null;
+  expenseId: string | null;
+  amount: number;
+  method: PaymentMethod | null;
+  occurredAt: string;
+  note: string | null;
+  createdBy: string | null;
+  archivedAt: string | null;
+};
+
+/** Lo pendiente de una línea de negocio, tal como llega de la vista. */
+export type OutstandingByLine = {
+  organizationId: string;
+  businessLineId: string;
+  outstanding: number;
 };
 
 /** El bucket de los comprobantes de compra y gasto (esquema §13). */

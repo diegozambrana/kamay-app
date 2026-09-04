@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PaymentStatusBadge } from "@/features/payments/payment-status-badge";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { formatDate } from "@/lib/format/datetime";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,9 @@ export function ExpenseRows({
                   {KIND_LABELS[row.kind]}
                 </Badge>
                 {row.archivedAt && <Badge variant="outline">Archivado</Badge>}
+                {/* Estado de pago derivado de `total` y `paid`: la misma
+                    función que usa el tablero de pedidos. */}
+                <PaymentStatusBadge total={row.total} paid={row.paid} />
                 <UploadIndicator upload={uploads[row.id]} />
               </span>
             </TableCell>

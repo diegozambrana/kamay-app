@@ -83,6 +83,7 @@ function order(overrides: Partial<BoardOrder> & { id: string }): BoardOrder {
     lineColor: "blue",
     statusKind: "waiting",
     total: 0,
+    paid: 0,
     itemsSummary: null,
     archivedAt: null,
     statusId: "",
@@ -129,6 +130,7 @@ function renderScreen(props: Partial<Parameters<typeof OrdersScreen>[0]> = {}) {
       allStatuses={props.allStatuses ?? statuses}
       lines={lines}
       activeLineId={props.activeLineId === undefined ? SUBLI : props.activeLineId}
+      receivables={props.receivables ?? []}
       view={props.view ?? "board"}
       search=""
       includeArchived={false}

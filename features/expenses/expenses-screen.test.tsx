@@ -32,6 +32,7 @@ function row(overrides: Partial<ExpenseRowView> & { id: string }): ExpenseRowVie
     expenseCategoryId: null,
     orderId: null,
     amount: null,
+    paid: 0,
     occurredAt: "2026-09-02T14:00:00.000Z",
     note: null,
     archivedAt: null,
@@ -72,6 +73,8 @@ function renderScreen(rows = ROWS) {
       suppliers={[]}
       categories={[]}
       filters={FILTERS}
+      activeLineId={SUBLI}
+      payables={[]}
       selected={null}
       timezone="America/La_Paz"
     />,

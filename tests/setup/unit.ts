@@ -1,3 +1,8 @@
+// jsdom no implementa IndexedDB, y la cola de captura sin conexión (KAM-11)
+// vive precisamente ahí. Se instala antes que nada: Dexie toma la referencia
+// global al cargarse, así que llegar tarde no sirve de nada.
+import "fake-indexeddb/auto";
+
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 

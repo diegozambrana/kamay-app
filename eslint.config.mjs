@@ -19,6 +19,10 @@ const eslintConfig = defineConfig([
     "supabase/**",
     "playwright-report/**",
     "test-results/**",
+    // El service worker lo compila Serwist en el paso `postbuild`; el fuente
+    // que sí se revisa es `app/sw.ts`.
+    "public/sw.js",
+    "public/sw.js.map",
   ]),
 ]);
 

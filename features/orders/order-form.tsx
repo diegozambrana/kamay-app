@@ -7,9 +7,7 @@ import { useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
 import {
-  createOrder,
   setOrderAttachmentArchived,
-  updateOrder,
   uploadOrderAttachment,
 } from "@/actions/orders";
 import { FileDropzone } from "@/components/file-dropzone/file-dropzone";
@@ -29,6 +27,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ContactCombobox } from "@/features/contacts/contact-combobox";
+import { ORDER_CREATE, ORDER_UPDATE } from "@/features/sync/operations";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { IMAGE_ACCEPT, MAX_ATTACHMENTS_PER_RECORD } from "@/lib/catalog/photos";
 import type { PickableItem } from "@/lib/orders/lines";
@@ -37,7 +37,15 @@ import {
   type OrderFormInput,
   type OrderFormValues,
 } from "@/lib/orders/schema";
+import {
+  capture,
+  drainOutbox,
+  enqueue,
+  outboxDatabase,
+} from "@/lib/offline";
 import { cn } from "@/lib/utils";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useUserStore } from "@/stores/user-store";
 import type {
   BusinessLine,
   Contact,
@@ -72,8 +80,17 @@ export type OrderAttachmentView = {
   url: string | null;
 };
 
-/** Lo que devuelve un guardado exitoso, en cualquiera de los dos modos. */
-type Saved = { orderId: string; code: number };
+/**
+ * Lo que devuelve un guardado, en cualquiera de los dos modos.
+ *
+ * `queued` no es un fallo: el pedido está guardado en el dispositivo y saldrá
+ * solo. Lo que no tiene todavía es número visible —lo asigna la base— y por
+ * eso se presenta como pendiente de sincronizar en vez de con un «#142» que
+ * nadie podría garantizar (KAM-11, design.md decisión 10).
+ */
+type Saved =
+  | { status: "sent"; orderId: string; code: number }
+  | { status: "queued"; orderId: string };
 
 const DELIVERY_LABELS: Record<DeliveryMode, string> = {
   pickup: "Recojo",
@@ -181,6 +198,13 @@ export function OrderForm({
   /** Un pedido guardado cuyos adjuntos fallaron: existe, pero seguimos aquí. */
   const [savedId, setSavedId] = useState<string | null>(null);
   const [removed, setRemoved] = useState<string[]>([]);
+
+  // La captura sin conexión (KAM-11): quién registra y desde qué organización
+  // se graba en la entrada de la cola, y la señal decide si vale la pena
+  // esperar al servidor.
+  const organizationId = useOrganizationStore((state) => state.organization?.id);
+  const userId = useUserStore((state) => state.user?.id);
+  const { isOnline, browserOnline, reportSendResult } = useOnlineStatus();
 
   // `useWatch` y no `watch()`: se suscribe por campo y deja que el compilador
   // de React memoice el componente, que con `watch()` no puede.
@@ -305,22 +329,67 @@ export function OrderForm({
     setRemoved((previous) => [...previous, attachment.id]);
   }
 
+  /**
+   * Guardar es **encolar y esperar un poco** (KAM-11, design.md decisión 3).
+   *
+   * El formulario ya no llama a la Server Action: escribe en la cola, dispara
+   * el vaciado y espera su resultado un plazo corto. Con red el pedido sale
+   * dentro del mismo gesto y todo se comporta como en KAM-08; sin red se
+   * confirma igual y el resto es cosa de la cola.
+   */
   async function persist(parsed: OrderFormValues): Promise<Saved | null> {
-    if (mode === "create") {
-      const result = await createOrder(parsed);
-      if ("error" in result) {
-        setError(result.error);
-        return null;
-      }
-      return { orderId: result.orderId, code: result.code };
-    }
-
-    const result = await updateOrder(parsed);
-    if (result?.error) {
-      setError(result.error);
+    if (!organizationId || !userId) {
+      setError("Tu sesión terminó. Vuelve a entrar.");
       return null;
     }
-    return { orderId: parsed.id, code: code ?? 0 };
+
+    /**
+     * La hora del hecho es la de **registrar**, no la de abrir el formulario.
+     * El valor por omisión se fija al rendir la página, y entre abrir el
+     * formulario y guardarlo pueden pasar veinte minutos —sobre todo sin red,
+     * que es cuando esta hora es la única que habrá—. En la edición no se
+     * toca: el hecho ocurrió cuando ocurrió, y `update_order` tampoco la
+     * escribe.
+     */
+    const values: OrderFormValues =
+      mode === "create"
+        ? { ...parsed, occurredAt: new Date().toISOString() }
+        : parsed;
+
+    const result = await capture(
+      {
+        recordId: values.id,
+        operation: mode === "create" ? ORDER_CREATE : ORDER_UPDATE,
+        payload: values,
+        organizationId,
+        userId,
+      },
+      {
+        enqueue: (input) => enqueue(input, outboxDatabase()),
+        drain: () => drainOutbox({ session: { organizationId, userId } }),
+        isOnline: () => isOnline,
+      },
+    );
+
+    // Lo que acaba de pasar es mejor evidencia de conectividad que
+    // `navigator.onLine`, que en una WiFi sin salida sigue diciendo que sí.
+    reportSendResult(result.status !== "queued");
+
+    if (result.status === "failed") {
+      setError(result.message);
+      return null;
+    }
+
+    if (result.status === "queued") {
+      return { status: "queued", orderId: values.id };
+    }
+
+    if (mode === "create") {
+      const created = result.result as { orderId: string; code: number };
+      return { status: "sent", orderId: created.orderId, code: created.code };
+    }
+
+    return { status: "sent", orderId: values.id, code: code ?? 0 };
   }
 
   const submit = (andAnother: boolean) =>
@@ -331,6 +400,29 @@ export function OrderForm({
 
       const saved = await persist(parsed);
       if (!saved) return;
+
+      /**
+       * Sin sincronizar no hay número, no hay detalle que servir y no hay
+       * dónde subir una imagen. Se confirma, se limpia el formulario y se
+       * sigue registrando: navegar a una pantalla que la red no puede
+       * entregar convertiría un guardado correcto en una pantalla de error.
+       */
+      if (saved.status === "queued") {
+        const pendingFiles = files.length;
+        setFiles([]);
+        reset(mode === "create" ? blankAfter(getValues()) : getValues());
+        setNames({});
+        setSelected(null);
+        setNotice(
+          pendingFiles > 0
+            ? "Pedido guardado · pendiente de sincronizar. Las imágenes necesitan conexión: añádelas desde la edición cuando vuelva la señal."
+            : "Pedido guardado · pendiente de sincronizar. Se enviará solo cuando vuelva la señal.",
+        );
+        if (mode === "create") {
+          document.getElementById("contact-combobox-input")?.focus();
+        }
+        return;
+      }
 
       const failed = await uploadFiles(saved.orderId);
 
@@ -622,6 +714,20 @@ export function OrderForm({
               label="Arrastra las imágenes de referencia"
               description={`Hasta ${MAX_ATTACHMENTS_PER_RECORD} imágenes por pedido, 5 MB cada una.`}
             />
+
+            {/* Los adjuntos exigen conexión: no entran en la cola (KAM-11,
+                proposal.md — fuera de alcance). Se avisa antes de guardar,
+                y guardar sigue estando permitido. */}
+            {!browserOnline && (
+              <p
+                data-testid="attachments-offline"
+                role="status"
+                className="text-xs text-muted-foreground"
+              >
+                Sin conexión, las imágenes no se pueden subir. Guarda el pedido
+                igualmente y añádelas desde la edición cuando vuelva la señal.
+              </p>
+            )}
           </CardContent>
         </Card>
 

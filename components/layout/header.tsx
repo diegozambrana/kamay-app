@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SyncIndicator } from "@/features/sync/sync-indicator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useOrganizationStore } from "@/stores/organization-store";
 
@@ -30,7 +31,8 @@ export function Header() {
         </span>
       )}
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
+        <SyncIndicator />
         <ThemeToggle />
       </div>
     </header>

@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, NetworkOnly, Serwist } from "serwist";
+import { CacheFirst, NetworkFirst, NetworkOnly, Serwist } from "serwist";
 
 /**
  * KAM-11 · El cascarón se abre sin red.
@@ -30,6 +30,11 @@ import { CacheFirst, NetworkOnly, Serwist } from "serwist";
  * Lo que sí se guarda son los recursos de compilación —llevan su huella en el
  * nombre, así que una copia nunca queda obsoleta— y la página `/offline`, que
  * es lo que se sirve cuando una navegación no puede completarse.
+ *
+ * **Una excepción, acotada y razonada:** el cascarón de `/fair` (KAM-12). Es
+ * la única ruta de negocio que se guarda, y no rompe la regla nº 2 porque no
+ * guarda datos: los productos los sirve el snapshot de Dexie, con su hora a la
+ * vista. Ver la regla correspondiente más abajo.
  */
 
 declare global {
@@ -55,6 +60,27 @@ const serwist = new Serwist({
       matcher: ({ url, sameOrigin }) =>
         sameOrigin && url.pathname.startsWith("/_next/static/"),
       handler: new CacheFirst({ cacheName: "kamay-build-assets" }),
+    },
+    {
+      // ── La única excepción: el cascarón del modo feria (KAM-12) ─────────
+      //
+      // La regla de abajo manda toda navegación a red, y sin red responde
+      // `/offline`. Para cualquier pantalla de Kamay eso es lo correcto. Para
+      // `/fair` vacía de contenido su razón de ser: quien llega al puesto sin
+      // señal y abre la aplicación necesita la cuadrícula, no una página que
+      // le diga que no hay conexión.
+      //
+      // Esto NO contradice la regla nº 2 de arriba, porque lo que se guarda
+      // aquí es el **cascarón**, no los datos: los productos y sus precios
+      // los sirve el snapshot de Dexie, que lleva su hora encima y se enseña
+      // (design.md, decisión 12). Un documento cacheado sin más serviría
+      // precios de anoche sin decirlo, que es justo lo que la regla evita.
+      //
+      // `NetworkFirst`: con red se sirve el documento nuevo y se guarda; sin
+      // red se sirve el último. La copia nunca sustituye a la red disponible.
+      matcher: ({ request, url, sameOrigin }) =>
+        sameOrigin && request.mode === "navigate" && url.pathname === "/fair",
+      handler: new NetworkFirst({ cacheName: "kamay-fair-shell" }),
     },
     {
       // Las navegaciones van siempre a la red —los datos nunca se sirven de

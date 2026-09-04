@@ -5,6 +5,9 @@
 export const PROTECTED_PREFIXES = [
   "/dashboard",
   "/quick",
+  // El modo feria vive en su propio grupo de rutas `(fair)`, sin cascarón,
+  // pero necesita sesión igual que el resto: se vende contra la organización.
+  "/fair",
   "/orders",
   "/catalog",
   "/contacts",

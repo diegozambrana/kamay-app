@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { MainContainer } from "@/components/layout/main-container";
+import { OutstandingSummary } from "@/features/payments/outstanding-summary";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -17,7 +18,14 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ExpenseSummary } from "@/lib/expenses/totals";
 import type { ExpenseWithTotal } from "@/services/expenses/expense-service";
-import type { Contact, ExpenseCategory, ExpenseKind, LineColor } from "@/types";
+import {
+  ALL_LINES,
+  type Contact,
+  type ExpenseCategory,
+  type ExpenseKind,
+  type LineColor,
+  type OutstandingByLine,
+} from "@/types";
 
 import { ExpenseCard } from "./expense-card";
 import { ExpenseDetail, KIND_LABELS, type ExpenseDetailData } from "./expense-detail";
@@ -44,6 +52,8 @@ export function ExpensesScreen({
   suppliers,
   categories,
   filters,
+  activeLineId,
+  payables,
   selected,
   timezone,
 }: {
@@ -52,6 +62,10 @@ export function ExpensesScreen({
   suppliers: Contact[];
   categories: ExpenseCategory[];
   filters: ExpenseFilterValues;
+  /** La línea activa del selector global; `null` es "Todas". */
+  activeLineId: string | null;
+  /** Lo pendiente de pago por línea, tal como llega de la vista. */
+  payables: OutstandingByLine[];
   /** El egreso abierto en el panel lateral (`?selected=`), ya resuelto. */
   selected: ExpenseDetailData | null;
   timezone: string;
@@ -92,6 +106,14 @@ export function ExpensesScreen({
       description="Todo lo que sale de caja: compras y gastos."
       action={
         <div className="flex flex-wrap items-center gap-2">
+          {/* Por pagar de la línea activa. Al ayudante le daría cero, pero a
+              esta pantalla no llega: los egresos son del dueño (§16). */}
+          <OutstandingSummary
+            label="Por pagar"
+            rows={payables}
+            activeLine={activeLineId ?? ALL_LINES}
+            testId="payables-summary"
+          />
           <Button asChild variant="outline" data-testid="new-purchase">
             <Link href="/expenses/purchases/new">
               <PlusIcon className="size-4" aria-hidden /> Nueva compra

@@ -215,6 +215,49 @@ test.describe.serial("tablero de pedidos (V3)", () => {
   });
 });
 
+test.describe("señal de pago e indicador Por cobrar (KAM-10)", () => {
+  test.skip(({ isMobile }) => Boolean(isMobile), "usa el selector del menú lateral");
+
+  test("la tarjeta muestra la señal de pago y la cabecera lo pendiente", async ({
+    page,
+  }) => {
+    await login(page, GEEKO_OWNER);
+    await selectLine(page, "Sublimación");
+    await page.goto("/orders");
+
+    // Se localizan por `data-order-code`, no por su texto: "#1" también
+    // casaría con "#10" y "#11".
+    const carta = (code: number) =>
+      page.locator(`[data-testid="order-card"][data-order-code="${code}"]`);
+
+    // El #3 de la semilla está saldado (90 de 90). Ninguna otra suite lo
+    // mueve ni le registra cobros, así que su señal es estable.
+    await expect(carta(3).getByTestId("payment-status")).toHaveAttribute(
+      "data-status",
+      "paid",
+    );
+
+    // El #1 lleva un anticipo de 60 sobre 190.
+    await expect(carta(1).getByTestId("payment-status")).toHaveAttribute(
+      "data-status",
+      "partial",
+    );
+
+    // El #6 no tiene ningún cobro.
+    await expect(carta(6).getByTestId("payment-status")).toHaveAttribute(
+      "data-status",
+      "pending",
+    );
+
+    // El indicador existe y trae un importe. No se afirma la cifra exacta: es
+    // un agregado de toda la línea y `order-payments.spec.ts` cobra en
+    // paralelo sobre el #5, que también es de Sublimación.
+    const porCobrar = page.getByTestId("receivables-summary");
+    await expect(porCobrar).toContainText("Por cobrar");
+    await expect(porCobrar).toContainText(/\d+\.\d{2}/);
+  });
+});
+
 test.describe("tablero de pedidos en móvil", () => {
   test.skip(({ isMobile }) => !isMobile, "cubre el camino sin selector de línea");
 

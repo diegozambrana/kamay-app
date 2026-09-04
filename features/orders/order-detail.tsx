@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PaymentBlock } from "@/features/payments/payment-block";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { formatDateTime } from "@/lib/format/datetime";
 import { isOverdue } from "@/lib/orders/overdue";
@@ -35,6 +36,7 @@ import type {
   ActivityEntry,
   BusinessLine,
   Contact,
+  Payment,
   Status,
   StatusKind,
 } from "@/types";
@@ -54,8 +56,9 @@ const ACTION_LABELS: Record<ActivityEntry["action"], string> = {
 export type OrderImage = { id: string; fileName: string; url: string | null };
 
 /**
- * V4 · Detalle de pedido. El total sale de la vista, nunca de una columna, y
- * el historial de `activity_log`, nunca de una tabla propia.
+ * V4 · Detalle de pedido. El total y lo cobrado salen de la vista, nunca de
+ * una columna; el saldo se deriva de ambos al leer; y el historial sale de
+ * `activity_log`, nunca de una tabla propia.
  */
 export function OrderDetail({
   order,
@@ -67,6 +70,8 @@ export function OrderDetail({
   businessLine,
   channelName,
   images,
+  payments,
+  canVoidPayments,
   history,
   today,
   timezone,
@@ -80,6 +85,10 @@ export function OrderDetail({
   businessLine: BusinessLine | null;
   channelName: string | null;
   images: OrderImage[];
+  /** Movimientos del pedido, anulados incluidos. */
+  payments: Payment[];
+  /** Anular es del dueño: lo decide la base, aquí solo se ofrece o no. */
+  canVoidPayments: boolean;
   history: ActivityEntry[];
   today: string;
   timezone: string;
@@ -299,6 +308,18 @@ export function OrderDetail({
           </CardContent>
         </Card>
       </div>
+
+      {/* Cobros y saldo. Un pedido archivado está congelado: se ven sus
+          movimientos pero no se registran nuevos. */}
+      <PaymentBlock
+        target={{ kind: "order", orderId: order.id }}
+        total={order.total}
+        paid={order.paid}
+        payments={payments}
+        timezone={timezone}
+        canVoid={canVoidPayments}
+        frozen={Boolean(order.archivedAt)}
+      />
 
       <Card>
         <CardHeader>

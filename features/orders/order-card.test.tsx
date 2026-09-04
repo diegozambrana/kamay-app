@@ -15,6 +15,7 @@ function card(overrides: Partial<OrderCardData> = {}): OrderCardData {
     lineColor: "blue",
     statusKind: "in_progress",
     total: 190,
+    paid: 0,
     itemsSummary: "3 × Taza personalizada",
     archivedAt: null,
     ...overrides,
@@ -134,5 +135,49 @@ describe("OrderCard", () => {
       "href",
       "/orders/33333333-3333-3333-3333-333333333333",
     );
+  });
+});
+
+describe("OrderCard · señal de pago", () => {
+  it("Scenario: Señal de pago de un pedido con anticipo", () => {
+    render(<OrderCard order={card({ total: 190, paid: 40 })} today={TODAY} />);
+
+    expect(screen.getByTestId("payment-status")).toHaveAttribute(
+      "data-status",
+      "partial",
+    );
+  });
+
+  it("Scenario: Señal de pago de un pedido saldado", () => {
+    render(<OrderCard order={card({ total: 190, paid: 190 })} today={TODAY} />);
+
+    expect(screen.getByTestId("payment-status")).toHaveAttribute(
+      "data-status",
+      "paid",
+    );
+  });
+
+  it("Scenario: La señal de pago no depende del estado del pedido", () => {
+    // Entregado y cobrado son hechos distintos (modelo 6.1): un pedido en un
+    // estado `final` sin cobros sigue estando sin cobrar.
+    render(
+      <OrderCard
+        order={card({ statusKind: "final", total: 190, paid: 0 })}
+        today={TODAY}
+      />,
+    );
+
+    expect(screen.getByTestId("payment-status")).toHaveAttribute(
+      "data-status",
+      "pending",
+    );
+  });
+
+  it("no ofrece ningún control para fijarla", () => {
+    const { container } = render(
+      <OrderCard order={card({ total: 190, paid: 40 })} today={TODAY} />,
+    );
+
+    expect(container.querySelector("input, select, button")).toBeNull();
   });
 });

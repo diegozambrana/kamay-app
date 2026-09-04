@@ -4,6 +4,7 @@ import { PackageIcon, TriangleAlertIcon, TruckIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { PaymentStatusBadge } from "@/features/payments/payment-status-badge";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { isOverdue } from "@/lib/orders/overdue";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,8 @@ export type OrderCardData = {
   lineColor: LineColor;
   statusKind: StatusKind;
   total: number;
+  /** Lo cobrado, de `order_totals`. La señal de pago sale de aquí. */
+  paid: number;
   itemsSummary: string | null;
   archivedAt: string | null;
 };
@@ -40,6 +43,10 @@ function shortDate(date: string): string {
  * La alerta de retraso la decide `isOverdue` a partir del `kind` del estado,
  * nunca de su nombre (convención nº 5): un pedido vencido en espera no se
  * pinta de rojo, porque el trabajo del taller ya terminó.
+ *
+ * La señal de pago se deriva de `total` y `paid` y no depende del estado del
+ * pedido: entregado y cobrado son hechos distintos (modelo 6.1). Tampoco es
+ * editable desde aquí — no hay ningún campo detrás.
  */
 export function OrderCard({
   order,
@@ -133,7 +140,10 @@ export function OrderCard({
           )}
         </span>
 
-        <span className="tabular-nums">{order.total.toFixed(2)}</span>
+        <span className="flex items-center gap-2">
+          <PaymentStatusBadge total={order.total} paid={order.paid} />
+          <span className="tabular-nums">{order.total.toFixed(2)}</span>
+        </span>
       </div>
 
       {order.archivedAt && (

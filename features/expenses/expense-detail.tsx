@@ -34,9 +34,10 @@ import { IMAGE_ACCEPT } from "@/lib/catalog/photos";
 import { formatDate, formatDateTime } from "@/lib/format/datetime";
 import { formatFileSize } from "@/lib/format/file-size";
 import { cn } from "@/lib/utils";
+import { PaymentBlock } from "@/features/payments/payment-block";
 import type { ExpenseItemWithNames } from "@/services/expenses/expense-item-service";
 import type { ExpenseWithTotal } from "@/services/expenses/expense-service";
-import type { ActivityEntry, BusinessLine, Contact } from "@/types";
+import type { ActivityEntry, BusinessLine, Contact, Payment } from "@/types";
 
 import { useReceiptUploadStore } from "./receipt-upload-store";
 
@@ -66,6 +67,8 @@ export type ExpenseDetailData = {
   businessLine: BusinessLine | null;
   order: { id: string; code: number } | null;
   receipts: ReceiptView[];
+  /** Movimientos del egreso, anulados incluidos. */
+  payments: Payment[];
   history: ActivityEntry[];
 };
 
@@ -74,9 +77,12 @@ export type ExpenseDetailData = {
  * bandeja (`variant="panel"`) y a la página `/expenses/[id]` para enlaces
  * directos (`variant="page"`, design D6).
  *
- * El total sale de la vista, nunca de una columna; el historial de
- * `activity_log`, nunca de una tabla propia. El estado de pago no está aquí:
- * llega con `payments` en KAM-10.
+ * El total y lo pagado salen de la vista, nunca de una columna; el saldo se
+ * deriva de ambos al leer; y el historial sale de `activity_log`, nunca de una
+ * tabla propia.
+ *
+ * Registrar un pago es del dueño, y a `/expenses` solo llega el dueño: el
+ * ayudante no tiene política de lectura sobre `expenses`.
  */
 export function ExpenseDetail({
   data,
@@ -294,6 +300,18 @@ function DetailBody({
           )}
         </CardContent>
       </Card>
+
+      {/* Pagos y saldo. Un egreso archivado está congelado: se ven sus
+          movimientos pero no se registran nuevos. */}
+      <PaymentBlock
+        target={{ kind: "expense", expenseId: data.expense.id }}
+        total={data.expense.total}
+        paid={data.expense.paid}
+        payments={data.payments}
+        timezone={timezone}
+        canVoid
+        frozen={Boolean(data.expense.archivedAt)}
+      />
 
       <Card>
         <CardHeader>

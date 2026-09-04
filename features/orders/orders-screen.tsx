@@ -12,6 +12,7 @@ import { useState } from "react";
 
 import { selectBusinessLine } from "@/actions/business-line-context";
 import { MainContainer } from "@/components/layout/main-container";
+import { OutstandingSummary } from "@/features/payments/outstanding-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { cn } from "@/lib/utils";
-import type { BusinessLine, Status } from "@/types";
+import { ALL_LINES, type BusinessLine, type OutstandingByLine, type Status } from "@/types";
 
 import { BoardView, type BoardOrder } from "./board-view";
 import { CalendarView } from "./calendar-view";
@@ -39,6 +40,7 @@ export function OrdersScreen({
   allStatuses,
   lines,
   activeLineId,
+  receivables,
   view,
   search,
   includeArchived,
@@ -51,6 +53,8 @@ export function OrdersScreen({
   allStatuses: Status[];
   lines: BusinessLine[];
   activeLineId: string | null;
+  /** Lo pendiente de cobro por línea, tal como llega de la vista. */
+  receivables: OutstandingByLine[];
   view: View;
   search: string;
   includeArchived: boolean;
@@ -75,6 +79,15 @@ export function OrdersScreen({
       description="El trabajo comprometido con clientes."
       action={
         <div className="flex flex-wrap items-center gap-2">
+        {/* Por cobrar de la línea activa. Su sitio definitivo es el panel
+            principal (V2, KAM-14), que leerá la misma vista. */}
+        <OutstandingSummary
+          label="Por cobrar"
+          rows={receivables}
+          activeLine={activeLineId ?? ALL_LINES}
+          testId="receivables-summary"
+        />
+
         {/* El conmutador solo cambia `view`: los demás filtros siguen en la
            dirección, así que sobreviven al cambio. */}
         <ToggleGroup

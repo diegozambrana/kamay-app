@@ -1,6 +1,7 @@
 "use client";
 
 import { LineSelector } from "@/features/business-lines/line-selector";
+import { SyncIndicator } from "@/features/sync/sync-indicator";
 import { useOrganizationStore } from "@/stores/organization-store";
 
 /**
@@ -13,6 +14,11 @@ import { useOrganizationStore } from "@/stores/organization-store";
  *
  * Su `data-testid` es propio a propósito: `top-bar` está afirmado como
  * *oculto* en móvil, y reutilizarlo rompería esa garantía.
+ *
+ * Aquí vive también el indicador de registros por sincronizar. No en la barra
+ * inferior: esa es para navegar, sus entradas se reparten el ancho a partes
+ * iguales y un sexto elemento que aparece y desaparece movería la navegación
+ * bajo el pulgar de quien está registrando.
  */
 export function MobileContextBar() {
   const organization = useOrganizationStore((state) => state.organization);
@@ -29,6 +35,10 @@ export function MobileContextBar() {
           {organization.name}
         </span>
       )}
+
+      <div className="ml-auto">
+        <SyncIndicator />
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileContextBar } from "@/components/layout/mobile-context-bar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { SyncProvider } from "@/features/sync/sync-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BusinessLineProvider } from "@/components/providers/business-line-provider";
@@ -100,6 +101,10 @@ export default async function AppLayout({
                 quien decide el primer render es el servidor: sin esto el menú
                 aparecería desplegado y se plegaría de golpe tras hidratar. */}
             <SidebarProvider defaultOpen={sidebarOpen}>
+              {/* Refleja la cola en el store y dispara el vaciado. Va dentro
+                  de los providers de sesión: sin organización y persona no
+                  puede decidir qué entrada sale. */}
+              <SyncProvider />
               <AppSidebar />
               {/* `min-w-0`: sin él, un contenido interno más ancho que la
                   ventana (el tablero, por ejemplo) empuja este contenedor —

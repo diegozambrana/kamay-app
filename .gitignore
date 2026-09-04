@@ -51,3 +51,6 @@ next-env.d.ts
 /supabase/.branches/
 
 graphify-out/cache/
+# Service worker compilado por Serwist en el paso postbuild
+public/sw.js
+public/sw.js.map

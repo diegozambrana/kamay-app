@@ -28,6 +28,11 @@ import {
   uploadOrderAttachment,
 } from "@/actions/orders";
 
+import { registerOfflineOperations } from "@/features/sync/operations";
+import { clearOperations, listEntries, outboxDatabase, resetDrainLock } from "@/lib/offline";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useUserStore } from "@/stores/user-store";
+
 import { OrderForm, type OrderFormState } from "./order-form";
 
 const NEW_ORDER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -153,7 +158,24 @@ function submitForm() {
   form.requestSubmit();
 }
 
-beforeEach(() => vi.clearAllMocks());
+/**
+ * Desde KAM-11 el formulario no llama a la Server Action: encola y espera un
+ * plazo corto. Con red —que es lo que jsdom simula— el vaciado responde dentro
+ * del mismo gesto y todo se comporta como en KAM-08, que es justamente lo que
+ * estas pruebas siguen comprobando.
+ */
+beforeEach(async () => {
+  vi.clearAllMocks();
+  resetDrainLock();
+  clearOperations();
+  registerOfflineOperations();
+  await outboxDatabase().outbox.clear();
+  useOrganizationStore.setState({
+    organization: { id: "org", name: "Geeko", timezone: "America/La_Paz" } as never,
+  });
+  useUserStore.setState({ user: { id: "user-a", email: "a@kamay.test" } });
+});
+
 afterEach(cleanup);
 
 describe("OrderForm · mínimos obligatorios", () => {
@@ -412,5 +434,141 @@ describe("OrderForm · adjuntos", () => {
     submitForm();
     await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(1));
     expect(uploadOrderAttachment).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * KAM-11 · Registrar sin conexión.
+ *
+ * Escenarios del delta `orders` — "Guardar y Guardar y crear otro": «Guardar
+ * sin conexión», «Guardar y crear otro sin conexión»; y "Adjuntos del pedido":
+ * «Adjuntar sin conexión». Del delta `offline-capture` — "Todo registro
+ * cubierto se guarda localmente antes de intentar enviarse": «Registrar sin
+ * red».
+ */
+describe("OrderForm · sin conexión", () => {
+  function goOffline() {
+    Object.defineProperty(navigator, "onLine", { value: false, configurable: true });
+  }
+
+  afterEach(() => {
+    Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
+  });
+
+  it("guarda el pedido en la cola y lo confirma sin error", async () => {
+    goOffline();
+    renderForm();
+
+    submitForm();
+
+    expect(
+      await screen.findByText(/pendiente de sincronizar/i),
+    ).toBeVisible();
+    // Ningún error: la confirmación es la única alerta en pantalla.
+    expect(screen.queryByText("No se pudo guardar")).not.toBeInTheDocument();
+    expect(createOrder).not.toHaveBeenCalled();
+
+    const entries = await listEntries(outboxDatabase());
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      recordId: NEW_ORDER,
+      operation: "order.create",
+      organizationId: "org",
+      userId: "user-a",
+      state: "pending",
+    });
+  });
+
+  it("no confirma con un número que todavía no existe", async () => {
+    goOffline();
+    renderForm();
+
+    submitForm();
+
+    const notice = await screen.findByText(/pendiente de sincronizar/i);
+    expect(notice.textContent).not.toMatch(/#\d/);
+  });
+
+  it("no navega al detalle: no hay detalle que servir sin red", async () => {
+    goOffline();
+    renderForm();
+
+    submitForm();
+
+    await screen.findByText(/pendiente de sincronizar/i);
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("conserva línea y canal para el pedido siguiente", async () => {
+    goOffline();
+    renderForm("create", { salesChannelId: CHANNEL });
+
+    submitForm();
+
+    await screen.findByText(/pendiente de sincronizar/i);
+    // La línea y el canal siguen elegidos; el cliente y las líneas, no.
+    expect(screen.getByTestId("order-form")).toBeInTheDocument();
+    expect(screen.queryByText("María Céspedes")).not.toBeInTheDocument();
+  });
+
+  it("la hora real del hecho es la de registrar, no la de abrir el formulario", async () => {
+    goOffline();
+    // El formulario se abrió con una hora vieja: la que trae por omisión al
+    // rendir la página. Entre abrirlo y guardarlo puede pasar media hora, y
+    // sin red esa es la única hora que habrá.
+    renderForm("create", { occurredAt: "2026-09-03T12:00:00.000Z" });
+
+    const antes = Date.now();
+    submitForm();
+
+    await screen.findByText(/pendiente de sincronizar/i);
+    const [entry] = await listEntries(outboxDatabase());
+    const occurredAt = (entry.payload as { occurredAt: string }).occurredAt;
+
+    expect(occurredAt).not.toBe("2026-09-03T12:00:00.000Z");
+    expect(new Date(occurredAt).getTime()).toBeGreaterThanOrEqual(antes);
+  });
+
+  it("al editar no reescribe la hora del hecho: ocurrió cuando ocurrió", async () => {
+    goOffline();
+    renderForm("edit", { occurredAt: "2026-09-03T12:00:00.000Z" }, { code: 42 });
+
+    submitForm();
+
+    await screen.findByText(/pendiente de sincronizar/i);
+    const [entry] = await listEntries(outboxDatabase());
+    expect((entry.payload as { occurredAt: string }).occurredAt).toBe(
+      "2026-09-03T12:00:00.000Z",
+    );
+  });
+
+  it("avisa de que las imágenes necesitan conexión y deja guardar igualmente", async () => {
+    goOffline();
+    const { user } = renderForm();
+
+    // El aviso aparece antes de guardar, junto a la zona de imágenes.
+    expect(await screen.findByTestId("attachments-offline")).toBeVisible();
+
+    const file = new File(["x"], "referencia.png", { type: "image/png" });
+    const input = document.querySelector("input[type=file]") as HTMLInputElement;
+    await user.upload(input, file);
+
+    submitForm();
+
+    expect(await screen.findByText(/imágenes necesitan conexión/i)).toBeVisible();
+    expect(uploadOrderAttachment).not.toHaveBeenCalled();
+    expect(await listEntries(outboxDatabase())).toHaveLength(1);
+  });
+
+  it("al editar también encola, con su propia operación", async () => {
+    goOffline();
+    renderForm("edit", {}, { code: 42 });
+
+    submitForm();
+
+    await screen.findByText(/pendiente de sincronizar/i);
+    const [entry] = await listEntries(outboxDatabase());
+    expect(entry.operation).toBe("order.update");
+    expect(updateOrder).not.toHaveBeenCalled();
   });
 });

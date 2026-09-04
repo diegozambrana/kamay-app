@@ -141,8 +141,14 @@ export class OrderService {
       .from("orders")
       .select(COLUMNS)
       .eq("organization_id", organizationId)
-      // El tablero es de pedidos; la venta directa tiene su propio flujo
-      // (V6, KAM-12) y no debe aparecer aquí.
+      // Invariante del tablero: SOLO pedidos. La venta directa tiene su
+      // propio flujo (V6) y no recorre ningún ciclo de producción, así que no
+      // aparece en ninguna de las tres vistas —tablero, lista y calendario—
+      // ni siquiera con «Ver archivados» activado, porque este filtro no
+      // depende de ningún filtro que el usuario pueda desactivar.
+      //
+      // Quitar esta línea llena el tablero de ventas de feria. Hay pruebas
+      // que fallan si desaparece, a propósito.
       .eq("kind", "order");
 
     if (filters.businessLineId) {

@@ -147,7 +147,17 @@ insert into items (id, organization_id, business_line_id, kind, name, descriptio
 -- Productos: el primero es el que tiene variantes.
 insert into items (id, organization_id, business_line_id, kind, name, description, unit_id, category, sale_price) values
   ('90000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000001', 'product', 'Taza personalizada', 'Taza sublimada con diseño del cliente.', '60000000-0000-0000-0000-000000000001', 'Regalos',    45),
-  ('90000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'product', 'Maceta de barro',    'Torneada a mano.',                       '60000000-0000-0000-0000-000000000001', 'Decoración', 60);
+  ('90000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'product', 'Maceta de barro',    'Torneada a mano.',                       '60000000-0000-0000-0000-000000000001', 'Decoración', 60),
+  -- Alfarería vende casi todo como venta directa (KAM-12), así que su
+  -- catálogo vendible es lo que llena la cuadrícula del modo feria.
+  ('90000000-0000-0000-0000-000000000013', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'product', 'Taza de barro',      'Torneada a mano, esmalte mate.',         '60000000-0000-0000-0000-000000000001', 'Vajilla',    35),
+  ('90000000-0000-0000-0000-000000000014', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'product', 'Plato hondo',        'Juego de mesa, pieza suelta.',           '60000000-0000-0000-0000-000000000001', 'Vajilla',    28),
+  -- Compartido: se vende en cualquier línea, así que la cuadrícula lo ofrece
+  -- esté en la feria que esté.
+  ('90000000-0000-0000-0000-000000000015', '10000000-0000-0000-0000-000000000003', null,                                   'product', 'Bolsa de regalo',    'Papel kraft con asa.',                   '60000000-0000-0000-0000-000000000001', 'Embalaje',    5),
+  -- Sin precio de venta a propósito: no se puede vender en dos toques, así
+  -- que la cuadrícula del modo feria NO debe ofrecerlo.
+  ('90000000-0000-0000-0000-000000000016', '10000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'product', 'Jarrón grande',      'Pieza única; se cotiza cada una.',       '60000000-0000-0000-0000-000000000001', 'Decoración', null);
 
 -- Activos: los datos de costo y recuperación llegan con KAM-19.
 insert into items (id, organization_id, business_line_id, kind, name, description, unit_id) values
@@ -453,3 +463,87 @@ insert into payments (
    'in', 'a0000000-0000-0000-0000-000000000004', 100, 'cash',
    now() - interval '5 days', 'Anotado en el pedido equivocado.',
    now() - interval '4 days');
+
+-- ── Ventas directas de feria (KAM-12) ─────────────────────────────────────
+-- Alfarería vende casi todo así: sin pedido, sin ciclo de producción, cobrado
+-- en el acto. Nacen en el estado de tipo `final` de su línea («Entregado»,
+-- 70000000-…-0023), que es exactamente lo que hace `create_direct_sale`.
+--
+-- La semilla las inserta directamente y no por la función porque corre como
+-- `postgres`, sin sesión ni `auth.uid()`; el estado se escribe a mano, con el
+-- mismo criterio que la función aplica.
+--
+-- Sirven a tres cosas a la vez:
+--   · que la cuadrícula de más vendidos tenga orden observable —la taza de
+--     barro vende más que la maceta, y el plato hondo casi nada—;
+--   · que los ingresos de la línea sumen pedidos y ventas directas;
+--   · que el tablero de pedidos demuestre que NO las muestra.
+--
+-- El cliente es nulo en casi todas: en una feria nadie pregunta el nombre.
+
+insert into orders (
+  id, organization_id, business_line_id, kind, code, contact_id, status_id,
+  sales_channel_id, occurred_at, notes
+) values
+  -- Feria de hace tres días: cuatro ventas seguidas, sin cliente.
+  ('a0000000-0000-0000-0000-000000000041', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'direct_sale', 20, null,
+   '70000000-0000-0000-0000-000000000023', '40000000-0000-0000-0000-000000000003',
+   now() - interval '3 days', null),
+  ('a0000000-0000-0000-0000-000000000042', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'direct_sale', 21, null,
+   '70000000-0000-0000-0000-000000000023', '40000000-0000-0000-0000-000000000003',
+   now() - interval '3 days', null),
+  ('a0000000-0000-0000-0000-000000000043', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'direct_sale', 22, null,
+   '70000000-0000-0000-0000-000000000023', '40000000-0000-0000-0000-000000000003',
+   now() - interval '3 days', null),
+  -- Con cliente: alguien que pidió factura y quedó en el directorio.
+  ('a0000000-0000-0000-0000-000000000044', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'direct_sale', 23,
+   '80000000-0000-0000-0000-000000000004',
+   '70000000-0000-0000-0000-000000000023', '40000000-0000-0000-0000-000000000003',
+   now() - interval '3 days', 'Pidió comprobante.'),
+  -- Cobrada solo en parte: se llevó las piezas y quedó a deber.
+  ('a0000000-0000-0000-0000-000000000045', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'direct_sale', 24, null,
+   '70000000-0000-0000-0000-000000000023', '40000000-0000-0000-0000-000000000003',
+   now() - interval '2 days', 'Quedó debiendo 30.'),
+  -- Sin cobro: el caso raro, no el imposible.
+  ('a0000000-0000-0000-0000-000000000046', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', 'direct_sale', 25, null,
+   '70000000-0000-0000-0000-000000000023', '40000000-0000-0000-0000-000000000003',
+   now() - interval '1 day', 'Se la llevó fiada; paga la próxima feria.');
+
+-- Líneas. Las cantidades están elegidas para que el orden de la cuadrícula sea
+-- comprobable: taza de barro 14, maceta 6, bolsa 4, plato hondo 1.
+insert into order_items (id, organization_id, order_id, item_id, variant_id, description, quantity, unit_price) values
+  ('a1000000-0000-0000-0000-000000000041', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000041', '90000000-0000-0000-0000-000000000013', null, null,  6, 35),
+  ('a1000000-0000-0000-0000-000000000042', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000041', '90000000-0000-0000-0000-000000000012', null, null,  2, 60),
+  ('a1000000-0000-0000-0000-000000000043', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000042', '90000000-0000-0000-0000-000000000013', null, null,  4, 35),
+  ('a1000000-0000-0000-0000-000000000044', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000042', '90000000-0000-0000-0000-000000000015', null, null,  4,  5),
+  ('a1000000-0000-0000-0000-000000000045', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000043', '90000000-0000-0000-0000-000000000013', null, null,  3, 35),
+  ('a1000000-0000-0000-0000-000000000046', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000044', '90000000-0000-0000-0000-000000000012', null, null,  3, 60),
+  ('a1000000-0000-0000-0000-000000000047', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000044', '90000000-0000-0000-0000-000000000014', null, null,  1, 28),
+  ('a1000000-0000-0000-0000-000000000048', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000045', '90000000-0000-0000-0000-000000000012', null, null,  1, 60),
+  ('a1000000-0000-0000-0000-000000000049', '10000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000046', '90000000-0000-0000-0000-000000000013', null, null,  1, 35);
+
+-- Los cobros: en el acto y por el total, salvo los dos casos preparados.
+insert into payments (
+  id, organization_id, direction, order_id, amount, method, occurred_at, note
+) values
+  -- #20: 6 × 35 + 2 × 60 = 330.
+  ('c0000000-0000-0000-0000-000000000021', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000041', 330, 'cash', now() - interval '3 days', null),
+  -- #21: 4 × 35 + 4 × 5 = 160.
+  ('c0000000-0000-0000-0000-000000000022', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000042', 160, 'cash', now() - interval '3 days', null),
+  -- #22: 3 × 35 = 105.
+  ('c0000000-0000-0000-0000-000000000023', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000043', 105, 'cash', now() - interval '3 days', null),
+  -- #23: 3 × 60 + 1 × 28 = 208, por transferencia porque pidió comprobante.
+  ('c0000000-0000-0000-0000-000000000024', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000044', 208, 'transfer', now() - interval '3 days', null),
+  -- #24: total 60, cobrados 30. Saldo pendiente 30, visible en el detalle.
+  ('c0000000-0000-0000-0000-000000000025', '10000000-0000-0000-0000-000000000003',
+   'in', 'a0000000-0000-0000-0000-000000000045', 30, 'cash', now() - interval '2 days', 'La mitad ahora.');

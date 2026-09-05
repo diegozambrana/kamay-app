@@ -53,3 +53,32 @@ export type SendOutcome =
   | { kind: "ok"; result: unknown }
   | { kind: "transient"; message: string }
   | { kind: "permanent"; message: string; recoverable: boolean };
+
+/**
+ * Lo que el modo feria captura al entrar con red para poder abrir sin ella
+ * (KAM-12, design.md decisión 12).
+ *
+ * No es una caché que se sirva a espaldas de nadie: lleva `capturedAt` y la
+ * cuadrícula lo enseña. La diferencia con cachear la ruta a secas es de
+ * honestidad, no de implementación — el HTML cacheado serviría precios de
+ * anoche sin decirlo.
+ */
+export interface FairSnapshot {
+  /** `<organizationId>:<businessLineId>`: una feria por línea y organización. */
+  id: string;
+  organizationId: string;
+  businessLineId: string;
+  /** El canal elegido al abrir la feria; el mismo para toda la sesión. */
+  salesChannelId: string | null;
+  products: FairSnapshotProduct[];
+  /** Cuándo se capturó, en ISO. Es lo que la cuadrícula muestra. */
+  capturedAt: string;
+}
+
+/** Un producto tal como se guarda para vender sin señal. */
+export interface FairSnapshotProduct {
+  id: string;
+  name: string;
+  salePrice: number;
+  quantitySold: number;
+}

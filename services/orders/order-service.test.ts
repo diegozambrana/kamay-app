@@ -62,6 +62,31 @@ describe("OrderService.list", () => {
     expect(client.queries[0].has("is", "archived_at", null)).toBe(false);
   });
 
+  // «Ver archivados» no trae de vuelta las ventas directas: el filtro por
+  // `kind` no depende de ningún filtro que el usuario pueda desactivar.
+  it("sigue excluyendo las ventas directas con «Ver archivados» activado", async () => {
+    const client = new FakeClient([
+      { data: [orderRow], error: null },
+      { data: [], error: null },
+    ]);
+    await new OrderService(client.asSupabase()).list(ORG, { includeArchived: true });
+
+    expect(client.queries[0].has("eq", "kind", "order")).toBe(true);
+  });
+
+  it("sigue excluyendo las ventas directas al filtrar por línea y estado", async () => {
+    const client = new FakeClient([
+      { data: [orderRow], error: null },
+      { data: [], error: null },
+    ]);
+    await new OrderService(client.asSupabase()).list(ORG, {
+      businessLineId: LINE,
+      statusId: STATUS,
+    });
+
+    expect(client.queries[0].has("eq", "kind", "order")).toBe(true);
+  });
+
   it("filtra por línea y por estado cuando se piden", async () => {
     const client = new FakeClient([
       { data: [orderRow], error: null },

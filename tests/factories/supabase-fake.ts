@@ -30,6 +30,8 @@ export class FakeQuery {
   lte = (...args: unknown[]) => this.record("lte", ...args);
   lt = (...args: unknown[]) => this.record("lt", ...args);
   ilike = (...args: unknown[]) => this.record("ilike", ...args);
+  not = (...args: unknown[]) => this.record("not", ...args);
+  or = (...args: unknown[]) => this.record("or", ...args);
   order = (...args: unknown[]) => this.record("order", ...args);
   limit = (...args: unknown[]) => this.record("limit", ...args);
   single = (...args: unknown[]) => this.record("single", ...args);

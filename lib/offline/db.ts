@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from "dexie";
 
-import type { OutboxEntry } from "./types";
+import type { FairSnapshot, OutboxEntry } from "./types";
 
 /**
  * Versión del formato de una entrada de la cola.
@@ -21,6 +21,13 @@ export const OUTBOX_DB_NAME = "kamay-outbox";
  */
 export type OutboxDatabase = Dexie & {
   outbox: EntityTable<OutboxEntry, "seq">;
+  /**
+   * El snapshot del modo feria (KAM-12): una fila por organización y línea.
+   * Vive aquí y no en `localStorage` porque es lo mismo que la cola —estado
+   * de captura que tiene que sobrevivir a cerrar la aplicación— y partirlo en
+   * dos almacenes abre la puerta a que uno sobreviva sin el otro.
+   */
+  fairSnapshots: EntityTable<FairSnapshot, "id">;
 };
 
 export function createOutboxDatabase(name: string = OUTBOX_DB_NAME): OutboxDatabase {
@@ -28,6 +35,14 @@ export function createOutboxDatabase(name: string = OUTBOX_DB_NAME): OutboxDatab
 
   db.version(1).stores({
     outbox: "++seq, recordId, state, operation, nextAttemptAt, *dependsOn",
+  });
+
+  // La versión 2 solo **añade** una tabla: las entradas de la cola encoladas
+  // por la versión 1 sobreviven intactas a la migración, que es exactamente
+  // lo que `OUTBOX_SCHEMA_VERSION` protege. Por eso esa constante no cambia:
+  // el formato de una entrada no se ha tocado.
+  db.version(2).stores({
+    fairSnapshots: "id, organizationId",
   });
 
   return db;

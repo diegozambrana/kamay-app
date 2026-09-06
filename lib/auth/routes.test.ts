@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   defaultLandingPath,
+  isMobileUserAgent,
   isProtectedPath,
   sanitizeNextPath,
 } from "@/lib/auth/routes";
@@ -9,6 +10,9 @@ import {
 describe("isProtectedPath", () => {
   it("protects (app) routes and their subpaths", () => {
     expect(isProtectedPath("/dashboard")).toBe(true);
+    // Destino de la tercera ranura de la barra inferior: sin el prefijo, el
+    // proxy no reconoce la ruta y la ranura lleva fuera del área autenticada.
+    expect(isProtectedPath("/my-tasks")).toBe(true);
     expect(isProtectedPath("/quick")).toBe(true);
     expect(isProtectedPath("/dashboard/anything")).toBe(true);
     expect(isProtectedPath("/settings")).toBe(true);
@@ -84,5 +88,15 @@ describe("defaultLandingPath", () => {
     expect(defaultLandingPath(DESKTOP_UA)).toBe("/dashboard");
     expect(defaultLandingPath(null)).toBe("/dashboard");
     expect(defaultLandingPath("")).toBe("/dashboard");
+  });
+
+  it("comparte la detección con la vista por omisión de pedidos", () => {
+    // Una sola expresión regular para las dos decisiones: si divergieran, se
+    // podría aterrizar en `/quick` y encontrar el tablero (design D4).
+    expect(isMobileUserAgent(IPHONE_UA)).toBe(true);
+    expect(isMobileUserAgent(ANDROID_UA)).toBe(true);
+    expect(isMobileUserAgent(DESKTOP_UA)).toBe(false);
+    expect(isMobileUserAgent(null)).toBe(false);
+    expect(isMobileUserAgent("")).toBe(false);
   });
 });

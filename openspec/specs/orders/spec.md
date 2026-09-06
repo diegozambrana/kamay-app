@@ -380,6 +380,8 @@ El sistema SHALL ofrecer, sobre el mismo conjunto de pedidos, una vista de lista
 
 Las tres vistas SHALL mostrar únicamente pedidos —filas con `kind = 'order'`— y SHALL excluir siempre las ventas directas, que no tienen ciclo de producción que recorrer. Esta exclusión SHALL NOT depender de ningún filtro que el usuario pueda desactivar, ni siquiera de "Ver archivados".
 
+La vista por omisión —cuando la dirección no declara ninguna— SHALL depender del dispositivo: **lista** en un dispositivo móvil y **tablero** en el resto. El tablero SHALL seguir disponible en móvil como alternativa elegida explícitamente, desplazándose por columnas dentro de sus propios límites. La vista elegida SHALL seguir viviendo en la dirección, de modo que el enlace de un tablero compartido desde un escritorio abra el tablero también en un teléfono.
+
 #### Scenario: Pedido archivado oculto por defecto
 
 - **WHEN** se abre el tablero sin activar "Ver archivados"
@@ -414,6 +416,26 @@ Las tres vistas SHALL mostrar únicamente pedidos —filas con `kind = 'order'`�
 
 - **WHEN** se activa "Ver archivados" en cualquiera de las tres vistas
 - **THEN** las ventas directas siguen sin aparecer, archivadas o no
+
+#### Scenario: En móvil la lista es la vista por omisión
+
+- **WHEN** se abre la pantalla de pedidos desde un dispositivo móvil sin declarar vista en la dirección
+- **THEN** los pedidos se presentan como lista
+
+#### Scenario: En escritorio el tablero sigue siendo la vista por omisión
+
+- **WHEN** se abre la pantalla de pedidos desde un escritorio sin declarar vista en la dirección
+- **THEN** los pedidos se presentan como tablero
+
+#### Scenario: El tablero sigue disponible en móvil
+
+- **WHEN** se elige explícitamente la vista de tablero desde un dispositivo móvil
+- **THEN** el tablero se presenta y sus columnas se desplazan horizontalmente dentro del propio tablero
+
+#### Scenario: La vista declarada manda sobre el dispositivo
+
+- **WHEN** se abre desde un dispositivo móvil una dirección que declara la vista de tablero
+- **THEN** se presenta el tablero, no la lista
 
 ### Requirement: Detalle del pedido
 

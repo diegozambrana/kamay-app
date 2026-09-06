@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileContextBar } from "@/components/layout/mobile-context-bar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { RegisterButton } from "@/features/quick-capture/register-button";
 import { SyncProvider } from "@/features/sync/sync-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -111,11 +112,24 @@ export default async function AppLayout({
                   que es un ítem flex— más allá del viewport en vez de dejar
                   que su propio `overflow-x-auto` lo absorba. El síntoma es
                   que la barra superior, al ser hermana en el mismo desborde,
-                  se mueve con el scroll horizontal en vez de quedarse fija. */}
-              <SidebarInset className="min-w-0">
+                  se mueve con el scroll horizontal en vez de quedarse fija.
+
+                  `overflow-x-clip`: `min-w-0` no bastaba. En 390 px el
+                  desbordamiento del tablero seguía llegando al documento, y
+                  con él crecía el bloque contenedor de los elementos
+                  `fixed` —la barra inferior y el botón flotante—, que
+                  aparecían a 567 px de ancho en una pantalla de 390. El
+                  recorte va aquí y no en `MainContainer` porque esos dos son
+                  hermanos suyos, no descendientes. `clip` y no `hidden`:
+                  `hidden` crearía un contexto de desplazamiento y rompería
+                  los encabezados `sticky`. */}
+              <SidebarInset className="min-w-0 overflow-x-clip">
                 <Header />
                 <MobileContextBar />
                 {children}
+                {/* Registrar está a un toque desde cualquier pantalla (mapa
+                    §2.6). Flota sobre la barra, no dentro de ella. */}
+                <RegisterButton />
                 <MobileNav />
               </SidebarInset>
             </SidebarProvider>

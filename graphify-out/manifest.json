@@ -1967,6 +1967,26 @@
     "mtime": 1787255471.8653362,
     "hash": "1365af3a72c9df4eaef1449339d03990"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-04-kam-12-fair-mode-quick-sale/tasks.md": {
+    "mtime": 1788536301.8018012,
+    "hash": "25fa3931b1dc7171bf09c117dffc24d0"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-04-kam-12-fair-mode-quick-sale/design.md": {
+    "mtime": 1788520615.0242994,
+    "hash": "2054ab7f14289ace52a89eafd633409d"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-04-kam-12-fair-mode-quick-sale/proposal.md": {
+    "mtime": 1788520643.0821595,
+    "hash": "4d75e6d9426480d47ecd072774170eb9"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-04-kam-12-fair-mode-quick-sale/specs/fair-mode/spec.md": {
+    "mtime": 1788520667.5369093,
+    "hash": "d5ec42edb859f1f1521c72fdfb7bd2c4"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-04-kam-12-fair-mode-quick-sale/specs/orders/spec.md": {
+    "mtime": 1788521108.224834,
+    "hash": "bf98af266811c05580d59f9cf115be55"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-26-kam-06-catalog-directory/tasks.md": {
     "mtime": 1787782884.0514276,
     "hash": "ed4d22fbc077ea423ede4b696d6f50b3"
@@ -2024,48 +2044,28 @@
     "hash": "d8e35f45d4ee17045eecda5feedcc642"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-13-quick-capture-mobile-nav/tasks.md": {
-    "mtime": 1788485841.6471744,
-    "hash": "0d6ce6e7d532ddfcc0af97f55c9b2cfb"
+    "mtime": 1788646667.0636382,
+    "hash": "5efe1d7a04c402dce9813f3b1ff9d273"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-13-quick-capture-mobile-nav/design.md": {
-    "mtime": 1788485776.6205287,
-    "hash": "5d6ee2008b72a04cfd00b4ba1af83163"
+    "mtime": 1788646667.0827692,
+    "hash": "c725320450606be9ffeb468cd80a24bc"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-13-quick-capture-mobile-nav/proposal.md": {
-    "mtime": 1788485592.0555627,
-    "hash": "4750a152b9fc0ada6fd734ee50163869"
+    "mtime": 1788646427.102095,
+    "hash": "8ba95e92df1620b2f0ab8ef8a930b33f"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-13-quick-capture-mobile-nav/specs/quick-capture/spec.md": {
-    "mtime": 1788485633.654276,
-    "hash": "8d3cc7b840936be7e15582b62d52bc3a"
+    "mtime": 1788646472.78994,
+    "hash": "2e792106736c1c3c79ff7f18170306c0"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-13-quick-capture-mobile-nav/specs/user-auth/spec.md": {
-    "mtime": 1788485663.9715605,
-    "hash": "91435ae13225cc98a39ba7b1be63e467"
+    "mtime": 1788646487.0721345,
+    "hash": "2676d6a120a1f39acaeabc7e913c195c"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-13-quick-capture-mobile-nav/specs/orders/spec.md": {
-    "mtime": 1788485676.7903938,
-    "hash": "4c029f72a1ca46030987749a410e4bd7"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-12-fair-mode-quick-sale/tasks.md": {
-    "mtime": 1788530218.9028242,
-    "hash": "f9ecad192fe06167dfd271ee67b3ad71"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-12-fair-mode-quick-sale/design.md": {
-    "mtime": 1788520615.0242994,
-    "hash": "2054ab7f14289ace52a89eafd633409d"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-12-fair-mode-quick-sale/proposal.md": {
-    "mtime": 1788520643.0821595,
-    "hash": "4d75e6d9426480d47ecd072774170eb9"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-12-fair-mode-quick-sale/specs/fair-mode/spec.md": {
-    "mtime": 1788520667.5369093,
-    "hash": "d5ec42edb859f1f1521c72fdfb7bd2c4"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-12-fair-mode-quick-sale/specs/orders/spec.md": {
-    "mtime": 1788521108.224834,
-    "hash": "bf98af266811c05580d59f9cf115be55"
+    "mtime": 1788646643.2284815,
+    "hash": "d09f211f49d8579467e347fd3e813b93"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/public/file.svg": {
     "mtime": 1787193856.6466262,

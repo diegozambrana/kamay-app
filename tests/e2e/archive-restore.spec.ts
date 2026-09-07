@@ -94,6 +94,10 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
   });
 
   test("un contacto archivado vuelve entero desde el filtro", async ({ page }) => {
+    // La espera de abajo reintenta hasta 30 s: con el límite por omisión, que
+    // es ese mismo, la prueba moría antes de que el bucle pudiera repetir.
+    test.setTimeout(90_000);
+
     await login(page, GEEKO_OWNER);
 
     const name = uniqueName("Proveedor de prueba");

@@ -23,6 +23,10 @@ test.describe("configuración de estados (V22)", () => {
   test("personalizar el juego de tareas de Alfarería no toca a las otras líneas", async ({
     page,
   }) => {
+    // Misma razón que en `archive-restore`: la espera reintenta hasta 30 s y
+    // el límite por omisión es ese mismo, así que no le cabría ni una vuelta.
+    test.setTimeout(90_000);
+
     await login(page, GEEKO_OWNER);
 
     // Alfarería, flujo Tareas: sin juego propio, rige el de la organización.

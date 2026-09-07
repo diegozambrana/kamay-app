@@ -339,6 +339,11 @@ test.describe("modo feria", () => {
     page,
     context,
   }) => {
+    // El vaciado de la cola puede tardar hasta un barrido completo (30 s) más
+    // su reintento. La espera de abajo lo contempla con 60 s, pero el límite
+    // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
+    // agotarse nunca y el caso lento se contaba como fallo.
+    test.setTimeout(120_000);
     await abrirFeria(page);
     await context.setOffline(true);
 
@@ -368,6 +373,11 @@ test.describe("modo feria", () => {
     page,
     context,
   }) => {
+    // El vaciado de la cola puede tardar hasta un barrido completo (30 s) más
+    // su reintento. La espera de abajo lo contempla con 60 s, pero el límite
+    // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
+    // agotarse nunca y el caso lento se contaba como fallo.
+    test.setTimeout(120_000);
     await abrirFeria(page);
 
     await expect(page.getByTestId("fair-pending-sales")).toHaveCount(0);
@@ -448,6 +458,11 @@ test.describe("el modo feria se abre sin red", () => {
 
 // ── Roles ─────────────────────────────────────────────────────────────────
 test("el ayudante puede atender el puesto", async ({ page }) => {
+    // El vaciado de la cola puede tardar hasta un barrido completo (30 s) más
+    // su reintento. La espera de abajo lo contempla con 60 s, pero el límite
+    // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
+    // agotarse nunca y el caso lento se contaba como fallo.
+    test.setTimeout(120_000);
   await login(page, GEEKO_ASSISTANT);
   await abrirFeria(page);
 

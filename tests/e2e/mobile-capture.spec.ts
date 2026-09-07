@@ -57,6 +57,34 @@ async function desbordaHorizontalmente(page: Page): Promise<boolean> {
   );
 }
 
+/**
+ * Los `uuid` de los pedidos que esta pestaña dejó en la cola.
+ *
+ * KAM-11 genera el identificador en el cliente y es el que acaba siendo llave
+ * primaria, así que sirve para seguir al mismo registro antes y después de
+ * sincronizar. Hace falta porque "Registrado hoy" es de la organización y la
+ * suite entera comparte la de Geeko: sin él, no hay forma de distinguir el
+ * pedido de esta prueba del que acaba de crear otra.
+ */
+async function pedidosEncolados(page: Page): Promise<string[]> {
+  return page.evaluate(async () => {
+    const req = indexedDB.open("kamay-outbox");
+    const db: IDBDatabase = await new Promise((resolve, reject) => {
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const entries: { operation: string; recordId: string }[] = await new Promise(
+      (resolve) => {
+        const all = db.transaction("outbox").objectStore("outbox").getAll();
+        all.onsuccess = () => resolve(all.result);
+      },
+    );
+    return entries
+      .filter((entry) => entry.operation === "order.create")
+      .map((entry) => entry.recordId);
+  });
+}
+
 test.describe("V16 · registro rápido", () => {
   test("entrar en el celular aterriza en el registro rápido", async ({ page }) => {
     await login(page, GEEKO_OWNER);
@@ -293,6 +321,12 @@ test.describe("Registrado hoy cuenta lo que no se ha enviado", () => {
   test("un pedido sin enviar aparece marcado y no se duplica al drenar", async ({
     page,
   }) => {
+    // Reintentar espera cada vez más (KAM-11): cuando se restablece el envío,
+    // la entrada puede llevar acumulados varios intentos y su siguiente turno
+    // caer decenas de segundos después. El límite por omisión de 30 s dejaba
+    // la espera de abajo sin poder agotarse nunca.
+    test.setTimeout(150_000);
+
     // Los egresos no están entre las operaciones que la cola cubre: el
     // recorrido se hace con un pedido, que sí lo está.
     //
@@ -334,20 +368,35 @@ test.describe("Registrado hoy cuenta lo que no se ha enviado", () => {
     await expect(fila.getByRole("link")).toHaveCount(0);
     await expect(page.getByTestId("recent-today-empty")).toHaveCount(0);
 
-    // Se restablece el envío: la cola vacía y la fila deja de ser pendiente.
-    await page.unroute("**/orders/new");
-    await page.reload();
-    // El indicador se rinde en las dos barras; en el celular manda la tira
-    // de contexto, que es la única visible.
-    await expect(
-      page.getByTestId("mobile-context-bar").getByTestId("sync-indicator"),
-    ).toBeHidden({ timeout: 60_000 });
+    const [pedidoId] = await pedidosEncolados(page);
+    expect(pedidoId, "el pedido tiene que estar en la cola").toBeTruthy();
 
-    await page.reload();
-    await expect(page.getByTestId("recent-pending")).toHaveCount(0);
-    // Una sola vez: la entrada de la cola y su fila comparten el `uuid`.
-    await expect(
-      page.getByTestId("recent-today").locator("li"),
-    ).toContainText([/Pedido/]);
+    // Se restablece el envío. Reintentar espera cada vez más, así que en vez
+    // de esperar de brazos cruzados se reabre la pantalla hasta que la cola
+    // esté vacía: cada montaje dispara un barrido, que es justamente lo que
+    // haría quien vuelve a mirar.
+    //
+    // Se comprueba con la lista ya rendida y no con el indicador: `toBeHidden`
+    // justo después de recargar pasa sin más, porque en ese instante el
+    // elemento todavía no existe, y la cola seguía llena.
+    await page.unroute("**/orders/new");
+
+    const enlace = page.locator(`a[href="/orders/${pedidoId}"]`);
+
+    await expect(async () => {
+      await page.reload();
+      await expect(page.getByTestId("recent-today")).toBeVisible();
+      // El mismo `uuid` que estaba en la cola, ahora con detalle que abrir.
+      await expect(enlace).toHaveCount(1);
+    }).toPass({ timeout: 120_000 });
+
+    // Una sola vez, y ya sin la marca: la entrada de la cola y la fila del
+    // servidor comparten identificador, así que la mezcla las funde.
+    const sincronizada = page
+      .getByTestId("recent-today")
+      .locator("li")
+      .filter({ has: enlace });
+    await expect(sincronizada).toHaveCount(1);
+    await expect(sincronizada.getByTestId("recent-pending")).toHaveCount(0);
   });
 });

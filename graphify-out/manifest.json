@@ -3163,6 +3163,38 @@
     "mtime": 1787225202.0352983,
     "hash": "d8e35f45d4ee17045eecda5feedcc642"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/tasks.md": {
+    "mtime": 1788788421.0757875,
+    "hash": "8ca0e147adf901ef8921bd14c0978ef5"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/design.md": {
+    "mtime": 1788723145.5601797,
+    "hash": "86f161be9f1469a6bda20c742ca18b14"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/proposal.md": {
+    "mtime": 1788698627.6530414,
+    "hash": "b43e412b57b43a8bfbf91314bde1eb6b"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/specs/payments/spec.md": {
+    "mtime": 1788722898.7674787,
+    "hash": "f5ae04be1a6d6487b8079962e09008d2"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/specs/quick-capture/spec.md": {
+    "mtime": 1788723009.1246054,
+    "hash": "2131bb130a9162ca31fc1d16bb30a042"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/specs/user-auth/spec.md": {
+    "mtime": 1788722947.874569,
+    "hash": "29353700da6ba2b538d3667be70dd7e2"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/specs/activity-log/spec.md": {
+    "mtime": 1788723058.4670782,
+    "hash": "17f71fca6c7f9b202d14f543a9e71321"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/specs/dashboard/spec.md": {
+    "mtime": 1788784826.3175216,
+    "hash": "371104b3affd81a8c9a255c6c5f19855"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-15-tasks-model-board/tasks.md": {
     "mtime": 1788740354.9743443,
     "hash": "d8a0ad04bf0f9d6fd03713ba3233cf0f"
@@ -3190,38 +3222,6 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-15-tasks-model-board/specs/orders/spec.md": {
     "mtime": 1788740243.977302,
     "hash": "7a4c61ccecacf25ef763b3116c9acace"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-14-dashboard-assistant-variant/tasks.md": {
-    "mtime": 1788788421.0757875,
-    "hash": "8ca0e147adf901ef8921bd14c0978ef5"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-14-dashboard-assistant-variant/design.md": {
-    "mtime": 1788723145.5601797,
-    "hash": "86f161be9f1469a6bda20c742ca18b14"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-14-dashboard-assistant-variant/proposal.md": {
-    "mtime": 1788698627.6530414,
-    "hash": "b43e412b57b43a8bfbf91314bde1eb6b"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-14-dashboard-assistant-variant/specs/payments/spec.md": {
-    "mtime": 1788722898.7674787,
-    "hash": "f5ae04be1a6d6487b8079962e09008d2"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-14-dashboard-assistant-variant/specs/quick-capture/spec.md": {
-    "mtime": 1788723009.1246054,
-    "hash": "2131bb130a9162ca31fc1d16bb30a042"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-14-dashboard-assistant-variant/specs/user-auth/spec.md": {
-    "mtime": 1788722947.874569,
-    "hash": "29353700da6ba2b538d3667be70dd7e2"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-14-dashboard-assistant-variant/specs/activity-log/spec.md": {
-    "mtime": 1788723058.4670782,
-    "hash": "17f71fca6c7f9b202d14f543a9e71321"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-14-dashboard-assistant-variant/specs/dashboard/spec.md": {
-    "mtime": 1788784826.3175216,
-    "hash": "371104b3affd81a8c9a255c6c5f19855"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/public/file.svg": {
     "mtime": 1787193856.6466262,

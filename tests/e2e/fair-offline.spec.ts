@@ -96,6 +96,36 @@ async function esperarCascaronGuardado(page: Page) {
   );
 }
 
+/**
+ * Espera a que el service worker **controle esta página**, no solo a que esté
+ * activo.
+ *
+ * `navigator.serviceWorker.ready` resuelve en cuanto hay un registro activo,
+ * pero `clientsClaim` toma el control de forma asíncrona: entre una cosa y la
+ * otra hay una ventana en la que `controller` sigue siendo `null`. Cortar la
+ * red ahí hace que la navegación a `/fair` se vaya a la red en vez de al
+ * cascarón guardado, y la prueba muere sin producto que enseñar. Era la causa
+ * de que esta suite saliera intermitente en CI.
+ *
+ * Si el control no llega —la página se cargó antes de que el worker se
+ * registrara—, una recarga lo garantiza: un worker ya activo controla toda
+ * navegación nueva.
+ */
+async function esperarServiceWorkerAlMando(page: Page) {
+  await page.evaluate(() => navigator.serviceWorker.ready);
+
+  const controlada = () =>
+    page.evaluate(() => navigator.serviceWorker.controller !== null);
+
+  if (await controlada()) return;
+
+  await page.reload();
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null, undefined, {
+    timeout: 30_000,
+  });
+}
+
 /** Los identificadores que esta pestaña dejó en la cola, sin haber salido aún. */
 async function ventasEncoladas(page: Page): Promise<string[]> {
   return page.evaluate(async () => {
@@ -373,7 +403,7 @@ test.describe("el modo feria se abre sin red", () => {
     test.setTimeout(120_000);
 
     await abrirFeria(page);
-    await page.evaluate(() => navigator.serviceWorker.ready);
+    await esperarServiceWorkerAlMando(page);
     await esperarCascaronGuardado(page);
 
     await context.setOffline(true);
@@ -393,8 +423,13 @@ test.describe("el modo feria se abre sin red", () => {
   // El arranque en frío: decisión 12. Es lo que separa «vender sin señal» de
   // «vender sin señal si dejaste la pestaña abierta».
   test("abre sin red desde el catálogo capturado", async ({ page, context }) => {
+    // Tomar el control puede costar una recarga, y el arranque en frío sin red
+    // tiene su propio margen de 30 s: con el timeout por omisión la prueba
+    // moría antes de llegar a comprobar nada.
+    test.setTimeout(90_000);
+
     await abrirFeria(page);
-    await page.evaluate(() => navigator.serviceWorker.ready);
+    await esperarServiceWorkerAlMando(page);
     await esperarCascaronGuardado(page);
     const productos = await page.getByTestId("fair-product").count();
     expect(productos).toBeGreaterThan(0);

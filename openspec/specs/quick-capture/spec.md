@@ -138,9 +138,11 @@ El sistema SHALL incluir en "Registrado hoy" las capturas del día que siguen en
 - **WHEN** se intenta activar un elemento marcado como no enviado
 - **THEN** no se navega a ningún detalle
 
-### Requirement: Registrar está a dos toques desde cualquier pantalla móvil
+### Requirement: Registrar está a dos toques desde cualquier pantalla
 
-El sistema SHALL ofrecer en móvil, en toda pantalla del área autenticada, un control *+ Registrar* que abre el mismo menú de destinos de la retícula de `/quick`, filtrado por el mismo rol. Desde cualquier pantalla, alcanzar el formulario de un destino disponible SHALL requerir como máximo dos interacciones: abrir el menú y elegir el destino. El control SHALL ausentarse únicamente de las pantallas de captura a pantalla completa, donde taparía las acciones de guardar y ofrecería una salida que se saltaría la confirmación de descarte. El control SHALL NOT tapar ni desplazar el indicador de registros por sincronizar.
+El sistema SHALL ofrecer, en toda pantalla del área autenticada y **en cualquier tamaño de pantalla**, un control *+ Registrar* que abre el mismo menú de destinos de la retícula de `/quick`, filtrado por el mismo rol. Desde cualquier pantalla, alcanzar el formulario de un destino disponible SHALL requerir como máximo dos interacciones: abrir el menú y elegir el destino. El control SHALL ausentarse únicamente de las pantallas de captura a pantalla completa, donde taparía las acciones de guardar y ofrecería una salida que se saltaría la confirmación de descarte. El control SHALL NOT tapar ni desplazar el indicador de registros por sincronizar, ni el contenido de la pantalla sobre la que flota en escritorio.
+
+El menú SHALL ser uno solo: los destinos, su orden y su filtrado por rol SHALL salir de la misma declaración en ambas superficies, sin que ninguna pueda ofrecer un destino que la otra no.
 
 #### Scenario: Registrar un gasto desde el catálogo
 
@@ -164,8 +166,18 @@ El sistema SHALL ofrecer en móvil, en toda pantalla del área autenticada, un c
 
 #### Scenario: En escritorio no aparece
 
-- **WHEN** se abre cualquier pantalla del área autenticada en un viewport de escritorio
-- **THEN** el control *+ Registrar* móvil no se rinde
+- **WHEN** se abre el formulario de nuevo pedido en un viewport de escritorio
+- **THEN** el control *+ Registrar* no se rinde, porque la regla de las pantallas de captura vale en las dos superficies
+
+#### Scenario: Registrar una compra desde el panel en escritorio
+
+- **WHEN** una persona dueña está en el panel principal en un viewport de escritorio y activa *+ Registrar* y luego *Compra*
+- **THEN** llega al formulario de nueva compra en dos interacciones
+
+#### Scenario: Un solo menú para las dos superficies
+
+- **WHEN** se compara el menú de *+ Registrar* en móvil y en escritorio para el mismo rol
+- **THEN** ofrece exactamente los mismos destinos en el mismo orden
 
 #### Scenario: El indicador de sincronización sigue alcanzable
 

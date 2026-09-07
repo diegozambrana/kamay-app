@@ -49,3 +49,18 @@ export function formatDate(iso: string, timeZone: string): string {
 
   return `${get("day")}/${get("month")}/${get("year")}`;
 }
+
+/**
+ * Una fecha de calendario —`YYYY-MM-DD`, como la fecha comprometida de un
+ * pedido— escrita día/mes/año.
+ *
+ * Sin zona horaria y a propósito: `due_date` es un `date` y no un instante.
+ * Pasarla por `formatDate` obligaría a inventarle una hora, y esa hora
+ * inventada movería la fecha un día en cuanto la zona de la organización
+ * cruzara el meridiano al otro lado del que se eligiera.
+ */
+export function formatCalendarDate(date: string): string {
+  const [year, month, day] = date.split("-");
+  if (!year || !month || !day) return date;
+  return `${day}/${month}/${year}`;
+}

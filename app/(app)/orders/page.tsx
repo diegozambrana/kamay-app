@@ -1,8 +1,9 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { lineCookieName } from "@/constants/auth";
 import { OrdersScreen } from "@/features/orders/orders-screen";
+import { isMobileUserAgent } from "@/lib/auth/routes";
 import { getSessionContext } from "@/lib/auth/session-context";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { todayInTimezone } from "@/lib/orders/overdue";
@@ -36,9 +37,18 @@ export default async function OrdersPage({
   if (!context) redirect("/auth/login");
 
   const params = await searchParams;
+  // La vista por omisión depende del dispositivo: un kanban horizontal no
+  // funciona en 390 px, así que el celular abre en lista y el escritorio en
+  // tablero. Se decide aquí, en el servidor, para que la pantalla no aparezca
+  // como tablero y se convierta en lista tras hidratar (design D4). Una vista
+  // declarada en la dirección manda sobre el dispositivo: un enlace expresa
+  // una intención.
+  const fallback: View = isMobileUserAgent((await headers()).get("user-agent"))
+    ? "list"
+    : "board";
   const view: View = VIEWS.includes(params.view as View)
     ? (params.view as View)
-    : "board";
+    : fallback;
   const search = params.q ?? "";
   const includeArchived = params.archived === "1";
 

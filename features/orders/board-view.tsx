@@ -161,7 +161,10 @@ export function BoardView({
       onDragEnd={onDragEnd}
       onDragCancel={() => setActiveOrder(null)}
     >
-      <div className="flex gap-3 overflow-x-auto pb-4">
+      {/* El desplazamiento horizontal vive aquí, dentro del tablero: en un
+          teléfono las columnas se recorren de lado, pero la página no se
+          mueve (`user-auth` — "No app screen scrolls horizontally"). */}
+      <div data-testid="orders-board" className="flex gap-3 overflow-x-auto pb-4">
         {statuses.map((status) => {
           const inColumn = orders.filter(
             (order) =>

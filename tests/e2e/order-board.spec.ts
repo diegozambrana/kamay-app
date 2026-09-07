@@ -265,7 +265,9 @@ test.describe("tablero de pedidos en móvil", () => {
     page,
   }) => {
     await login(page, GEEKO_OWNER);
-    await page.goto("/orders");
+    // El tablero se pide explícitamente: desde KAM-13 la vista por omisión en
+    // el celular es la lista, y el kanban es la alternativa.
+    await page.goto("/orders?view=board");
 
     // Sin barra superior no hay selector global: el aviso de "Todas" es la
     // única vía, y por eso trae los botones de las líneas (design.md D1).

@@ -87,6 +87,11 @@ test.describe("captura sin conexión", () => {
     page,
     context,
   }) => {
+    // El vaciado de la cola puede tardar hasta un barrido completo (30 s) más
+    // su reintento. La espera de abajo lo contempla con 60 s, pero el límite
+    // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
+    // agotarse nunca y el caso lento se contaba como fallo.
+    test.setTimeout(120_000);
     await login(page, GEEKO_OWNER);
     await page.goto("/orders/new");
 
@@ -146,6 +151,11 @@ test.describe("captura sin conexión", () => {
     page,
     context,
   }) => {
+    // El vaciado de la cola puede tardar hasta un barrido completo (30 s) más
+    // su reintento. La espera de abajo lo contempla con 60 s, pero el límite
+    // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
+    // agotarse nunca y el caso lento se contaba como fallo.
+    test.setTimeout(120_000);
     await login(page, GEEKO_OWNER);
     await page.goto("/orders/new");
     await context.setOffline(true);
@@ -220,6 +230,11 @@ test.describe("el cascarón se abre sin red", () => {
     page,
     context,
   }) => {
+    // El vaciado de la cola puede tardar hasta un barrido completo (30 s) más
+    // su reintento. La espera de abajo lo contempla con 60 s, pero el límite
+    // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
+    // agotarse nunca y el caso lento se contaba como fallo.
+    test.setTimeout(120_000);
     await login(page, GEEKO_OWNER);
     await page.goto("/orders/new");
     await page.evaluate(() => navigator.serviceWorker.ready);

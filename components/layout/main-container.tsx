@@ -37,6 +37,11 @@ type MainContainerProps = {
  * `pb-36` cubre los 136 px que ocupan entre los dos y deja un margen; con el
  * `pb-20` anterior el flotante tapaba la última fila de toda pantalla.
  * Se resuelve aquí una vez, no pantalla por pantalla (design D6).
+ *
+ * En escritorio el flotante también existe desde KAM-14 —V2 lo pide entre
+ * sus elementos permanentes— y allí no hay barra que despejar: se apoya a
+ * 24 px del borde y ocupa 56 px, así que `md:pb-24` basta para que no tape
+ * la última fila de ninguna pantalla.
  */
 export function MainContainer({
   title,
@@ -50,7 +55,7 @@ export function MainContainer({
   children,
 }: MainContainerProps) {
   return (
-    <main className="min-w-0 flex-1 p-4 pb-36 md:p-6 md:pb-6">
+    <main className="min-w-0 flex-1 p-4 pb-36 md:p-6 md:pb-24">
       {/* El encabezado se rinde también mientras carga: si desapareciera, la
           pantalla daría un salto al llegar los datos. */}
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">

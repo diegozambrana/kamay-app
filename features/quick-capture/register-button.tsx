@@ -25,7 +25,12 @@ import { useUserStore } from "@/stores/user-store";
  * los rótulos (design D6). Arriba, en la tira de contexto, sigue viviendo el
  * indicador de sincronización: no se pisan.
  *
- * Solo en móvil. El flotante de escritorio es de KAM-14.
+ * En escritorio flota también, un poco más adentro: V2 lo pide entre sus
+ * elementos permanentes (mapa §4.1) y allí no hay barra inferior que
+ * despejar, así que se apoya directamente sobre la esquina. Es el mismo
+ * botón y el mismo menú, no una segunda declaración de destinos: el
+ * requisito exige que ninguna superficie pueda ofrecer lo que la otra no
+ * (KAM-14, design D10).
  */
 export function RegisterButton() {
   const role = useUserStore((state) => state.membership?.role);
@@ -47,7 +52,7 @@ export function RegisterButton() {
         aria-expanded={open}
         aria-label="Registrar"
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:hidden"
+        className="fixed bottom-20 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg md:bottom-6 md:right-6"
       >
         <PlusIcon className="size-6" aria-hidden />
       </button>
@@ -56,7 +61,6 @@ export function RegisterButton() {
         <SheetContent
           side="bottom"
           data-testid="register-menu"
-          className="md:hidden"
         >
           <SheetHeader>
             <SheetTitle>Registrar</SheetTitle>

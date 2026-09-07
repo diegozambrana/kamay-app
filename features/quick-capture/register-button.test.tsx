@@ -92,11 +92,48 @@ describe("RegisterButton", () => {
     }
   });
 
-  it("en escritorio no se ve", () => {
-    // El flotante de escritorio es de KAM-14; este es el móvil y se retira
-    // con `md:hidden`, no con una consulta de medios en JavaScript.
+  it("en escritorio no se retira: se recoloca", () => {
+    // Desde KAM-14 el flotante existe también en escritorio (V2 lo pide entre
+    // sus elementos permanentes). Ya no hay `md:hidden`; lo que cambia es
+    // dónde se apoya, porque allí no hay barra inferior que despejar.
     renderButton("/catalog");
 
-    expect(screen.getByTestId("register-button").className).toContain("md:hidden");
+    const button = screen.getByTestId("register-button");
+    expect(button.className).not.toContain("md:hidden");
+    expect(button.className).toContain("md:bottom-6");
+  });
+
+  it("registrar una compra desde el panel son dos interacciones", async () => {
+    renderButton("/dashboard");
+
+    await userEvent.click(screen.getByTestId("register-button"));
+
+    expect(screen.getByTestId("register-destination-purchase")).toHaveAttribute(
+      "href",
+      "/expenses/purchases/new",
+    );
+  });
+
+  it("el menú tampoco se oculta en escritorio", async () => {
+    // Si el panel se retirase con `md:hidden`, el botón de escritorio abriría
+    // un menú invisible: dos interacciones que no llevan a ninguna parte.
+    renderButton("/dashboard");
+
+    await userEvent.click(screen.getByTestId("register-button"));
+
+    expect(screen.getByTestId("register-menu").className).not.toContain(
+      "md:hidden",
+    );
+  });
+
+  it("el indicador de sincronización no queda tapado por el flotante", () => {
+    // El indicador vive arriba, en la tira de contexto; el flotante se ancla
+    // abajo a la derecha. No comparten ni borde ni capa.
+    renderButton("/catalog");
+
+    const className = screen.getByTestId("register-button").className;
+    expect(className).toContain("fixed");
+    expect(className).toContain("bottom-20");
+    expect(className).not.toContain("top-");
   });
 });

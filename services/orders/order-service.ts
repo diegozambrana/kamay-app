@@ -174,6 +174,37 @@ export class OrderService {
     }));
   }
 
+  /**
+   * El número visible de un conjunto de pedidos, en una sola consulta.
+   *
+   * Existe para poner el "#142" en una lista que solo conoce identificadores
+   * —la bitácora del panel—, sin traerse el pedido entero de cada evento. Un
+   * identificador ajeno o inexistente simplemente no aparece en el mapa.
+   */
+  async codesFor(
+    organizationId: string,
+    orderIds: readonly string[],
+  ): Promise<Map<string, number>> {
+    if (orderIds.length === 0) return new Map();
+
+    const { data, error } = await this.supabase
+      .from("orders")
+      .select("id, code")
+      .eq("organization_id", organizationId)
+      .in("id", [...orderIds]);
+
+    if (error) {
+      throw new Error(`No se pudieron cargar los pedidos: ${error.message}`);
+    }
+
+    return new Map(
+      (data ?? []).map((row) => {
+        const typed = row as { id: string; code: number };
+        return [typed.id, typed.code];
+      }),
+    );
+  }
+
   async getById(
     organizationId: string,
     id: string,

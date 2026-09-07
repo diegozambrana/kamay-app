@@ -1,5 +1,6 @@
 "use client";
 
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SyncIndicator } from "@/features/sync/sync-indicator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -7,8 +8,8 @@ import { useOrganizationStore } from "@/stores/organization-store";
 
 /**
  * Barra superior de escritorio. Desde que la navegación vive en el menú
- * lateral solo le quedan tres cosas: plegar el menú, decir en qué
- * organización estás y cambiar el tema.
+ * lateral le quedan cuatro cosas: plegar el menú, decir en qué organización
+ * estás, avisar de lo que hay sin leer y cambiar el tema.
  *
  * Sigue siendo `md:flex`, así que en móvil no existe — allí manda la barra
  * inferior. El disparador del menú lateral vive solo aquí, de modo que en
@@ -33,6 +34,10 @@ export function Header() {
 
       <div className="ml-auto flex items-center gap-1">
         <SyncIndicator />
+        {/* Elemento siempre disponible del cascarón (mapa §4.1). Su bandeja
+            —V21— llega con KAM-17; hasta entonces el contador es cero y la
+            campana lo explica al abrirse. */}
+        <NotificationBell />
         <ThemeToggle />
       </div>
     </header>

@@ -5,12 +5,20 @@
 --   recovery@kamay.test → ayudante de "Taller Kamay" (para la prueba de recuperación)
 
 --   geeko@kamay.test    → dueña de "Geeko Store" (la organización real, con su configuración)
+--   ayudante@kamay.test → ayudante de "Geeko Store"
+--   historico@kamay.test → dueño de "Kamay Histórico", doce meses de movimientos
+--                          para medir el presupuesto de carga del panel (KAM-14)
 
 -- Organizaciones
 insert into organizations (id, name) values
   ('10000000-0000-0000-0000-000000000001', 'Taller Kamay'),
   ('10000000-0000-0000-0000-000000000002', 'Kamay Feria'),
-  ('10000000-0000-0000-0000-000000000003', 'Geeko Store');
+  ('10000000-0000-0000-0000-000000000003', 'Geeko Store'),
+  -- Organización aparte y a propósito (KAM-14): los doce meses de historia que
+  -- el presupuesto de carga necesita no pueden vivir en Geeko Store, cuyas
+  -- filas son fixtures de las pruebas de tablero, alta y feria —36 pedidos más
+  -- les cambiarían las columnas, las listas y la cuadrícula bajo los pies—.
+  ('10000000-0000-0000-0000-000000000004', 'Kamay Histórico');
 
 -- Usuarios de Supabase Auth
 insert into auth.users (
@@ -32,7 +40,8 @@ from (values
   ('20000000-0000-0000-0000-000000000002'::uuid, 'multi@kamay.test'),
   ('20000000-0000-0000-0000-000000000003'::uuid, 'recovery@kamay.test'),
   ('20000000-0000-0000-0000-000000000004'::uuid, 'geeko@kamay.test'),
-  ('20000000-0000-0000-0000-000000000005'::uuid, 'ayudante@kamay.test')
+  ('20000000-0000-0000-0000-000000000005'::uuid, 'ayudante@kamay.test'),
+  ('20000000-0000-0000-0000-000000000006'::uuid, 'historico@kamay.test')
 ) as u(id, email);
 
 insert into auth.identities (
@@ -54,7 +63,8 @@ insert into memberships (organization_id, user_id, role, display_name) values
   ('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', 'owner', 'Multi Org'),
   ('10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 'assistant', 'Ayudante Recuperación'),
   ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000004', 'owner', 'Dueña Geeko'),
-  ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000005', 'assistant', 'Ayudante Geeko');
+  ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000005', 'assistant', 'Ayudante Geeko'),
+  ('10000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000006', 'owner', 'Dueño Histórico');
 
 -- ── Geeko Store: la configuración real del negocio ────────────────────────
 -- Tres líneas productivas más General/Compartido, que es donde caen los
@@ -547,3 +557,151 @@ insert into payments (
   -- #24: total 60, cobrados 30. Saldo pendiente 30, visible en el detalle.
   ('c0000000-0000-0000-0000-000000000025', '10000000-0000-0000-0000-000000000003',
    'in', 'a0000000-0000-0000-0000-000000000045', 30, 'cash', now() - interval '2 days', 'La mitad ahora.');
+
+-- ── Doce meses de historia · Kamay Histórico (KAM-14) ─────────────────────
+-- Todo lo sembrado hasta aquí ocurre en los últimos días: suficiente para el
+-- tablero y el detalle, insuficiente para el panel, cuyo criterio de carga
+-- —menos de 1,5 s con doce meses sembrados— no se podría medir sobre un solo
+-- mes.
+--
+-- Esa profundidad vive en su propia organización y no en Geeko Store por una
+-- razón comprobada: las filas de Geeko son fixtures de las suites de tablero,
+-- alta de pedidos y modo feria. Treinta y seis pedidos más les cambian las
+-- columnas, las listas y el orden de la cuadrícula de feria —que se ordena
+-- por lo más vendido de los últimos 90 días—, y esas suites empiezan a fallar
+-- por datos que no son suyos.
+--
+-- Dos cosas se siembran descuadradas a propósito, porque son justo lo que
+-- distingue la lectura en caja de la devengada (design D1):
+--
+--   · el pedido de cada mes se registra en su mes pero **se cobra al mes
+--     siguiente**, de modo que ingresos y facturación nunca coinciden;
+--   · el gasto sí se paga en su propio mes, de modo que la diferencia entre
+--     ambos criterios se ve en una sola columna.
+
+insert into business_lines (id, organization_id, name, color, is_shared, position) values
+  ('31000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', 'Sublimación',  'blue',   false, 1),
+  ('31000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000004', 'Impresión 3D', 'violet', false, 2),
+  ('31000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000004', 'Alfarería',    'orange', false, 3);
+
+insert into sales_channels (id, organization_id, name, position) values
+  ('41000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', 'Feria', 1);
+
+insert into expense_categories (id, organization_id, name) values
+  ('51000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', 'Insumos');
+
+insert into units (id, organization_id, code, name) values
+  ('61000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', 'u', 'Unidad');
+
+-- Un estado por tipo y por línea: el histórico no ejercita ningún flujo, solo
+-- necesita que cada pedido tenga un estado válido de su propia línea.
+insert into statuses (id, organization_id, business_line_id, flow, name, kind, position) values
+  ('71000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000001', 'order', 'Registrado', 'initial', 1),
+  ('71000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000001', 'order', 'Entregado',  'final',   2),
+  ('71000000-0000-0000-0000-000000000021', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000002', 'order', 'Registrado', 'initial', 1),
+  ('71000000-0000-0000-0000-000000000022', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000002', 'order', 'Entregado',  'final',   2),
+  ('71000000-0000-0000-0000-000000000031', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000003', 'order', 'Registrado', 'initial', 1),
+  ('71000000-0000-0000-0000-000000000032', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000003', 'order', 'Entregado',  'final',   2);
+
+insert into contacts (id, organization_id, name, is_customer, is_supplier) values
+  ('81000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', 'Clientela del año', true,  false),
+  ('81000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000004', 'Proveedor del año', false, true);
+
+insert into items (id, organization_id, business_line_id, kind, name, unit_id, sale_price) values
+  ('91000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000001', 'product', 'Taza estampada', '61000000-0000-0000-0000-000000000001', 45),
+  ('91000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000002', 'product', 'Llavero 3D',     '61000000-0000-0000-0000-000000000001', 60),
+  ('91000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000004', '31000000-0000-0000-0000-000000000003', 'product', 'Taza de barro',  '61000000-0000-0000-0000-000000000001', 35);
+
+-- Un pedido entregado por línea y por mes, de hace 1 a 12 meses. Las
+-- cantidades varían con el mes para que el comparativo no salga plano.
+insert into orders (
+  id, organization_id, business_line_id, kind, code, contact_id, status_id,
+  sales_channel_id, delivery_mode, due_date, occurred_at
+)
+select
+  ('a2000000-0000-0000-0000-0000000' || lpad((mes * 10 + linea.idx)::text, 5, '0'))::uuid,
+  '10000000-0000-0000-0000-000000000004',
+  linea.id,
+  'order',
+  mes * 10 + linea.idx,
+  '81000000-0000-0000-0000-000000000001',
+  linea.final_status,
+  '41000000-0000-0000-0000-000000000001',
+  case when mes % 2 = 0 then 'delivery' else 'pickup' end,
+  (current_date - (mes * 30))::date,
+  now() - (mes * interval '30 days')
+from generate_series(1, 12) as mes
+cross join (values
+  ('31000000-0000-0000-0000-000000000001'::uuid, '71000000-0000-0000-0000-000000000012'::uuid, 1),
+  ('31000000-0000-0000-0000-000000000002'::uuid, '71000000-0000-0000-0000-000000000022'::uuid, 2),
+  ('31000000-0000-0000-0000-000000000003'::uuid, '71000000-0000-0000-0000-000000000032'::uuid, 3)
+) as linea(id, final_status, idx);
+
+insert into order_items (
+  id, organization_id, order_id, item_id, quantity, unit_price
+)
+select
+  ('a3000000-0000-0000-0000-0000000' || lpad((mes * 10 + linea.idx)::text, 5, '0'))::uuid,
+  '10000000-0000-0000-0000-000000000004',
+  ('a2000000-0000-0000-0000-0000000' || lpad((mes * 10 + linea.idx)::text, 5, '0'))::uuid,
+  linea.item_id,
+  2 + ((mes + linea.idx) % 6),
+  linea.price
+from generate_series(1, 12) as mes
+cross join (values
+  ('91000000-0000-0000-0000-000000000001'::uuid, 45.00, 1),
+  ('91000000-0000-0000-0000-000000000002'::uuid, 60.00, 2),
+  ('91000000-0000-0000-0000-000000000003'::uuid, 35.00, 3)
+) as linea(item_id, price, idx);
+
+-- El cobro llega un mes después del pedido: en caja cuenta en el mes en que
+-- entró el dinero, no en el que se firmó el compromiso.
+insert into payments (
+  id, organization_id, direction, order_id, amount, method, occurred_at
+)
+select
+  ('c2000000-0000-0000-0000-0000000' || lpad((mes * 10 + linea.idx)::text, 5, '0'))::uuid,
+  '10000000-0000-0000-0000-000000000004',
+  'in',
+  ('a2000000-0000-0000-0000-0000000' || lpad((mes * 10 + linea.idx)::text, 5, '0'))::uuid,
+  (2 + ((mes + linea.idx) % 6)) * linea.price,
+  case when mes % 3 = 0 then 'transfer' else 'cash' end,
+  now() - (mes * interval '30 days') + interval '30 days'
+from generate_series(1, 12) as mes
+cross join (values (45.00, 1), (60.00, 2), (35.00, 3)) as linea(price, idx);
+
+insert into expenses (
+  id, organization_id, business_line_id, kind, contact_id, expense_category_id,
+  amount, occurred_at, note
+)
+select
+  ('b2000000-0000-0000-0000-0000000' || lpad((mes * 10 + linea.idx)::text, 5, '0'))::uuid,
+  '10000000-0000-0000-0000-000000000004',
+  linea.id,
+  'expense',
+  '81000000-0000-0000-0000-000000000002',
+  '51000000-0000-0000-0000-000000000001',
+  80 + ((mes * 7 + linea.idx * 13) % 120),
+  now() - (mes * interval '30 days') + interval '2 days',
+  'Insumos del mes.'
+from generate_series(1, 12) as mes
+cross join (values
+  ('31000000-0000-0000-0000-000000000001'::uuid, 1),
+  ('31000000-0000-0000-0000-000000000002'::uuid, 2),
+  ('31000000-0000-0000-0000-000000000003'::uuid, 3)
+) as linea(id, idx);
+
+-- El gasto sí se paga en su propio mes.
+insert into payments (
+  id, organization_id, direction, expense_id, amount, method, occurred_at
+)
+select
+  ('c3000000-0000-0000-0000-0000000' || lpad((mes * 10 + linea.idx)::text, 5, '0'))::uuid,
+  '10000000-0000-0000-0000-000000000004',
+  'out',
+  ('b2000000-0000-0000-0000-0000000' || lpad((mes * 10 + linea.idx)::text, 5, '0'))::uuid,
+  80 + ((mes * 7 + linea.idx * 13) % 120),
+  'transfer',
+  now() - (mes * interval '30 days') + interval '3 days'
+from generate_series(1, 12) as mes
+cross join (values (1), (2), (3)) as linea(idx);

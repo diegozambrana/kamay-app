@@ -123,12 +123,18 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     await archived.click();
     await page.getByRole("button", { name: "Desarchivar" }).click();
 
-    await page.goto("/contacts");
-    await page.getByTestId("contact-row").filter({ hasText: name }).click();
-    // Vuelve con sus datos, no como un contacto en blanco.
-    await expect(page.getByTestId("contact-detail")).toContainText(
-      "+591 70012345",
-    );
+    // Desarchivar sigue en vuelo cuando se suelta el botón: navegar de
+    // inmediato la cancelaba a mitad y el contacto seguía archivado. Se
+    // reintenta hasta que el servidor lo ha guardado; si no llegara a
+    // guardarse nunca, esto sigue fallando.
+    await expect(async () => {
+      await page.goto("/contacts");
+      await page.getByTestId("contact-row").filter({ hasText: name }).click();
+      // Vuelve con sus datos, no como un contacto en blanco.
+      await expect(page.getByTestId("contact-detail")).toContainText(
+        "+591 70012345",
+      );
+    }).toPass({ timeout: 30_000 });
   });
 
   test("el ayudante crea y edita, pero no se le ofrece archivar", async ({

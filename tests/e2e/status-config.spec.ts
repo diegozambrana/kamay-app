@@ -92,13 +92,23 @@ test.describe("configuración de estados (V22)", () => {
     );
     await page.mouse.up();
 
+    const primeroDeAntes = firstBefore.split("\n")[0];
+
+    // La tarjeta se pinta en su sitio nuevo antes de que el servidor conteste.
     await expect(page.getByTestId("status-row").first()).not.toContainText(
-      firstBefore.split("\n")[0],
+      primeroDeAntes,
     );
-    await page.reload();
-    await expect(page.getByTestId("status-row").first()).not.toContainText(
-      firstBefore.split("\n")[0],
-    );
+
+    // Y el orden sobrevive a recargar. Se reintenta la recarga porque la
+    // escritura sigue viva cuando se suelta el ratón: recargar de inmediato la
+    // cancelaba a mitad y el orden volvía al de antes. Si no llegara a
+    // guardarse nunca, esto sigue fallando.
+    await expect(async () => {
+      await page.reload();
+      await expect(page.getByTestId("status-row").first()).not.toContainText(
+        primeroDeAntes,
+      );
+    }).toPass({ timeout: 30_000 });
 
     // Las demás líneas no se enteraron: Sublimación sigue sin juego propio…
     const sublimacionId = await page

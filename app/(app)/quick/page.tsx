@@ -30,6 +30,7 @@ export default async function QuickPage() {
     new RecentCaptureService(context.supabase).listToday(
       context.organizationId,
       today,
+      timezone,
     ),
     new BusinessLineService(context.supabase).listActive(context.organizationId),
   ]);

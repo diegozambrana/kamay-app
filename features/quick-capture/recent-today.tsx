@@ -60,7 +60,10 @@ export function RecentToday({
   lineNames: Record<string, string>;
 }) {
   const items = useSyncStore((state) => state.items);
-  const rows = mergeRecentCaptures(synced, pendingCapturesToday(items, today));
+  const rows = mergeRecentCaptures(
+    synced,
+    pendingCapturesToday(items, today, timezone),
+  );
 
   if (rows.length === 0) {
     return (

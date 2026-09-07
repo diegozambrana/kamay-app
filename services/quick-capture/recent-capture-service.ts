@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { RECENT_LIMIT, type RecentCapture } from "@/lib/quick-capture/recent";
+import {
+  RECENT_LIMIT,
+  dayBoundsInTimezone,
+  type RecentCapture,
+} from "@/lib/quick-capture/recent";
 
 type OrderRow = {
   id: string;
@@ -35,10 +39,17 @@ export class RecentCaptureService {
 
   /**
    * @param today "Hoy" en la zona de la organización, como `YYYY-MM-DD`.
+   * @param timezone La zona de la organización, que es la que define ese día.
    */
-  async listToday(organizationId: string, today: string): Promise<RecentCapture[]> {
-    const from = `${today}T00:00:00`;
-    const to = `${today}T23:59:59.999`;
+  async listToday(
+    organizationId: string,
+    today: string,
+    timezone: string,
+  ): Promise<RecentCapture[]> {
+    // Los extremos llevan su desplazamiento: `occurred_at` es `timestamptz` y
+    // un literal sin offset lo interpretaría la base en UTC, acotando el día
+    // equivocado (ver `dayBoundsInTimezone`).
+    const { from, to } = dayBoundsInTimezone(today, timezone);
 
     const [orders, expenses] = await Promise.all([
       this.supabase

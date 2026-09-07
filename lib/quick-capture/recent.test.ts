@@ -4,6 +4,8 @@ import { clearOperations, registerOperation } from "@/lib/offline";
 import type { SyncItem } from "@/stores/sync-store";
 
 import {
+  dayBoundsInTimezone,
+  dayOfInstant,
   mergeRecentCaptures,
   pendingCapturesToday,
   type RecentCapture,
@@ -45,6 +47,8 @@ function queued(over: Partial<SyncItem["entry"]> = {}): SyncItem {
 }
 
 const TODAY = "2026-09-05";
+/** La Paz: UTC−4 todo el año. El desfase con UTC es justo el que rompía. */
+const TZ = "America/La_Paz";
 
 describe("mergeRecentCaptures", () => {
   it("muestra lo registrado hoy, lo más reciente primero", () => {
@@ -136,7 +140,7 @@ describe("mergeRecentCaptures", () => {
   it("una fila pendiente no enlaza a ninguna parte", () => {
     const rows = mergeRecentCaptures(
       [],
-      pendingCapturesToday([queued()], TODAY),
+      pendingCapturesToday([queued()], TODAY, TZ),
     );
 
     expect(rows[0].href).toBeUndefined();
@@ -153,7 +157,7 @@ describe("pendingCapturesToday", () => {
   });
 
   it("una captura sin red aparece con su hora real", () => {
-    const [captura] = pendingCapturesToday([queued()], TODAY);
+    const [captura] = pendingCapturesToday([queued()], TODAY, TZ);
 
     expect(captura).toMatchObject({
       kind: "order",
@@ -166,7 +170,7 @@ describe("pendingCapturesToday", () => {
 
   it("toma el rótulo del registro de operaciones, no uno propio", () => {
     // La lista y la bandeja deben llamar igual a lo mismo.
-    expect(pendingCapturesToday([queued()], TODAY)[0].label).toBe(
+    expect(pendingCapturesToday([queued()], TODAY, TZ)[0].label).toBe(
       "Pedido nuevo · 1 línea",
     );
   });
@@ -174,7 +178,7 @@ describe("pendingCapturesToday", () => {
   it("lo encolado ayer no cuenta", () => {
     const ayer = queued({ enqueuedAt: "2026-09-04T23:50:00.000Z" });
 
-    expect(pendingCapturesToday([ayer], TODAY)).toEqual([]);
+    expect(pendingCapturesToday([ayer], TODAY, TZ)).toEqual([]);
   });
 
   it("una operación que la lista no representa se ignora", () => {
@@ -183,14 +187,68 @@ describe("pendingCapturesToday", () => {
     const edicion = queued({ operation: "order.update" });
     const desconocida = queued({ operation: "algo.raro" });
 
-    expect(pendingCapturesToday([edicion, desconocida], TODAY)).toEqual([]);
+    expect(pendingCapturesToday([edicion, desconocida], TODAY, TZ)).toEqual([]);
   });
 
   it("sin rótulo registrado cae en uno genérico y no revienta", () => {
     clearOperations();
 
-    expect(pendingCapturesToday([queued()], TODAY)[0].label).toBe(
+    expect(pendingCapturesToday([queued()], TODAY, TZ)[0].label).toBe(
       "Registro pendiente",
     );
+  });
+});
+
+describe("el día de la organización, no el de UTC", () => {
+  // El fallo que esto fija: a las 20:24 en La Paz el instante ya lleva la
+  // fecha del día siguiente en UTC. Filtrar por la fecha local sin tener en
+  // cuenta el huso dejaba "Registrado hoy" vacío toda la tarde-noche —justo
+  // la duda que la pantalla existe para disipar.
+  const TARDE_EN_LA_PAZ = "2026-09-07T00:24:00.000Z"; // 20:24 del día 6
+
+  it("un instante de la tarde pertenece al día local, no al de UTC", () => {
+    expect(dayOfInstant(TARDE_EN_LA_PAZ, TZ)).toBe("2026-09-06");
+    expect(dayOfInstant(TARDE_EN_LA_PAZ, "UTC")).toBe("2026-09-07");
+  });
+
+  it("una captura de las 20:24 sigue contando como de hoy", () => {
+    const captura = queued({ enqueuedAt: TARDE_EN_LA_PAZ });
+
+    expect(pendingCapturesToday([captura], "2026-09-06", TZ)).toHaveLength(1);
+  });
+
+  it("y no cuenta como del día siguiente", () => {
+    const captura = queued({ enqueuedAt: TARDE_EN_LA_PAZ });
+
+    expect(pendingCapturesToday([captura], "2026-09-07", TZ)).toEqual([]);
+  });
+
+  it("los extremos del día viajan con su desplazamiento", () => {
+    // Sin el offset, la base —que guarda en UTC— acotaría el día equivocado.
+    expect(dayBoundsInTimezone("2026-09-06", TZ)).toEqual({
+      from: "2026-09-06T00:00:00.000-04:00",
+      to: "2026-09-06T23:59:59.999-04:00",
+    });
+  });
+
+  it("el instante de las 20:24 cae dentro de esos extremos", () => {
+    const { from, to } = dayBoundsInTimezone("2026-09-06", TZ);
+    const momento = new Date(TARDE_EN_LA_PAZ).getTime();
+
+    expect(momento).toBeGreaterThanOrEqual(new Date(from).getTime());
+    expect(momento).toBeLessThanOrEqual(new Date(to).getTime());
+  });
+
+  it("en UTC los extremos no llevan desfase", () => {
+    expect(dayBoundsInTimezone("2026-09-06", "UTC")).toEqual({
+      from: "2026-09-06T00:00:00.000+00:00",
+      to: "2026-09-06T23:59:59.999+00:00",
+    });
+  });
+
+  it("respeta el horario de verano de la zona, no una tabla fija", () => {
+    // Madrid: +01:00 en enero y +02:00 en julio.
+    expect(dayBoundsInTimezone("2026-01-15", "Europe/Madrid").from).toContain("+01:00");
+    expect(dayBoundsInTimezone("2026-07-15", "Europe/Madrid").from).toContain("+02:00");
   });
 });

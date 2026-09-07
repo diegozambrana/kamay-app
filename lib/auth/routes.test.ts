@@ -13,6 +13,8 @@ describe("isProtectedPath", () => {
     // Destino de la tercera ranura de la barra inferior: sin el prefijo, el
     // proxy no reconoce la ruta y la ranura lleva fuera del área autenticada.
     expect(isProtectedPath("/my-tasks")).toBe(true);
+    expect(isProtectedPath("/tasks")).toBe(true);
+    expect(isProtectedPath("/tasks/new")).toBe(true);
     expect(isProtectedPath("/quick")).toBe(true);
     expect(isProtectedPath("/dashboard/anything")).toBe(true);
     expect(isProtectedPath("/settings")).toBe(true);

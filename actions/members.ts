@@ -8,6 +8,7 @@ import { setActiveOrganizationCookie } from "@/lib/auth/post-auth";
 import { getOwnerContext } from "@/lib/auth/session-context";
 import { createClient } from "@/lib/supabase/server";
 import { InvitationService } from "@/services/invitation-service";
+import { MembershipService } from "@/services/membership-service";
 
 export type MemberActionResult = { error: string } | undefined;
 
@@ -24,7 +25,11 @@ const inviteSchema = z.object({
   role: z.enum(["owner", "assistant"]),
 });
 
-const membershipSchema = z.object({ membershipId: z.uuid() });
+const membershipSchema = z.object({ membershipId: z.guid() });
+
+const memberLinesSchema = membershipSchema.extend({
+  businessLineIds: z.array(z.guid()),
+});
 
 export async function inviteMember(
   input: z.infer<typeof inviteSchema>,
@@ -66,7 +71,7 @@ export async function inviteMember(
 export async function revokeInvitation(input: {
   invitationId: string;
 }): Promise<MemberActionResult> {
-  const parsed = z.object({ invitationId: z.uuid() }).safeParse(input);
+  const parsed = z.object({ invitationId: z.guid() }).safeParse(input);
   if (!parsed.success) return { error: "No se pudo identificar la invitación." };
 
   const context = await getOwnerContext();
@@ -105,6 +110,37 @@ export async function changeMemberRole(
     return { error: "No se pudo cambiar el rol. Intenta de nuevo." };
   }
 
+  revalidatePath("/", "layout");
+}
+
+/**
+ * Deja la membresía con exactamente las líneas indicadas.
+ *
+ * Una lista vacía no es un error ni deja a nadie fuera: significa «sin
+ * restricción declarada», que es como alcanza todas las líneas (KAM-15,
+ * design D4). Restringir es un acto explícito de la persona dueña.
+ */
+export async function setMemberLines(
+  input: z.infer<typeof memberLinesSchema>,
+): Promise<MemberActionResult> {
+  const parsed = memberLinesSchema.safeParse(input);
+  if (!parsed.success) return { error: "No se pudo identificar la membresía." };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  try {
+    await new MembershipService(context.supabase).setLines(
+      context.organizationId,
+      parsed.data.membershipId,
+      parsed.data.businessLineIds,
+    );
+  } catch {
+    return { error: "No se pudieron guardar las líneas. Intenta de nuevo." };
+  }
+
+  // Cambia qué tareas ve esa persona en toda la aplicación, no solo en
+  // Configuración.
   revalidatePath("/", "layout");
 }
 

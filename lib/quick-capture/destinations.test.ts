@@ -21,7 +21,7 @@ describe("QUICK_DESTINATIONS", () => {
     ]);
   });
 
-  it("los cuatro destinos vivos llevan href y ninguna leyenda", () => {
+  it("los cinco destinos vivos llevan href y ninguna leyenda", () => {
     const vivos = QUICK_DESTINATIONS.filter(isAvailable);
 
     expect(vivos.map((d) => d.href)).toEqual([
@@ -29,15 +29,24 @@ describe("QUICK_DESTINATIONS", () => {
       "/orders/new",
       "/expenses/purchases/new",
       "/expenses/costs/new",
+      // Encendido por KAM-15, que construyó el alta de tarea.
+      "/tasks/new",
     ]);
     expect(vivos.every((d) => d.availableFrom === undefined)).toBe(true);
   });
 
-  it("los dos destinos pendientes declaran qué falta y no llevan href", () => {
+  it("solo Consumo sigue pendiente: declara qué falta y no lleva href", () => {
     const pendientes = QUICK_DESTINATIONS.filter((d) => !isAvailable(d));
 
-    expect(pendientes.map((d) => d.label)).toEqual(["Consumo", "Tarea"]);
+    expect(pendientes.map((d) => d.label)).toEqual(["Consumo"]);
     expect(pendientes.every((d) => d.availableFrom !== undefined)).toBe(true);
+  });
+
+  it("tarea enlaza al alta, que existe desde KAM-15", () => {
+    const tarea = QUICK_DESTINATIONS.find((d) => d.key === "task");
+
+    expect(tarea?.href).toBe("/tasks/new");
+    expect(tarea?.availableFrom).toBeUndefined();
   });
 
   it("venta rápida enlaza al modo feria, que ya existe desde KAM-12", () => {

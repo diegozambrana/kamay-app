@@ -8,6 +8,9 @@ export const PROTECTED_PREFIXES = [
   // Destino de la tercera ranura de la barra inferior (V20). Cascarón hasta
   // KAM-17, pero la ruta tiene que existir para el proxy desde ya.
   "/my-tasks",
+  // El tablero de tareas (V17). `/my-tasks` es su hermana móvil y va arriba:
+  // son dos pantallas distintas sobre las mismas tareas, no una ruta anidada.
+  "/tasks",
   // El modo feria vive en su propio grupo de rutas `(fair)`, sin cascarón,
   // pero necesita sesión igual que el resto: se vende contra la organización.
   "/fair",

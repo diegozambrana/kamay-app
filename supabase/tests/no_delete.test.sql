@@ -4,7 +4,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(5);
+select plan(6);
 
 create function pg_temp.login(uid uuid) returns void
 language plpgsql as $$
@@ -57,6 +57,14 @@ select throws_ok(
   $$ delete from payments $$,
   '42501', null,
   'payments: DELETE ni se ejecuta — el privilegio está revocado');
+
+-- Las cinco tablas de KAM-15 siguen el mismo criterio que `payments`: el
+-- privilegio revocado, no solo la política ausente. Una tarea, su etiqueta y
+-- su vínculo se archivan o se quedan; no se borran.
+select throws_ok(
+  $$ delete from tasks $$,
+  '42501', null,
+  'tasks/tags/task_tags/task_links/membership_lines: DELETE revocado (KAM-15)');
 
 select pg_temp.logout();
 

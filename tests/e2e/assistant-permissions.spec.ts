@@ -352,3 +352,99 @@ test.describe("V2 · el botón + Registrar de escritorio", () => {
     }
   });
 });
+
+/**
+ * KAM-15 · El ayudante ve solo las tareas de su línea o las asignadas a él.
+ *
+ * Escenarios del delta spec `tasks` — requisito "Visibilidad de tareas por rol
+ * y por línea": «Ayudante restringido a una línea» y «Tarea asignada de otra
+ * línea». Y del delta spec `user-management` — «Owner restricts an assistant to
+ * one line».
+ *
+ * El recorte lo aplica RLS, así que la comprobación importante es que **no se
+ * pueda esquivar manipulando la dirección**: filtrar por la línea prohibida
+ * sigue sin devolver nada.
+ */
+test.describe.serial("tareas del ayudante por línea", () => {
+  test.skip(({ isMobile }) => Boolean(isMobile), "usa el selector de línea del menú lateral");
+
+  const enAlfareria = `Alfarería ${Date.now()}`;
+  const enSublimacion = `Sublimación ${Date.now()}`;
+
+  test("el dueño crea una tarea en cada línea y restringe al ayudante", async ({
+    page,
+  }) => {
+    await login(page, GEEKO_OWNER);
+
+    for (const [linea, titulo] of [
+      ["Alfarería", enAlfareria],
+      ["Sublimación", enSublimacion],
+    ] as const) {
+      await page.getByTestId("line-selector").click();
+      await page.getByRole("menuitem", { name: linea }).click();
+      await expect(page.getByTestId("line-selector")).toBeEnabled();
+
+      await page.goto("/tasks");
+      await page.getByTestId("quick-add-task").click();
+      await page.getByTestId("quick-add-title").fill(titulo);
+      await page.getByTestId("quick-add-title").press("Enter");
+      await expect(page.getByText(titulo)).toBeVisible();
+    }
+
+    // Se restringe al ayudante a Alfarería desde Usuarios y roles.
+    await page.goto("/settings/members");
+    const fila = page
+      .getByTestId("member-list")
+      .locator("li")
+      .filter({ hasText: "Ayudante Geeko" });
+    // La casilla se deshabilita mientras la acción viaja, así que se pulsa y se
+    // espera la respuesta: `check()` verificaría sobre un control deshabilitado.
+    const guardado = page.waitForResponse(
+      (r) => r.request().method() === "POST" && r.url().includes("/settings/members"),
+    );
+    await fila.getByLabel(/^Alfarería para/).click();
+    await guardado;
+    await expect(fila.getByLabel(/^Alfarería para/)).toBeChecked();
+  });
+
+  test("el ayudante ve su línea y no la que no le toca", async ({ page }) => {
+    await login(page, GEEKO_ASSISTANT);
+
+    // La lista cruza todas las líneas, así que muestra todo lo que puede ver.
+    await page.goto("/tasks?view=list");
+
+    await expect(page.getByText(enAlfareria)).toBeVisible();
+    await expect(page.getByText(enSublimacion)).toHaveCount(0);
+  });
+
+  test("manipular la dirección no le devuelve lo que RLS le quitó", async ({
+    page,
+  }) => {
+    await login(page, GEEKO_ASSISTANT);
+
+    // Filtrar explícitamente por el título de la tarea prohibida: si el recorte
+    // viviera en la interfaz y no en la base, aquí aparecería.
+    await page.goto(`/tasks?view=list&q=${encodeURIComponent(enSublimacion)}`);
+
+    await expect(page.getByTestId("task-row")).toHaveCount(0);
+    await expect(page.getByText(enSublimacion)).toHaveCount(0);
+  });
+
+  test("el dueño le devuelve todas las líneas y vuelve a verlo todo", async ({
+    page,
+  }) => {
+    await login(page, GEEKO_OWNER);
+    await page.goto("/settings/members");
+
+    const fila = page
+      .getByTestId("member-list")
+      .locator("li")
+      .filter({ hasText: "Ayudante Geeko" });
+    const guardado = page.waitForResponse(
+      (r) => r.request().method() === "POST" && r.url().includes("/settings/members"),
+    );
+    await fila.getByLabel(/^Alfarería para/).click();
+    await guardado;
+    await expect(fila.getByLabel(/^Alfarería para/)).not.toBeChecked();
+  });
+});

@@ -1,29 +1,12 @@
 "use client";
 
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  closestCorners,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useTransition } from "react";
 
 import { moveOrderToStatus, reorderQueue } from "@/actions/orders";
+import { KanbanBoard, type KanbanColumn } from "@/components/board/kanban-board";
 import { Badge } from "@/components/ui/badge";
-import { displayedPlacement, useBoardStore } from "@/features/orders/board-store";
 import { queuePositions, sortByArrival } from "@/lib/orders/queue";
-import { cn } from "@/lib/utils";
+import { displayedPlacement, useBoardStore } from "@/stores/board-store";
 import type { Status } from "@/types";
 
 import { OrderCard, type OrderCardData } from "./order-card";
@@ -37,6 +20,11 @@ export type BoardOrder = OrderCardData & {
  * V3 · Tablero. Las columnas son exactamente el juego de estados que la base
  * resolvió para la línea activa, en su orden declarado: aquí no hay ninguna
  * lista de estados ni ninguna rama por línea.
+ *
+ * La mecánica de arrastre vive en `components/board/kanban-board.tsx`, que
+ * comparte con el tablero de tareas (KAM-15, design D6). Lo que se queda aquí
+ * es lo que solo los pedidos tienen: la cola, su orden por llegada y su
+ * numeración visible.
  */
 export function BoardView({
   orders,
@@ -57,57 +45,59 @@ export function BoardView({
   const settle = useBoardStore((state) => state.settle);
   const revert = useBoardStore((state) => state.revert);
 
-  // El pedido que se está arrastrando ahora mismo, para pintarlo en el
-  // `DragOverlay` (design.md: la animación tiene que verse igual cuando el
-  // arrastre cruza de una columna a otra).
-  const [activeOrder, setActiveOrder] = useState<BoardOrder | null>(null);
-
-  // Un arrastre solo empieza tras unos píxeles: si no, tocar una tarjeta en
-  // el móvil nunca abriría su detalle.
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-  );
-
-  /** Dónde está ahora mismo cada pedido, contando los movimientos en vuelo. */
-  function currentStatusOf(orderId: string): string | null {
-    const order = orders.find((o) => o.id === orderId);
-    if (!order) return null;
-    return displayedPlacement(order, pending, pendingQueue).statusId;
+  /** El pedido con su llegada en vuelo aplicada, si la tiene. */
+  function withPendingQueue(order: BoardOrder): BoardOrder {
+    return { ...order, queuedAt: pendingQueue[order.id] ?? order.queuedAt };
   }
 
-  function onDragStart(event: DragStartEvent) {
-    const orderId = String(event.active.id);
-    setActiveOrder(orders.find((order) => order.id === orderId) ?? null);
-  }
+  // Las posiciones visibles se derivan del orden de cada cola, así que hay que
+  // calcularlas antes de rendir las tarjetas: mover uno renumera a todos sin
+  // escribir una sola fila más (design.md D4 de KAM-07).
+  const positions = new Map<string, number>();
 
-  function onDragEnd(event: DragEndEvent) {
-    setActiveOrder(null);
+  const columns: KanbanColumn<BoardOrder>[] = statuses.map((status) => {
+    const inColumn = orders.filter(
+      (order) => displayedPlacement(order, pending, pendingQueue).statusId === status.id,
+    );
 
-    const orderId = String(event.active.id);
-    if (!event.over) return;
+    // En una columna de cola manda la llegada, no la urgencia; en las demás,
+    // la fecha comprometida es el orden natural de trabajo.
+    const ordered = status.isQueue
+      ? sortByArrival(inColumn.map(withPendingQueue))
+      : [...inColumn].sort((a, b) =>
+          (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"),
+        );
 
-    const overId = String(event.over.id);
-    const from = currentStatusOf(orderId);
-    if (!from) return;
-
-    // Se puede soltar sobre una columna o sobre otra tarjeta. En el segundo
-    // caso el destino es la columna de esa tarjeta, y la posición importa
-    // cuando es una cola.
-    const overIsColumn = statuses.some((status) => status.id === overId);
-    const to = overIsColumn ? overId : currentStatusOf(overId);
-    if (!to) return;
-
-    if (to !== from) {
-      moveCard(orderId, to);
-      return;
+    if (status.isQueue) {
+      for (const [orderId, position] of queuePositions(ordered)) {
+        positions.set(orderId, position);
+      }
     }
 
-    // Mismo sitio: solo tiene sentido reordenar, y solo en una cola.
-    const status = statuses.find((s) => s.id === to);
-    if (!status?.isQueue || overIsColumn || overId === orderId) return;
-
-    reorderCard(orderId, to, overId);
-  }
+    return {
+      id: status.id,
+      sortable: status.isQueue,
+      items: ordered,
+      attributes: {
+        "data-testid": "board-column",
+        "data-status-name": status.name,
+        "data-is-queue": status.isQueue ? "1" : "0",
+      },
+      header: (
+        <>
+          <h2 className="text-sm font-medium">{status.name}</h2>
+          <Badge variant="secondary" className="tabular-nums">
+            {ordered.length}
+          </Badge>
+        </>
+      ),
+      empty: (
+        <p className="px-1 py-6 text-center text-xs text-muted-foreground">
+          Sin pedidos
+        </p>
+      ),
+    };
+  });
 
   function moveCard(orderId: string, statusId: string) {
     // La tarjeta se mueve ya; el servidor confirma después (design.md D6).
@@ -128,7 +118,7 @@ export function BoardView({
     const column = sortByArrival(
       orders
         .filter((o) => displayedPlacement(o, pending, pendingQueue).statusId === statusId)
-        .map((o) => ({ ...o, queuedAt: pendingQueue[o.id] ?? o.queuedAt })),
+        .map(withPendingQueue),
     );
 
     const targetIndex = column.findIndex((o) => o.id === overOrderId);
@@ -151,163 +141,16 @@ export function BoardView({
   }
 
   return (
-    <DndContext
-      // Sin un id estable, dnd-kit numera sus descripciones con un contador
-      // que difiere entre servidor y cliente.
+    <KanbanBoard
       id="orders-board"
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onDragCancel={() => setActiveOrder(null)}
-    >
-      {/* El desplazamiento horizontal vive aquí, dentro del tablero: en un
-          teléfono las columnas se recorren de lado, pero la página no se
-          mueve (`user-auth` — "No app screen scrolls horizontally"). */}
-      <div data-testid="orders-board" className="flex gap-3 overflow-x-auto pb-4">
-        {statuses.map((status) => {
-          const inColumn = orders.filter(
-            (order) =>
-              displayedPlacement(order, pending, pendingQueue).statusId === status.id,
-          );
-
-          return (
-            <BoardColumn
-              key={status.id}
-              status={status}
-              orders={inColumn}
-              today={today}
-              pendingQueue={pendingQueue}
-            />
-          );
-        })}
-      </div>
-
-      {/* `useSortable` solo anima transiciones dentro de un mismo
-          `SortableContext`, y cada columna tiene el suyo: sin esto, la
-          tarjeta se movía con el cursor mientras seguía sobre su columna de
-          origen, pero desaparecía sin transición al cruzar a otra. El
-          `DragOverlay` es un clon que sigue al puntero por fuera de ambos
-          contextos, así que la animación no se corta al cambiar de columna. */}
-      <DragOverlay>
-        {activeOrder && <OrderCard order={activeOrder} today={today} />}
-      </DragOverlay>
-    </DndContext>
-  );
-}
-
-function BoardColumn({
-  status,
-  orders,
-  today,
-  pendingQueue,
-}: {
-  status: Status;
-  orders: BoardOrder[];
-  today: string;
-  pendingQueue: Record<string, string>;
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: status.id });
-
-  // En una columna de cola manda la llegada, no la urgencia; en las demás,
-  // la fecha comprometida es el orden natural de trabajo.
-  const ordered = status.isQueue
-    ? sortByArrival(
-        orders.map((order) => ({
-          ...order,
-          queuedAt: pendingQueue[order.id] ?? order.queuedAt,
-        })),
-      )
-    : [...orders].sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
-
-  // La posición visible se deriva del orden: mover uno renumera a todos sin
-  // escribir una sola fila más (design.md D4).
-  const positions = status.isQueue ? queuePositions(ordered) : null;
-
-  return (
-    <section
-      ref={setNodeRef}
-      data-testid="board-column"
-      data-status-name={status.name}
-      data-is-queue={status.isQueue ? "1" : "0"}
-      className={cn(
-        "flex w-72 shrink-0 flex-col gap-2 rounded-lg bg-muted/40 p-2 transition-colors",
-        isOver && "bg-accent",
+      testId="orders-board"
+      columns={columns}
+      onMove={moveCard}
+      onReorder={reorderCard}
+      renderCard={(order) => (
+        <OrderCard order={order} today={today} position={positions.get(order.id)} />
       )}
-    >
-      <header className="flex items-center justify-between px-1 py-1">
-        <h2 className="text-sm font-medium">{status.name}</h2>
-        <Badge variant="secondary" className="tabular-nums">
-          {ordered.length}
-        </Badge>
-      </header>
-
-      <div className="flex flex-col gap-2">
-        {/* Las tarjetas son ordenables además de arrastrables: soltar una
-            sobre otra dentro de una cola es lo que reordena. */}
-        <SortableContext
-          items={ordered.map((order) => order.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {ordered.map((order) => (
-            <DraggableCard key={order.id} orderId={order.id}>
-              <OrderCard
-                order={order}
-                today={today}
-                position={positions?.get(order.id)}
-              />
-            </DraggableCard>
-          ))}
-        </SortableContext>
-
-        {ordered.length === 0 && (
-          <p className="px-1 py-6 text-center text-xs text-muted-foreground">
-            Sin pedidos
-          </p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function DraggableCard({
-  orderId,
-  children,
-}: {
-  orderId: string;
-  children: React.ReactNode;
-}) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
-    id: orderId,
-  });
-
-  // La tarjeta es un enlace al detalle, así que soltar tras arrastrar
-  // dispararía la navegación además del movimiento. Se recuerda que hubo
-  // arrastre y se cancela ese clic —solo ese—: un toque limpio sigue abriendo
-  // el pedido, que es lo que el tablero necesita en el móvil.
-  const dragged = useRef(false);
-
-  useEffect(() => {
-    if (isDragging) dragged.current = true;
-  }, [isDragging]);
-
-  function onClickCapture(event: React.MouseEvent) {
-    if (!dragged.current) return;
-    event.preventDefault();
-    event.stopPropagation();
-    dragged.current = false;
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Translate.toString(transform) }}
-      className={cn(isDragging && "opacity-50")}
-      onClickCapture={onClickCapture}
-      {...listeners}
-      {...attributes}
-    >
-      {children}
-    </div>
+      renderOverlay={(order) => <OrderCard order={order} today={today} />}
+    />
   );
 }

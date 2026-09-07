@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { BusinessLine, Status, StatusKind } from "@/types";
 
 import type { BoardOrder } from "./board-view";
-import { useBoardStore } from "./board-store";
+import { useBoardStore } from "@/stores/board-store";
 import { OrdersScreen } from "./orders-screen";
 
 vi.mock("@/actions/orders", () => ({

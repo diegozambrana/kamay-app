@@ -125,6 +125,61 @@ export type MemberRow = Membership & {
   archivedAt: string | null;
 };
 
+/** Una etiqueta de la organización. Se crean al vuelo desde la tarea. */
+export type Tag = {
+  id: string;
+  organizationId: string;
+  name: string;
+};
+
+/**
+ * Los tipos de registro que una tarea puede referenciar.
+ *
+ * El dominio completo del canon (§12) vive aquí desde el principio, pero
+ * KAM-15 solo escribe `order`: el resto lo abre KAM-21 con su interfaz de
+ * vínculos.
+ */
+export const TASK_LINK_TYPES = [
+  "order",
+  "contact",
+  "item",
+  "expense",
+  "asset",
+] as const;
+
+export type TaskLinkType = (typeof TASK_LINK_TYPES)[number];
+
+export type TaskLink = {
+  id: string;
+  taskId: string;
+  entityType: TaskLinkType;
+  entityId: string;
+};
+
+/**
+ * Una tarea tal como la lee el tablero.
+ *
+ * No lleva `bodyMarkdown`, `remindAt` ni `closedWithoutDeliverables`: las
+ * columnas existen en la base desde KAM-15, pero las escriben y las leen
+ * KAM-16, KAM-17 y KAM-21. Añadirlas aquí antes de que alguien las use sería
+ * invitar a leerlas vacías.
+ */
+export type Task = {
+  id: string;
+  organizationId: string;
+  businessLineId: string;
+  statusId: string;
+  title: string;
+  assigneeId: string | null;
+  /** Fecha límite en ISO, o `null`. */
+  dueAt: string | null;
+  closedAt: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  archivedAt: string | null;
+  tags: Tag[];
+};
+
 /** "Todas" no es una línea: es la ausencia deliberada de filtro. */
 export const ALL_LINES = "all" as const;
 

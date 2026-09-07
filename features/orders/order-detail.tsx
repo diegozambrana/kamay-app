@@ -171,6 +171,17 @@ export function OrderDetail({
 
           {/* Un pedido archivado está congelado: ni se edita ni se cancela.
               Lo garantiza la base; aquí simplemente no se ofrece. */}
+          {/* La única vía por la que un pedido origina una tarea: una acción
+              explícita de la persona. El formulario llega prellenado con la
+              línea, el vínculo y una fecha anterior a la de entrega, y todo se
+              puede cambiar. **Ningún cambio de estado de este pedido crea,
+              mueve ni cierra tarea alguna** (convención nº 10). */}
+          <Button asChild variant="outline" data-testid="create-task-for-order">
+            <Link href={`/tasks/new?orderId=${order.id}`}>
+              Crear tarea para este pedido
+            </Link>
+          </Button>
+
           {!order.archivedAt && (
             <>
               <Button asChild variant="outline" data-testid="edit-order">

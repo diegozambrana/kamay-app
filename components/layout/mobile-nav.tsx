@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import {
+  barHrefOf,
   barLabelOf,
   bottomBarEntriesFor,
   isNavEntryActive,
@@ -34,6 +35,7 @@ const CAPTURE_ROUTES = [
   /^\/orders\/[^/]+\/edit$/,
   /^\/expenses\/purchases\/new$/,
   /^\/expenses\/costs\/new$/,
+  /^\/tasks\/new$/,
 ];
 
 export function isCaptureRoute(pathname: string): boolean {
@@ -71,12 +73,15 @@ export function MobileNav() {
       >
         {entries.map((entry) => {
           const Icon = entry.icon;
-          const active = isNavEntryActive(entry.href, pathname);
+          // El destino de la ranura, que no siempre es el de escritorio:
+          // *Tareas* abre el tablero allí y *Mis pendientes* aquí (design D9).
+          const href = barHrefOf(entry);
+          const active = isNavEntryActive(href, pathname);
 
           return (
             <Link
               key={entry.href}
-              href={entry.href}
+              href={href}
               aria-current={active ? "page" : undefined}
               className={cn(slotClass, active && "text-foreground")}
             >

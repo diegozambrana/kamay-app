@@ -61,19 +61,25 @@ describe("QuickGrid", () => {
     expect(venta).toHaveAttribute("href", "/fair");
   });
 
-  it("los dos destinos pendientes ocupan su ranura, inertes y con su leyenda", () => {
+  it("el destino pendiente ocupa su ranura, inerte y con su leyenda", () => {
     renderGrid();
 
-    for (const key of ["consumption", "task"]) {
-      const tile = screen.getByTestId(`quick-destination-${key}`);
-      expect(tile.tagName).toBe("BUTTON");
-      expect(tile).toBeDisabled();
-      expect(tile).toHaveAttribute("aria-disabled");
-      expect(tile).not.toHaveAttribute("href");
-    }
+    // Solo queda Consumo: *Tarea* la encendió KAM-15 con su alta.
+    const tile = screen.getByTestId("quick-destination-consumption");
+    expect(tile.tagName).toBe("BUTTON");
+    expect(tile).toBeDisabled();
+    expect(tile).toHaveAttribute("aria-disabled");
+    expect(tile).not.toHaveAttribute("href");
 
     expect(screen.getByText("Llega con el inventario")).toBeInTheDocument();
-    expect(screen.getByText("Llega con las tareas")).toBeInTheDocument();
+  });
+
+  it("el destino Tarea abre el alta de tarea", () => {
+    renderGrid();
+
+    const tile = screen.getByTestId("quick-destination-task");
+    expect(tile).toHaveAttribute("href", "/tasks/new");
+    expect(tile).not.toBeDisabled();
   });
 
   it("al ayudante no le ofrece compra ni gasto", () => {

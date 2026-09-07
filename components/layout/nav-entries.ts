@@ -27,6 +27,18 @@ export type NavEntry = {
    * entradas.
    */
   barLabel?: string;
+  /**
+   * Destino de la ranura en la barra inferior, cuando difiere del de
+   * escritorio.
+   *
+   * *Tareas* abre el tablero (V17) en escritorio, que es lo que el mapa §4.1
+   * pide para el grupo *Trabajo*, y *Mis pendientes* (V20) en el celular,
+   * donde interesa "qué hago hoy" (§4.2) y donde el kanban horizontal no
+   * funciona (§11). Es la misma sección alcanzada por la pantalla que
+   * corresponde a cada superficie, no dos entradas — dos entradas pondrían
+   * *Tareas* dos veces en el panel "Más" (KAM-15, design D9).
+   */
+  barHref?: string;
   /** Roles que ven la entrada. Lo que un rol no puede usar, no aparece. */
   roles: Role[];
   /**
@@ -69,10 +81,12 @@ export const NAV_ENTRIES: NavEntry[] = [
     mobile: "bar",
   },
   {
-    // Tercera ranura. Apunta a *Mis pendientes*, no al tablero: en el celular
-    // interesa "qué hago hoy" (mapa §4.2). La pantalla llega en KAM-17; hoy
-    // es un cascarón, pero la ranura ya no vuelve a moverse.
-    href: "/my-tasks",
+    // Tercera ranura. En el celular sigue apuntando a *Mis pendientes*, no al
+    // tablero: interesa "qué hago hoy" (mapa §4.2), y V17 se reemplaza por V20
+    // en móvil (§11). En escritorio abre el tablero, que es lo que el mapa
+    // §4.1 pide para el grupo *Trabajo*.
+    href: "/tasks",
+    barHref: "/my-tasks",
     label: "Tareas",
     icon: ListChecksIcon,
     roles: ["owner", "assistant"],
@@ -153,6 +167,11 @@ export function bottomBarEntriesFor(role: Role | null | undefined): NavEntry[] {
 /** El rótulo que le toca a la entrada en la barra inferior. */
 export function barLabelOf(entry: NavEntry): string {
   return entry.barLabel ?? entry.label;
+}
+
+/** El destino que le toca a la entrada en la barra inferior. */
+export function barHrefOf(entry: NavEntry): string {
+  return entry.barHref ?? entry.href;
 }
 
 /** Las entradas que viven dentro del panel "Más" del celular. */

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  NAV_ENTRIES,
+  barHrefOf,
   barLabelOf,
   bottomBarEntriesFor,
   isNavEntryActive,
@@ -54,7 +56,9 @@ describe("navEntriesFor", () => {
 
   it("tareas es de la navegación base: la ven ambos roles", () => {
     for (const role of ["owner", "assistant"] as const) {
-      expect(navEntriesFor(role).map((entry) => entry.href)).toContain("/my-tasks");
+      // En el menú la entrada abre el tablero; su ranura móvil sigue llevando
+      // a *Mis pendientes* — eso lo comprueba la prueba de `barHrefOf`.
+      expect(navEntriesFor(role).map((entry) => entry.href)).toContain("/tasks");
     }
   });
 });
@@ -169,5 +173,35 @@ describe("isNavEntryActive", () => {
 
   it("no marca una sección distinta", () => {
     expect(isNavEntryActive("/orders", "/catalog")).toBe(false);
+  });
+});
+
+describe("la entrada Tareas apunta a la pantalla de cada superficie", () => {
+  const tareas = NAV_ENTRIES.find((entry) => entry.label === "Tareas")!;
+
+  it("en el menú de escritorio abre el tablero (V17)", () => {
+    expect(tareas.href).toBe("/tasks");
+  });
+
+  it("en la ranura de la barra inferior abre Mis pendientes (V20)", () => {
+    // En el celular V17 se reemplaza por V20 (mapa §11): el kanban horizontal
+    // no es lo que se quiere mirar en 390 px.
+    expect(barHrefOf(tareas)).toBe("/my-tasks");
+  });
+
+  it("es una sola entrada, así que la sección no se duplica", () => {
+    const conRotuloTareas = NAV_ENTRIES.filter((entry) => entry.label === "Tareas");
+    expect(conRotuloTareas).toHaveLength(1);
+  });
+
+  it("el tablero no aparece en el panel «Más»: su ranura ya está en la barra", () => {
+    for (const role of ["owner", "assistant"] as const) {
+      expect(moreEntriesFor(role).map((entry) => entry.href)).not.toContain("/tasks");
+    }
+  });
+
+  it("una entrada sin `barHref` usa el mismo destino en las dos superficies", () => {
+    const pedidos = NAV_ENTRIES.find((entry) => entry.href === "/orders")!;
+    expect(barHrefOf(pedidos)).toBe("/orders");
   });
 });

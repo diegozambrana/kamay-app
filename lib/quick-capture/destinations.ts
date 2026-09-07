@@ -81,8 +81,8 @@ export const QUICK_DESTINATIONS: QuickDestination[] = [
     key: "task",
     label: "Tarea",
     icon: ListChecksIcon,
+    href: "/tasks/new",
     roles: ["owner", "assistant"],
-    availableFrom: "Llega con las tareas",
   },
 ];
 

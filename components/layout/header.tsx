@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { SyncIndicator } from "@/features/sync/sync-indicator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useOrganizationStore } from "@/stores/organization-store";
+import type { NotificationGroup } from "@/types";
 
 /**
  * Barra superior de escritorio. Desde que la navegación vive en el menú
@@ -16,7 +17,15 @@ import { useOrganizationStore } from "@/stores/organization-store";
  * móvil nada puede abrirlo y el panel lateral queda inerte sin necesidad de
  * condicionales.
  */
-export function Header() {
+export function Header({
+  unreadCount = 0,
+  notificationGroups = [],
+  timezone = "UTC",
+}: {
+  unreadCount?: number;
+  notificationGroups?: NotificationGroup[];
+  timezone?: string;
+}) {
   const organization = useOrganizationStore((state) => state.organization);
 
   return (
@@ -35,9 +44,13 @@ export function Header() {
       <div className="ml-auto flex items-center gap-1">
         <SyncIndicator />
         {/* Elemento siempre disponible del cascarón (mapa §4.1). Su bandeja
-            —V21— llega con KAM-17; hasta entonces el contador es cero y la
-            campana lo explica al abrirse. */}
-        <NotificationBell />
+            —V21— y su contador los compone el layout, que es donde vive la
+            sesión. */}
+        <NotificationBell
+          unreadCount={unreadCount}
+          groups={notificationGroups}
+          timezone={timezone}
+        />
         <ThemeToggle />
       </div>
     </header>

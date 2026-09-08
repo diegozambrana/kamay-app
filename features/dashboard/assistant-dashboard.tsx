@@ -1,13 +1,15 @@
-import {
-  LOW_STOCK_PLACEHOLDER,
-  PENDING_TASKS_PLACEHOLDER,
-  PlaceholderCard,
-} from "./placeholder-card";
+import { PendingTasksCard, type PendingCounts } from "./pending-tasks-card";
+import { LOW_STOCK_PLACEHOLDER, PlaceholderCard } from "./placeholder-card";
 import { UpcomingDeliveries, type DeliveryItem } from "./upcoming-deliveries";
 
 export type AssistantDashboardProps = {
   deliveries: readonly DeliveryItem[];
   today: string;
+  /**
+   * Los conteos del ayudante son los suyos: la RLS ya recortó las tareas a su
+   * línea y a lo asignado a él antes de que se contaran.
+   */
+  pending: PendingCounts;
 };
 
 /**
@@ -33,13 +35,14 @@ export type AssistantDashboardProps = {
 export function AssistantDashboard({
   deliveries,
   today,
+  pending,
 }: AssistantDashboardProps) {
   return (
     <div data-testid="assistant-dashboard" className="flex flex-col gap-4">
       <UpcomingDeliveries deliveries={deliveries} today={today} emphasis />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <PlaceholderCard {...PENDING_TASKS_PLACEHOLDER} />
+        <PendingTasksCard counts={pending} />
         <PlaceholderCard {...LOW_STOCK_PLACEHOLDER} />
       </div>
     </div>

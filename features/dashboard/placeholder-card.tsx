@@ -38,15 +38,12 @@ export function PlaceholderCard({
 }
 
 /**
- * Los dos marcadores del panel, declarados una sola vez para que las dos
- * composiciones muestren exactamente los mismos y con el mismo texto.
+ * El único marcador que queda en el panel.
+ *
+ * El de pendientes lo retiró KAM-17 al construir V20: esa tarjeta ya muestra
+ * sus tres conteos y enlaza a su pantalla. Este sobrevive hasta KAM-18, que es
+ * quien traerá los saldos de inventario de los que derivarlo.
  */
-export const PENDING_TASKS_PLACEHOLDER = {
-  title: "Pendientes",
-  note: "Las tareas vencidas, las de hoy y las de los próximos siete días aparecerán aquí cuando exista el módulo de tareas.",
-  testId: "placeholder-tasks",
-} as const;
-
 export const LOW_STOCK_PLACEHOLDER = {
   title: "Insumos bajo mínimo",
   note: "Los insumos por debajo de su mínimo aparecerán aquí cuando el inventario registre entradas y salidas.",

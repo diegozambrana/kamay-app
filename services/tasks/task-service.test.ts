@@ -469,3 +469,80 @@ describe("TaskService.history", () => {
     ).rejects.toThrow(/No se pudo cargar el historial/);
   });
 });
+
+/**
+ * KAM-17 · Mis pendientes.
+ *
+ * Escenarios del delta spec `my-tasks` — requisito "Cada quien ve sus
+ * pendientes según su rol": «El ayudante ve lo suyo» y «El dueño lo ve todo»
+ * se verifican de verdad contra las políticas en
+ * `supabase/tests/task_access.test.sql`; lo que se comprueba aquí es que la
+ * consulta **no** reimplemente ese recorte por su cuenta ni deje escapar lo
+ * cerrado o lo archivado.
+ */
+describe("TaskService.listPending", () => {
+  it("pide solo lo abierto y vigente de esa organización", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+
+    await new TaskService(client.asSupabase()).listPending(ORG);
+
+    expect(client.queries[0].has("eq", "organization_id", ORG)).toBe(true);
+    expect(client.queries[0].has("is", "archived_at", null)).toBe(true);
+    expect(client.queries[0].has("is", "closed_at", null)).toBe(true);
+  });
+
+  it("no filtra por línea: V20 ignora el selector a propósito", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+
+    await new TaskService(client.asSupabase()).listPending(ORG);
+
+    const filtered = client.queries[0].calls.filter(
+      (call) => call.method === "eq" && call.args[0] === "business_line_id",
+    );
+    expect(filtered).toEqual([]);
+  });
+
+  it("no reimplementa el alcance del rol: eso lo hace la RLS", async () => {
+    // Repetir aquí «su línea o lo asignado a él» crearía un segundo sitio
+    // donde equivocarse, y una consulta directa dejaría de coincidir con la
+    // pantalla.
+    const client = new FakeClient([{ data: [], error: null }]);
+
+    await new TaskService(client.asSupabase()).listPending(ORG);
+
+    const byAssignee = client.queries[0].calls.filter(
+      (call) => call.method === "eq" && call.args[0] === "assignee_id",
+    );
+    expect(byAssignee).toEqual([]);
+  });
+
+  it("ordena por fecha límite y deja las sin fecha al final", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+
+    await new TaskService(client.asSupabase()).listPending(ORG);
+
+    expect(client.queries[0].argsOf("order")).toEqual([
+      "due_at",
+      { ascending: true, nullsFirst: false },
+    ]);
+  });
+
+  it("traduce las filas como el resto del servicio", async () => {
+    const client = new FakeClient([{ data: [row], error: null }]);
+
+    const tasks = await new TaskService(client.asSupabase()).listPending(ORG);
+
+    expect(tasks[0].id).toBe(TASK);
+    expect(tasks[0].dueAt).toBe("2026-09-20T00:00:00Z");
+  });
+
+  it("un error se propaga con un mensaje comprensible", async () => {
+    const client = new FakeClient([
+      { data: null, error: { message: "sin conexión" } },
+    ]);
+
+    await expect(
+      new TaskService(client.asSupabase()).listPending(ORG),
+    ).rejects.toThrow(/No se pudieron cargar los pendientes/);
+  });
+});

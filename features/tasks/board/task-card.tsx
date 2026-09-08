@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarIcon, UserIcon } from "lucide-react";
+import { useRef } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { lineColorClasses } from "@/lib/business-lines/colors";
@@ -44,6 +45,15 @@ const SIGNAL_LABELS: Record<DueSignal, string> = {
  * línea seleccionada todas las tarjetas serían del mismo color, y un color que
  * no distingue nada es ruido.
  */
+/**
+ * Cuánto puede temblar el puntero entre pulsar y soltar sin que deje de ser un
+ * clic, en píxeles. Por encima de eso fue un arrastre y la tarjeta no navega.
+ *
+ * Coincide con el umbral con el que dnd-kit arranca el arrastre: por debajo no
+ * hubo movimiento que nadie pudiera pretender.
+ */
+const DRAG_SLOP = 6;
+
 export function TaskCard({
   task,
   today,
@@ -55,25 +65,48 @@ export function TaskCard({
   /** El filtro de línea está en «Todas». */
   showLine: boolean;
   /**
-   * Abrir el panel de edición.
+   * Abrir el detalle de la tarea (V18).
    *
    * El manejador vive en la propia tarjeta y no en un `<button>` que la
    * envuelva: el contenedor que pinta el tablero ya lleva `role="button"` —se
    * lo pone dnd-kit para poder arrastrar con el teclado—, y meter un control
    * dentro de otro control es HTML inválido además de una trampa para el
    * puntero, que es de quien depende el arrastre.
+   *
+   * **Solo se invoca si el puntero no se movió**: ver `DRAG_SLOP`.
    */
   onOpen?: () => void;
 }) {
   const signal = dueSignal(task.dueDate, today, { closed: Boolean(task.closedAt) });
   const colors = lineColorClasses(task.lineColor);
 
+  // Dónde empezó el gesto, para distinguir un clic de un arrastre.
+  const origin = useRef<{ x: number; y: number } | null>(null);
+
   return (
     <article
       data-testid="task-card"
       data-task-id={task.id}
       data-due-signal={signal}
-      onClick={onOpen}
+      onPointerDown={(event) => {
+        origin.current = { x: event.clientX, y: event.clientY };
+      }}
+      onClick={(event) => {
+        // Soltar una tarjeta arrastrada también dispara un clic. Antes eso
+        // abría un panel encima del tablero y se cerraba solo; ahora navega a
+        // otra pantalla, así que un arrastre acabaría sacando a la persona del
+        // tablero a mitad de gesto.
+        const start = origin.current;
+        origin.current = null;
+        if (start) {
+          const recorrido = Math.hypot(
+            event.clientX - start.x,
+            event.clientY - start.y,
+          );
+          if (recorrido > DRAG_SLOP) return;
+        }
+        onOpen?.();
+      }}
       className="flex flex-col gap-2 rounded-lg border bg-card p-3 shadow-xs"
     >
       <div className="flex items-start gap-2">

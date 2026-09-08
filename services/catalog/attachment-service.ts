@@ -12,12 +12,13 @@ type AttachmentRow = {
   file_name: string;
   mime_type: string | null;
   size_bytes: number | null;
+  uploaded_by: string | null;
   created_at: string;
   archived_at: string | null;
 };
 
 const COLUMNS =
-  "id, organization_id, entity_type, entity_id, bucket, storage_path, file_name, mime_type, size_bytes, created_at, archived_at";
+  "id, organization_id, entity_type, entity_id, bucket, storage_path, file_name, mime_type, size_bytes, uploaded_by, created_at, archived_at";
 
 /** Una hora: lo que dura una sesión de trabajo mirando un listado. */
 const SIGNED_URL_TTL = 60 * 60;
@@ -54,6 +55,7 @@ export class AttachmentService {
       fileName: row.file_name,
       mimeType: row.mime_type,
       sizeBytes: row.size_bytes,
+      uploadedBy: row.uploaded_by,
       createdAt: row.created_at,
       archivedAt: row.archived_at,
     };
@@ -101,6 +103,43 @@ export class AttachmentService {
     }
 
     return (data ?? []).map((row) => this.toEntity(row as AttachmentRow));
+  }
+
+  /** Adjuntos vigentes de un registro, del más nuevo al más viejo. */
+  async listForEntity(
+    organizationId: string,
+    entityType: AttachmentEntityType,
+    entityId: string,
+  ): Promise<Attachment[]> {
+    return this.listForEntities(organizationId, entityType, [entityId]);
+  }
+
+  /**
+   * Cuántos adjuntos vigentes tiene un registro.
+   *
+   * Es lo que sostiene el límite por tarea en el servidor (design D5): una
+   * comprobación que solo viva en la pantalla no impide nada, porque basta con
+   * llamar a la acción. Cuenta sin traerse las filas, que es lo que pide una
+   * comprobación previa a subir.
+   */
+  async countActive(
+    organizationId: string,
+    entityType: AttachmentEntityType,
+    entityId: string,
+  ): Promise<number> {
+    const { count, error } = await this.supabase
+      .from("attachments")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("entity_type", entityType)
+      .eq("entity_id", entityId)
+      .is("archived_at", null);
+
+    if (error) {
+      throw new Error(`No se pudieron contar los adjuntos: ${error.message}`);
+    }
+
+    return count ?? 0;
   }
 
   /**

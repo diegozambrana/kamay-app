@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 import { moveTaskToStatus } from "@/actions/tasks";
 import { KanbanBoard, type KanbanColumn } from "@/components/board/kanban-board";
 import { Badge } from "@/components/ui/badge";
 import { displayedPlacement, useBoardStore } from "@/stores/board-store";
-import type { Status, Tag } from "@/types";
+import type { Status } from "@/types";
 
 import { QuickAdd } from "./quick-add";
 import { TaskCard, type TaskCardData } from "./task-card";
-import { TaskSheet } from "./task-sheet";
 
 export type BoardTask = TaskCardData & { statusId: string };
 
@@ -34,8 +34,6 @@ export function BoardView({
   today,
   showLine,
   quickAddLineId,
-  tags,
-  assignees,
   onError,
 }: {
   tasks: BoardTask[];
@@ -44,14 +42,10 @@ export function BoardView({
   showLine: boolean;
   /** La línea que usará el alta rápida, o `null` si hay que pedirla. */
   quickAddLineId: string | null;
-  tags: Tag[];
-  assignees: { userId: string; displayName: string | null }[];
   onError: (message: string) => void;
 }) {
   const [, startTransition] = useTransition();
-  // La tarjeta abre un panel compacto, no una página: `/tasks/[id]` es de
-  // KAM-16 y esta tarea deja la ruta libre (design D12).
-  const [editing, setEditing] = useState<BoardTask | null>(null);
+  const router = useRouter();
   const pending = useBoardStore((state) => state.pending);
   const pendingQueue = useBoardStore((state) => state.pendingQueue);
   const move = useBoardStore((state) => state.move);
@@ -130,7 +124,11 @@ export function BoardView({
             task={task}
             today={today}
             showLine={showLine}
-            onOpen={() => setEditing(task)}
+            // Activar una tarjeta abre V18. KAM-15 editaba responsable, fecha
+            // y etiquetas en un panel provisional y dejó dicho que al llegar
+            // KAM-16 «sustituir este panel es cambiar a dónde apunta la
+            // tarjeta»: esto es ese cambio.
+            onOpen={() => router.push(`/tasks/${task.id}`)}
           />
         )}
         renderOverlay={(task) => (
@@ -138,14 +136,6 @@ export function BoardView({
         )}
       />
 
-      <TaskSheet
-        task={editing}
-        tags={tags}
-        assignees={assignees}
-        open={editing !== null}
-        onOpenChange={(open) => !open && setEditing(null)}
-        onError={onError}
-      />
     </div>
   );
 }

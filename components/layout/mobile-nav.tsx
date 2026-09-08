@@ -36,6 +36,10 @@ const CAPTURE_ROUTES = [
   /^\/expenses\/purchases\/new$/,
   /^\/expenses\/costs\/new$/,
   /^\/tasks\/new$/,
+  // El detalle de tarea (V18) es captura larga: en el celular ocupa la
+  // pantalla completa (mapa §4), y la barra taparía el editor y los adjuntos.
+  // `/tasks` a secas —el tablero— sí la conserva.
+  /^\/tasks\/[^/]+$/,
 ];
 
 export function isCaptureRoute(pathname: string): boolean {

@@ -218,8 +218,6 @@ export function TasksScreen({
             today={today}
             showLine={showLine}
             quickAddLineId={quickAddLineId}
-            tags={tags}
-            assignees={assignees}
             onError={setError}
           />
         )}

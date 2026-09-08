@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { TaskInput } from "@/lib/tasks/schema";
-import type { Tag, Task, TaskLinkType } from "@/types";
+import type { ActivityEntry, Tag, Task, TaskLinkType } from "@/types";
 
 type TaskRow = {
   id: string;
@@ -9,8 +9,10 @@ type TaskRow = {
   business_line_id: string;
   status_id: string;
   title: string;
+  body_markdown: string | null;
   assignee_id: string | null;
   due_at: string | null;
+  remind_at: string | null;
   closed_at: string | null;
   created_by: string | null;
   created_at: string;
@@ -19,14 +21,13 @@ type TaskRow = {
 };
 
 /**
- * Las columnas que KAM-15 lee. `body_markdown`, `remind_at` y
- * `closed_without_deliverables` existen en la tabla desde esta misma
- * migración, pero las enciende KAM-16, KAM-17 y KAM-21: pedirlas ahora sería
- * traerlas vacías a una pantalla que no sabe qué hacer con ellas.
+ * Las columnas de una tarea. `body_markdown` y `remind_at` las encendió
+ * KAM-16, que construye el detalle donde se editan; `closed_without_deliverables`
+ * sigue apagada hasta KAM-21, porque nada sabría todavía qué hacer con ella.
  */
 const COLUMNS =
-  "id, organization_id, business_line_id, status_id, title, assignee_id, " +
-  "due_at, closed_at, created_by, created_at, archived_at, " +
+  "id, organization_id, business_line_id, status_id, title, body_markdown, " +
+  "assignee_id, due_at, remind_at, closed_at, created_by, created_at, archived_at, " +
   "task_tags (tag:tags (id, organization_id, name))";
 
 export type TaskFilters = {
@@ -45,8 +46,10 @@ function toTask(row: TaskRow): Task {
     businessLineId: row.business_line_id,
     statusId: row.status_id,
     title: row.title,
+    bodyMarkdown: row.body_markdown,
     assigneeId: row.assignee_id,
     dueAt: row.due_at,
+    remindAt: row.remind_at,
     closedAt: row.closed_at,
     createdBy: row.created_by,
     createdAt: row.created_at,
@@ -176,7 +179,16 @@ export class TaskService {
     return data.id;
   }
 
-  /** Responsable, fecha límite y título: el alcance de edición de KAM-15. */
+  /**
+   * Los campos editables de una tarea.
+   *
+   * Cada uno se manda por separado y solo se escribe lo que llega definido:
+   * es lo que permite que el detalle guarde campo a campo sin releer la tarea
+   * entera y sin pisar lo que otra persona acaba de cambiar (design D3).
+   *
+   * KAM-15 abrió título, responsable y fecha límite; KAM-16 suma el cuerpo, el
+   * estado, la línea y el recordatorio.
+   */
   async updateFields(
     organizationId: string,
     id: string,
@@ -184,6 +196,10 @@ export class TaskService {
       title?: string;
       assigneeId?: string | null;
       dueDate?: string | null;
+      bodyMarkdown?: string | null;
+      statusId?: string;
+      businessLineId?: string;
+      remindAt?: string | null;
     },
   ): Promise<void> {
     const patch: Record<string, unknown> = {
@@ -194,6 +210,14 @@ export class TaskService {
     if (fields.dueDate !== undefined) {
       patch.due_at = fields.dueDate ? `${fields.dueDate}T00:00:00Z` : null;
     }
+    if (fields.bodyMarkdown !== undefined) {
+      patch.body_markdown = fields.bodyMarkdown;
+    }
+    if (fields.statusId !== undefined) patch.status_id = fields.statusId;
+    if (fields.businessLineId !== undefined) {
+      patch.business_line_id = fields.businessLineId;
+    }
+    if (fields.remindAt !== undefined) patch.remind_at = fields.remindAt;
 
     const { error } = await this.supabase
       .from("tasks")
@@ -320,6 +344,42 @@ export class TaskService {
     return (data ?? []).map((row) => ({
       userId: row.user_id,
       displayName: row.display_name,
+    }));
+  }
+
+  /**
+   * El historial de la tarea. Un solo historial (convención nº 7): todo lo que
+   * muestre "qué pasó aquí" lee de `activity_log` y de ninguna otra fuente.
+   *
+   * Es el mismo método que en pedidos, egresos e ítems, y esa repetición es
+   * deliberada: la manera de garantizar que no aparezca una segunda tabla de
+   * historial es no escribir nada nuevo.
+   *
+   * La bitácora solo es legible por el dueño; para el ayudante devuelve vacío
+   * por RLS, y el bloque se rinde con su mensaje de lista sin contenido, no
+   * con un error.
+   */
+  async history(organizationId: string, id: string): Promise<ActivityEntry[]> {
+    const { data, error } = await this.supabase
+      .from("activity_log")
+      .select("id, action, actor_id, actor_label, changes, occurred_at")
+      .eq("organization_id", organizationId)
+      .eq("table_name", "tasks")
+      .eq("record_id", id)
+      .order("occurred_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      throw new Error(`No se pudo cargar el historial: ${error.message}`);
+    }
+
+    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+      id: row.id as number,
+      action: row.action as ActivityEntry["action"],
+      actorId: (row.actor_id as string | null) ?? null,
+      actorLabel: (row.actor_label as string | null) ?? null,
+      changes: (row.changes as Record<string, unknown> | null) ?? null,
+      occurredAt: row.occurred_at as string,
     }));
   }
 }

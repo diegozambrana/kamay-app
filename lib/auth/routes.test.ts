@@ -15,6 +15,9 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/my-tasks")).toBe(true);
     expect(isProtectedPath("/tasks")).toBe(true);
     expect(isProtectedPath("/tasks/new")).toBe(true);
+    // El detalle de tarea (V18) queda cubierto por el prefijo /tasks: no
+    // hace falta declararlo aparte, pero sí fijar que está protegido.
+    expect(isProtectedPath("/tasks/86e70354-5706-4f88-9122-b2474f9cc9fc")).toBe(true);
     expect(isProtectedPath("/quick")).toBe(true);
     expect(isProtectedPath("/dashboard/anything")).toBe(true);
     expect(isProtectedPath("/settings")).toBe(true);

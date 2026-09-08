@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type FakeResult = { data: unknown; error: { message: string } | null };
+export type FakeResult = {
+  data: unknown;
+  error: { message: string } | null;
+  /** Solo para las consultas que piden `{ count: "exact" }`. */
+  count?: number;
+};
 type Call = { method: string; args: unknown[] };
 
 /**

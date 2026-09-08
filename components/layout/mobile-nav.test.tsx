@@ -75,6 +75,20 @@ describe("MobileNav", () => {
     expect(screen.queryByTestId("bottom-bar")).toBeNull();
   });
 
+  it("no se rinde en el detalle de una tarea", () => {
+    // V18 es captura larga: la barra taparía el editor y los adjuntos.
+    renderNav("/tasks/86e70354-5706-4f88-9122-b2474f9cc9fc");
+
+    expect(screen.queryByTestId("bottom-bar")).toBeNull();
+  });
+
+  it("sí se rinde en el tablero de tareas", () => {
+    // El tablero no es captura: la barra es su navegación.
+    renderNav("/tasks");
+
+    expect(screen.getByTestId("bottom-bar")).toBeInTheDocument();
+  });
+
   it("tiene cuatro ranuras: Inicio, Pedidos, Tareas y Más", () => {
     renderNav("/orders");
 

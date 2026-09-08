@@ -171,8 +171,12 @@ export type Task = {
   statusId: string;
   title: string;
   assigneeId: string | null;
+  /** El cuerpo tal como se escribió. Se sanea al rendirlo, nunca al guardarlo. */
+  bodyMarkdown: string | null;
   /** Fecha límite en ISO, o `null`. */
   dueAt: string | null;
+  /** Recordatorio en ISO. La base exige que haya fecha límite para fijarlo. */
+  remindAt: string | null;
   closedAt: string | null;
   createdBy: string | null;
   createdAt: string;
@@ -267,6 +271,8 @@ export type Attachment = {
   fileName: string;
   mimeType: string | null;
   sizeBytes: number | null;
+  /** Quién lo subió. La columna se escribía desde KAM-06b; aquí empieza a leerse. */
+  uploadedBy: string | null;
   createdAt: string;
   archivedAt: string | null;
 };

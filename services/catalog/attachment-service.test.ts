@@ -142,6 +142,7 @@ describe("AttachmentService", () => {
         fileName: "taza.jpg",
         mimeType: "image/jpeg",
         sizeBytes: 120000,
+        uploadedBy: null,
         createdAt: row.created_at,
         archivedAt: null,
       },
@@ -165,11 +166,75 @@ describe("AttachmentService", () => {
         fileName: "taza.jpg",
         mimeType: "image/jpeg",
         sizeBytes: 120000,
+        uploadedBy: null,
         createdAt: row.created_at,
         archivedAt: null,
       },
     ]);
 
     expect(urls.size).toBe(0);
+  });
+});
+
+describe("AttachmentService.listForEntity", () => {
+  it("lee los adjuntos vigentes de un registro, del más nuevo al más viejo", async () => {
+    const client = new FakeClient([{ data: [{ ...row, uploaded_by: USER }], error: null }]);
+
+    const adjuntos = await new AttachmentService(client.asSupabase()).listForEntity(
+      ORG,
+      "task",
+      ITEM,
+    );
+
+    const query = client.queries[0];
+    expect(client.tables[0]).toBe("attachments");
+    expect(query.has("eq", "organization_id", ORG)).toBe(true);
+    expect(query.has("eq", "entity_type", "task")).toBe(true);
+    expect(query.has("eq", "entity_id", ITEM)).toBe(false);
+    // Un solo registro se resuelve con el mismo `in` del caso de varios: es la
+    // misma consulta, no una segunda ruta que pueda divergir.
+    expect(query.has("in", "entity_id", [ITEM])).toBe(true);
+    expect(query.has("is", "archived_at", null)).toBe(true);
+    expect(query.has("order", "created_at", { ascending: false })).toBe(true);
+
+    expect(adjuntos[0].uploadedBy).toBe(USER);
+  });
+});
+
+describe("AttachmentService.countActive", () => {
+  it("cuenta solo los vigentes del registro, sin traerse las filas", async () => {
+    const client = new FakeClient([{ data: null, error: null, count: 13 }]);
+
+    const total = await new AttachmentService(client.asSupabase()).countActive(
+      ORG,
+      "task",
+      ITEM,
+    );
+
+    expect(total).toBe(13);
+
+    const query = client.queries[0];
+    expect(query.argsOf("select")).toEqual(["id", { count: "exact", head: true }]);
+    expect(query.has("eq", "organization_id", ORG)).toBe(true);
+    expect(query.has("eq", "entity_type", "task")).toBe(true);
+    expect(query.has("eq", "entity_id", ITEM)).toBe(true);
+    // Sin esto, un adjunto retirado seguiría ocupando ranura.
+    expect(query.has("is", "archived_at", null)).toBe(true);
+  });
+
+  it("una tarea sin adjuntos cuenta cero, no indefinido", async () => {
+    const client = new FakeClient([{ data: null, error: null }]);
+
+    expect(
+      await new AttachmentService(client.asSupabase()).countActive(ORG, "task", ITEM),
+    ).toBe(0);
+  });
+
+  it("un fallo al contar no se traga: el límite no puede decidirse a ciegas", async () => {
+    const client = new FakeClient([{ data: null, error: { message: "sin conexión" } }]);
+
+    await expect(
+      new AttachmentService(client.asSupabase()).countActive(ORG, "task", ITEM),
+    ).rejects.toThrow(/No se pudieron contar los adjuntos/);
   });
 });

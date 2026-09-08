@@ -81,6 +81,7 @@ function photo(overrides: Partial<ItemPhoto> = {}): ItemPhoto {
     fileName: "taza.png",
     mimeType: "image/png",
     sizeBytes: 120_000,
+    uploadedBy: null,
     createdAt: "2026-08-26T12:00:00Z",
     archivedAt: null,
     url: "https://firmada/taza.png",

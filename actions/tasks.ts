@@ -13,6 +13,7 @@ import {
 import { toggleChecklistItem } from "@/lib/markdown/checklist";
 import { taskSchema } from "@/lib/tasks/schema";
 import { AttachmentService } from "@/services/catalog/attachment-service";
+import { emitTaskEvents } from "@/services/notifications/emit-task-events";
 import { StatusService } from "@/services/configuration/status-service";
 import { TagService } from "@/services/tasks/tag-service";
 import { TaskService } from "@/services/tasks/task-service";
@@ -120,6 +121,16 @@ export async function moveTaskToStatus(
       parsed.data.taskId,
       parsed.data.statusId,
     );
+
+    // Después de que la escritura haya tenido éxito, nunca antes: un aviso de
+    // algo que no llegó a pasar es peor que ningún aviso.
+    const moved = statuses.find((s) => s.id === parsed.data.statusId)!;
+    await emitTaskEvents({
+      organizationId: context.organizationId,
+      actorId: context.userId,
+      task: { id: task.id, title: task.title, assigneeId: task.assigneeId },
+      status: { id: moved.id, kind: moved.kind },
+    });
   } catch {
     return { error: "No se pudo mover la tarea. Intenta de nuevo." };
   }
@@ -139,11 +150,32 @@ export async function updateTaskFields(
 
   try {
     const tasks = new TaskService(context.supabase);
+
+    // Se lee antes para saber si el responsable **cambia**: reasignar a quien
+    // ya la tenía no es un hecho nuevo y no debe volver a avisar.
+    const before =
+      parsed.data.assigneeId !== undefined
+        ? await tasks.getById(context.organizationId, parsed.data.taskId)
+        : null;
+
     await tasks.updateFields(context.organizationId, parsed.data.taskId, {
       title: parsed.data.title,
       assigneeId: parsed.data.assigneeId,
       dueDate: parsed.data.dueDate,
     });
+
+    if (before && before.assigneeId !== parsed.data.assigneeId) {
+      await emitTaskEvents({
+        organizationId: context.organizationId,
+        actorId: context.userId,
+        task: {
+          id: before.id,
+          title: parsed.data.title ?? before.title,
+          assigneeId: parsed.data.assigneeId ?? null,
+        },
+        assignedTo: parsed.data.assigneeId ?? null,
+      });
+    }
 
     if (parsed.data.tagNames) {
       const tagIds = await new TagService(context.supabase).resolveNames(
@@ -453,4 +485,107 @@ export async function detachFromTask(
   }
 
   revalidatePath(`/tasks/${parsed.data.taskId}`);
+}
+
+// ── V20 · Mis pendientes ────────────────────────────────────────────────────
+
+const completeTaskSchema = taskIdSchema.extend({
+  /** El estado en que estaba, para poder deshacer sin adivinarlo. */
+  previousStatusId: z.guid().optional(),
+});
+
+const postponeSchema = taskIdSchema.extend({
+  /** "Mañana" ya calculado en la zona de la organización por quien llama. */
+  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+/**
+ * Marcar hecha desde *Mis pendientes*.
+ *
+ * **No escribe `closed_at` a mano.** Resuelve el estado de tipo `final` del
+ * juego que corresponde a la línea de la tarea y la mueve allí, que es lo que
+ * ya hace el arrastre del tablero: así el cierre lo deriva el mismo mecanismo
+ * y no hay dos verdades sobre qué significa «hecha» (design D9). El
+ * `closed_at` lo pone el trigger, como siempre.
+ *
+ * El estado se identifica por su `kind`, nunca por su nombre (convención
+ * nº 5): renombrar «Hecho» no cambia nada.
+ */
+export async function completeTask(
+  input: z.infer<typeof completeTaskSchema>,
+): Promise<TaskActionResult> {
+  const parsed = completeTaskSchema.safeParse(input);
+  if (!parsed.success) return { error: "No se pudo identificar la tarea." };
+
+  const context = await getSessionContext();
+  if (!context) return { error: NO_SESSION };
+
+  try {
+    const tasks = new TaskService(context.supabase);
+    const task = await tasks.getById(context.organizationId, parsed.data.taskId);
+    if (!task) return { error: "La tarea ya no está disponible." };
+
+    const statuses = await new StatusService(context.supabase).resolve(
+      context.organizationId,
+      task.businessLineId,
+      "task",
+    );
+
+    const final = statuses.find((status) => status.kind === "final");
+    if (!final) {
+      // La base exige un `final` por juego, así que esto no debería ocurrir;
+      // si ocurre, decirlo es mejor que cerrar la tarea de otra manera.
+      return { error: "Esta línea no tiene un estado final configurado." };
+    }
+
+    await tasks.moveToStatus(context.organizationId, parsed.data.taskId, final.id);
+  } catch {
+    return { error: "No se pudo marcar la tarea. Intenta de nuevo." };
+  }
+
+  revalidateTasks();
+}
+
+/**
+ * Deshacer el marcado: devolver la tarea al estado en que estaba.
+ *
+ * Es `moveToStatus` con el estado anterior, no un «reabrir» propio: el cierre
+ * se deriva de la posición, así que devolverla a su columna la reabre sola.
+ */
+export async function uncompleteTask(
+  input: z.infer<typeof moveTaskSchema>,
+): Promise<TaskActionResult> {
+  return moveTaskToStatus(input);
+}
+
+/**
+ * Posponer a mañana con un solo gesto.
+ *
+ * Escribe `due_at` y **ningún campo nuevo**: posponer es cambiar la fecha
+ * límite, no anotar un aplazamiento aparte.
+ *
+ * «Mañana» llega ya calculado en la zona horaria de la organización —lo
+ * resuelve la pantalla con `todayInTimezone`—, no en la del navegador: una
+ * tarea pospuesta a las 23:50 no debe saltar dos días.
+ */
+export async function postponeTask(
+  input: z.infer<typeof postponeSchema>,
+): Promise<TaskActionResult> {
+  const parsed = postponeSchema.safeParse(input);
+  if (!parsed.success) return { error: "No se pudo posponer la tarea." };
+
+  const context = await getSessionContext();
+  if (!context) return { error: NO_SESSION };
+
+  try {
+    await new TaskService(context.supabase).updateFields(
+      context.organizationId,
+      parsed.data.taskId,
+      { dueDate: parsed.data.dueDate },
+    );
+  } catch {
+    return { error: "No se pudo posponer la tarea. Intenta de nuevo." };
+  }
+
+  revalidateTasks();
 }

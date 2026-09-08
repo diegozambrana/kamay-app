@@ -49,7 +49,8 @@ test.describe("V2 · panel del ayudante", () => {
 
     // Y lo que sí tiene, tiene contenido.
     await expect(page.getByTestId("upcoming-deliveries")).toBeVisible();
-    await expect(page.getByTestId("placeholder-tasks")).toBeVisible();
+    // Pendientes dejó de ser marcador con KAM-17: el ayudante ve sus conteos.
+    await expect(page.getByTestId("pending-tasks-card")).toBeVisible();
     await expect(page.getByTestId("placeholder-stock")).toBeVisible();
   });
 
@@ -214,22 +215,25 @@ test.describe("V2 · panel de la persona dueña", () => {
     expect(elapsed, `el panel tardó ${elapsed} ms`).toBeLessThan(1500);
   });
 
-  test("los marcadores de posición se declaran, sin cifras", async ({ page }) => {
+  test("el marcador que queda se declara, sin cifras", async ({ page }) => {
+    // Desde KAM-17 solo sobrevive el de insumos: el de pendientes lo sustituyó
+    // su tarjeta real, que sí muestra números y sí lleva a su pantalla.
     await login(page, GEEKO_OWNER);
     await page.goto("/dashboard");
 
-    await expect(page.getByTestId("placeholder-tasks")).toContainText(
-      "Pendientes",
-    );
     await expect(page.getByTestId("placeholder-stock")).toContainText(
       "Insumos bajo mínimo",
     );
+    const stock = await page.getByTestId("placeholder-stock").innerText();
+    expect(stock).not.toMatch(/\d/);
 
-    const tasks = await page.getByTestId("placeholder-tasks").innerText();
-    expect(tasks).not.toMatch(/\d/);
+    await expect(page.getByTestId("pending-tasks-card")).toContainText(
+      "Pendientes",
+    );
+    await expect(page.getByTestId("placeholder-tasks")).toHaveCount(0);
   });
 
-  test("la campana explica que la bandeja aún no existe", async ({
+  test("la campana abre la bandeja", async ({
     page,
     isMobile,
   }) => {
@@ -245,8 +249,10 @@ test.describe("V2 · panel de la persona dueña", () => {
     await expect(bell).toBeEnabled();
     await bell.click();
 
+    // Desde KAM-17 la bandeja existe: sin avisos muestra su lista vacía, y
+    // siempre ofrece el camino a las preferencias (mapa §11).
     await expect(page.getByTestId("notification-panel")).toContainText(
-      "todavía no está disponible",
+      "Preferencias de notificación",
       { timeout: 10_000 },
     );
     // No navega: la ruta no existe.

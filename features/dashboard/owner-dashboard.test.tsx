@@ -57,6 +57,9 @@ const activity: ActivityItem[] = [
   },
 ];
 
+/** Conteos de pendientes sin nada urgente: esta prueba mira otras cosas. */
+const PENDING = { overdue: 0, today: 0, upcoming: 0 };
+
 function renderOwner(overrides: Partial<OwnerDashboardProps> = {}) {
   return render(
     <OwnerDashboard
@@ -65,6 +68,7 @@ function renderOwner(overrides: Partial<OwnerDashboardProps> = {}) {
       comparison={comparison}
       deliveries={deliveries}
       activity={activity}
+      pending={PENDING}
       activeLineId={null}
       monthLabel="febrero de 2026"
       today="2026-02-14"
@@ -85,7 +89,8 @@ describe("OwnerDashboard", () => {
     expect(screen.getByTestId("line-comparison")).toBeInTheDocument();
     expect(screen.getByTestId("upcoming-deliveries")).toBeInTheDocument();
     expect(screen.getByTestId("recent-activity")).toBeInTheDocument();
-    expect(screen.getByTestId("placeholder-tasks")).toBeInTheDocument();
+    // Pendientes dejó de ser marcador con KAM-17: es su tarjeta real.
+    expect(screen.getByTestId("pending-tasks-card")).toBeInTheDocument();
     expect(screen.getByTestId("placeholder-stock")).toBeInTheDocument();
   });
 
@@ -152,6 +157,7 @@ describe("OwnerDashboard", () => {
         comparison={comparison}
         deliveries={deliveries}
         activity={activity}
+        pending={PENDING}
         activeLineId={null}
         monthLabel="febrero de 2026"
         today="2026-02-14"
@@ -185,14 +191,21 @@ describe("OwnerDashboard", () => {
     );
   });
 
-  it("los marcadores no muestran cifras", () => {
+  it("el marcador que queda no muestra cifras", () => {
     renderOwner();
 
-    expect(screen.getByTestId("placeholder-tasks").textContent).not.toMatch(
-      /\d/,
-    );
     expect(screen.getByTestId("placeholder-stock").textContent).not.toMatch(
       /\d/,
+    );
+  });
+
+  // Scenario: Pendientes ya no es marcador (delta spec `dashboard`)
+  it("la tarjeta de pendientes sí muestra sus conteos", () => {
+    renderOwner({ pending: { overdue: 2, today: 1, upcoming: 3 } });
+
+    expect(screen.getByTestId("pending-overdue")).toHaveTextContent("2");
+    expect(screen.getByTestId("pending-tasks-card")).not.toHaveAttribute(
+      "data-placeholder",
     );
   });
 });

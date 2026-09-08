@@ -26,6 +26,7 @@ export class FakeQuery {
   select = (...args: unknown[]) => this.record("select", ...args);
   insert = (...args: unknown[]) => this.record("insert", ...args);
   update = (...args: unknown[]) => this.record("update", ...args);
+  upsert = (...args: unknown[]) => this.record("upsert", ...args);
   eq = (...args: unknown[]) => this.record("eq", ...args);
   is = (...args: unknown[]) => this.record("is", ...args);
   like = (...args: unknown[]) => this.record("like", ...args);

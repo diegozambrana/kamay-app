@@ -113,6 +113,41 @@ export class TaskService {
       : tasks;
   }
 
+  /**
+   * Las tareas abiertas para *Mis pendientes* (V20) y para la tarjeta del
+   * panel.
+   *
+   * **Sin filtro de línea, a propósito**: V20 es una de las dos únicas vistas
+   * que ignoran el selector de línea —la otra es el comparativo de Reportes—,
+   * porque aquí el valor está justamente en ver todo junto.
+   *
+   * **Sin comprobación de rol, como el resto del servicio**: el alcance del
+   * ayudante —su línea o lo asignado a él— lo aplica la política de RLS, de
+   * modo que esta consulta devuelve exactamente lo que esa persona puede ver
+   * sin repetir la condición en un segundo sitio donde equivocarse.
+   *
+   * Cae sobre el índice `(organization_id, due_at) where archived_at is null
+   * and closed_at is null` que `tasks` ya declara.
+   */
+  async listPending(organizationId: string): Promise<Task[]> {
+    const { data, error } = await this.supabase
+      .from("tasks")
+      .select(COLUMNS)
+      .eq("organization_id", organizationId)
+      .is("archived_at", null)
+      .is("closed_at", null)
+      // Sin fecha al final: la agrupación las recoloca, pero llegar ya
+      // ordenadas evita que el grupo *Sin fecha* dependa del orden de inserción.
+      .order("due_at", { ascending: true, nullsFirst: false })
+      .overrideTypes<TaskRow[]>();
+
+    if (error) {
+      throw new Error(`No se pudieron cargar los pendientes: ${error.message}`);
+    }
+
+    return (data ?? []).map(toTask);
+  }
+
   async getById(organizationId: string, id: string): Promise<Task | null> {
     const { data, error } = await this.supabase
       .from("tasks")

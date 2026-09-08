@@ -1,3 +1,5 @@
+import type { NotificationType } from "@/lib/notifications/types";
+
 export type Role = "owner" | "assistant";
 
 export type Organization = {
@@ -453,3 +455,30 @@ export type OutstandingByLine = {
 
 /** El bucket de los comprobantes de compra y gasto (esquema §13). */
 export const RECEIPTS_BUCKET = "receipts";
+
+/**
+ * Un aviso ya escrito, tal como lo lee la bandeja.
+ *
+ * No es lo mismo que `PlannedNotification` de `lib/notifications/types.ts`:
+ * aquel es la decisión antes de escribirla —sin `id`, sin `createdAt`, sin
+ * `readAt`—, y este es la fila. Mantenerlos separados es lo que permite que la
+ * decisión sea una función pura.
+ */
+export type Notification = {
+  id: string;
+  organizationId: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  entityType: string | null;
+  entityId: string | null;
+  readAt: string | null;
+  createdAt: string;
+};
+
+/** Un grupo de la bandeja: los avisos de un mismo tipo (V21). */
+export type NotificationGroup = {
+  type: NotificationType;
+  notifications: Notification[];
+};

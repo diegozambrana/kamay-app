@@ -12,6 +12,7 @@ import { recordHref } from "@/lib/activity/describe";
 import { getSessionContext } from "@/lib/auth/session-context";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { comparisonRows } from "@/lib/dashboard/indicators";
+import { pendingCounts } from "@/lib/tasks/groups";
 import {
   monthLabel,
   monthStartInTimezone,
@@ -24,6 +25,7 @@ import { DashboardService } from "@/services/dashboard/dashboard-service";
 import { InvitationService } from "@/services/invitation-service";
 import { OrderService } from "@/services/orders/order-service";
 import { PaymentService } from "@/services/payments/payment-service";
+import { TaskService } from "@/services/tasks/task-service";
 import { ALL_LINES } from "@/types";
 
 export const metadata = { title: "Panel · Kamay" };
@@ -78,6 +80,19 @@ export default async function DashboardPage() {
   const contactNames = new Map(contacts.map((c) => [c.id, c.name]));
   const lineById = new Map(lines.map((line) => [line.id, line]));
 
+  // Los conteos de pendientes salen de la **misma** función que agrupa V20, y
+  // deliberadamente sin filtrar por línea: la tarjeta cuenta lo mismo que esa
+  // pantalla, que es una de las dos que ignoran el selector. El recorte por rol
+  // lo aplicó ya la RLS al leer.
+  const pending = pendingCounts(
+    (await new TaskService(supabase).listPending(organizationId)).map((task) => ({
+      id: task.id,
+      dueDate: task.dueAt ? task.dueAt.slice(0, 10) : null,
+      closedAt: task.closedAt,
+    })),
+    today,
+  );
+
   const deliveryItems: DeliveryItem[] = deliveries.map((delivery) => ({
     ...delivery,
     contactName: delivery.contactId
@@ -90,7 +105,11 @@ export default async function DashboardPage() {
   if (!isOwner) {
     return (
       <MainContainer title="Panel" description={`Entregas y pendientes · ${period}`}>
-        <AssistantDashboard deliveries={deliveryItems} today={today} />
+        <AssistantDashboard
+          deliveries={deliveryItems}
+          today={today}
+          pending={pending}
+        />
       </MainContainer>
     );
   }
@@ -154,6 +173,7 @@ export default async function DashboardPage() {
         comparison={comparisonRows(lines, byLine)}
         deliveries={deliveryItems}
         activity={activityItems}
+        pending={pending}
         activeLineId={activeLineId}
         monthLabel={period}
         today={today}

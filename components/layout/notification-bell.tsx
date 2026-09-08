@@ -1,34 +1,49 @@
 "use client";
 
 import { BellIcon } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
+import { useState, useTransition } from "react";
 
+import {
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/actions/notifications";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { NotificationList } from "@/features/notifications/notification-list";
+import type { NotificationGroup } from "@/types";
 
 /**
- * Campana de notificaciones de la barra superior.
+ * Campana de notificaciones de la barra superior, y puerta de la bandeja V21.
  *
- * Es uno de los elementos siempre disponibles del cascarón (mapa §4.1) y la
- * puerta de la bandeja V21, que llega con los avisos y recordatorios
- * (KAM-17). Su sitio se cierra aquí para no volver a tocar la barra superior
- * cuando exista el contenido: entonces solo cambiarán la fuente del contador
- * y lo que este panel muestra.
- *
- * Mientras tanto no enlaza a `/notifications`: esa ruta no existe y un 404
- * sería peor que una explicación (design D9). Y la insignia no se pinta
- * cuando no hay nada sin leer —un "0" permanente enseña a ignorar la
- * campana, que es justo lo contrario de lo que una campana debe conseguir—.
+ * Es uno de los elementos siempre disponibles del cascarón (mapa §4.1). La
+ * insignia no se pinta cuando no hay nada sin leer —un "0" permanente enseña a
+ * ignorar la campana, que es justo lo contrario de lo que una campana debe
+ * conseguir—.
  *
  * La ven ambos roles: los avisos de entrega y de tarea son del ayudante tanto
- * como de la persona dueña.
+ * como de la persona dueña, y sus preferencias también (design D1).
+ *
+ * El contador se cuenta en el servidor al componer el cascarón, no por
+ * suscripción: un aviso que aparece medio minuto tarde no le cuesta nada a un
+ * taller de tres personas, y una suscripción por organización sí cuesta
+ * complejidad (design, *Non-Goals*).
  */
-export function NotificationBell({ unreadCount = 0 }: { unreadCount?: number }) {
+export function NotificationBell({
+  unreadCount = 0,
+  groups = [],
+  timezone = "UTC",
+}: {
+  unreadCount?: number;
+  groups?: NotificationGroup[];
+  timezone?: string;
+}) {
   const [open, setOpen] = useState(false);
+  const [, startTransition] = useTransition();
   const hasUnread = unreadCount > 0;
 
   return (
@@ -63,10 +78,32 @@ export function NotificationBell({ unreadCount = 0 }: { unreadCount?: number }) 
             <SheetTitle>Notificaciones</SheetTitle>
           </SheetHeader>
 
-          <p className="px-4 text-sm text-muted-foreground">
-            La bandeja de notificaciones todavía no está disponible. Llegará
-            con los recordatorios y los avisos.
-          </p>
+          <NotificationList
+            groups={groups}
+            timezone={timezone}
+            onMarkRead={(id) =>
+              startTransition(() => {
+                void markNotificationRead({ notificationId: id });
+              })
+            }
+            onMarkAllRead={() =>
+              startTransition(() => {
+                void markAllNotificationsRead();
+              })
+            }
+          />
+
+          {/* El mapa manda V21 → Preferencias → V15 → Notificaciones, y esa
+              sección está abierta a los dos roles (design D6). */}
+          <div className="border-t px-4 pt-3">
+            <Link
+              href="/settings/notifications"
+              className="text-sm text-muted-foreground hover:underline"
+              onClick={() => setOpen(false)}
+            >
+              Preferencias de notificación
+            </Link>
+          </div>
         </SheetContent>
       </Sheet>
     </>

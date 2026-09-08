@@ -105,3 +105,41 @@ describe("defaultLandingPath", () => {
     expect(isMobileUserAgent("")).toBe(false);
   });
 });
+
+/**
+ * KAM-17 · El enlace del correo.
+ *
+ * Escenarios del delta spec `notifications` — requisito "El enlace del correo
+ * abre exactamente esa tarea, con o sin sesión": «Sin sesión, entra y llega» y
+ * «No se admite un destino externo».
+ *
+ * El recorrido completo —abrir el enlace, identificarse, aterrizar— lo cubre
+ * la prueba e2e. Lo que se comprueba aquí es la pieza de la que depende: que
+ * el destino de un correo sobreviva al inicio de sesión y que uno externo no.
+ */
+describe("el destino que transporta el inicio de sesión", () => {
+  it("el detalle de tarea de un correo pasa por el inicio de sesión", () => {
+    // Es lo que hace que el enlace lleve a esa tarea y no al aterrizaje
+    // habitual: el proxy lo protege, así que lo transporta en `next`.
+    const destino = "/tasks/86e70354-5706-4f88-9122-b2474f9cc9fc";
+
+    expect(isProtectedPath(destino)).toBe(true);
+    expect(sanitizeNextPath(destino)).toBe(destino);
+  });
+
+  it("Mis pendientes, destino del resumen diario, también", () => {
+    expect(isProtectedPath("/my-tasks")).toBe(true);
+    expect(sanitizeNextPath("/my-tasks")).toBe("/my-tasks");
+  });
+
+  it("las preferencias de notificación están protegidas", () => {
+    expect(isProtectedPath("/settings/notifications")).toBe(true);
+  });
+
+  it("un destino externo se descarta", () => {
+    // Sin esto, un correo con un `next` manipulado llevaría fuera tras entrar.
+    expect(sanitizeNextPath("https://otro.sitio/tasks/1")).toBeNull();
+    expect(sanitizeNextPath("//otro.sitio/tasks/1")).toBeNull();
+    expect(sanitizeNextPath("/\\otro.sitio")).toBeNull();
+  });
+});

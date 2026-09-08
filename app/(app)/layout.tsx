@@ -17,6 +17,10 @@ import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { createClient } from "@/lib/supabase/server";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { MembershipService } from "@/services/membership-service";
+import {
+  NotificationService,
+  groupByType,
+} from "@/services/notifications/notification-service";
 
 /**
  * AuthCheck: carga usuario y membresías, revalida la organización activa
@@ -74,6 +78,14 @@ export default async function AppLayout({
     lines,
   );
 
+  // La bandeja y el contador se componen aquí, en el cascarón, porque la
+  // campana es un elemento siempre disponible (mapa §4.1): cargarlos en cada
+  // página los duplicaría, y cargarlos en el cliente haría parpadear el
+  // contador en cada navegación.
+  const notificationService = new NotificationService(supabase);
+  const notifications = await notificationService.list(active.organizationId);
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
+
   // Ausente = desplegado, que es el valor por defecto de shadcn.
   const sidebarOpen = cookieStore.get("sidebar_state")?.value !== "false";
 
@@ -124,7 +136,11 @@ export default async function AppLayout({
                   `hidden` crearía un contexto de desplazamiento y rompería
                   los encabezados `sticky`. */}
               <SidebarInset className="min-w-0 overflow-x-clip">
-                <Header />
+                <Header
+                  unreadCount={unreadCount}
+                  notificationGroups={groupByType(notifications)}
+                  timezone={active.organization.timezone}
+                />
                 <MobileContextBar />
                 {children}
                 {/* Registrar está a un toque desde cualquier pantalla (mapa

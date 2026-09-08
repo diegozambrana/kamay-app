@@ -2203,22 +2203,6 @@
     "mtime": 1788493968.832983,
     "hash": "92e1944d0f82e6b9c069e60199e8cc78"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-16-task-detail-markdown-attachments/tasks.md": {
-    "mtime": 1788838584.3283372,
-    "hash": "ae817e88a1f68fb4e3b4dbaea5cca5d1"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-16-task-detail-markdown-attachments/design.md": {
-    "mtime": 1788838584.3270252,
-    "hash": "97773e724d73057e246316df3b11c3ac"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-16-task-detail-markdown-attachments/proposal.md": {
-    "mtime": 1788838584.3274057,
-    "hash": "25020613ca07b34dcd5a00d0a1896b81"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-16-task-detail-markdown-attachments/specs/task-detail/spec.md": {
-    "mtime": 1788838584.3278303,
-    "hash": "43c33a94926e4920c4de351f7e86946f"
-  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-03-activity-log/tasks.md": {
     "mtime": 1787230405.2808964,
     "hash": "860efcf8f18976f840b9662befa19262"
@@ -2530,6 +2514,22 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-07-kam-14-dashboard-assistant-variant/specs/dashboard/spec.md": {
     "mtime": 1788784826.3175216,
     "hash": "371104b3affd81a8c9a255c6c5f19855"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-08-kam-16-task-detail-markdown-attachments/tasks.md": {
+    "mtime": 1788839058.4653814,
+    "hash": "940f8136648fb9e1d986954d46da2217"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-08-kam-16-task-detail-markdown-attachments/design.md": {
+    "mtime": 1788838584.3270252,
+    "hash": "97773e724d73057e246316df3b11c3ac"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-08-kam-16-task-detail-markdown-attachments/proposal.md": {
+    "mtime": 1788838584.3274057,
+    "hash": "25020613ca07b34dcd5a00d0a1896b81"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-08-kam-16-task-detail-markdown-attachments/specs/task-detail/spec.md": {
+    "mtime": 1788838584.3278303,
+    "hash": "43c33a94926e4920c4de351f7e86946f"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/public/file.svg": {
     "mtime": 1787193856.6466262,

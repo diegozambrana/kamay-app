@@ -15,6 +15,7 @@ import { UserProvider } from "@/components/providers/user-provider";
 import { lineCookieName, ORG_COOKIE } from "@/constants/auth";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { createClient } from "@/lib/supabase/server";
+import { ItemService } from "@/services/catalog/item-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { MembershipService } from "@/services/membership-service";
 import {
@@ -82,6 +83,19 @@ export default async function AppLayout({
   // campana es un elemento siempre disponible (mapa §4.1): cargarlos en cada
   // página los duplicaría, y cargarlos en el cliente haría parpadear el
   // contador en cada navegación.
+  /**
+   * Los insumos que ofrece el diálogo de consumo del menú *+ Registrar*
+   * (KAM-18). Se cargan aquí porque el botón flota en toda pantalla
+   * autenticada y el diálogo no puede consultar desde el cliente.
+   *
+   * El catálogo de un taller cabe en una consulta —decenas de insumos, no
+   * miles (§Volumen esperado)—, que es el mismo criterio con el que KAM-09
+   * carga todos los últimos costos de una vez.
+   */
+  const supplies = await new ItemService(supabase).list(active.organizationId, {
+    kind: "supply",
+  });
+
   const notificationService = new NotificationService(supabase);
   const notifications = await notificationService.list(active.organizationId);
   const unreadCount = notifications.filter((n) => !n.readAt).length;
@@ -145,7 +159,7 @@ export default async function AppLayout({
                 {children}
                 {/* Registrar está a un toque desde cualquier pantalla (mapa
                     §2.6). Flota sobre la barra, no dentro de ella. */}
-                <RegisterButton />
+                <RegisterButton supplies={supplies} />
                 <MobileNav />
               </SidebarInset>
             </SidebarProvider>

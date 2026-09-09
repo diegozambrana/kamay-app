@@ -12,9 +12,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { ConsumptionDialog } from "@/features/inventory/consumption-dialog";
 import { destinationsFor, isAvailable } from "@/lib/quick-capture/destinations";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
+import type { Item } from "@/types";
 
 /**
  * *+ Registrar*: el acceso al menú de creación desde cualquier pantalla.
@@ -32,10 +34,11 @@ import { useUserStore } from "@/stores/user-store";
  * requisito exige que ninguna superficie pueda ofrecer lo que la otra no
  * (KAM-14, design D10).
  */
-export function RegisterButton() {
+export function RegisterButton({ supplies = [] }: { supplies?: Item[] }) {
   const role = useUserStore((state) => state.membership?.role);
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [consuming, setConsuming] = useState(false);
 
   // El mismo criterio que la barra inferior: en una pantalla de captura este
   // botón taparía el guardar y ofrecería una salida sin confirmar el descarte.
@@ -73,7 +76,26 @@ export function RegisterButton() {
                 "flex items-center gap-3 rounded-md px-3 py-3 text-sm";
 
               // Los mismos seis destinos que la retícula, con el mismo estado:
-              // ambos salen de `destinations.ts` (design D1).
+              // ambos salen de `destinations.ts` (design D1). *Consumo* abre
+              // su diálogo en vez de navegar, y cierra el menú al hacerlo.
+              if (destination.opensDialog) {
+                return (
+                  <button
+                    key={destination.key}
+                    type="button"
+                    data-testid={`register-destination-${destination.key}`}
+                    onClick={() => {
+                      setOpen(false);
+                      setConsuming(true);
+                    }}
+                    className={cn(rowClass, "text-foreground hover:bg-accent")}
+                  >
+                    <Icon className="size-5 shrink-0" aria-hidden />
+                    {destination.label}
+                  </button>
+                );
+              }
+
               return isAvailable(destination) ? (
                 <Link
                   key={destination.key}
@@ -103,6 +125,12 @@ export function RegisterButton() {
           </nav>
         </SheetContent>
       </Sheet>
+
+      <ConsumptionDialog
+        open={consuming}
+        onOpenChange={setConsuming}
+        supplies={supplies}
+      />
     </>
   );
 }

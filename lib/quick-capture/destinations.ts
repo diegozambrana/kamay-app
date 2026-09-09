@@ -22,11 +22,17 @@ export type QuickDestination = {
   key: string;
   label: string;
   icon: LucideIcon;
-  /** Ausente mientras el destino no exista. */
+  /** Ausente cuando el destino no es una pantalla, o cuando aún no existe. */
   href?: string;
+  /**
+   * El destino abre un diálogo sobre la propia pantalla en vez de navegar
+   * (mapa §5: *Consumo → diálogo*). Registrar un consumo no puede sacar a
+   * nadie de donde estaba, así que no todo destino es una dirección.
+   */
+  opensDialog?: boolean;
   /** Roles que lo ven. Lo que un rol no puede usar, no aparece. */
   roles: Role[];
-  /** Qué falta para que exista. Solo cuando no hay `href`. */
+  /** Qué falta para que exista. Solo cuando no hay `href` ni diálogo. */
   availableFrom?: string;
 };
 
@@ -74,8 +80,11 @@ export const QUICK_DESTINATIONS: QuickDestination[] = [
     key: "consumption",
     label: "Consumo",
     icon: BoxesIcon,
+    // Diálogo y no pantalla (mapa §5). Es el único destino de los seis que no
+    // navega, y la retícula lo rinde exactamente igual que los demás: mismo
+    // tamaño, misma jerarquía.
+    opensDialog: true,
     roles: ["owner", "assistant"],
-    availableFrom: "Llega con el inventario",
   },
   {
     key: "task",
@@ -98,7 +107,13 @@ export function destinationsFor(role: Role | null | undefined): QuickDestination
   return QUICK_DESTINATIONS.filter((destination) => destination.roles.includes(role));
 }
 
-/** ¿El destino se puede activar hoy? */
+/**
+ * ¿El destino se puede activar hoy?
+ *
+ * Lo cumple tanto el que navega como el que abre un diálogo. Desde KAM-18 los
+ * seis lo cumplen y `availableFrom` se queda sin usuarios — el campo sigue en
+ * el tipo para el siguiente destino que haga falta declarar pendiente.
+ */
 export function isAvailable(destination: QuickDestination): boolean {
-  return destination.href !== undefined;
+  return destination.href !== undefined || destination.opensDialog === true;
 }

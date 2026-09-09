@@ -482,3 +482,65 @@ export type NotificationGroup = {
   type: NotificationType;
   notifications: Notification[];
 };
+
+// ── Inventario (KAM-18) ───────────────────────────────────────────────────
+
+export const MOVEMENT_KINDS = ["in", "out", "adjustment"] as const;
+
+export type MovementKind = (typeof MOVEMENT_KINDS)[number];
+
+/**
+ * De dónde viene un movimiento.
+ *
+ * `order_item` está declarado en el esquema y **sin uso**: el índice único
+ * `(source_type, source_id)` admitiría un solo movimiento por línea de pedido,
+ * y consumir tres insumos distintos para la misma línea es el caso normal de
+ * un taller. Todo consumo humano nace `manual`, venga del ítem, del pedido o
+ * de la tarea; la referencia vive en la nota (design D5).
+ */
+export const MOVEMENT_SOURCES = [
+  "expense_item",
+  "order_item",
+  "manual",
+  "count",
+] as const;
+
+export type MovementSource = (typeof MOVEMENT_SOURCES)[number];
+
+/**
+ * Un movimiento de inventario: el único documento del que sale el saldo.
+ *
+ * No se edita, no se archiva y no se borra. Una corrección es siempre un
+ * movimiento nuevo, así que aquí no hay `updatedAt` ni `archivedAt` — y su
+ * ausencia no es un olvido.
+ */
+export type InventoryMovement = {
+  id: string;
+  organizationId: string;
+  itemId: string;
+  variantId: string | null;
+  kind: MovementKind;
+  /** Con signo: positiva entra, negativa sale. Nunca cero. */
+  quantity: number;
+  sourceType: MovementSource | null;
+  sourceId: string | null;
+  /** La hora del hecho, fijada por el dispositivo (convención nº 9). */
+  occurredAt: string;
+  note: string | null;
+  createdBy: string | null;
+  createdAt: string;
+};
+
+/**
+ * El saldo de un insumo, tal como lo expone `item_balances`.
+ *
+ * Es siempre derivado: ninguna columna lo almacena, y `belowMin` lo calcula la
+ * propia vista para que el panel, el catálogo y V11 no puedan discrepar.
+ */
+export type ItemBalance = {
+  itemId: string;
+  organizationId: string;
+  balance: number;
+  minStock: number | null;
+  belowMin: boolean;
+};

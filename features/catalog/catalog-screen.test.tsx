@@ -111,11 +111,33 @@ describe("CatalogScreen", () => {
     );
   });
 
-  it("no muestra saldo ni último costo: son de KAM-18", () => {
-    renderScreen([item()]);
+  // Escenario "Sin columnas de inventario ni costo": el inventario llegó con
+  // KAM-18 y la prohibición sigue en pie. Lo que se añadió es un distintivo,
+  // no una cifra.
+  it("no muestra saldo ni último costo, tampoco con el inventario construido", () => {
+    renderScreen([item({ belowMin: true })]);
 
     expect(screen.queryByText(/saldo/i)).toBeNull();
     expect(screen.queryByText(/último costo/i)).toBeNull();
+  });
+
+  // Escenario "Distintivo de insumo bajo mínimo".
+  it("marca el insumo bajo mínimo sin enseñar la cifra", () => {
+    const bajo = item({ belowMin: true, minStock: 100 });
+    renderScreen([bajo]);
+
+    const distintivo = screen.getByTestId(`below-min-${bajo.id}`);
+    expect(distintivo).toHaveTextContent("Bajo mínimo");
+    // El número vive en el detalle, que está a un toque.
+    expect(distintivo.textContent).not.toMatch(/\d/);
+  });
+
+  // Escenario "Insumo sin mínimo declarado": sin mínimo no hay alerta posible.
+  it("un insumo sin mínimo declarado no lleva distintivo", () => {
+    const sano = item({ minStock: null });
+    renderScreen([sano]);
+
+    expect(screen.queryByTestId(`below-min-${sano.id}`)).toBeNull();
   });
 
   it("el dueño ve archivar en el menú; el ayudante no lo ve ni deshabilitado", async () => {

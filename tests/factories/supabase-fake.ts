@@ -40,6 +40,7 @@ export class FakeQuery {
   or = (...args: unknown[]) => this.record("or", ...args);
   order = (...args: unknown[]) => this.record("order", ...args);
   limit = (...args: unknown[]) => this.record("limit", ...args);
+  range = (...args: unknown[]) => this.record("range", ...args);
   single = (...args: unknown[]) => this.record("single", ...args);
   maybeSingle = (...args: unknown[]) => this.record("maybeSingle", ...args);
   overrideTypes = () => this;

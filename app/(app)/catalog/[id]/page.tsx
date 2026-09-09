@@ -7,8 +7,17 @@ import { ItemService } from "@/services/catalog/item-service";
 import { ItemVariantService } from "@/services/catalog/item-variant-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { UnitService } from "@/services/configuration/unit-service";
+import { ItemLastCostService } from "@/services/expenses/item-last-cost-service";
+import { MovementService } from "@/services/inventory/movement-service";
 
 export const metadata = { title: "Ítem · Catálogo · Kamay" };
+
+/**
+ * Cuántos movimientos trae la primera página. Un insumo muy usado acumula
+ * miles de filas al año (§Volumen esperado): la sección carga una página, no
+ * el historial entero.
+ */
+const MOVEMENT_PAGE = 20;
 
 /**
  * V11 · Detalle de ítem. Ruta propia y no panel: el mapa de navegación exige
@@ -45,6 +54,28 @@ export default async function ItemDetailPage({
     attachments.listForEntities(context.organizationId, "item", [item.id]),
   ]);
 
+  /**
+   * Las tres secciones de inventario (KAM-18) son solo de los insumos: un
+   * producto o un activo no tiene saldo que explicar.
+   *
+   * La evolución de precios **no se recorta con un `if` de rol**: se consulta
+   * igual para los dos, y para el ayudante RLS devuelve cero filas porque no
+   * tiene política de lectura sobre `expenses`. Si no hay datos, el servidor
+   * compone sin la sección y nunca la envía (design D9).
+   */
+  const movements = new MovementService(context.supabase);
+  const lastCosts = new ItemLastCostService(context.supabase);
+  const isSupply = item.kind === "supply";
+
+  const [balance, itemMovements, prices, lastCostMap] = await Promise.all([
+    isSupply ? movements.balanceFor(context.organizationId, item.id) : null,
+    isSupply
+      ? movements.forItem(context.organizationId, item.id, { limit: MOVEMENT_PAGE })
+      : [],
+    isSupply ? lastCosts.pricesFor(context.organizationId, item.id) : [],
+    isSupply ? lastCosts.mapFor(context.organizationId) : new Map(),
+  ]);
+
   // El bucket es privado: cada lectura se firma, y una firma que falla deja la
   // tarjeta sin imagen en vez de tumbar la página.
   const signed = await attachments.signedUrls(photoRows);
@@ -63,6 +94,11 @@ export default async function ItemDetailPage({
       history={history}
       role={context.membership.role}
       timeZone={context.membership.organization.timezone}
+      balance={balance}
+      movements={itemMovements}
+      hasMoreMovements={itemMovements.length === MOVEMENT_PAGE}
+      prices={prices}
+      lastCost={lastCostMap.get(item.id)?.lastCost ?? null}
     />
   );
 }

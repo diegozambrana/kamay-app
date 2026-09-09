@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { PurchasePrice } from "@/features/inventory/price-history-section";
+
 /** El último costo conocido de un ítem, tal como lo expone `item_last_cost`. */
 export type ItemLastCost = {
   itemId: string;
@@ -53,5 +55,55 @@ export class ItemLastCostService {
       });
     }
     return map;
+  }
+  /**
+   * Los precios pagados por un insumo, del más reciente al más antiguo por la
+   * fecha del hecho. Alimenta la sección *Evolución de precios* de V11
+   * (KAM-18).
+   *
+   * Al ayudante le devuelve **cero filas** sin una línea de código de
+   * aplicación: la consulta pasa por `expenses`, tabla sin política de lectura
+   * para él (esquema §16). Ese vacío es lo que hace que el servidor componga
+   * la página sin la sección, en vez de esconderla en el cliente.
+   *
+   * Las compras archivadas no cuentan, igual que en `item_last_cost`.
+   */
+  async pricesFor(
+    organizationId: string,
+    itemId: string,
+    limit = 12,
+  ): Promise<PurchasePrice[]> {
+    const { data, error } = await this.supabase
+      .from("expense_items")
+      .select(
+        "unit_price, expenses!inner(id, occurred_at, archived_at, kind, contacts(name))",
+      )
+      .eq("organization_id", organizationId)
+      .eq("item_id", itemId)
+      .eq("expenses.kind", "purchase")
+      .is("expenses.archived_at", null)
+      .order("occurred_at", { referencedTable: "expenses", ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(`No se pudieron cargar los precios: ${error.message}`);
+    }
+
+    return (data ?? []).map((raw) => {
+      const row = raw as unknown as {
+        unit_price: number | string;
+        expenses: {
+          id: string;
+          occurred_at: string;
+          contacts: { name: string } | null;
+        };
+      };
+      return {
+        expenseId: row.expenses.id,
+        unitPrice: toNumber(row.unit_price),
+        occurredAt: row.expenses.occurred_at,
+        supplierName: row.expenses.contacts?.name ?? null,
+      };
+    });
   }
 }

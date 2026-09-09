@@ -1,7 +1,9 @@
 import { registerDirectSale } from "@/actions/fair";
+import { registerConsumption, registerCountAdjustment } from "@/actions/inventory";
 import { createOrder, updateOrder } from "@/actions/orders";
 import { registerOperation } from "@/lib/offline";
 import type { DirectSaleInput } from "@/lib/fair/sale-schema";
+import type { ConsumptionValues, CountValues } from "@/lib/inventory/schema";
 import type { OrderFormValues } from "@/lib/orders/schema";
 
 /**
@@ -20,6 +22,10 @@ export const ORDER_CREATE = "order.create";
 export const ORDER_UPDATE = "order.update";
 /** Venta de feria: la venta, sus líneas y su cobro en un solo sobre (KAM-12). */
 export const DIRECT_SALE_CREATE = "directSale.create";
+/** Consumo de inventario (KAM-18). Un movimiento es siempre un sobre completo. */
+export const INVENTORY_CONSUMPTION = "inventory.consumption";
+/** Ajuste por conteo físico (KAM-18). */
+export const INVENTORY_ADJUSTMENT = "inventory.adjustment";
 
 /** Lo que la bandeja enseña de un pedido encolado. Sin jerga y sin número. */
 export function describeOrder(payload: unknown, verb: string): string {
@@ -43,6 +49,26 @@ export function describeDirectSale(payload: unknown): string {
   return `Venta de feria · ${units} ${units === 1 ? "unidad" : "unidades"} · ${total}`;
 }
 
+/**
+ * Lo que la bandeja enseña de un consumo encolado. Sin el nombre del insumo:
+ * el sobre lleva su identificador, no su nombre, y la bandeja no consulta.
+ */
+export function describeConsumption(payload: unknown): string {
+  const values = payload as Partial<ConsumptionValues>;
+  const quantity = values.quantity ?? 0;
+  return values.note
+    ? `Consumo de ${quantity} · ${values.note}`
+    : `Consumo de ${quantity}`;
+}
+
+/** Lo que la bandeja enseña de un ajuste encolado, con su signo. */
+export function describeAdjustment(payload: unknown): string {
+  const values = payload as Partial<CountValues>;
+  const difference = values.difference ?? 0;
+  const signed = difference > 0 ? `+${difference}` : String(difference);
+  return `Ajuste por conteo · ${signed}`;
+}
+
 export function registerOfflineOperations(): void {
   registerOperation(ORDER_CREATE, {
     send: (payload) => createOrder(payload),
@@ -59,5 +85,17 @@ export function registerOfflineOperations(): void {
   registerOperation(DIRECT_SALE_CREATE, {
     send: (payload) => registerDirectSale(payload),
     describe: describeDirectSale,
+  });
+
+  // KAM-18. Un movimiento de inventario tampoco declara `dependsOn`: no espera
+  // a ningún padre, porque el insumo ya existe cuando se consume.
+  registerOperation(INVENTORY_CONSUMPTION, {
+    send: (payload) => registerConsumption(payload),
+    describe: describeConsumption,
+  });
+
+  registerOperation(INVENTORY_ADJUSTMENT, {
+    send: (payload) => registerCountAdjustment(payload),
+    describe: describeAdjustment,
   });
 }

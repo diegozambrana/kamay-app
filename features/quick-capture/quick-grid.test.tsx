@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { useUserStore } from "@/stores/user-store";
@@ -61,17 +62,36 @@ describe("QuickGrid", () => {
     expect(venta).toHaveAttribute("href", "/fair");
   });
 
-  it("el destino pendiente ocupa su ranura, inerte y con su leyenda", () => {
+  // Escenario "Destinos aún no construidos": desde KAM-18 no queda ninguno.
+  it("ningún destino queda inerte ni lleva leyenda de no disponible", () => {
     renderGrid();
 
-    // Solo queda Consumo: *Tarea* la encendió KAM-15 con su alta.
+    for (const key of [
+      "direct-sale",
+      "order",
+      "purchase",
+      "cost",
+      "consumption",
+      "task",
+    ]) {
+      expect(screen.getByTestId(`quick-destination-${key}`)).not.toBeDisabled();
+    }
+    expect(screen.queryByText(/Llega con/)).not.toBeInTheDocument();
+  });
+
+  // Escenario "El destino que es diálogo no cambia de pantalla": Consumo es un
+  // botón sin `href`, y abre su diálogo sobre la propia pantalla (mapa §5).
+  it("Consumo abre su diálogo sin navegar a ninguna parte", async () => {
+    renderGrid();
+
     const tile = screen.getByTestId("quick-destination-consumption");
     expect(tile.tagName).toBe("BUTTON");
-    expect(tile).toBeDisabled();
-    expect(tile).toHaveAttribute("aria-disabled");
+    expect(tile).not.toBeDisabled();
     expect(tile).not.toHaveAttribute("href");
 
-    expect(screen.getByText("Llega con el inventario")).toBeInTheDocument();
+    await userEvent.click(tile);
+
+    expect(screen.getByTestId("consumption-form")).toBeInTheDocument();
   });
 
   it("el destino Tarea abre el alta de tarea", () => {

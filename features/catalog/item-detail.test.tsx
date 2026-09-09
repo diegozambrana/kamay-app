@@ -2,7 +2,16 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { BusinessLine, Item, ItemVariant, Role, Unit } from "@/types";
+import type { PurchasePrice } from "@/features/inventory/price-history-section";
+import type {
+  BusinessLine,
+  InventoryMovement,
+  Item,
+  ItemBalance,
+  ItemVariant,
+  Role,
+  Unit,
+} from "@/types";
 
 import { ItemDetail } from "./item-detail";
 import type { ItemPhoto } from "./item-photos";
@@ -89,11 +98,19 @@ function photo(overrides: Partial<ItemPhoto> = {}): ItemPhoto {
   };
 }
 
+type InventoryProps = Partial<{
+  balance: ItemBalance | null;
+  movements: InventoryMovement[];
+  prices: PurchasePrice[];
+  lastCost: number | null;
+}>;
+
 function renderDetail(
   overrides: Partial<Item> = {},
   role: Role = "owner",
   variants: ItemVariant[] = [],
   photos: ItemPhoto[] = [],
+  inventory: InventoryProps = {},
 ) {
   return render(
     <ItemDetail
@@ -105,9 +122,18 @@ function renderDetail(
       history={[]}
       role={role}
       timeZone="America/La_Paz"
+      {...inventory}
     />,
   );
 }
+
+const BALANCE: ItemBalance = {
+  itemId: "77777777-7777-4777-8777-777777777777",
+  organizationId: "11111111-1111-4111-8111-111111111111",
+  balance: 57,
+  minStock: 12,
+  belowMin: false,
+};
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(cleanup);
@@ -128,18 +154,78 @@ describe("ItemDetail", () => {
     ).toBeInTheDocument();
   });
 
-  it("no muestra secciones de inventario ni de costos", () => {
-    renderDetail({}, "owner", [variant("11oz")]);
+  // Escenario "Sin secciones de inventario ni costos": un producto o un
+  // activo no tiene saldo que explicar, así que la página no le pasa ninguna.
+  it("un producto no muestra secciones de inventario ni de costos", () => {
+    renderDetail({ kind: "product" }, "owner", [variant("11oz")]);
 
-    for (const forbidden of [
-      /saldo/i,
-      /último costo/i,
-      /evolución de precios/i,
-      /proveedores habituales/i,
-      /tareas relacionadas/i,
-    ]) {
-      expect(screen.queryByText(forbidden)).toBeNull();
-    }
+    // Por identificador de sección y no por texto: el bloque *Historial*, que
+    // sí existe en un producto, habla de «movimientos» de la bitácora y no
+    // tiene nada que ver con el inventario.
+    expect(screen.queryByTestId("item-balance")).toBeNull();
+    expect(screen.queryByTestId("item-movements")).toBeNull();
+    expect(screen.queryByTestId("item-price-history")).toBeNull();
+    expect(screen.queryByText(/evolución de precios/i)).toBeNull();
+  });
+
+  // Escenario "Sin proveedores habituales ni tareas relacionadas": siguen
+  // siendo de KAM-21 y no se insinúan aquí.
+  it("no muestra proveedores habituales ni tareas relacionadas", () => {
+    renderDetail({}, "owner", [], [], { balance: BALANCE });
+
+    expect(screen.queryByText(/proveedores habituales/i)).toBeNull();
+    expect(screen.queryByText(/tareas relacionadas/i)).toBeNull();
+  });
+
+  // Escenario "Secciones de inventario en un insumo".
+  it("un insumo muestra saldo, movimientos y evolución de precios", () => {
+    renderDetail({}, "owner", [], [], {
+      balance: BALANCE,
+      movements: [
+        {
+          id: "88888888-8888-4888-8888-888888888888",
+          organizationId: BALANCE.organizationId,
+          itemId: BALANCE.itemId,
+          variantId: null,
+          kind: "out",
+          quantity: -24,
+          sourceType: "manual",
+          sourceId: null,
+          occurredAt: "2026-09-01T10:00:00.000Z",
+          note: "Pedido #1",
+          createdBy: null,
+          createdAt: "2026-09-01T10:00:00.000Z",
+        },
+      ],
+      lastCost: 8.5,
+    });
+
+    expect(screen.getByTestId("item-balance")).toBeInTheDocument();
+    expect(screen.getByTestId("balance-value")).toHaveTextContent("57");
+    expect(screen.getByTestId("item-movements")).toHaveTextContent("Consumo");
+    expect(screen.getByTestId("item-price-history")).toBeInTheDocument();
+    expect(screen.getByTestId("last-cost")).toHaveTextContent("8.50");
+  });
+
+  // Design D9: el recorte lo hace RLS en la fuente. El ayudante recibe la
+  // lista de precios vacía, así que la sección no llega a existir — y este
+  // componente no consulta el rol para decidirlo.
+  it("sin precios no hay sección de precios, sin mirar el rol", () => {
+    renderDetail({}, "assistant", [], [], { balance: BALANCE, lastCost: null });
+
+    expect(screen.getByTestId("item-balance")).toBeInTheDocument();
+    expect(screen.queryByTestId("item-price-history")).toBeNull();
+  });
+
+  // El saldo negativo se muestra tal cual: dice que faltan entradas por
+  // registrar, y recortarlo a cero escondería justo eso.
+  it("un saldo negativo se muestra y se explica", () => {
+    renderDetail({}, "owner", [], [], {
+      balance: { ...BALANCE, balance: -3, belowMin: true },
+    });
+
+    expect(screen.getByTestId("balance-value")).toHaveTextContent("-3");
+    expect(screen.getByTestId("balance-below-min")).toBeInTheDocument();
   });
 
   it("el historial no se renderiza para el ayudante", () => {

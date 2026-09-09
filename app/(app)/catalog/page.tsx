@@ -10,6 +10,7 @@ import { BusinessLineService } from "@/services/configuration/business-line-serv
 import { UnitService } from "@/services/configuration/unit-service";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ItemService } from "@/services/catalog/item-service";
+import { MovementService } from "@/services/inventory/movement-service";
 import { ALL_LINES, type ItemKind } from "@/types";
 
 export const metadata = { title: "Catálogo · Kamay" };
@@ -82,6 +83,25 @@ export default async function CatalogPage({
     }
   }
 
+  /**
+   * El distintivo de bajo mínimo (KAM-18). Solo hace falta en la pestaña de
+   * insumos: `item_balances` se define sobre `kind = 'supply'`, así que en
+   * productos y activos la consulta sobraría.
+   *
+   * Es una bandera, no una cifra: el catálogo sigue sin columnas de saldo ni
+   * de costo.
+   */
+  const belowMin = new Set<string>(
+    kind === "supply"
+      ? (
+          await new MovementService(context.supabase).balances(
+            context.organizationId,
+            { belowMinOnly: true },
+          )
+        ).map((balance) => balance.itemId)
+      : [],
+  );
+
   // La línea activa del selector global preselecciona el formulario (D5).
   const activeLine = resolveActiveLine(
     (await cookies()).get(lineCookieName(context.organizationId))?.value,
@@ -93,6 +113,7 @@ export default async function CatalogPage({
       items={items.map((item) => ({
         ...item,
         photoUrl: photoUrls.get(item.id) ?? null,
+        belowMin: belowMin.has(item.id),
       }))}
       lines={lines}
       units={units}

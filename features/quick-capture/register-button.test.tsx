@@ -69,13 +69,19 @@ describe("RegisterButton", () => {
     }
   });
 
-  it("los destinos pendientes también salen inertes en el menú", async () => {
+  // El menú y la retícula salen de la misma declaración, así que Consumo
+  // tampoco queda inerte aquí: abre el mismo diálogo y cierra el menú.
+  it("Consumo abre su diálogo desde el menú, sin destinos inertes", async () => {
     renderButton("/catalog");
     await userEvent.click(screen.getByTestId("register-button"));
 
     const consumo = screen.getByTestId("register-destination-consumption");
     expect(consumo.tagName).toBe("BUTTON");
-    expect(consumo).toBeDisabled();
+    expect(consumo).not.toBeDisabled();
+
+    await userEvent.click(consumo);
+
+    expect(screen.getByTestId("consumption-form")).toBeInTheDocument();
   });
 
   it("no se rinde en las pantallas de captura", () => {

@@ -1,5 +1,5 @@
+import { LowStockCard, type LowStockItem } from "./low-stock-card";
 import { PendingTasksCard, type PendingCounts } from "./pending-tasks-card";
-import { LOW_STOCK_PLACEHOLDER, PlaceholderCard } from "./placeholder-card";
 import { UpcomingDeliveries, type DeliveryItem } from "./upcoming-deliveries";
 
 export type AssistantDashboardProps = {
@@ -10,6 +10,7 @@ export type AssistantDashboardProps = {
    * línea y a lo asignado a él antes de que se contaran.
    */
   pending: PendingCounts;
+  lowStock: readonly LowStockItem[];
 };
 
 /**
@@ -36,6 +37,7 @@ export function AssistantDashboard({
   deliveries,
   today,
   pending,
+  lowStock,
 }: AssistantDashboardProps) {
   return (
     <div data-testid="assistant-dashboard" className="flex flex-col gap-4">
@@ -43,7 +45,7 @@ export function AssistantDashboard({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <PendingTasksCard counts={pending} />
-        <PlaceholderCard {...LOW_STOCK_PLACEHOLDER} />
+        <LowStockCard items={lowStock} />
       </div>
     </div>
   );

@@ -39,11 +39,24 @@ afterEach(cleanup);
 /** Conteos de pendientes sin nada urgente: esta prueba mira otras cosas. */
 const PENDING = { overdue: 0, today: 0, upcoming: 0 };
 
+/** Un insumo bajo mínimo: la tarjeta la ven los dos roles, no lleva importes. */
+const LOW_STOCK = [
+  {
+    itemId: "item-1",
+    organizationId: "org-1",
+    balance: 2,
+    minStock: 100,
+    belowMin: true,
+    name: "Papel de transferencia",
+    unitCode: "u",
+  },
+];
+
 describe("AssistantDashboard", () => {
   // Scenario: Ningún importe en pantalla
   it("no muestra ninguna cifra monetaria", () => {
     const { container } = render(
-      <AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} />,
+      <AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} lowStock={LOW_STOCK} />,
     );
 
     // Ni importes con decimales ni etiquetas de dinero: la composición no
@@ -56,7 +69,7 @@ describe("AssistantDashboard", () => {
 
   // Scenario: El ayudante no tiene esta pieza (últimos movimientos)
   it("no tiene la pieza de bitácora, ni siquiera vacía", () => {
-    render(<AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} />);
+    render(<AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} lowStock={LOW_STOCK} />);
 
     expect(screen.queryByTestId("recent-activity")).not.toBeInTheDocument();
     expect(screen.queryByText(/movimientos/i)).not.toBeInTheDocument();
@@ -64,26 +77,27 @@ describe("AssistantDashboard", () => {
 
   // Scenario: Sin huecos donde estaban las piezas del dueño
   it("no deja secciones vacías donde la persona dueña tiene las suyas", () => {
-    render(<AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} />);
+    render(<AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} lowStock={LOW_STOCK} />);
 
     expect(screen.queryByTestId("indicator-cards")).not.toBeInTheDocument();
     expect(screen.queryByTestId("line-comparison")).not.toBeInTheDocument();
     expect(screen.queryByTestId("recent-activity")).not.toBeInTheDocument();
 
     // Lo que queda tiene contenido: entregas, la tarjeta de pendientes —real
-    // desde KAM-17— y el marcador de insumos, y ninguna está en blanco.
+    // desde KAM-17— y la de insumos bajo mínimo —real desde KAM-18—. Ya no
+    // queda ningún marcador en el panel.
     expect(screen.getByTestId("upcoming-deliveries")).toHaveTextContent("#1");
     expect(screen.getByTestId("pending-tasks-card")).toHaveTextContent(
       "Pendientes",
     );
-    expect(screen.getByTestId("placeholder-stock")).toHaveTextContent(
-      "Insumos bajo mínimo",
+    expect(screen.getByTestId("low-stock-card")).toHaveTextContent(
+      "Papel de transferencia",
     );
   });
 
   // Scenario: Las entregas encabezan su pantalla
   it("las entregas próximas son la pieza principal", () => {
-    render(<AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} />);
+    render(<AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} lowStock={LOW_STOCK} />);
 
     const root = screen.getByTestId("assistant-dashboard");
     expect(root.firstElementChild).toBe(screen.getByTestId("upcoming-deliveries"));
@@ -95,7 +109,7 @@ describe("AssistantDashboard", () => {
   });
 
   it("marca lo vencido igual que la otra composición", () => {
-    render(<AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} />);
+    render(<AssistantDashboard deliveries={deliveries} today={TODAY} pending={PENDING} lowStock={LOW_STOCK} />);
 
     expect(screen.getByTestId("delivery-b")).toHaveAttribute(
       "data-overdue",
@@ -104,7 +118,7 @@ describe("AssistantDashboard", () => {
   });
 
   it("sin entregas sigue sin dejar huecos", () => {
-    render(<AssistantDashboard deliveries={[]} today={TODAY} pending={PENDING} />);
+    render(<AssistantDashboard deliveries={[]} today={TODAY} pending={PENDING} lowStock={LOW_STOCK} />);
 
     expect(screen.getByText(/No hay entregas comprometidas/)).toBeInTheDocument();
     expect(screen.getByTestId("pending-tasks-card")).toBeInTheDocument();
@@ -116,8 +130,7 @@ describe("AssistantDashboard", () => {
       <AssistantDashboard
         deliveries={deliveries}
         today={TODAY}
-        pending={{ overdue: 1, today: 0, upcoming: 2 }}
-      />,
+        pending={{ overdue: 1, today: 0, upcoming: 2 }} lowStock={LOW_STOCK} />,
     );
 
     expect(screen.getByTestId("pending-overdue")).toHaveTextContent("1");

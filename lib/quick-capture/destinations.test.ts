@@ -21,10 +21,11 @@ describe("QUICK_DESTINATIONS", () => {
     ]);
   });
 
-  it("los cinco destinos vivos llevan href y ninguna leyenda", () => {
-    const vivos = QUICK_DESTINATIONS.filter(isAvailable);
+  // Escenario "Destinos disponibles hoy": los seis, desde KAM-18.
+  it("los cinco destinos que navegan llevan href y ninguna leyenda", () => {
+    const navegan = QUICK_DESTINATIONS.filter((d) => d.href !== undefined);
 
-    expect(vivos.map((d) => d.href)).toEqual([
+    expect(navegan.map((d) => d.href)).toEqual([
       "/fair",
       "/orders/new",
       "/expenses/purchases/new",
@@ -32,14 +33,27 @@ describe("QUICK_DESTINATIONS", () => {
       // Encendido por KAM-15, que construyó el alta de tarea.
       "/tasks/new",
     ]);
-    expect(vivos.every((d) => d.availableFrom === undefined)).toBe(true);
+    expect(navegan.every((d) => d.availableFrom === undefined)).toBe(true);
   });
 
-  it("solo Consumo sigue pendiente: declara qué falta y no lleva href", () => {
+  // Escenario "Destinos aún no construidos": ya no queda ninguno.
+  it("ningún destino sigue pendiente", () => {
     const pendientes = QUICK_DESTINATIONS.filter((d) => !isAvailable(d));
 
-    expect(pendientes.map((d) => d.label)).toEqual(["Consumo"]);
-    expect(pendientes.every((d) => d.availableFrom !== undefined)).toBe(true);
+    expect(pendientes).toEqual([]);
+    expect(QUICK_DESTINATIONS.every((d) => d.availableFrom === undefined)).toBe(
+      true,
+    );
+  });
+
+  // Escenario "El destino que es diálogo no cambia de pantalla": Consumo es el
+  // único de los seis que no navega (mapa §5).
+  it("Consumo está disponible como diálogo, sin dirección propia", () => {
+    const consumo = QUICK_DESTINATIONS.find((d) => d.key === "consumption");
+
+    expect(consumo?.opensDialog).toBe(true);
+    expect(consumo?.href).toBeUndefined();
+    expect(isAvailable(consumo!)).toBe(true);
   });
 
   it("tarea enlaza al alta, que existe desde KAM-15", () => {

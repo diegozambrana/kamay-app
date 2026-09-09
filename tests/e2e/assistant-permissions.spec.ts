@@ -49,9 +49,10 @@ test.describe("V2 · panel del ayudante", () => {
 
     // Y lo que sí tiene, tiene contenido.
     await expect(page.getByTestId("upcoming-deliveries")).toBeVisible();
-    // Pendientes dejó de ser marcador con KAM-17: el ayudante ve sus conteos.
+    // Pendientes dejó de ser marcador con KAM-17 e insumos bajo mínimo con
+    // KAM-18: el ayudante ve las dos tarjetas con su contenido real.
     await expect(page.getByTestId("pending-tasks-card")).toBeVisible();
-    await expect(page.getByTestId("placeholder-stock")).toBeVisible();
+    await expect(page.getByTestId("low-stock-card")).toBeVisible();
   });
 
   test("la composición llega ya decidida desde el servidor", async ({ page }) => {
@@ -215,21 +216,22 @@ test.describe("V2 · panel de la persona dueña", () => {
     expect(elapsed, `el panel tardó ${elapsed} ms`).toBeLessThan(1500);
   });
 
-  test("el marcador que queda se declara, sin cifras", async ({ page }) => {
-    // Desde KAM-17 solo sobrevive el de insumos: el de pendientes lo sustituyó
-    // su tarjeta real, que sí muestra números y sí lleva a su pantalla.
+  // Scenario "Ningún marcador de posición sobrevive" (delta spec `dashboard`)
+  test("al panel no le queda ningún marcador de posición", async ({ page }) => {
+    // KAM-17 retiró el de pendientes y KAM-18 el de insumos: las dos piezas
+    // muestran contenido real y llevan a su pantalla.
     await login(page, GEEKO_OWNER);
     await page.goto("/dashboard");
 
-    await expect(page.getByTestId("placeholder-stock")).toContainText(
+    await expect(page.getByTestId("low-stock-card")).toContainText(
       "Insumos bajo mínimo",
     );
-    const stock = await page.getByTestId("placeholder-stock").innerText();
-    expect(stock).not.toMatch(/\d/);
-
     await expect(page.getByTestId("pending-tasks-card")).toContainText(
       "Pendientes",
     );
+
+    await expect(page.locator("[data-placeholder]")).toHaveCount(0);
+    await expect(page.getByTestId("placeholder-stock")).toHaveCount(0);
     await expect(page.getByTestId("placeholder-tasks")).toHaveCount(0);
   });
 

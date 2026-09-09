@@ -4,7 +4,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(6);
+select plan(8);
 
 create function pg_temp.login(uid uuid) returns void
 language plpgsql as $$
@@ -65,6 +65,22 @@ select throws_ok(
   $$ delete from tasks $$,
   '42501', null,
   'tasks/tags/task_tags/task_links/membership_lines: DELETE revocado (KAM-15)');
+
+-- `inventory_movements` sigue el mismo criterio, y por la misma razón que
+-- `payments`: un movimiento de existencias no se borra ni se edita jamás. Una
+-- corrección es siempre un movimiento nuevo (KAM-18, criterio nº 7).
+select throws_ok(
+  $$ delete from inventory_movements $$,
+  '42501', null,
+  'inventory_movements: DELETE revocado (KAM-18)');
+
+-- Y tampoco se edita: el privilegio de UPDATE tampoco se concedió. Es la
+-- diferencia entre este documento y el resto del esquema, donde editar sí es
+-- normal.
+select throws_ok(
+  $$ update inventory_movements set quantity = 1 $$,
+  '42501', null,
+  'inventory_movements: UPDATE revocado (KAM-18)');
 
 select pg_temp.logout();
 

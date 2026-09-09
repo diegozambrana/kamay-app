@@ -45,13 +45,26 @@ const ALL_LINES_OPTION = "all";
 const SHARED_OPTION = "shared";
 
 /** Un ítem del listado con su miniatura ya firmada por el servidor. */
-export type CatalogRow = Item & { photoUrl: string | null };
+export type CatalogRow = Item & {
+  photoUrl: string | null;
+  /**
+   * Si el insumo está por debajo de su mínimo (KAM-18). Lo calcula la vista
+   * `item_balances`, no esta pantalla: el panel, el catálogo y V11 leen la
+   * misma bandera y no pueden discrepar.
+   */
+  belowMin?: boolean;
+};
 
 /**
  * V10 · Catálogo. El alcance vive en la dirección (`?kind=&line=&q=&archived=`)
  * para que el listado sea enlazable y el servidor entregue exactamente lo que
- * se pide. No muestra saldo ni último costo: son datos derivados y llegan con
- * el inventario (KAM-18).
+ * se pide.
+ *
+ * Sigue **sin mostrar saldo ni último costo**, y eso no cambió con el
+ * inventario: lo que se añadió es un distintivo binario de bajo mínimo. La
+ * cifra vive en el detalle, que está a un toque. Poner el número aquí
+ * convertiría el catálogo en una pantalla de inventario y arrastraría al
+ * ayudante hacia columnas de costo que no debe ver.
  */
 export function CatalogScreen({
   items,
@@ -115,6 +128,11 @@ export function CatalogScreen({
           <span className="font-medium">{item.name}</span>
           {item.archivedAt !== null && (
             <Badge variant="secondary">Archivado</Badge>
+          )}
+          {item.belowMin && (
+            <Badge variant="destructive" data-testid={`below-min-${item.id}`}>
+              Bajo mínimo
+            </Badge>
           )}
         </div>
       ),

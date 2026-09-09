@@ -1,25 +1,35 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
+import { ConsumptionDialog } from "@/features/inventory/consumption-dialog";
 import { destinationsFor, isAvailable } from "@/lib/quick-capture/destinations";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
+import type { Item } from "@/types";
 
 /**
  * V16 · La retícula de registro rápido.
  *
- * Seis ranuras en dos columnas desde el primer día, aunque dos destinos aún
- * no existan: si la retícula creciera de cuatro a seis en dos tareas, habría
- * que volver a verificar el alcance del pulgar en cada una (design D7).
+ * Seis ranuras en dos columnas desde el primer día, cuando aún faltaban dos
+ * destinos por construir: si la retícula hubiese crecido de cuatro a seis en
+ * dos tareas, habría que volver a verificar el alcance del pulgar en cada una
+ * (design D7). Desde KAM-18 las seis están llenas.
  *
  * Filtrada por rol: lo que un rol no puede usar no aparece —ocultar, no
  * deshabilitar (mapa §4.4)—. Deshabilitar sí es lo correcto cuando la razón
  * es que el producto todavía no lo tiene, y eso lo dice `availableFrom`.
+ *
+ * Desde KAM-18 los seis destinos existen. *Consumo* es el único que no
+ * navega: abre su diálogo sobre esta misma pantalla (mapa §5), y se rinde
+ * exactamente igual que los demás —mismo tamaño, misma jerarquía— porque la
+ * forma de un destino no es asunto de quien lo pulsa.
  */
-export function QuickGrid() {
+export function QuickGrid({ supplies = [] }: { supplies?: Item[] }) {
   const role = useUserStore((state) => state.membership?.role);
   const destinations = destinationsFor(role);
+  const [consuming, setConsuming] = useState(false);
 
   const tileClass =
     "flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center";
@@ -46,6 +56,21 @@ export function QuickGrid() {
           );
         }
 
+        if (destination.opensDialog) {
+          return (
+            <button
+              key={destination.key}
+              type="button"
+              onClick={() => setConsuming(true)}
+              data-testid={`quick-destination-${destination.key}`}
+              className={cn(tileClass, "bg-card hover:bg-accent")}
+            >
+              <Icon className="size-7 shrink-0" aria-hidden />
+              <span className="text-sm font-medium">{destination.label}</span>
+            </button>
+          );
+        }
+
         return (
           <Link
             key={destination.key}
@@ -58,6 +83,12 @@ export function QuickGrid() {
           </Link>
         );
       })}
+
+      <ConsumptionDialog
+        open={consuming}
+        onOpenChange={setConsuming}
+        supplies={supplies}
+      />
     </div>
   );
 }

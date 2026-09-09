@@ -60,6 +60,19 @@ const activity: ActivityItem[] = [
 /** Conteos de pendientes sin nada urgente: esta prueba mira otras cosas. */
 const PENDING = { overdue: 0, today: 0, upcoming: 0 };
 
+/** Un insumo bajo mínimo, para que la tarjeta tenga algo real que enseñar. */
+const LOW_STOCK = [
+  {
+    itemId: "item-1",
+    organizationId: "org-1",
+    balance: 2,
+    minStock: 100,
+    belowMin: true,
+    name: "Papel de transferencia",
+    unitCode: "u",
+  },
+];
+
 function renderOwner(overrides: Partial<OwnerDashboardProps> = {}) {
   return render(
     <OwnerDashboard
@@ -69,6 +82,7 @@ function renderOwner(overrides: Partial<OwnerDashboardProps> = {}) {
       deliveries={deliveries}
       activity={activity}
       pending={PENDING}
+      lowStock={LOW_STOCK}
       activeLineId={null}
       monthLabel="febrero de 2026"
       today="2026-02-14"
@@ -89,9 +103,10 @@ describe("OwnerDashboard", () => {
     expect(screen.getByTestId("line-comparison")).toBeInTheDocument();
     expect(screen.getByTestId("upcoming-deliveries")).toBeInTheDocument();
     expect(screen.getByTestId("recent-activity")).toBeInTheDocument();
-    // Pendientes dejó de ser marcador con KAM-17: es su tarjeta real.
+    // Las dos dejaron de ser marcadores: pendientes con KAM-17, insumos bajo
+    // mínimo con KAM-18. El panel ya no tiene ninguno.
     expect(screen.getByTestId("pending-tasks-card")).toBeInTheDocument();
-    expect(screen.getByTestId("placeholder-stock")).toBeInTheDocument();
+    expect(screen.getByTestId("low-stock-card")).toBeInTheDocument();
   });
 
   it("muestra las cuatro cifras: ingresos, egresos, margen y por cobrar", () => {
@@ -158,6 +173,7 @@ describe("OwnerDashboard", () => {
         deliveries={deliveries}
         activity={activity}
         pending={PENDING}
+        lowStock={LOW_STOCK}
         activeLineId={null}
         monthLabel="febrero de 2026"
         today="2026-02-14"
@@ -191,12 +207,35 @@ describe("OwnerDashboard", () => {
     );
   });
 
-  it("el marcador que queda no muestra cifras", () => {
+  // Scenario: Ningún marcador de posición sobrevive (delta spec `dashboard`)
+  it("ninguna pieza del panel es ya un marcador", () => {
+    const { container } = renderOwner();
+
+    expect(container.querySelector("[data-placeholder]")).toBeNull();
+    expect(container.textContent).not.toMatch(/aún no está disponible/i);
+  });
+
+  // Scenario: Los insumos por debajo del mínimo aparecen
+  it("la tarjeta de insumos muestra saldo y mínimo, y lleva al detalle", () => {
     renderOwner();
 
-    expect(screen.getByTestId("placeholder-stock").textContent).not.toMatch(
-      /\d/,
+    const card = screen.getByTestId("low-stock-card");
+    expect(card).toHaveTextContent("Papel de transferencia");
+    expect(card).toHaveTextContent("2");
+    expect(card).toHaveTextContent("100");
+    expect(screen.getByRole("link", { name: "Papel de transferencia" })).toHaveAttribute(
+      "href",
+      "/catalog/item-1",
     );
+  });
+
+  // Scenario: Nada por debajo del mínimo
+  it("sin insumos bajo mínimo lo dice, sin cifras ni tarjeta en blanco", () => {
+    renderOwner({ lowStock: [] });
+
+    const card = screen.getByTestId("low-stock-card");
+    expect(card).toHaveTextContent(/Ningún insumo está por debajo/);
+    expect(screen.queryByTestId("low-stock-list")).toBeNull();
   });
 
   // Scenario: Pendientes ya no es marcador (delta spec `dashboard`)

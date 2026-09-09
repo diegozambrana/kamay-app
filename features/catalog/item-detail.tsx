@@ -34,11 +34,20 @@ import { formatDateTime } from "@/lib/format/datetime";
 import type {
   ActivityEntry,
   BusinessLine,
+  InventoryMovement,
   Item,
+  ItemBalance,
   ItemVariant,
   Role,
   Unit,
 } from "@/types";
+
+import { BalanceSection } from "@/features/inventory/balance-section";
+import { MovementsSection } from "@/features/inventory/movements-section";
+import {
+  PriceHistorySection,
+  type PurchasePrice,
+} from "@/features/inventory/price-history-section";
 
 import { ItemFormDialog } from "./item-form-dialog";
 import { ItemPhotos, type ItemPhoto } from "./item-photos";
@@ -53,11 +62,18 @@ const ACTION_LABELS: Record<ActivityEntry["action"], string> = {
 };
 
 /**
- * V11 · Detalle de ítem. Datos generales, variantes e historial.
+ * V11 · Detalle de ítem. Datos generales, variantes, inventario e historial.
  *
- * Deliberadamente **sin** saldo de inventario, último costo, evolución de
- * precios de compra, proveedores habituales ni tareas relacionadas: son de
- * KAM-18, KAM-19 y KAM-15. Nada de eso se insinúa aquí todavía.
+ * Para un insumo muestra además su saldo, sus movimientos y la evolución de
+ * precios de compra (KAM-18). Un producto o un activo no lleva ninguna de las
+ * tres: no tienen saldo que explicar.
+ *
+ * La evolución de precios llega o no llega: la página la consulta igual para
+ * los dos roles, y para el ayudante RLS devuelve cero filas. Aquí no hay
+ * ninguna condición sobre el rol, y no debe haberla (design D9).
+ *
+ * Siguen **sin** aparecer proveedores habituales ni tareas relacionadas: son
+ * de KAM-21.
  */
 export function ItemDetail({
   item,
@@ -68,6 +84,11 @@ export function ItemDetail({
   history,
   role,
   timeZone,
+  balance = null,
+  movements = [],
+  hasMoreMovements = false,
+  prices = [],
+  lastCost = null,
 }: {
   item: Item;
   variants: ItemVariant[];
@@ -78,6 +99,13 @@ export function ItemDetail({
   /** Vacío para el ayudante: la bitácora solo la lee el dueño. */
   history: ActivityEntry[];
   role: Role;
+  /** Solo para los insumos; `null` en productos y activos. */
+  balance?: ItemBalance | null;
+  movements?: InventoryMovement[];
+  hasMoreMovements?: boolean;
+  /** Vacío para el ayudante: RLS no le da los precios de compra. */
+  prices?: PurchasePrice[];
+  lastCost?: number | null;
   /** Zona horaria de la organización: la historia se cuenta en hora del taller. */
   timeZone: string;
 }) {
@@ -234,6 +262,35 @@ export function ItemDetail({
         role={role}
         readOnly={isArchived}
       />
+
+      {/* Inventario (KAM-18). Solo los insumos tienen saldo: `item_balances`
+          se define sobre `kind = 'supply'`, así que en un producto o un activo
+          `balance` llega nulo y estas dos secciones no existen. */}
+      {balance && (
+        <>
+          <BalanceSection
+            item={item}
+            balance={balance}
+            unit={unit}
+            readOnly={isArchived}
+          />
+          <MovementsSection
+            movements={movements}
+            timeZone={timeZone}
+            hasMore={hasMoreMovements}
+          />
+        </>
+      )}
+
+      {/* La evolución de precios se rinde si hay algo que rendir. Para el
+          ayudante llega vacía por RLS, no por una condición de rol. */}
+      {(prices.length > 0 || lastCost !== null) && (
+        <PriceHistorySection
+          prices={prices}
+          lastCost={lastCost}
+          timeZone={timeZone}
+        />
+      )}
 
       {/* Historial: convención nº 7, todo sale de `activity_log`. La bitácora
           solo la lee el dueño, así que para el ayudante no hay sección. */}

@@ -6,13 +6,16 @@ import { lineCookieName } from "@/constants/auth";
 import { AssistantDashboard } from "@/features/dashboard/assistant-dashboard";
 import { OwnerDashboard } from "@/features/dashboard/owner-dashboard";
 import type { ActivityItem } from "@/features/dashboard/recent-activity";
+import type { LowStockItem } from "@/features/dashboard/low-stock-card";
 import type { DeliveryItem } from "@/features/dashboard/upcoming-deliveries";
 import { outstandingFor } from "@/features/payments/outstanding-summary";
 import { recordHref } from "@/lib/activity/describe";
 import { getSessionContext } from "@/lib/auth/session-context";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { comparisonRows } from "@/lib/dashboard/indicators";
+import { scopedToLine } from "@/lib/inventory/stock";
 import { pendingCounts } from "@/lib/tasks/groups";
+import { MovementService } from "@/services/inventory/movement-service";
 import {
   monthLabel,
   monthStartInTimezone,
@@ -20,7 +23,9 @@ import {
 } from "@/lib/dashboard/period";
 import { ActivityService } from "@/services/activity/activity-service";
 import { ContactService } from "@/services/catalog/contact-service";
+import { ItemService } from "@/services/catalog/item-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
+import { UnitService } from "@/services/configuration/unit-service";
 import { DashboardService } from "@/services/dashboard/dashboard-service";
 import { InvitationService } from "@/services/invitation-service";
 import { OrderService } from "@/services/orders/order-service";
@@ -93,6 +98,47 @@ export default async function DashboardPage() {
     today,
   );
 
+  /**
+   * Insumos bajo mínimo (KAM-18). La ven los dos roles: no lleva ningún
+   * importe, y es el ayudante quien está delante del estante.
+   *
+   * Sí respeta el selector de línea, a diferencia de los pendientes: el
+   * requisito *Todo el panel responde al selector* no admite excepciones, y
+   * `balances()` incluye siempre los insumos compartidos.
+   */
+  const lowStockBalances = await new MovementService(supabase).balances(
+    organizationId,
+    { belowMinOnly: true },
+  );
+
+  const supplyNames = new Map(
+    (
+      await new ItemService(supabase).list(organizationId, {
+        kind: "supply",
+        includeArchived: true,
+      })
+    ).map((item) => [item.id, item]),
+  );
+  const unitCodes = new Map(
+    (await new UnitService(supabase).listActive(organizationId)).map((unit) => [
+      unit.id,
+      unit.code,
+    ]),
+  );
+
+  const lowStock: LowStockItem[] = scopedToLine(
+    lowStockBalances,
+    supplyNames,
+    activeLineId,
+  ).map((balance) => {
+    const item = supplyNames.get(balance.itemId);
+    return {
+      ...balance,
+      name: item?.name ?? "",
+      unitCode: item?.unitId ? (unitCodes.get(item.unitId) ?? null) : null,
+    };
+  });
+
   const deliveryItems: DeliveryItem[] = deliveries.map((delivery) => ({
     ...delivery,
     contactName: delivery.contactId
@@ -109,6 +155,7 @@ export default async function DashboardPage() {
           deliveries={deliveryItems}
           today={today}
           pending={pending}
+          lowStock={lowStock}
         />
       </MainContainer>
     );
@@ -174,6 +221,7 @@ export default async function DashboardPage() {
         deliveries={deliveryItems}
         activity={activityItems}
         pending={pending}
+        lowStock={lowStock}
         activeLineId={activeLineId}
         monthLabel={period}
         today={today}

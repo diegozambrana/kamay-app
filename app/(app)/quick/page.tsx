@@ -5,6 +5,7 @@ import { QuickGrid } from "@/features/quick-capture/quick-grid";
 import { RecentToday } from "@/features/quick-capture/recent-today";
 import { getSessionContext } from "@/lib/auth/session-context";
 import { todayInTimezone } from "@/lib/orders/overdue";
+import { ItemService } from "@/services/catalog/item-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { RecentCaptureService } from "@/services/quick-capture/recent-capture-service";
 
@@ -26,13 +27,17 @@ export default async function QuickPage() {
   // las 23:40 no debe ver su captura caer en el día equivocado.
   const today = todayInTimezone(timezone);
 
-  const [synced, lines] = await Promise.all([
+  // Los insumos que ofrece el diálogo del destino *Consumo* (KAM-18).
+  const [synced, lines, supplies] = await Promise.all([
     new RecentCaptureService(context.supabase).listToday(
       context.organizationId,
       today,
       timezone,
     ),
     new BusinessLineService(context.supabase).listActive(context.organizationId),
+    new ItemService(context.supabase).list(context.organizationId, {
+      kind: "supply",
+    }),
   ]);
 
   const lineNames = Object.fromEntries(lines.map((line) => [line.id, line.name]));
@@ -43,7 +48,7 @@ export default async function QuickPage() {
       description="Anota lo que acaba de pasar, sin buscar la sección."
     >
       <div className="space-y-6">
-        <QuickGrid />
+        <QuickGrid supplies={supplies} />
 
         <section className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">

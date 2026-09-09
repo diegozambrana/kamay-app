@@ -4,7 +4,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(18);
+select plan(20);
 
 -- ── Helpers: simular usuarios autenticados ────────────────────────────────
 
@@ -254,6 +254,37 @@ select is(
       and record_id = '00000000-0000-0000-0000-000000000005'
       and action = 'updated'),
   2, 'fusión: ediciones de autores distintos no se fusionan');
+
+-- ── `inventory_movements` · KAM-18 ────────────────────────────────────────
+-- Convención nº 7: un solo historial. La sección *Movimientos* de V11 lee el
+-- propio documento, pero «quién hizo esto» sale de aquí, igual que en toda
+-- tabla auditable. El movimiento solo se crea —nunca se edita—, así que su
+-- trigger es `after insert` y la bitácora solo puede recoger `created`.
+
+insert into items (id, organization_id, kind, name) values
+  ('00000000-0000-0000-0000-0000000003c1', '00000000-0000-0000-0000-000000000001', 'supply', 'Taza');
+
+select pg_temp.login('00000000-0000-0000-0000-0000000000a1');
+
+insert into inventory_movements (id, organization_id, item_id, kind, quantity, source_type, note)
+values ('00000000-0000-0000-0000-0000000003c2', '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-0000000003c1', 'out', -5, 'manual', 'Pedido #1');
+
+select pg_temp.logout();
+
+select is(
+  (select count(*)::int from activity_log
+    where table_name = 'inventory_movements'
+      and record_id = '00000000-0000-0000-0000-0000000003c2'
+      and action = 'created'),
+  1, 'inventory_movements: la creación queda en la bitácora');
+
+select is(
+  (select actor_id from activity_log
+    where table_name = 'inventory_movements'
+      and record_id = '00000000-0000-0000-0000-0000000003c2'),
+  '00000000-0000-0000-0000-0000000000a1'::uuid,
+  'inventory_movements: la bitácora conserva quién registró el movimiento');
 
 select * from finish();
 

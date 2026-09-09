@@ -147,6 +147,79 @@ test.describe("captura sin conexión", () => {
     await expect(page.getByText(/conflicto/i)).toHaveCount(0);
   });
 
+  /**
+   * KAM-18 · El consumo de inventario entra en la misma cola.
+   *
+   * Escenarios del delta `inventory`: «Consumo sin red», «La hora es la del
+   * taller» y «Reintento sin duplicar». V16 declara que sus seis destinos
+   * funcionan sin conexión, y *Consumo* es uno de ellos: activarlo escribiendo
+   * directo dejaría la retícula con dos clases de botón indistinguibles.
+   */
+  test("un consumo sin red se encola, conserva su hora y no se duplica", async ({
+    page,
+    context,
+  }) => {
+    // Mismo motivo que arriba: el vaciado puede tardar un barrido completo.
+    test.setTimeout(120_000);
+    await login(page, GEEKO_OWNER);
+
+    // Un insumo propio: el saldo es justo lo que esta prueba mide, y los
+    // sembrados los mueven otras pruebas en paralelo.
+    const nombre = `Insumo sin red ${Date.now()}`;
+    await page.goto("/catalog?kind=supply");
+    await page.getByRole("button", { name: "Nuevo ítem" }).click();
+    const form = page.getByTestId("item-form");
+    await form.getByLabel("Nombre").fill(nombre);
+    await form.getByRole("button", { name: "Crear ítem" }).click();
+
+    const fila = page.getByTestId("catalog-row").filter({ hasText: nombre });
+    await expect(fila).toHaveCount(1);
+    await fila.getByRole("button", { name: "Acciones" }).click();
+    await page.getByRole("menuitem", { name: "Ver" }).click();
+    await page.waitForURL(/\/catalog\/[0-9a-f-]{36}$/);
+    const detalle = page.url();
+
+    // Con red: un conteo deja el saldo en 30, para tener de dónde consumir.
+    await page.getByRole("button", { name: "Ajuste por conteo" }).click();
+    await page.getByLabel("Cantidad contada").fill("30");
+    await page.getByRole("button", { name: "Guardar conteo" }).click();
+    await expect(page.getByTestId("balance-value")).toContainText("30");
+
+    await context.setOffline(true);
+
+    // ── Registrar sin red ─────────────────────────────────────────────────
+    await page.getByRole("button", { name: "Registrar consumo" }).click();
+    await page.getByLabel("Cantidad").fill("6");
+    await page.getByRole("button", { name: "Registrar" }).click();
+
+    // Encolado cuenta como registrado: el diálogo se cierra y no hay error.
+    await expect(page.getByTestId("consumption-form")).toHaveCount(0);
+    await expect(page.getByText("No se pudo registrar")).toHaveCount(0);
+
+    await expect(indicador(page)).toBeVisible();
+    await expect(cuenta(page)).toHaveText("1");
+
+    const encolado = await leerCola(page);
+    expect(encolado).toHaveLength(1);
+    expect(encolado[0].operation).toBe("inventory.consumption");
+
+    // ── Reconectar ────────────────────────────────────────────────────────
+    await context.setOffline(false);
+    await expect(indicador(page)).toBeHidden({ timeout: 60_000 });
+
+    // ── Un solo movimiento, y el saldo que corresponde ────────────────────
+    await page.goto(detalle);
+    await expect(page.getByTestId("balance-value")).toContainText("24");
+    await expect(
+      page.getByTestId("item-movements").getByText("Consumo", { exact: true }),
+    ).toHaveCount(1);
+
+    // ── Con la hora del taller, no la de la sincronización ────────────────
+    await expect(
+      page.getByText(horaEsperada(encolado[0].occurredAt)).first(),
+    ).toBeVisible();
+  });
+
   test("tres pedidos sin red llegan los tres, y el indicador baja de tres a cero", async ({
     page,
     context,

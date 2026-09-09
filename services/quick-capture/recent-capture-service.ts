@@ -30,10 +30,19 @@ type ExpenseRow = {
  * aquí: RLS ya recorta —el ayudante no lee `expenses` y recibe cero filas—,
  * y duplicar la regla en el servicio sería una segunda verdad que mantener.
  *
- * Dos consultas acotadas en vez de una vista: con dos orígenes el
- * sobre-consumo es de cinco filas y la mezcla es pura y probable, y este
- * cambio no toca el esquema (design D3, que fija cuándo deja de bastar).
+ * Tres consultas acotadas en vez de una vista: con tres orígenes el
+ * sobre-consumo sigue siendo de cinco filas por origen y la mezcla es pura y
+ * probable, y esto no toca el esquema (design D3 de KAM-13, que fija cuándo
+ * deja de bastar).
  */
+type ConsumptionRow = {
+  id: string;
+  item_id: string;
+  quantity: number | string;
+  note: string | null;
+  occurred_at: string;
+};
+
 export class RecentCaptureService {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -51,7 +60,7 @@ export class RecentCaptureService {
     // equivocado (ver `dayBoundsInTimezone`).
     const { from, to } = dayBoundsInTimezone(today, timezone);
 
-    const [orders, expenses] = await Promise.all([
+    const [orders, expenses, consumptions] = await Promise.all([
       this.supabase
         .from("orders")
         .select("id, kind, code, business_line_id, occurred_at")
@@ -70,11 +79,24 @@ export class RecentCaptureService {
         .lte("occurred_at", to)
         .order("occurred_at", { ascending: false })
         .limit(RECENT_LIMIT),
+      // Los consumos del día (KAM-18). Solo los `manual`: las entradas de
+      // compra ya aparecen como su compra, y un ajuste por conteo no es una
+      // captura del día sino una corrección del saldo.
+      this.supabase
+        .from("inventory_movements")
+        .select("id, item_id, quantity, note, occurred_at")
+        .eq("organization_id", organizationId)
+        .eq("source_type", "manual")
+        .gte("occurred_at", from)
+        .lte("occurred_at", to)
+        .order("occurred_at", { ascending: false })
+        .limit(RECENT_LIMIT),
     ]);
 
     return [
       ...((orders.data ?? []) as OrderRow[]).map(toOrderCapture),
       ...((expenses.data ?? []) as ExpenseRow[]).map(toExpenseCapture),
+      ...((consumptions.data ?? []) as ConsumptionRow[]).map(toConsumptionCapture),
     ];
   }
 }
@@ -91,6 +113,29 @@ function toOrderCapture(row: OrderRow): RecentCapture {
     occurredAt: row.occurred_at,
     // Una venta directa no aparece en el tablero, pero sí tiene detalle.
     href: `/orders/${row.id}`,
+    pending: false,
+  };
+}
+
+/**
+ * Un consumo registrado hoy.
+ *
+ * `lineId` va nulo a propósito: el movimiento no tiene línea propia —la tiene
+ * el ítem—, y adivinarla aquí obligaría a una consulta más por fila. La lista
+ * de V16 no filtra por línea, así que no hace falta.
+ *
+ * Lleva al detalle del insumo, que es donde están su saldo y sus movimientos.
+ */
+function toConsumptionCapture(row: ConsumptionRow): RecentCapture {
+  const quantity = typeof row.quantity === "number" ? row.quantity : Number(row.quantity);
+
+  return {
+    kind: "consumption",
+    id: row.id,
+    label: row.note ? `Consumo · ${row.note}` : `Consumo de ${Math.abs(quantity)}`,
+    lineId: null,
+    occurredAt: row.occurred_at,
+    href: `/catalog/${row.item_id}`,
     pending: false,
   };
 }

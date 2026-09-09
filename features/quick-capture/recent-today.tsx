@@ -16,6 +16,7 @@ const KIND_LABELS: Record<CaptureKind, string> = {
   "direct-sale": "Venta rápida",
   purchase: "Compra",
   cost: "Gasto",
+  consumption: "Consumo",
 };
 
 /** La hora del hecho, en la zona de la organización. Sin fecha: es de hoy. */

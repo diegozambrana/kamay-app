@@ -413,6 +413,41 @@ insert into attachments (
    '10000000-0000-0000-0000-000000000003/expense/b0000000-0000-0000-0000-000000000004/factura-internet.jpg',
    'factura-internet.jpg', 'image/jpeg', 96512);
 
+-- ── Inventario (KAM-18) ───────────────────────────────────────────────────
+-- Las **entradas no se siembran**: las genera el trigger `record_stock_entry`
+-- al insertarse las líneas de compra de arriba. Sembrarlas a mano duplicaría
+-- cada una y escondería justo lo que hay que poder ver funcionando.
+--
+-- Estado que deja esta semilla, y por qué cada pieza:
+--
+--   Taza para sublimación  100 comprada − 40 consumida − 3 de ajuste =  57  (mínimo  12) → sano, con historial de los tres tipos
+--   Papel de transferencia                                    2 comprado  (mínimo 100) → bajo mínimo
+--   Arcilla roja                                              4 comprada  (mínimo  25) → bajo mínimo
+--   Caja de cartón                                            0           (mínimo  40) → bajo mínimo, y compartida entre líneas
+--
+-- Las 20 unidades de taza de la compra archivada `b0000000-…-07` **cuentan**:
+-- archivar una compra no toca el inventario (design D1, supuesto 3). Es el
+-- ejemplo vivo de esa regla dentro de la propia semilla.
+
+insert into inventory_movements (
+  id, organization_id, item_id, kind, quantity, source_type, source_id,
+  occurred_at, note
+) values
+  -- Consumos de una persona: siempre `manual`, aunque salgan de un pedido
+  -- (design D5). La referencia al pedido vive en la nota, no en `source_id`.
+  ('c3000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003',
+   '90000000-0000-0000-0000-000000000001', 'out', -24, 'manual', null,
+   now() - interval '20 days', 'Pedido #1'),
+  ('c3000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000003',
+   '90000000-0000-0000-0000-000000000001', 'out', -16, 'manual', null,
+   now() - interval '9 days', 'Feria de agosto'),
+
+  -- Ajuste por conteo: se contaron 57 donde el saldo decía 60. Sin
+  -- justificación, que es justamente el punto (criterio nº 4 del backlog).
+  ('c3000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003',
+   '90000000-0000-0000-0000-000000000001', 'adjustment', -3, 'count', null,
+   now() - interval '2 days', null);
+
 -- ── Cobros y pagos (KAM-10) ───────────────────────────────────────────────
 -- Los casos que el bloque de cobros, la señal de pago de la tarjeta y los
 -- indicadores necesitan para tener materia; `seed_geeko.test.sql` vigila que

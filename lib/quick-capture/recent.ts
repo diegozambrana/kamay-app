@@ -2,7 +2,12 @@ import { getOperation } from "@/lib/offline";
 import type { SyncItem } from "@/stores/sync-store";
 
 /** De qué tipo es el registro, para rotularlo y para llevarlo a su detalle. */
-export type CaptureKind = "order" | "direct-sale" | "purchase" | "cost";
+export type CaptureKind =
+  | "order"
+  | "direct-sale"
+  | "purchase"
+  | "cost"
+  | "consumption";
 
 /**
  * Una fila de "Registrado hoy", venga del servidor o de la cola.
@@ -120,6 +125,10 @@ export function dayOfInstant(iso: string, timeZone: string): string {
 const PENDING_KINDS: Record<string, CaptureKind> = {
   "order.create": "order",
   "directSale.create": "direct-sale",
+  // KAM-18. El ajuste por conteo no entra: la lista es de *capturas* —lo que
+  // se acaba de registrar—, y un ajuste es una corrección del saldo, no un
+  // hecho del día que confirmar.
+  "inventory.consumption": "consumption",
 };
 
 /**

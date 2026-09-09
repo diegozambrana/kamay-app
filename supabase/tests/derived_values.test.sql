@@ -10,7 +10,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(13);
+select plan(19);
 
 -- ── Semilla propia ────────────────────────────────────────────────────────
 
@@ -147,6 +147,74 @@ select is(
 select is(
   (select count(*)::int from expense_totals where expense_id = '00000000-0000-0000-0000-000000000da1'),
   0, 'expense_totals: el egreso archivado desaparece de la vista');
+
+-- ── `item_balances` · KAM-18 ──────────────────────────────────────────────
+-- Convención nº 4: el saldo no existe como dato, existe como suma. Estas
+-- pruebas comprueban la aritmética de la vista; quién puede verla es de
+-- inventory_access.test.sql.
+--
+-- Se añade un ítem propio para no depender de las entradas que el trigger de
+-- KAM-18 ya generó desde las compras de arriba.
+
+insert into items (id, organization_id, kind, name, min_stock) values
+  ('00000000-0000-0000-0000-000000000db1', '00000000-0000-0000-0000-0000000000d9', 'supply', 'Filamento', 20),
+  ('00000000-0000-0000-0000-000000000db2', '00000000-0000-0000-0000-0000000000d9', 'product', 'Llavero 3D', null);
+
+insert into inventory_movements (organization_id, item_id, kind, quantity, source_type) values
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000db1', 'in',        100, 'manual'),
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000db1', 'out',       -30, 'manual'),
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000db1', 'adjustment', -5, 'count');
+
+-- ── Scenario: El saldo coincide con la suma manual ────────────────────────
+
+select is(
+  (select balance from item_balances where item_id = '00000000-0000-0000-0000-000000000db1'),
+  65::numeric,
+  'item_balances: 100 de entrada, 30 de consumo y −5 de ajuste dan 65');
+
+select is(
+  (select balance from item_balances where item_id = '00000000-0000-0000-0000-000000000db1'),
+  (select coalesce(sum(quantity), 0) from inventory_movements
+   where item_id = '00000000-0000-0000-0000-000000000db1'),
+  'item_balances: el saldo derivado es exactamente la suma de sus movimientos');
+
+-- El mínimo se evalúa en la propia vista, para que las tres superficies que lo
+-- leen (panel, catálogo y V11) no puedan discrepar.
+select ok(
+  (select not below_min from item_balances where item_id = '00000000-0000-0000-0000-000000000db1'),
+  'item_balances: 65 sobre un mínimo de 20 no está bajo mínimo');
+
+-- ── Scenario: Insumo sin movimientos ──────────────────────────────────────
+-- El `left join` de la vista es lo que hace que aparezca con cero en vez de
+-- desaparecer: un insumo ausente del listado se lee como «no falta nada».
+
+select is(
+  (select balance from item_balances where item_id = '00000000-0000-0000-0000-000000000d97'),
+  0::numeric,
+  'item_balances: un insumo sin movimientos tiene saldo cero, y aparece');
+
+-- ── Scenario: Solo los insumos tienen saldo ───────────────────────────────
+
+select is_empty(
+  $$ select item_id from item_balances
+     where item_id = '00000000-0000-0000-0000-000000000db2' $$,
+  'item_balances: un producto no aparece en la vista de saldos');
+
+-- ── Scenario: Ninguna columna guarda el saldo ─────────────────────────────
+-- La misma comprobación que `catalog.test.sql` hace sobre `items`, extendida a
+-- las tres tablas que podrían tentar a almacenarlo. `min_stock` es canónico y
+-- no es derivado: lo fija la persona dueña.
+
+select is_empty(
+  $$ select table_name || '.' || column_name
+     from information_schema.columns
+     where table_schema = 'public'
+       and table_name in ('items', 'item_variants', 'inventory_movements')
+       and column_name <> 'min_stock'
+       and (column_name like '%balance%' or column_name like '%stock%'
+         or column_name like '%saldo%'  or column_name like '%avg_cost%'
+         or column_name like '%last_cost%' or column_name like '%margin%') $$,
+  'catálogo e inventario: ninguna columna almacena saldo, último costo ni margen');
 
 select * from finish();
 

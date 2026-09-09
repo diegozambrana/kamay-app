@@ -2,8 +2,8 @@ import type { CashFlow, LineCashFlow } from "@/lib/dashboard/indicators";
 
 import { IndicatorCards } from "./indicator-cards";
 import { LineComparison } from "./line-comparison";
+import { LowStockCard, type LowStockItem } from "./low-stock-card";
 import { PendingTasksCard, type PendingCounts } from "./pending-tasks-card";
-import { LOW_STOCK_PLACEHOLDER, PlaceholderCard } from "./placeholder-card";
 import { RecentActivity, type ActivityItem } from "./recent-activity";
 import { UpcomingDeliveries, type DeliveryItem } from "./upcoming-deliveries";
 
@@ -14,6 +14,7 @@ export type OwnerDashboardProps = {
   deliveries: readonly DeliveryItem[];
   activity: readonly ActivityItem[];
   pending: PendingCounts;
+  lowStock: readonly LowStockItem[];
   activeLineId: string | null;
   monthLabel: string;
   today: string;
@@ -40,6 +41,7 @@ export function OwnerDashboard({
   deliveries,
   activity,
   pending,
+  lowStock,
   activeLineId,
   monthLabel,
   today,
@@ -67,7 +69,7 @@ export function OwnerDashboard({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <PendingTasksCard counts={pending} />
-          <PlaceholderCard {...LOW_STOCK_PLACEHOLDER} />
+          <LowStockCard items={lowStock} />
         </div>
       </div>
     </div>

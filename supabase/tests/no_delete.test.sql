@@ -82,12 +82,17 @@ select throws_ok(
   '42501', null,
   'inventory_movements: UPDATE revocado (KAM-18)');
 
--- `asset_details` sigue el criterio general —política ausente, privilegio
--- concedido—: el DELETE se ejecuta y no alcanza ninguna fila. La máquina se
--- archiva archivando su ítem, nunca se borra (KAM-19).
-select lives_ok(
+-- `asset_details` sigue el criterio de `payments`: el privilegio revocado, no
+-- solo la política ausente, así que el borrado ni siquiera se ejecuta. La
+-- máquina se archiva archivando su ítem, nunca se borra (KAM-19).
+--
+-- Con solo la política ausente esta prueba dependía de si el arranque de
+-- Supabase había repartido `DELETE` sobre el esquema `public`, y eso cambia
+-- con la versión de la CLI: pasaba en local y fallaba en CI.
+select throws_ok(
   $$ delete from asset_details $$,
-  'asset_details: DELETE del dueño no falla, pero no tiene política (KAM-19)');
+  '42501', null,
+  'asset_details: DELETE revocado (KAM-19)');
 
 select pg_temp.logout();
 

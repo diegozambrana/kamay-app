@@ -12,6 +12,7 @@ import {
 import { todayInTimezone } from "@/lib/orders/overdue";
 import { ContactService } from "@/services/catalog/contact-service";
 import { ItemService } from "@/services/catalog/item-service";
+import { AssetService } from "@/services/assets/asset-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { ItemLastCostService } from "@/services/expenses/item-last-cost-service";
 
@@ -41,7 +42,9 @@ export default async function NewPurchasePage() {
     new ContactService(context.supabase).list(context.organizationId, {
       role: "supplier",
     }),
-    new ItemService(context.supabase).listSuppliesWithVariants(context.organizationId),
+    // Insumos y activos: comprar una máquina es un egreso como cualquier
+    // otro, y es la compra desde la que se declara el activo (KAM-19).
+    new ItemService(context.supabase).listPurchasableWithVariants(context.organizationId),
     new ItemLastCostService(context.supabase).mapFor(context.organizationId),
     // Con archivados: el proveedor de la última compra puede estar archivado
     // y su nombre sigue siendo la pista correcta.
@@ -62,6 +65,24 @@ export default async function NewPurchasePage() {
     };
   }
 
+  /**
+   * Los activos del catálogo que todavía no tienen costo ni fecha declarados:
+   * son los que la compra puede ofrecer declarar (KAM-19). Se resuelve aquí y
+   * no en el formulario, que no consulta; a `asset_recovery` solo llega la
+   * persona dueña, así que para el ayudante el mapa queda vacío y no se le
+   * ofrece nada.
+   */
+  const declared = new Set(
+    (await new AssetService(context.supabase).list(context.organizationId)).map(
+      (asset) => asset.itemId,
+    ),
+  );
+  const undeclaredAssets = Object.fromEntries(
+    supplies
+      .filter((item) => item.kind === "asset" && !declared.has(item.id))
+      .map((item) => [item.id, item.name]),
+  );
+
   return (
     <PurchaseForm
       // Con "Todas" activa no se preselecciona ninguna: una compra es de una
@@ -73,6 +94,7 @@ export default async function NewPurchasePage() {
       hints={hints}
       today={todayInTimezone(context.membership.organization.timezone)}
       timezone={context.membership.organization.timezone}
+      undeclaredAssets={undeclaredAssets}
     />
   );
 }

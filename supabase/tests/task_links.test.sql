@@ -9,7 +9,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(8);
+select plan(10);
 
 create function pg_temp.login(uid uuid) returns void
 language plpgsql as $$
@@ -59,6 +59,15 @@ insert into orders (id, organization_id, business_line_id, kind, contact_id, sta
   ('00000000-0000-0000-0000-00000015f5a1', '00000000-0000-0000-0000-0000000015fa',
    '00000000-0000-0000-0000-00000015f2a1', 'order',
    '00000000-0000-0000-0000-00000015f4a1', '00000000-0000-0000-0000-00000015f3a3');
+
+-- KAM-19: un ítem de tipo activo con sus datos, para el destino `asset`.
+insert into items (id, organization_id, business_line_id, kind, name) values
+  ('00000000-0000-0000-0000-00000015f7a1', '00000000-0000-0000-0000-0000000015fa',
+   '00000000-0000-0000-0000-00000015f2a1', 'asset', 'Impresora 3D');
+
+insert into asset_details (item_id, organization_id, acquisition_cost, acquired_on) values
+  ('00000000-0000-0000-0000-00000015f7a1', '00000000-0000-0000-0000-0000000015fa',
+   7000, date '2026-01-15');
 
 insert into tasks (id, organization_id, business_line_id, title) values
   ('00000000-0000-0000-0000-00000015f6a1', '00000000-0000-0000-0000-0000000015fa',
@@ -141,6 +150,25 @@ select is(
   1, 'task_links: la persona dueña sí lo ve');
 
 select pg_temp.logout();
+
+-- ── Scenario: Vínculo a un activo existente / inexistente (KAM-19) ───────
+-- Hasta KAM-19 el trigger rechazaba todo vínculo `asset`: no había a qué
+-- apuntar. Ahora valida contra `asset_details`. La interfaz que crea estos
+-- vínculos sigue siendo de KAM-21; lo que se comprueba aquí es la validación.
+
+select lives_ok(
+  $$ insert into task_links (task_id, organization_id, entity_type, entity_id)
+     values ('00000000-0000-0000-0000-00000015f6a2',
+             '00000000-0000-0000-0000-0000000015fa', 'asset',
+             '00000000-0000-0000-0000-00000015f7a1') $$,
+  'task_links: el vínculo a un activo existente se guarda');
+
+select throws_ok(
+  $$ insert into task_links (task_id, organization_id, entity_type, entity_id)
+     values ('00000000-0000-0000-0000-00000015f6a2',
+             '00000000-0000-0000-0000-0000000015fa', 'asset',
+             '00000000-0000-0000-0000-0000000000ff') $$,
+  '23503', null, 'task_links: un activo inexistente se rechaza');
 
 select * from finish();
 rollback;

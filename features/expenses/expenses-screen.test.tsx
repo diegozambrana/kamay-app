@@ -35,6 +35,8 @@ function row(overrides: Partial<ExpenseRowView> & { id: string }): ExpenseRowVie
     paid: 0,
     occurredAt: "2026-09-02T14:00:00.000Z",
     note: null,
+    assetId: null,
+    assetExpenseRole: null,
     archivedAt: null,
     total: 0,
     lineName: "Sublimación",

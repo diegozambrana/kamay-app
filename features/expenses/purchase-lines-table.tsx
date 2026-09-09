@@ -264,12 +264,12 @@ function SupplyPicker({
   return (
     <div className="flex flex-col gap-2" data-testid="supply-picker">
       <Field>
-        <FieldLabel htmlFor="supply-picker-input">Agregar insumo</FieldLabel>
+        <FieldLabel htmlFor="supply-picker-input">Agregar insumo o activo</FieldLabel>
         <Input
           id="supply-picker-input"
           value={term}
           disabled={disabled}
-          placeholder="Buscar un insumo"
+          placeholder="Buscar un insumo o una máquina"
           onChange={(event) => {
             setTerm(event.target.value);
             setExpanded(null);
@@ -292,7 +292,16 @@ function SupplyPicker({
                     className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-muted"
                     onClick={() => choose(item)}
                   >
-                    <span>{item.name}</span>
+                    <span className="flex items-center gap-2">
+                      {item.name}
+                      {/* Comprar una máquina no es reponer material: el tipo se
+                          dice, para que no se confunda con un insumo. */}
+                      {item.kind === "asset" && (
+                        <Badge variant="outline" data-testid="option-asset">
+                          Activo
+                        </Badge>
+                      )}
+                    </span>
                     {item.variants.length > 0 && (
                       <Badge variant="secondary">{item.variants.length} variantes</Badge>
                     )}

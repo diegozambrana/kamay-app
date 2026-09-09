@@ -1,6 +1,10 @@
 -- KAM-04 · org-configuration: la semilla deja Geeko Store lista para trabajar.
 -- Escenarios del delta spec: "Geeko Store is seeded with its real lines and
 -- channels" y "Existing test organizations survive the seed".
+-- KAM-19 añade "Semilla de activos de Geeko Store" → "Semilla presente tras el
+-- reinicio" y "Las barras no salen todas iguales"; y de `catalog-directory`,
+-- "Semilla de catálogo y directorio de Geeko Store" → "Activos de la semilla
+-- con sus datos".
 --
 -- A diferencia de las demás suites, esta no crea sus propios datos: lee los que
 -- `supabase db reset` dejó a partir de supabase/seed.sql.
@@ -8,7 +12,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(25);
+select plan(31);
 
 -- ── Scenario: Reset leaves Geeko Store ready ──────────────────────────────
 
@@ -134,7 +138,9 @@ select is(
   (select count(*)::int from expenses
     where id between 'b0000000-0000-0000-0000-000000000001'
                  and 'b0000000-0000-0000-0000-000000000099'),
-  7, 'semilla: Geeko Store tiene sus siete egresos');
+  -- Siete de KAM-09 más los dos del activo (la compra de la prensa y su
+  -- mantenimiento), que KAM-19 añadió.
+  9, 'semilla: Geeko Store tiene sus nueve egresos');
 
 select is(
   (select count(*)::int from expense_items
@@ -208,6 +214,70 @@ select is(
     where expense_id = 'b0000000-0000-0000-0000-000000000004'),
   70::numeric,
   'semilla: el gasto de internet está pagado en parte → saldo por pagar 70');
+
+-- ── Scenario: Semilla presente tras el reinicio (activos, KAM-19) ─────────
+-- La vista `asset_recovery` se recorta al dueño, así que estas lecturas van
+-- sobre las tablas: lo que se comprueba aquí es que la semilla está, no quién
+-- la puede leer (eso es `asset_access`).
+
+-- Acotado a los ids de la semilla: la base local se comparte con las pruebas
+-- de extremo a extremo, y un `count(*)` de toda la organización contaría los
+-- activos que aquellas hayan dejado.
+select is(
+  (select count(*) from asset_details
+    where item_id in ('90000000-0000-0000-0000-000000000021',
+                      '90000000-0000-0000-0000-000000000022')),
+  2::bigint,
+  'semilla: los dos activos de Geeko Store tienen costo y fecha declarados');
+
+select is(
+  (select count(distinct i.business_line_id) from asset_details a
+     join items i on i.id = a.item_id
+    where a.item_id in ('90000000-0000-0000-0000-000000000021',
+                        '90000000-0000-0000-0000-000000000022')),
+  2::bigint,
+  'semilla: están en líneas distintas, para poder compararlos');
+
+select ok(
+  exists (select 1 from expenses
+           where asset_id = '90000000-0000-0000-0000-000000000021'
+             and asset_expense_role = 'acquisition'),
+  'semilla: la prensa tiene el egreso de su compra vinculado como adquisición');
+
+select is(
+  (select sum(et.total) from expenses e
+     join expense_totals et on et.expense_id = e.id
+    where e.asset_id = '90000000-0000-0000-0000-000000000021'
+      and e.asset_expense_role = 'maintenance'),
+  120::numeric,
+  'semilla: la prensa tiene 120 de mantenimiento vinculado → costo total 1020');
+
+-- ── Scenario: Las barras no salen todas iguales ───────────────────────────
+-- Una avanzada y una en cero: los dos estados que hay que poder ver
+-- funcionando. El margen se compone aquí igual que en `asset_recovery` — la
+-- vista no es legible como `postgres`, que no es dueño de nada.
+
+select cmp_ok(
+  (select coalesce(sum(pay.amount), 0) from payments pay
+     join orders o on o.id = pay.order_id
+    where o.business_line_id = '30000000-0000-0000-0000-000000000001'
+      and pay.direction = 'in'
+      and pay.archived_at is null
+      and o.archived_at is null
+      and pay.occurred_at::date >= (select acquired_on from asset_details
+                                     where item_id = '90000000-0000-0000-0000-000000000021')),
+  '>', 0::numeric,
+  'semilla: la prensa acumula margen desde su compra — su barra no está en 0 %');
+
+select is(
+  (select coalesce(sum(pay.amount), 0) from payments pay
+     join orders o on o.id = pay.order_id
+    where o.business_line_id = '30000000-0000-0000-0000-000000000002'
+      and pay.direction = 'in'
+      and pay.archived_at is null
+      and o.archived_at is null),
+  0::numeric,
+  'semilla: la impresora está en una línea sin cobros — su barra muestra 0 %');
 
 select * from finish();
 

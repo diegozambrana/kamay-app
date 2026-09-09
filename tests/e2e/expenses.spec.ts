@@ -130,7 +130,7 @@ test.describe("egresos (V7, V8, V9)", () => {
 
     // Dos insumos con cantidad y precio. La taza ya se compró antes (semilla):
     // muestra su pista y el precio nace vacío.
-    await page.getByLabel("Agregar insumo").fill("Taza");
+    await page.getByLabel("Agregar insumo o activo").fill("Taza");
     await page.getByRole("button", { name: /Taza para sublimación/ }).click();
     const taza = page.getByTestId("purchase-line-row").nth(0);
     await expect(taza.getByTestId("last-cost-hint")).toContainText("Último: 9.20");
@@ -138,7 +138,7 @@ test.describe("egresos (V7, V8, V9)", () => {
     await taza.getByLabel("Cantidad").fill("3");
     await taza.getByLabel("Precio unitario").fill("9.20");
 
-    await page.getByLabel("Agregar insumo").fill("Papel");
+    await page.getByLabel("Agregar insumo o activo").fill("Papel");
     await page.getByRole("button", { name: /Papel de transferencia/ }).click();
     const papel = page.getByTestId("purchase-line-row").nth(1);
     await papel.getByLabel("Cantidad").fill("1");
@@ -196,7 +196,7 @@ test.describe("egresos (V7, V8, V9)", () => {
     await login(page, GEEKO_OWNER);
     await page.goto("/expenses/purchases/new");
 
-    await page.getByLabel("Agregar insumo").fill("Arcilla");
+    await page.getByLabel("Agregar insumo o activo").fill("Arcilla");
     await page.getByRole("button", { name: /Arcilla roja/ }).click();
     await page.getByTestId("purchase-line-row").getByLabel("Precio unitario").fill("38");
     await page.getByTestId("save-purchase").click();

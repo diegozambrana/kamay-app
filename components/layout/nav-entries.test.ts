@@ -205,3 +205,26 @@ describe("la entrada Tareas apunta a la pantalla de cada superficie", () => {
     expect(barHrefOf(pedidos)).toBe("/orders");
   });
 });
+
+/**
+ * Escenarios del delta spec `assets`, requisito "Activos solo en el menú del
+ * dueño y redirección por dirección directa": "El menú del ayudante no la
+ * ofrece" y "El menú del dueño la ofrece en ambas superficies".
+ */
+describe("la entrada Activos (V12)", () => {
+  it("no aparece en el menú del ayudante, en ninguna superficie", () => {
+    expect(navEntriesFor("assistant").map((entry) => entry.href)).not.toContain("/assets");
+    expect(moreEntriesFor("assistant").map((entry) => entry.href)).not.toContain("/assets");
+  });
+
+  it("aparece en el menú lateral del dueño y en su panel «Más»", () => {
+    // Las dos superficies salen de la misma declaración: no pueden ofrecer
+    // cosas distintas ni desincronizarse.
+    expect(navEntriesFor("owner").map((entry) => entry.href)).toContain("/assets");
+    expect(moreEntriesFor("owner").map((entry) => entry.href)).toContain("/assets");
+  });
+
+  it("no ocupa ranura en la barra inferior: siguen siendo tres", () => {
+    expect(bottomBarEntriesFor("owner")).toHaveLength(3);
+  });
+});

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -219,5 +219,25 @@ describe("CatalogScreen", () => {
     ).toBeInTheDocument();
     // Editar un archivado exige desarchivarlo primero.
     expect(screen.queryByRole("menuitem", { name: "Editar" })).toBeNull();
+  });
+});
+
+/**
+ * Escenario del delta spec `catalog-directory`, requisito "Un ítem declara su
+ * tipo, su unidad y su alcance de línea": "Un activo sin datos declarados
+ * sigue siendo un ítem válido".
+ */
+describe("CatalogScreen · un activo sin datos declarados", () => {
+  it("se lista con normalidad, sin marca de incompleto", () => {
+    renderScreen([
+      item({ kind: "asset", name: "Impresora 3D", salePrice: null, unitId: null }),
+    ]);
+
+    const row = screen.getByText("Impresora 3D").closest("tr")!;
+    expect(row).toBeInTheDocument();
+    // El costo y la fecha son datos de la capacidad de activos y llegan
+    // aparte: su ausencia no descalifica al ítem en el catálogo.
+    expect(row).not.toHaveAttribute("data-incomplete");
+    expect(within(row).queryByText(/incompleto/i)).toBeNull();
   });
 });

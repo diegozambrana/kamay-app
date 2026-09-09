@@ -4,7 +4,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(8);
+select plan(9);
 
 create function pg_temp.login(uid uuid) returns void
 language plpgsql as $$
@@ -81,6 +81,13 @@ select throws_ok(
   $$ update inventory_movements set quantity = 1 $$,
   '42501', null,
   'inventory_movements: UPDATE revocado (KAM-18)');
+
+-- `asset_details` sigue el criterio general —política ausente, privilegio
+-- concedido—: el DELETE se ejecuta y no alcanza ninguna fila. La máquina se
+-- archiva archivando su ítem, nunca se borra (KAM-19).
+select lives_ok(
+  $$ delete from asset_details $$,
+  'asset_details: DELETE del dueño no falla, pero no tiene política (KAM-19)');
 
 select pg_temp.logout();
 

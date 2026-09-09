@@ -384,6 +384,15 @@ export type Expense = {
   amount: number | null;
   occurredAt: string;
   note: string | null;
+  /** Activo al que pertenece este egreso, si pertenece a alguno (KAM-19). */
+  assetId: string | null;
+  /**
+   * Qué hace este dinero por ese activo: `acquisition` es el egreso con el que
+   * se compró —su importe ya está representado por el costo declarado y no
+   * vuelve a sumar—, `maintenance` es lo gastado después en mantenerlo, que sí
+   * sube el costo total. Se declara junto a `assetId` o no se declara.
+   */
+  assetExpenseRole: AssetExpenseRole | null;
   archivedAt: string | null;
 };
 
@@ -543,4 +552,46 @@ export type ItemBalance = {
   balance: number;
   minStock: number | null;
   belowMin: boolean;
+};
+
+// ── Activos (KAM-19) ────────────────────────────────────────────────────────
+
+export const ASSET_EXPENSE_ROLES = ["acquisition", "maintenance"] as const;
+
+export type AssetExpenseRole = (typeof ASSET_EXPENSE_ROLES)[number];
+
+/**
+ * Los datos propios de un activo: un ítem de tipo `asset` con lo que costó y
+ * cuándo se compró. No lleva archivado propio — archivar la máquina es
+ * archivar su ítem — ni ninguna cifra derivada.
+ */
+export type AssetDetails = {
+  itemId: string;
+  organizationId: string;
+  /** Dato declarado, no copiado del egreso: una compra puede traer varias cosas. */
+  acquisitionCost: number;
+  acquiredOn: string;
+  supplierId: string | null;
+  notes: string | null;
+};
+
+/**
+ * Un activo con sus ingredientes de recuperación, tal como los expone
+ * `asset_recovery`. El porcentaje no viene de aquí: lo calcula
+ * `lib/assets/recovery.ts`, que es donde vive la fórmula (design D5).
+ */
+export type AssetRecovery = {
+  itemId: string;
+  organizationId: string;
+  /** `null` = compartido entre líneas: su recuperación no es atribuible. */
+  businessLineId: string | null;
+  name: string;
+  acquiredOn: string;
+  acquisitionCost: number;
+  /** Suma de los egresos de mantenimiento vigentes del activo. */
+  maintenanceCost: number;
+  /** Costo declarado más mantenimiento. Es el denominador de la barra. */
+  totalCost: number;
+  /** Margen de caja de su línea desde `acquiredOn`. Puede ser negativo. */
+  lineMarginSince: number;
 };

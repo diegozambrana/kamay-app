@@ -47,6 +47,7 @@ const SUBJECTS: Record<string, string> = {
   organizations: "la organización",
   memberships: "la persona del equipo",
   attachments: "el adjunto",
+  asset_details: "el activo",
 };
 
 /**

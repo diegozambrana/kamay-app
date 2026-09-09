@@ -1,5 +1,6 @@
 import {
   ClipboardListIcon,
+  FactoryIcon,
   HomeIcon,
   LayoutDashboardIcon,
   ListChecksIcon,
@@ -55,9 +56,10 @@ export type NavEntry = {
 /**
  * Entradas del menú principal (mapa de navegación §4.1). Cada tarea añade las
  * suyas; hoy existen el registro rápido, los pedidos, las tareas, el panel,
- * los egresos, el catálogo, los contactos y la configuración. Pedidos,
- * catálogo y contactos son de la navegación base: ambos roles trabajan con
- * ellos (matriz de acceso §16); egresos y configuración son del dueño.
+ * los egresos, el catálogo, los contactos, los activos y la configuración.
+ * Pedidos, catálogo y contactos son de la navegación base: ambos roles
+ * trabajan con ellos (matriz de acceso §16); egresos, activos y configuración
+ * son del dueño.
  *
  * El orden es el del menú lateral de escritorio. En el celular manda el campo
  * `mobile`, y las tres entradas `bar` van en el orden en que aparecen aquí.
@@ -122,6 +124,17 @@ export const NAV_ENTRIES: NavEntry[] = [
     label: "Contactos",
     icon: UsersIcon,
     roles: ["owner", "assistant"],
+    mobile: "more",
+  },
+  {
+    // Grupo "Base" del mapa §4.1, junto a Catálogo y Contactos, pero solo del
+    // dueño: `asset_details` está *sin acceso* para el ayudante (§16), así que
+    // la entrada no aparece en su menú — ocultarla es mejor que deshabilitarla
+    // (§4.4). En el celular vive bajo "Más", que es donde §4.2 la lista.
+    href: "/assets",
+    label: "Activos",
+    icon: FactoryIcon,
+    roles: ["owner"],
     mobile: "more",
   },
   {

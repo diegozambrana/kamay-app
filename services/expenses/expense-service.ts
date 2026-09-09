@@ -5,7 +5,7 @@ import type {
   PurchaseFormValues,
   PurchaseLineValues,
 } from "@/lib/expenses/schema";
-import type { ActivityEntry, Expense, ExpenseKind } from "@/types";
+import type { ActivityEntry, AssetExpenseRole, Expense, ExpenseKind } from "@/types";
 
 type ExpenseRow = {
   id: string;
@@ -18,12 +18,14 @@ type ExpenseRow = {
   amount: number | string | null;
   occurred_at: string;
   note: string | null;
+  asset_id: string | null;
+  asset_expense_role: string | null;
   archived_at: string | null;
 };
 
 const COLUMNS =
   "id, organization_id, business_line_id, kind, contact_id, expense_category_id, " +
-  "order_id, amount, occurred_at, note, archived_at";
+  "order_id, amount, occurred_at, note, asset_id, asset_expense_role, archived_at";
 
 export type ExpenseFilters = {
   businessLineId?: string | null;
@@ -95,6 +97,8 @@ export class ExpenseService {
       amount: row.amount === null ? null : toNumber(row.amount),
       occurredAt: row.occurred_at,
       note: row.note,
+      assetId: row.asset_id,
+      assetExpenseRole: row.asset_expense_role as AssetExpenseRole | null,
       archivedAt: row.archived_at,
     };
   }
@@ -332,6 +336,32 @@ export class ExpenseService {
       .from("expenses")
       .update({
         archived_at: archived ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("organization_id", organizationId)
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  /**
+   * Declarar a qué activo pertenece un egreso, o deshacer ese vínculo.
+   *
+   * Un egreso pertenece a lo sumo a un activo, así que vincular a otro es
+   * reemplazar: no hay que desvincular primero. Quién puede hacerlo lo decide
+   * la RLS de `expenses` —solo la persona dueña— y que el activo sea de la
+   * misma organización lo comprueba el trigger, no esta consulta.
+   */
+  async setAsset(
+    organizationId: string,
+    id: string,
+    asset: { assetId: string; role: AssetExpenseRole } | null,
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from("expenses")
+      .update({
+        asset_id: asset?.assetId ?? null,
+        asset_expense_role: asset?.role ?? null,
         updated_at: new Date().toISOString(),
       })
       .eq("organization_id", organizationId)

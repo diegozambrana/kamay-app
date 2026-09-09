@@ -1,4 +1,5 @@
 import {
+  ChartColumnIcon,
   ClipboardListIcon,
   FactoryIcon,
   HomeIcon,
@@ -56,7 +57,8 @@ export type NavEntry = {
 /**
  * Entradas del menú principal (mapa de navegación §4.1). Cada tarea añade las
  * suyas; hoy existen el registro rápido, los pedidos, las tareas, el panel,
- * los egresos, el catálogo, los contactos, los activos y la configuración.
+ * los egresos, los reportes, el catálogo, los contactos, los activos y la
+ * configuración.
  * Pedidos, catálogo y contactos son de la navegación base: ambos roles
  * trabajan con ellos (matriz de acceso §16); egresos, activos y configuración
  * son del dueño.
@@ -109,6 +111,17 @@ export const NAV_ENTRIES: NavEntry[] = [
     href: "/expenses",
     label: "Egresos",
     icon: ReceiptIcon,
+    roles: ["owner"],
+    mobile: "more",
+  },
+  {
+    // Grupo "Dinero" del mapa §4.1, junto a Egresos: **solo el dueño**. Las
+    // seis funciones derivadas de V14 llevan su propio `is_owner()` dentro
+    // (KAM-20, design D3), así que ocultar la entrada no es la protección,
+    // es la cortesía: la protección está en la base.
+    href: "/reports",
+    label: "Reportes",
+    icon: ChartColumnIcon,
     roles: ["owner"],
     mobile: "more",
   },

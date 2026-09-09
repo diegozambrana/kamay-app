@@ -18,6 +18,10 @@ export const PROTECTED_PREFIXES = [
   "/catalog",
   "/contacts",
   "/expenses",
+  // V14 · Reportes. Solo la persona dueña, como `/expenses` y `/assets`: la
+  // guardia real la pone la página con `getOwnerContext()`, y las funciones
+  // derivadas la ponen otra vez en la base; aquí solo se exige sesión.
+  "/reports",
   // V12 · Activos. Solo la persona dueña, como `/expenses`: la guardia real la
   // pone la página con `getOwnerContext()`; aquí solo se exige sesión.
   "/assets",

@@ -489,3 +489,48 @@ test.describe("V12 · activos, fuera del alcance del ayudante", () => {
     await expect(page.getByText(/no autorizado/i)).toHaveCount(0);
   });
 });
+
+/**
+ * Escenarios del delta spec `reports`, requisito "Reportes es una página
+ * completa reservada a la persona dueña": "El ayudante no ve la entrada" y
+ * "El ayudante escribe la dirección".
+ */
+test.describe("V14 · reportes, fuera del alcance del ayudante", () => {
+  test("no aparece en su menú, en ninguna de las dos superficies", async ({
+    page,
+    isMobile,
+  }) => {
+    await login(page, GEEKO_ASSISTANT);
+
+    if (isMobile) {
+      await page.getByRole("button", { name: "Más" }).click();
+      await expect(page.getByRole("link", { name: "Reportes" })).toHaveCount(0);
+      return;
+    }
+
+    await expect(page.getByRole("link", { name: "Reportes" })).toHaveCount(0);
+  });
+
+  test("por dirección directa va a su aterrizaje, y ninguna cifra llega", async ({
+    page,
+  }) => {
+    await login(page, GEEKO_ASSISTANT);
+    await page.goto("/reports");
+
+    await page.waitForURL(/\/(auth\/login|dashboard|quick)/);
+    await expect(page.getByTestId("allocation-legend")).toHaveCount(0);
+    await expect(page.getByText(/no autorizado/i)).toHaveCount(0);
+  });
+
+  test("la exportación tampoco responde al ayudante", async ({ page }) => {
+    await login(page, GEEKO_ASSISTANT);
+
+    // La ruta de descarga lleva el mismo guardián que la página: si solo
+    // ocultáramos la entrada del menú, esta dirección sería la puerta trasera.
+    const response = await page.request.get(
+      "/reports/export?report=line-comparison&preset=this-month",
+    );
+
+    expect(response.status()).toBe(403);
+  });
+});

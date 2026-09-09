@@ -214,10 +214,25 @@ describe("ItemService.listProductsWithVariants", () => {
     const query = client.queries[0];
     expect(client.tables[0]).toBe("items");
     expect(query.has("eq", "organization_id", ORG)).toBe(true);
-    expect(query.has("eq", "kind", "product")).toBe(true);
+    // `in` y no `eq`: la consulta acepta varios tipos desde que el formulario
+    // de compra pide insumos y activos a la vez (KAM-19).
+    expect(query.has("in", "kind", ["product"])).toBe(true);
     expect(query.has("is", "archived_at", null)).toBe(true);
   });
 
+
+describe("ItemService.listPurchasableWithVariants", () => {
+  it("pide insumos y activos, nunca productos: lo que se fabrica no se compra", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+    await new ItemService(client.asSupabase()).listPurchasableWithVariants(ORG);
+
+    const query = client.queries[0];
+    expect(client.tables[0]).toBe("items");
+    expect(query.has("in", "kind", ["supply", "asset"])).toBe(true);
+    expect(query.has("eq", "organization_id", ORG)).toBe(true);
+    expect(query.has("is", "archived_at", null)).toBe(true);
+  });
+});
   it("trae las variantes incrustadas y descarta las archivadas", async () => {
     const client = new FakeClient([
       {

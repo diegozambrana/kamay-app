@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { ItemDetail } from "@/features/catalog/item-detail";
 import { getSessionContext } from "@/lib/auth/session-context";
 import { AttachmentService } from "@/services/catalog/attachment-service";
+import { AssetService } from "@/services/assets/asset-service";
+import { ContactService } from "@/services/catalog/contact-service";
 import { ItemService } from "@/services/catalog/item-service";
 import { ItemVariantService } from "@/services/catalog/item-variant-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
@@ -76,6 +78,25 @@ export default async function ItemDetailPage({
     isSupply ? lastCosts.mapFor(context.organizationId) : new Map(),
   ]);
 
+  /**
+   * Los datos de activo (KAM-19) son solo de los activos y solo del dueño:
+   * `asset_details` está *sin acceso* para el ayudante (matriz §16), así que
+   * ni se consultan ni llegan a la pantalla. El proveedor del formulario sale
+   * del directorio, que ambos roles sí leen.
+   */
+  const isOwnedAsset = item.kind === "asset" && context.membership.role === "owner";
+
+  const [assetDetails, suppliers] = await Promise.all([
+    isOwnedAsset
+      ? new AssetService(context.supabase).details(context.organizationId, item.id)
+      : null,
+    isOwnedAsset
+      ? new ContactService(context.supabase).list(context.organizationId, {
+          role: "supplier",
+        })
+      : [],
+  ]);
+
   // El bucket es privado: cada lectura se firma, y una firma que falla deja la
   // tarjeta sin imagen en vez de tumbar la página.
   const signed = await attachments.signedUrls(photoRows);
@@ -99,6 +120,8 @@ export default async function ItemDetailPage({
       hasMoreMovements={itemMovements.length === MOVEMENT_PAGE}
       prices={prices}
       lastCost={lastCostMap.get(item.id)?.lastCost ?? null}
+      assetDetails={assetDetails}
+      suppliers={suppliers.map((contact) => ({ id: contact.id, name: contact.name }))}
     />
   );
 }

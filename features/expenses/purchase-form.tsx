@@ -6,6 +6,10 @@ import { useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
 import { createPurchase } from "@/actions/expenses";
+import {
+  DeclareAssetDialog,
+  type DeclarableAsset,
+} from "@/features/assets/declare-asset-dialog";
 import { MainContainer } from "@/components/layout/main-container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -67,11 +71,18 @@ export function PurchaseForm({
   hints,
   today,
   timezone,
+  undeclaredAssets = {},
 }: {
   defaultLineId: string;
   lines: BusinessLine[];
   suppliers: Contact[];
   supplies: PickableItem[];
+  /**
+   * Nombre de cada ítem de tipo activo que aún no tiene datos declarados. Se
+   * resuelve en el servidor: el formulario no consulta, y para el ayudante
+   * llega vacío porque no lee `asset_details`.
+   */
+  undeclaredAssets?: Record<string, string>;
   /** Último precio por insumo, ya con el nombre del proveedor (design D3). */
   hints: Record<string, LastCostHint>;
   today: string;
@@ -114,6 +125,13 @@ export function PurchaseForm({
   const [date, setDate] = useState(today);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Activo que la compra recién guardada permite declarar, y el egreso que lo
+   * trajo. Se ofrece DESPUÉS de guardar (design D9): declinar no deshace nada.
+   */
+  const [declarable, setDeclarable] = useState<
+    { asset: DeclarableAsset; expenseId: string } | null
+  >(null);
 
   const businessLineId = useWatch({ control, name: "businessLineId" });
   const currentItems = useWatch({ control, name: "items" });
@@ -162,6 +180,31 @@ export function PurchaseForm({
     }
 
     reset(getValues());
+
+    /**
+     * ¿Alguna línea trajo una máquina sin declarar? Entonces se ofrece
+     * declararla, con el costo prellenado desde el importe de su línea y la
+     * fecha desde la del hecho (KAM-19). Solo la primera: declarar dos
+     * máquinas en la misma compra es raro y encadenar diálogos lo sería más.
+     */
+    const line = parsed.items.find((item) => undeclaredAssets[item.itemId]);
+    if (line) {
+      setDeclarable({
+        asset: {
+          itemId: line.itemId,
+          name: undeclaredAssets[line.itemId],
+          suggestedCost: line.quantity * line.unitPrice,
+          // El día elegido en el formulario, no el corte UTC de `occurredAt`:
+          // `acquired_on` es un día del calendario del taller, y una compra de
+          // las 21:00 en La Paz se registraría un día tarde si se cortara el
+          // instante en UTC.
+          suggestedDate: date,
+        },
+        expenseId: result.expenseId,
+      });
+      return;
+    }
+
     router.push("/expenses");
   });
 
@@ -170,6 +213,15 @@ export function PurchaseForm({
       title="Nueva compra"
       description="Proveedor y al menos un insumo con cantidad y precio."
     >
+      <DeclareAssetDialog
+        asset={declarable?.asset ?? null}
+        expenseId={declarable?.expenseId ?? ""}
+        onDone={() => {
+          setDeclarable(null);
+          router.push("/expenses");
+        }}
+      />
+
       <form data-testid="purchase-form" className="flex flex-col gap-4" onSubmit={submit}>
         {error && (
           <Alert variant="destructive" role="alert">

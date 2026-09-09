@@ -75,7 +75,7 @@ function Harness({ initial = [] }: { initial?: PurchaseEditorLine[] }) {
 
 async function addSupply(name: string) {
   const user = userEvent.setup();
-  await user.type(screen.getByLabelText("Agregar insumo"), name.slice(0, 4));
+  await user.type(screen.getByLabelText("Agregar insumo o activo"), name.slice(0, 4));
   await user.click(within(screen.getByTestId("supply-options")).getByText(name));
   return user;
 }

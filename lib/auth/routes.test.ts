@@ -136,6 +136,12 @@ describe("el destino que transporta el inicio de sesión", () => {
     expect(isProtectedPath("/settings/notifications")).toBe(true);
   });
 
+  it("los activos (V12) están protegidos, con y sin activo seleccionado", () => {
+    expect(isProtectedPath("/assets")).toBe(true);
+    expect(isProtectedPath("/assets/44444444-4444-4444-4444-444444444444")).toBe(true);
+    expect(sanitizeNextPath("/assets")).toBe("/assets");
+  });
+
   it("un destino externo se descarta", () => {
     // Sin esto, un correo con un `next` manipulado llevaría fuera tras entrar.
     expect(sanitizeNextPath("https://otro.sitio/tasks/1")).toBeNull();

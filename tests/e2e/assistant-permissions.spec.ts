@@ -456,3 +456,36 @@ test.describe.serial("tareas del ayudante por línea", () => {
     await expect(fila.getByLabel(/^Alfarería para/)).not.toBeChecked();
   });
 });
+
+/**
+ * Escenario del delta spec `assets`, requisito "Activos solo en el menú del
+ * dueño y redirección por dirección directa": "Dirección directa del ayudante"
+ * y "El menú del ayudante no la ofrece".
+ */
+test.describe("V12 · activos, fuera del alcance del ayudante", () => {
+  test("no aparece en su menú, en ninguna de las dos superficies", async ({
+    page,
+    isMobile,
+  }) => {
+    await login(page, GEEKO_ASSISTANT);
+
+    if (isMobile) {
+      await page.getByRole("button", { name: "Más" }).click();
+      await expect(page.getByRole("link", { name: "Activos" })).toHaveCount(0);
+      return;
+    }
+
+    await expect(page.getByRole("link", { name: "Activos" })).toHaveCount(0);
+  });
+
+  test("por dirección directa va a su aterrizaje, sin pantalla de acceso denegado", async ({
+    page,
+  }) => {
+    await login(page, GEEKO_ASSISTANT);
+    await page.goto("/assets");
+
+    await page.waitForURL(/\/(auth\/login|dashboard|quick)/);
+    await expect(page.getByTestId("assets-list")).toHaveCount(0);
+    await expect(page.getByText(/no autorizado/i)).toHaveCount(0);
+  });
+});

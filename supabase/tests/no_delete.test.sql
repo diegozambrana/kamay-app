@@ -4,7 +4,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(8);
+select plan(9);
 
 create function pg_temp.login(uid uuid) returns void
 language plpgsql as $$
@@ -81,6 +81,18 @@ select throws_ok(
   $$ update inventory_movements set quantity = 1 $$,
   '42501', null,
   'inventory_movements: UPDATE revocado (KAM-18)');
+
+-- `asset_details` sigue el criterio de `payments`: el privilegio revocado, no
+-- solo la política ausente, así que el borrado ni siquiera se ejecuta. La
+-- máquina se archiva archivando su ítem, nunca se borra (KAM-19).
+--
+-- Con solo la política ausente esta prueba dependía de si el arranque de
+-- Supabase había repartido `DELETE` sobre el esquema `public`, y eso cambia
+-- con la versión de la CLI: pasaba en local y fallaba en CI.
+select throws_ok(
+  $$ delete from asset_details $$,
+  '42501', null,
+  'asset_details: DELETE revocado (KAM-19)');
 
 select pg_temp.logout();
 

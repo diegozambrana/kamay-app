@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SessionContext } from "@/lib/auth/session-context";
+import { AssetService } from "@/services/assets/asset-service";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ContactService } from "@/services/catalog/contact-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
@@ -58,6 +59,17 @@ export async function loadExpenseDetail(
       expenses.history(organizationId, expense.id),
     ]);
 
+  /**
+   * Los activos vigentes de la organización, para poder vincular este egreso
+   * como mantenimiento (KAM-19). A `/expenses` solo llega la persona dueña,
+   * que es la única que lee `asset_details`: para cualquier otro la consulta
+   * devuelve cero filas y el bloque no se rinde.
+   */
+  const assets = await new AssetService(supabase).list(organizationId);
+  const linked = expense.assetId
+    ? (assets.find((asset) => asset.itemId === expense.assetId) ?? null)
+    : null;
+
   // El bucket es privado: cada lectura se firma.
   const signed = await new AttachmentService(supabase).signedUrls(receipts);
 
@@ -71,6 +83,8 @@ export async function loadExpenseDetail(
     businessLine:
       businessLines.find((line) => line.id === expense.businessLineId) ?? null,
     order: order ? { id: order.id, code: order.code } : null,
+    asset: linked ? { itemId: linked.itemId, name: linked.name } : null,
+    assetOptions: assets.map((asset) => ({ itemId: asset.itemId, name: asset.name })),
     receipts: receipts.map((receipt) => ({
       id: receipt.id,
       fileName: receipt.fileName,

@@ -33,6 +33,7 @@ import { ITEM_KIND_SINGULAR, SHARED_LINE_LABEL } from "@/lib/catalog/labels";
 import { formatDateTime } from "@/lib/format/datetime";
 import type {
   ActivityEntry,
+  AssetDetails,
   BusinessLine,
   InventoryMovement,
   Item,
@@ -42,6 +43,7 @@ import type {
   Unit,
 } from "@/types";
 
+import { AssetDetailsForm } from "@/features/assets/asset-details-form";
 import { BalanceSection } from "@/features/inventory/balance-section";
 import { MovementsSection } from "@/features/inventory/movements-section";
 import {
@@ -89,6 +91,8 @@ export function ItemDetail({
   hasMoreMovements = false,
   prices = [],
   lastCost = null,
+  assetDetails = null,
+  suppliers = [],
 }: {
   item: Item;
   variants: ItemVariant[];
@@ -106,6 +110,14 @@ export function ItemDetail({
   /** Vacío para el ayudante: RLS no le da los precios de compra. */
   prices?: PurchasePrice[];
   lastCost?: number | null;
+  /**
+   * Datos de activo del ítem (KAM-19), o `null` si aún no se han declarado.
+   * Solo llega para la persona dueña y solo si el ítem es de tipo activo:
+   * `asset_details` está *sin acceso* para el ayudante (matriz §16).
+   */
+  assetDetails?: AssetDetails | null;
+  /** Proveedores vigentes, para el formulario de datos del activo. */
+  suppliers?: { id: string; name: string }[];
   /** Zona horaria de la organización: la historia se cuenta en hora del taller. */
   timeZone: string;
 }) {
@@ -280,6 +292,30 @@ export function ItemDetail({
             hasMore={hasMoreMovements}
           />
         </>
+      )}
+
+      {/* Activos (KAM-19). El costo y la fecha que KAM-06 aplazó
+          explícitamente —"esos datos llegan con los activos"— se declaran y se
+          corrigen aquí, sin salir del catálogo. Solo para la persona dueña y
+          solo en un ítem de tipo activo: para el ayudante la sección no
+          existe, ni vacía ni rotulada. */}
+      {isOwner && item.kind === "asset" && (
+        <div data-testid="asset-details-section" className="flex flex-col gap-2">
+          <AssetDetailsForm
+            itemId={item.id}
+            acquisitionCost={assetDetails?.acquisitionCost ?? null}
+            acquiredOn={assetDetails?.acquiredOn ?? null}
+            supplierId={assetDetails?.supplierId ?? null}
+            notes={assetDetails?.notes ?? null}
+            suppliers={suppliers}
+          />
+          <Link
+            href="/assets"
+            className="self-start text-xs text-muted-foreground underline-offset-4 hover:underline"
+          >
+            Ver la recuperación de inversión de todos los activos
+          </Link>
+        </div>
       )}
 
       {/* La evolución de precios se rinde si hay algo que rendir. Para el

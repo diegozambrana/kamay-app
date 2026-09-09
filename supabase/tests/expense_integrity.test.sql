@@ -4,11 +4,16 @@
 -- sola tabla", "Líneas de compra con precio propio", "Una compra necesita al
 -- menos una línea" (operación de guardado y guardado atómico) y "Ninguna
 -- columna almacena el derivado".
+-- KAM-19 añade los escenarios de pertenencia a un activo del mismo requisito
+-- "Modelo de egreso con dos tipos en una sola tabla": "Egreso que pertenece
+-- a un activo", "Activo sin papel", "Una sola adquisición por activo",
+-- "Varios mantenimientos por activo", "El activo es de la misma
+-- organización".
 begin;
 
 set search_path to public, extensions;
 
-select plan(25);
+select plan(33);
 
 -- ── Helpers: simular usuarios autenticados ────────────────────────────────
 
@@ -56,6 +61,23 @@ insert into contacts (id, organization_id, name, is_supplier, is_customer) value
 insert into items (id, organization_id, kind, name) values
   ('00000000-0000-0000-0000-00000000094a', '00000000-0000-0000-0000-00000000009a', 'supply', 'Taza'),
   ('00000000-0000-0000-0000-00000000094b', '00000000-0000-0000-0000-00000000009a', 'supply', 'Papel');
+
+-- KAM-19: un activo propio y otro de una organización ajena, para los
+-- escenarios de pertenencia de un egreso a un activo.
+insert into items (id, organization_id, kind, name) values
+  ('00000000-0000-0000-0000-00000000094c', '00000000-0000-0000-0000-00000000009a', 'asset', 'Impresora 3D');
+
+insert into asset_details (item_id, organization_id, acquisition_cost, acquired_on) values
+  ('00000000-0000-0000-0000-00000000094c', '00000000-0000-0000-0000-00000000009a', 7000, date '2026-01-15');
+
+insert into organizations (id, name) values
+  ('00000000-0000-0000-0000-00000000009b', 'Egresos B');
+
+insert into items (id, organization_id, kind, name) values
+  ('00000000-0000-0000-0000-00000000094d', '00000000-0000-0000-0000-00000000009b', 'asset', 'Horno ajeno');
+
+insert into asset_details (item_id, organization_id, acquisition_cost, acquired_on) values
+  ('00000000-0000-0000-0000-00000000094d', '00000000-0000-0000-0000-00000000009b', 3000, date '2026-01-15');
 
 -- ── Scenario: Gasto sin categoría / sin monto ─────────────────────────────
 
@@ -269,6 +291,102 @@ select is(
       and column_name ~ '(total|subtotal|line_total)'),
   0, 'expense_items: el total de la línea tampoco se guarda');
 
+-- ── Scenario: Egreso que pertenece a un activo ────────────────────────────
+-- KAM-19. El mantenimiento de una máquina es un gasto corriente con dueño
+-- declarado: suma al costo del activo en vez de restar del margen de la línea.
+
+select lives_ok(
+  $$insert into expenses
+      (id, organization_id, business_line_id, kind, expense_category_id, amount,
+       asset_id, asset_expense_role)
+    values ('00000000-0000-0000-0000-0000000009c1',
+            '00000000-0000-0000-0000-00000000009a',
+            '00000000-0000-0000-0000-00000000091a',
+            'expense', '00000000-0000-0000-0000-00000000092a', 500,
+            '00000000-0000-0000-0000-00000000094c', 'maintenance')$$,
+  'Un gasto puede declarar el activo al que pertenece y su papel');
+
+-- ── Scenario: Activo sin papel ────────────────────────────────────────────
+
+select throws_ok(
+  $$insert into expenses
+      (organization_id, business_line_id, kind, expense_category_id, amount, asset_id)
+    values ('00000000-0000-0000-0000-00000000009a',
+            '00000000-0000-0000-0000-00000000091a',
+            'expense', '00000000-0000-0000-0000-00000000092a', 50,
+            '00000000-0000-0000-0000-00000000094c')$$,
+  '23514', null,
+  'Un activo sin papel se rechaza por asset_role_declared_together');
+
+select throws_ok(
+  $$insert into expenses
+      (organization_id, business_line_id, kind, expense_category_id, amount,
+       asset_expense_role)
+    values ('00000000-0000-0000-0000-00000000009a',
+            '00000000-0000-0000-0000-00000000091a',
+            'expense', '00000000-0000-0000-0000-00000000092a', 50, 'maintenance')$$,
+  '23514', null,
+  'Un papel sin activo se rechaza por la misma restricción');
+
+-- ── Scenario: Una sola adquisición por activo ─────────────────────────────
+
+select lives_ok(
+  $$insert into expenses
+      (organization_id, business_line_id, kind, contact_id, asset_id, asset_expense_role)
+    values ('00000000-0000-0000-0000-00000000009a',
+            '00000000-0000-0000-0000-00000000091a', 'purchase',
+            '00000000-0000-0000-0000-00000000093a',
+            '00000000-0000-0000-0000-00000000094c', 'acquisition')$$,
+  'El egreso con el que se compró la máquina se declara como su adquisición');
+
+select throws_ok(
+  $$insert into expenses
+      (organization_id, business_line_id, kind, contact_id, asset_id, asset_expense_role)
+    values ('00000000-0000-0000-0000-00000000009a',
+            '00000000-0000-0000-0000-00000000091a', 'purchase',
+            '00000000-0000-0000-0000-00000000093a',
+            '00000000-0000-0000-0000-00000000094c', 'acquisition')$$,
+  '23505', null,
+  'Un segundo egreso de adquisición para el mismo activo se rechaza');
+
+-- ── Scenario: Varios mantenimientos por activo ────────────────────────────
+
+select lives_ok(
+  $$insert into expenses
+      (organization_id, business_line_id, kind, expense_category_id, amount,
+       asset_id, asset_expense_role)
+    values ('00000000-0000-0000-0000-00000000009a',
+            '00000000-0000-0000-0000-00000000091a',
+            'expense', '00000000-0000-0000-0000-00000000092a', 120,
+            '00000000-0000-0000-0000-00000000094c', 'maintenance'),
+           ('00000000-0000-0000-0000-00000000009a',
+            '00000000-0000-0000-0000-00000000091a',
+            'expense', '00000000-0000-0000-0000-00000000092a', 80,
+            '00000000-0000-0000-0000-00000000094c', 'maintenance')$$,
+  'Un activo admite cualquier número de mantenimientos');
+
+select is(
+  (select count(*) from expenses
+    where asset_id = '00000000-0000-0000-0000-00000000094c'
+      and asset_expense_role = 'maintenance'),
+  3::bigint,
+  'Los tres mantenimientos quedan registrados contra el mismo activo');
+
+-- ── Scenario: El activo es de la misma organización ───────────────────────
+
+select throws_ok(
+  $$insert into expenses
+      (organization_id, business_line_id, kind, expense_category_id, amount,
+       asset_id, asset_expense_role)
+    values ('00000000-0000-0000-0000-00000000009a',
+            '00000000-0000-0000-0000-00000000091a',
+            'expense', '00000000-0000-0000-0000-00000000092a', 90,
+            '00000000-0000-0000-0000-00000000094d', 'maintenance')$$,
+  '23503',
+  'El activo pertenece a otra organización',
+  'Un egreso no se vincula a un activo de otra organización');
+
 select * from finish();
+
 
 rollback;

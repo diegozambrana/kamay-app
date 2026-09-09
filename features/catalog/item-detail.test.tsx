@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PurchasePrice } from "@/features/inventory/price-history-section";
 import type {
+  AssetDetails,
   BusinessLine,
   InventoryMovement,
   Item,
@@ -17,6 +18,11 @@ import { ItemDetail } from "./item-detail";
 import type { ItemPhoto } from "./item-photos";
 
 import { setItemPhotoArchived } from "@/actions/catalog";
+
+vi.mock("@/actions/assets", () => ({
+  saveAssetDetails: vi.fn(async () => undefined),
+  linkExpenseToAsset: vi.fn(async () => undefined),
+}));
 
 vi.mock("@/actions/catalog", () => ({
   setItemArchived: vi.fn(async () => undefined),
@@ -103,6 +109,8 @@ type InventoryProps = Partial<{
   movements: InventoryMovement[];
   prices: PurchasePrice[];
   lastCost: number | null;
+  assetDetails: AssetDetails | null;
+  suppliers: { id: string; name: string }[];
 }>;
 
 function renderDetail(
@@ -306,5 +314,61 @@ describe("ItemDetail", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Ese ítem ya tiene una variante con ese nombre.",
     );
+  });
+});
+
+/**
+ * Escenarios del delta spec `assets`, requisito "Alta de un activo desde el
+ * catálogo": "Alta desde el detalle del ítem", "No se ofrece donde no
+ * corresponde", "El ayudante no ve la sección". Y del delta spec
+ * `catalog-directory`, requisito "Pantalla de detalle de ítem (V11)": "Los
+ * datos de activo en el detalle de un activo" y "El ayudante no ve los datos
+ * de activo".
+ */
+describe("ItemDetail · datos de activo (KAM-19)", () => {
+  it("un activo sin datos ofrece declararlos, sin salir del catálogo", () => {
+    renderDetail({ kind: "asset" }, "owner");
+
+    expect(screen.getByTestId("asset-details-section")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Declarar activo" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /recuperación de inversión/i }),
+    ).toHaveAttribute("href", "/assets");
+  });
+
+  it("un activo ya declarado muestra sus datos y permite corregirlos", () => {
+    renderDetail({ kind: "asset" }, "owner", [], [], {
+      assetDetails: {
+        itemId: "77777777-7777-4777-8777-777777777777",
+        organizationId: ORG,
+        acquisitionCost: 7000,
+        acquiredOn: "2026-03-01",
+        supplierId: null,
+        notes: null,
+      },
+    });
+
+    const form = within(screen.getByTestId("asset-details-form"));
+    expect(form.getByLabelText("Costo de adquisición")).toHaveValue(7000);
+    expect(form.getByLabelText("Fecha de compra")).toHaveValue("2026-03-01");
+    expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeInTheDocument();
+  });
+
+  it("no se ofrece en un insumo ni en un producto", () => {
+    renderDetail({ kind: "supply" }, "owner");
+    expect(screen.queryByTestId("asset-details-section")).not.toBeInTheDocument();
+
+    cleanup();
+
+    renderDetail({ kind: "product" }, "owner");
+    expect(screen.queryByTestId("asset-details-section")).not.toBeInTheDocument();
+  });
+
+  it("el ayudante no ve la sección: ni vacía ni rotulada", () => {
+    renderDetail({ kind: "asset" }, "assistant");
+
+    expect(screen.queryByTestId("asset-details-section")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Costo de adquisición/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Declarar activo/i)).not.toBeInTheDocument();
   });
 });

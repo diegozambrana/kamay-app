@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
+import { linkExpenseToAsset } from "@/actions/assets";
 import { archiveExpense, unarchiveExpense } from "@/actions/expenses";
 import { MainContainer } from "@/components/layout/main-container";
 import {
@@ -21,6 +22,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -66,6 +75,13 @@ export type ExpenseDetailData = {
   categoryName: string | null;
   businessLine: BusinessLine | null;
   order: { id: string; code: number } | null;
+  /**
+   * El activo al que pertenece este egreso, si pertenece a alguno (KAM-19).
+   * El nombre se resuelve en el servidor: el detalle no consulta.
+   */
+  asset: { itemId: string; name: string } | null;
+  /** Activos vigentes que se pueden elegir para vincular como mantenimiento. */
+  assetOptions: { itemId: string; name: string }[];
   receipts: ReceiptView[];
   /** Movimientos del egreso, anulados incluidos. */
   payments: Payment[];
@@ -138,7 +154,7 @@ function DetailBody({
   data: ExpenseDetailData;
   timezone: string;
 }) {
-  const { expense, lines, supplier, categoryName, businessLine, order, receipts, history } =
+  const { expense, lines, supplier, categoryName, businessLine, order, asset, assetOptions, receipts, history } =
     data;
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -225,6 +241,19 @@ function DetailBody({
               <Link href={`/orders/${order.id}`} className="hover:underline">
                 #{order.code}
               </Link>
+            </Detail>
+          )}
+
+          {asset && (
+            <Detail label="Activo" testId="detail-asset">
+              <Link href="/assets" className="hover:underline">
+                {asset.name}
+              </Link>
+              <span className="ml-2 text-muted-foreground">
+                {expense.assetExpenseRole === "acquisition"
+                  ? "· compra del activo"
+                  : "· mantenimiento"}
+              </span>
             </Detail>
           )}
 
@@ -394,6 +423,11 @@ function DetailBody({
       </Card>
 
       {/* Un solo historial (convención nº 7): sale de `activity_log`. */}
+      {/* Vincular el egreso a un activo (KAM-19). Solo llega aquí la persona
+          dueña —el ayudante no lee `expenses`—, así que no hay guardia de rol
+          en la pantalla: la impone la RLS de la tabla. */}
+      <AssetLinkCard expense={expense} asset={asset} options={assetOptions} />
+
       {history.length > 0 && (
         <Card>
           <CardHeader>
@@ -457,5 +491,101 @@ function Detail({
       <p className="text-muted-foreground">{label}</p>
       <p data-testid={testId}>{children}</p>
     </div>
+  );
+}
+
+/**
+ * Declarar a qué activo pertenece un egreso, o deshacer el vínculo.
+ *
+ * Solo se ofrece el papel *mantenimiento*: la adquisición la declara el alta
+ * del activo desde su compra, que es donde se conoce el costo. Vincular aquí
+ * una adquisición a mano permitiría dos verdades sobre el mismo hecho.
+ */
+function AssetLinkCard({
+  expense,
+  asset,
+  options,
+}: {
+  expense: ExpenseWithTotal;
+  asset: { itemId: string; name: string } | null;
+  options: { itemId: string; name: string }[];
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const [choice, setChoice] = useState(asset?.itemId ?? "");
+
+  const isAcquisition = expense.assetExpenseRole === "acquisition";
+
+  function apply(assetId: string) {
+    setChoice(assetId);
+    setError(null);
+    startTransition(async () => {
+      const result = await linkExpenseToAsset({
+        expenseId: expense.id,
+        assetId: assetId === "" ? null : assetId,
+        role: assetId === "" ? null : "maintenance",
+      });
+      if (result?.error) setError(result.error);
+    });
+  }
+
+  if (options.length === 0 && !asset) return null;
+
+  return (
+    <Card data-testid="asset-link">
+      <CardHeader>
+        <CardTitle>Mantenimiento de un activo</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>No se pudo vincular</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {isAcquisition ? (
+          <p className="text-sm text-muted-foreground">
+            Este egreso es la compra de {asset?.name}. Su importe ya está
+            representado por el costo declarado del activo.
+          </p>
+        ) : (
+          <>
+            <Select value={choice} onValueChange={(value) => apply(value)} disabled={pending}>
+              <SelectTrigger data-testid="asset-link-select" aria-label="Activo">
+                <SelectValue placeholder="Sin activo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {options.map((option) => (
+                    <SelectItem key={option.itemId} value={option.itemId}>
+                      {option.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+
+            {asset && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="self-start"
+                disabled={pending}
+                onClick={() => apply("")}
+              >
+                Desvincular
+              </Button>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              Lo vinculado suma al costo del activo y deja de restar del margen
+              con el que se mide su recuperación.
+            </p>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

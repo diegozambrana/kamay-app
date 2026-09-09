@@ -93,7 +93,7 @@ test.describe("inventario suave (KAM-18)", () => {
     await page.getByRole("button", { name: "Crear", exact: true }).click();
     await expect(page.getByText("Seleccionado:")).toContainText(supplier);
 
-    await page.getByLabel("Agregar insumo").fill(supply.name);
+    await page.getByLabel("Agregar insumo o activo").fill(supply.name);
     await page.getByRole("button", { name: new RegExp(supply.name) }).click();
     const linea = page.getByTestId("purchase-line-row").nth(0);
     await linea.getByLabel("Cantidad").fill("50");

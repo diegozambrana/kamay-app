@@ -121,22 +121,39 @@ export class ItemService {
     return this.listKindWithVariants(organizationId, "product");
   }
 
-  /** Los insumos con sus variantes: lo que ofrece el formulario de compra (V8). */
+  /** Los insumos con sus variantes. */
   async listSuppliesWithVariants(
     organizationId: string,
   ): Promise<(Item & { variants: ItemVariant[] })[]> {
     return this.listKindWithVariants(organizationId, "supply");
   }
 
+  /**
+   * Lo que se compra: insumos y activos, con sus variantes. Es lo que ofrece
+   * el formulario de compra (V8).
+   *
+   * Los productos quedan fuera a propósito: lo que el taller fabrica no lo
+   * compra. Los activos entran desde KAM-19 — comprar una máquina es un
+   * egreso como cualquier otro, y sin poder registrarlo no habría compra
+   * desde la que declarar el activo.
+   */
+  async listPurchasableWithVariants(
+    organizationId: string,
+  ): Promise<(Item & { variants: ItemVariant[] })[]> {
+    return this.listKindWithVariants(organizationId, ["supply", "asset"]);
+  }
+
   private async listKindWithVariants(
     organizationId: string,
-    kind: ItemKind,
+    kind: ItemKind | ItemKind[],
   ): Promise<(Item & { variants: ItemVariant[] })[]> {
+    const kinds = Array.isArray(kind) ? kind : [kind];
+
     const { data, error } = await this.supabase
       .from("items")
       .select(`${COLUMNS}, item_variants(${VARIANT_COLUMNS})`)
       .eq("organization_id", organizationId)
-      .eq("kind", kind)
+      .in("kind", kinds)
       .is("archived_at", null)
       .order("name", { ascending: true });
 

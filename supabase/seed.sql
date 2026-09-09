@@ -509,6 +509,61 @@ insert into payments (
    now() - interval '5 days', 'Anotado en el pedido equivocado.',
    now() - interval '4 days');
 
+-- ── Activos (KAM-19) ──────────────────────────────────────────────────────
+-- Los dos ítems de tipo activo del catálogo, ahora con costo y fecha, en
+-- líneas distintas para que la pantalla muestre barras en estados distintos;
+-- `seed_geeko.test.sql` vigila que sigan estando:
+--
+--   · la prensa de tazas (Sublimación, 900, hace 8 meses) con el egreso de su
+--     compra vinculado como adquisición y un mantenimiento de 120 vinculado —
+--     su barra avanza y su costo total (1020) no es el declarado;
+--   · la impresora 3D (Impresión 3D, 1500, hace 2 meses) sin mantenimiento y
+--     en una línea que todavía no ha cobrado nada — su barra muestra 0 % sin
+--     errores, que es el otro estado que hay que poder ver funcionando.
+--
+-- La compra de la prensa y el mantenimiento se pagan: es lo que hace visible
+-- la regla de que la inversión cuenta una sola vez. Si esos pagos restaran
+-- del margen, las dos barras estarían en cero y la semilla no enseñaría nada.
+
+insert into asset_details (item_id, organization_id, acquisition_cost, acquired_on, supplier_id, notes) values
+  ('90000000-0000-0000-0000-000000000021', '10000000-0000-0000-0000-000000000003',
+   900, (now() - interval '8 months')::date, '80000000-0000-0000-0000-000000000001',
+   'Comprada con la primera tanda de tazas.'),
+  ('90000000-0000-0000-0000-000000000022', '10000000-0000-0000-0000-000000000003',
+   1500, (now() - interval '2 months')::date, '80000000-0000-0000-0000-000000000003',
+   null);
+
+-- La compra de la prensa: un egreso real, con su línea apuntando al activo.
+insert into expenses (
+  id, organization_id, business_line_id, kind, contact_id, expense_category_id,
+  order_id, amount, occurred_at, note, asset_id, asset_expense_role
+) values
+  ('b0000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'purchase', '80000000-0000-0000-0000-000000000001',
+   null, null, null, now() - interval '8 months', 'Prensa térmica de 6 tazas.',
+   '90000000-0000-0000-0000-000000000021', 'acquisition'),
+
+  -- Mantenimiento de la prensa: sube su costo total a 3480 sin bajar su margen.
+  ('b0000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000001', 'expense', null,
+   '50000000-0000-0000-0000-000000000004', null, 120, now() - interval '2 months',
+   'Cambio de resistencia de la prensa.',
+   '90000000-0000-0000-0000-000000000021', 'maintenance');
+
+insert into expense_items (organization_id, expense_id, item_id, quantity, unit_price) values
+  ('10000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000011',
+   '90000000-0000-0000-0000-000000000021', 1, 900);
+
+insert into payments (
+  id, organization_id, direction, expense_id, amount, method, occurred_at, note
+) values
+  ('c0000000-0000-0000-0000-000000000031', '10000000-0000-0000-0000-000000000003',
+   'out', 'b0000000-0000-0000-0000-000000000011', 900, 'transfer',
+   now() - interval '8 months', null),
+  ('c0000000-0000-0000-0000-000000000032', '10000000-0000-0000-0000-000000000003',
+   'out', 'b0000000-0000-0000-0000-000000000012', 120, 'cash',
+   now() - interval '2 months', null);
+
 -- ── Ventas directas de feria (KAM-12) ─────────────────────────────────────
 -- Alfarería vende casi todo así: sin pedido, sin ciclo de producción, cobrado
 -- en el acto. Nacen en el estado de tipo `final` de su línea («Entregado»,

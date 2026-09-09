@@ -5,11 +5,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getOwnerContext } from "@/lib/auth/session-context";
+import { allocationSettingsSchema } from "@/lib/reports/allocation-schema";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
 import { SalesChannelService } from "@/services/configuration/sales-channel-service";
 import { UnitService } from "@/services/configuration/unit-service";
 import { OrganizationService } from "@/services/organization-service";
+import { AllocationRuleService } from "@/services/configuration/allocation-rule-service";
 import { LINE_COLORS } from "@/types";
 
 export type ActionResult = { error: string } | undefined;
@@ -319,6 +321,34 @@ export async function updateGeneralSettings(
     );
   } catch {
     return { error: "No se pudo guardar la organización. Intenta de nuevo." };
+  }
+
+  revalidateConfiguration();
+}
+
+/**
+ * La regla de reparto de gastos compartidos (KAM-20).
+ *
+ * El mensaje de una suma que no llega a 100 sale del esquema y no se
+ * reescribe aquí: dice cuánto suma y cuánto falta, que es lo que evita que
+ * quien configura tenga que sumar a mano lo que el formulario ya sabe.
+ */
+export async function updateAllocationRule(
+  input: z.infer<typeof allocationSettingsSchema>,
+): Promise<ActionResult> {
+  const parsed = allocationSettingsSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  try {
+    await new AllocationRuleService(context.supabase).save(
+      context.organizationId,
+      parsed.data,
+    );
+  } catch {
+    return { error: "No se pudo guardar la regla de reparto. Intenta de nuevo." };
   }
 
   revalidateConfiguration();

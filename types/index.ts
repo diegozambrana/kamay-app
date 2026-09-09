@@ -595,3 +595,48 @@ export type AssetRecovery = {
   /** Margen de caja de su línea desde `acquiredOn`. Puede ser negativo. */
   lineMarginSince: number;
 };
+
+// ── V14 · Reportes (KAM-20) ────────────────────────────────────────────────
+
+/**
+ * El alcance común de los cinco informes: un periodo y una línea, resueltos
+ * una sola vez en el servidor (design D1). Ninguna lectura de informe recibe
+ * un rango propio; todas reciben esto, que es lo que impide que dos informes
+ * de la misma pantalla queden sobre rangos distintos.
+ */
+export type ReportScope = {
+  organizationId: string;
+  /** Límite inferior inclusivo, como instante UTC. */
+  fromInstant: string;
+  /** Límite superior **exclusivo**: el inicio del día siguiente al último. */
+  toInstant: string;
+  /** `ALL_LINES` cuando no hay filtro. El comparativo lo ignora por diseño. */
+  line: ActiveLine;
+};
+
+/** Los cinco informes de V14, como identificadores estables para la dirección. */
+export const REPORT_IDS = [
+  "profitability",
+  "expense-breakdown",
+  "product-ranking",
+  "low-stock",
+  "line-comparison",
+] as const;
+
+export type ReportId = (typeof REPORT_IDS)[number];
+
+/** Las tres reglas de reparto de gastos de la línea compartida (KAM-20). */
+export const ALLOCATION_RULES = ["revenue", "equal", "manual"] as const;
+
+export type AllocationRule = (typeof ALLOCATION_RULES)[number];
+
+export const DEFAULT_ALLOCATION_RULE: AllocationRule = "revenue";
+
+/**
+ * La regla tal como vive en `organizations.settings`. `shares` solo tiene
+ * sentido con `manual`, y una línea ausente cuenta como 0 (no como error).
+ */
+export type AllocationSettings = {
+  rule: AllocationRule;
+  shares?: Record<string, number>;
+};

@@ -36,6 +36,8 @@ export default async function TasksPage({
     tag?: string;
     status?: string;
     archived?: string;
+    link?: string;
+    nodeliv?: string;
   }>;
 }) {
   const context = await getSessionContext();
@@ -50,6 +52,8 @@ export default async function TasksPage({
   const tagId = params.tag ?? "";
   const statusId = params.status ?? "";
   const includeArchived = params.archived === "1";
+  const linkFilter = params.link ?? "";
+  const withoutDeliverables = params.nodeliv === "1";
 
   const lines = await new BusinessLineService(context.supabase).listActive(
     context.organizationId,
@@ -100,9 +104,33 @@ export default async function TasksPage({
   // líneas, y viaja ya decidida (design D7).
   const quickAdd = resolveQuickAddLine(activeLine, lines);
 
+  // Vínculos y entregables de todo el tablero en dos consultas, no dos por
+  // tarjeta. No se almacena nada: se cuenta al leer (convención nº 4).
+  const badges = await taskService.boardBadges(
+    context.organizationId,
+    tasks.map((task) => task.id),
+  );
+
+  /**
+   * Los dos filtros nuevos se aplican aquí y no en la consulta.
+   *
+   * El de vínculo necesitaría un `exists` correlacionado sobre `task_links`, y
+   * el de la marca es una columna que ya viaja en la tarea: filtrar en memoria
+   * sobre las tareas que RLS ya devolvió cuesta menos que una consulta más y
+   * no cambia lo que se ve, porque el tablero de un taller son decenas de
+   * tarjetas, no miles.
+   */
+  const visible = tasks.filter((task) => {
+    if (withoutDeliverables && !task.closedWithoutDeliverables) return false;
+    const links = badges.get(task.id)?.links ?? 0;
+    if (linkFilter === "any" && links === 0) return false;
+    if (linkFilter === "none" && links > 0) return false;
+    return true;
+  });
+
   return (
     <TasksScreen
-      tasks={tasks.map((task) => {
+      tasks={visible.map((task) => {
         const line = lineById.get(task.businessLineId);
         return {
           id: task.id,
@@ -118,6 +146,10 @@ export default async function TasksPage({
           tags: task.tags,
           lineName: line?.name ?? "—",
           lineColor: line?.color ?? "zinc",
+          linkCount: badges.get(task.id)?.links ?? 0,
+          deliverableCount: badges.get(task.id)?.deliverables ?? 0,
+          pendingDeliverableCount: badges.get(task.id)?.pending ?? 0,
+          closedWithoutDeliverables: task.closedWithoutDeliverables,
         };
       })}
       statuses={statuses}
@@ -133,6 +165,8 @@ export default async function TasksPage({
       assigneeId={assigneeId}
       tagId={tagId}
       statusId={statusId}
+      linkFilter={linkFilter}
+      withoutDeliverables={withoutDeliverables}
       includeArchived={includeArchived}
       // "Hoy" en la zona horaria de la organización, no en la del navegador.
       today={todayInTimezone(context.membership.organization.timezone)}

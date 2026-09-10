@@ -11,6 +11,7 @@ import { StatusService } from "@/services/configuration/status-service";
 import { OrderItemService } from "@/services/orders/order-item-service";
 import { OrderService } from "@/services/orders/order-service";
 import { PaymentService } from "@/services/payments/payment-service";
+import { TaskService } from "@/services/tasks/task-service";
 
 export const metadata = { title: "Pedido · Kamay" };
 
@@ -84,6 +85,14 @@ export default async function OrderDetailPage({
   // ayudante llega vacío por RLS, y el bloque no se muestra.
   const history = await orders.history(context.organizationId, order.id);
 
+  // El otro lado del vínculo: qué tareas apuntan a este pedido. RLS decide
+  // cuáles ve quien mira; aquí no se filtra por rol ni por línea (D4).
+  const relatedTasks = await new TaskService(context.supabase).relatedTasks(
+    context.organizationId,
+    "order",
+    order.id,
+  );
+
   return (
     <OrderDetail
       order={order}
@@ -108,6 +117,7 @@ export default async function OrderDetailPage({
         url: signed.get(file.id) ?? null,
       }))}
       payments={payments}
+      relatedTasks={relatedTasks}
       // Anular es del dueño (`enforce_archive_rules`): al ayudante ni se le
       // ofrece, y si lo intentara la base lo rechazaría igual.
       canVoidPayments={context.membership.role === "owner"}

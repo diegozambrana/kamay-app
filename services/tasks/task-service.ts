@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { matchesSearch, normalizeForSearch } from "@/lib/search/normalize";
+import type {
+  Deliverable,
+  DeliverableType,
+} from "@/lib/tasks/deliverables";
 import type { TaskInput } from "@/lib/tasks/schema";
 import type { ActivityEntry, Tag, Task, TaskLinkType } from "@/types";
 
@@ -14,20 +19,18 @@ type TaskRow = {
   due_at: string | null;
   remind_at: string | null;
   closed_at: string | null;
+  closed_without_deliverables: boolean;
   created_by: string | null;
   created_at: string;
   archived_at: string | null;
   task_tags: { tag: { id: string; organization_id: string; name: string } | null }[] | null;
 };
 
-/**
- * Las columnas de una tarea. `body_markdown` y `remind_at` las encendió
- * KAM-16, que construye el detalle donde se editan; `closed_without_deliverables`
- * sigue apagada hasta KAM-21, porque nada sabría todavía qué hacer con ella.
- */
+/** Las columnas de una tarea. Todas: KAM-21 encendió la última que faltaba. */
 const COLUMNS =
   "id, organization_id, business_line_id, status_id, title, body_markdown, " +
-  "assignee_id, due_at, remind_at, closed_at, created_by, created_at, archived_at, " +
+  "assignee_id, due_at, remind_at, closed_at, closed_without_deliverables, " +
+  "created_by, created_at, archived_at, " +
   "task_tags (tag:tags (id, organization_id, name))";
 
 export type TaskFilters = {
@@ -51,6 +54,7 @@ function toTask(row: TaskRow): Task {
     dueAt: row.due_at,
     remindAt: row.remind_at,
     closedAt: row.closed_at,
+    closedWithoutDeliverables: row.closed_without_deliverables,
     createdBy: row.created_by,
     createdAt: row.created_at,
     archivedAt: row.archived_at,
@@ -64,6 +68,50 @@ function toTask(row: TaskRow): Task {
       })),
   };
 }
+
+/**
+ * Un vínculo resuelto contra su destino, listo para rendir.
+ *
+ * **Nada de esto se almacena.** `task_links` guarda tipo e identificador y
+ * nada más; el nombre y el estado se leen del registro apuntado cada vez que
+ * se rinde, que es lo que hace cierto «refleja el estado actual, no una copia»
+ * (D2). Renombrar el ítem cambia lo que se ve sin tocar el vínculo.
+ */
+export type ResolvedTaskLink = {
+  entityType: TaskLinkType;
+  entityId: string;
+  /** Nombre, o «Pedido #142» para un pedido. */
+  label: string;
+  /** Estado actual del destino, cuando lo tiene. Los ítems y contactos no. */
+  statusName: string | null;
+  archived: boolean;
+};
+
+/** Un acierto del buscador único de vínculos. */
+export type LinkTarget = {
+  entityType: TaskLinkType;
+  entityId: string;
+  label: string;
+  /** Lo que distingue a este registro de otro del mismo nombre. */
+  hint: string | null;
+};
+
+/** Una tarea tal como la lista el bloque *Tareas relacionadas*. */
+export type RelatedTask = {
+  id: string;
+  title: string;
+  statusName: string | null;
+  dueAt: string | null;
+  closedAt: string | null;
+};
+
+/**
+ * Los tipos que el buscador consulta, en el orden en que se ofrecen.
+ *
+ * El activo va aparte porque no se ofrece a todo el mundo: `asset_details`
+ * tiene sus tres políticas bajo `is_owner()` (D9).
+ */
+const SEARCH_LIMIT = 8;
 
 /**
  * Acceso a `tasks`. Todo acceso a Supabase vive en services/.
@@ -358,6 +406,495 @@ export class TaskService {
 
     if (error) {
       throw new Error(`No se pudo vincular la tarea: ${error.message}`);
+    }
+  }
+
+  /**
+   * Los vínculos de una tarea, resueltos contra sus destinos.
+   *
+   * Una consulta **por tipo presente**, nunca una por vínculo: una tarea con
+   * seis vínculos hace como mucho cinco consultas (D2).
+   *
+   * Los de tipo `asset` se omiten por completo para quien no es la persona
+   * dueña —ni resueltos ni como entrada sin acceso—, porque `asset_details`
+   * está reservada y una entrada rotulada le diría al ayudante cuántos activos
+   * hay (D9). RLS ya devolvería cero filas; esto es lo que evita rendir el
+   * hueco que las delata.
+   */
+  async links(
+    organizationId: string,
+    taskId: string,
+    isOwner: boolean,
+  ): Promise<ResolvedTaskLink[]> {
+    const { data, error } = await this.supabase
+      .from("task_links")
+      .select("entity_type, entity_id")
+      .eq("organization_id", organizationId)
+      .eq("task_id", taskId)
+      .is("archived_at", null)
+      .overrideTypes<{ entity_type: TaskLinkType; entity_id: string }[]>();
+
+    if (error) {
+      throw new Error(`No se pudieron cargar los vínculos: ${error.message}`);
+    }
+
+    const rows = (data ?? []).filter(
+      (row) => isOwner || row.entity_type !== "asset",
+    );
+    if (rows.length === 0) return [];
+
+    const byType = new Map<TaskLinkType, string[]>();
+    for (const row of rows) {
+      byType.set(row.entity_type, [
+        ...(byType.get(row.entity_type) ?? []),
+        row.entity_id,
+      ]);
+    }
+
+    const resolved = new Map<string, ResolvedTaskLink>();
+
+    for (const [entityType, ids] of byType) {
+      for (const link of await this.resolveTargets(
+        organizationId,
+        entityType,
+        ids,
+      )) {
+        resolved.set(`${link.entityType}:${link.entityId}`, link);
+      }
+    }
+
+    // El orden de `task_links` manda: el vínculo más antiguo primero, que es
+    // el que originó la tarea cuando vino de *Crear tarea para este pedido*.
+    return rows
+      .map((row) => resolved.get(`${row.entity_type}:${row.entity_id}`))
+      .filter((link): link is ResolvedTaskLink => link !== undefined);
+  }
+
+  /** Resuelve los destinos de un solo tipo, en una sola consulta. */
+  private async resolveTargets(
+    organizationId: string,
+    entityType: TaskLinkType,
+    ids: string[],
+  ): Promise<ResolvedTaskLink[]> {
+    if (entityType === "order") {
+      const { data } = await this.supabase
+        .from("orders")
+        .select("id, code, archived_at, status:statuses (name)")
+        .eq("organization_id", organizationId)
+        .in("id", ids)
+        .overrideTypes<
+          {
+            id: string;
+            code: number | null;
+            archived_at: string | null;
+            status: { name: string } | null;
+          }[]
+        >();
+
+      return (data ?? []).map((row) => ({
+        entityType,
+        entityId: row.id,
+        label: row.code === null ? "Pedido sin número" : `Pedido #${row.code}`,
+        statusName: row.status?.name ?? null,
+        archived: row.archived_at !== null,
+      }));
+    }
+
+    if (entityType === "expense") {
+      const { data } = await this.supabase
+        .from("expenses")
+        .select("id, kind, amount, occurred_at, note, archived_at")
+        .eq("organization_id", organizationId)
+        .in("id", ids)
+        .overrideTypes<
+          {
+            id: string;
+            kind: string;
+            amount: number | null;
+            occurred_at: string;
+            note: string | null;
+            archived_at: string | null;
+          }[]
+        >();
+
+      return (data ?? []).map((row) => ({
+        entityType,
+        entityId: row.id,
+        label:
+          row.note ?? (row.kind === "purchase" ? "Compra" : "Gasto"),
+        statusName: null,
+        archived: row.archived_at !== null,
+      }));
+    }
+
+    // Ítem, activo y contacto se resuelven por nombre. El activo vive en
+    // `items`: su `entity_id` es el `item_id` de `asset_details`.
+    const table = entityType === "contact" ? "contacts" : "items";
+    const { data } = await this.supabase
+      .from(table)
+      .select("id, name, archived_at")
+      .eq("organization_id", organizationId)
+      .in("id", ids)
+      .overrideTypes<
+        { id: string; name: string; archived_at: string | null }[]
+      >();
+
+    return (data ?? []).map((row) => ({
+      entityType,
+      entityId: row.id,
+      label: row.name,
+      statusName: null,
+      archived: row.archived_at !== null,
+    }));
+  }
+
+  /**
+   * Quita un vínculo.
+   *
+   * Retira la relación y nada más: el registro apuntado queda intacto, sin
+   * archivar y sin modificar.
+   *
+   * **Archiva la fila, no la borra** (convención nº 3): `task_links` no tiene
+   * política `DELETE` para nadie. La unicidad es parcial sobre las vigentes,
+   * así que el mismo destino se puede volver a vincular después sin chocar
+   * contra su propio historial.
+   */
+  async unlink(
+    organizationId: string,
+    taskId: string,
+    entityType: TaskLinkType,
+    entityId: string,
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from("task_links")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("organization_id", organizationId)
+      .eq("task_id", taskId)
+      .eq("entity_type", entityType)
+      .eq("entity_id", entityId)
+      .is("archived_at", null);
+
+    if (error) {
+      throw new Error(`No se pudo quitar el vínculo: ${error.message}`);
+    }
+  }
+
+  /**
+   * El buscador único: un término, cinco tipos, un solo listado.
+   *
+   * La normalización es la misma que usa el resto del sistema
+   * (`normalizeForSearch`), porque las tablas comparan contra
+   * `immutable_unaccent(lower(name))` y una segunda regla aquí daría
+   * resultados distintos a los del catálogo con el mismo término.
+   *
+   * Los archivados no se ofrecen —vincular a algo retirado es empezar roto— y
+   * los activos solo se ofrecen a la persona dueña (D9).
+   */
+  async searchLinkTargets(
+    organizationId: string,
+    term: string,
+    isOwner: boolean,
+  ): Promise<LinkTarget[]> {
+    const needle = normalizeForSearch(term);
+    if (needle === "") return [];
+
+    const pattern = `%${needle}%`;
+    const results: LinkTarget[] = [];
+
+    const { data: orders } = await this.supabase
+      .from("orders")
+      .select("id, code, contact:contacts (name)")
+      .eq("organization_id", organizationId)
+      .is("archived_at", null)
+      .limit(SEARCH_LIMIT)
+      .overrideTypes<
+        { id: string; code: number | null; contact: { name: string } | null }[]
+      >();
+
+    for (const row of orders ?? []) {
+      const label = row.code === null ? "Pedido" : `Pedido #${row.code}`;
+      const customer = row.contact?.name ?? null;
+      if (
+        matchesSearch(label, term) ||
+        (customer !== null && matchesSearch(customer, term))
+      ) {
+        results.push({
+          entityType: "order",
+          entityId: row.id,
+          label,
+          hint: customer,
+        });
+      }
+    }
+
+    const { data: contacts } = await this.supabase
+      .from("contacts")
+      .select("id, name, is_supplier, is_customer")
+      .eq("organization_id", organizationId)
+      .is("archived_at", null)
+      .ilike("search_name", pattern)
+      .limit(SEARCH_LIMIT)
+      .overrideTypes<
+        {
+          id: string;
+          name: string;
+          is_supplier: boolean;
+          is_customer: boolean;
+        }[]
+      >();
+
+    for (const row of contacts ?? []) {
+      results.push({
+        entityType: "contact",
+        entityId: row.id,
+        label: row.name,
+        hint: row.is_supplier ? "Proveedor" : row.is_customer ? "Cliente" : null,
+      });
+    }
+
+    const { data: items } = await this.supabase
+      .from("items")
+      .select("id, name, kind")
+      .eq("organization_id", organizationId)
+      .is("archived_at", null)
+      .ilike("search_name", pattern)
+      .limit(SEARCH_LIMIT)
+      .overrideTypes<{ id: string; name: string; kind: string }[]>();
+
+    // Un ítem de tipo activo se ofrece como activo solo si quien busca es la
+    // persona dueña; para el resto sigue siendo un ítem del catálogo, que es
+    // lo que ya podían ver antes de esta tarea.
+    for (const row of items ?? []) {
+      if (row.kind === "asset" && !isOwner) continue;
+      results.push({
+        entityType: row.kind === "asset" ? "asset" : "item",
+        entityId: row.id,
+        label: row.name,
+        hint:
+          row.kind === "asset"
+            ? "Activo"
+            : row.kind === "supply"
+              ? "Insumo"
+              : "Producto",
+      });
+    }
+
+    const { data: expenses } = await this.supabase
+      .from("expenses")
+      .select("id, kind, note, occurred_at")
+      .eq("organization_id", organizationId)
+      .is("archived_at", null)
+      .not("note", "is", null)
+      .ilike("note", pattern)
+      .limit(SEARCH_LIMIT)
+      .overrideTypes<
+        { id: string; kind: string; note: string | null; occurred_at: string }[]
+      >();
+
+    for (const row of expenses ?? []) {
+      results.push({
+        entityType: "expense",
+        entityId: row.id,
+        label: row.note ?? "Egreso",
+        hint: row.kind === "purchase" ? "Compra" : "Gasto",
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * Las tareas que referencian un registro: el otro lado del vínculo.
+   *
+   * Una sola consulta. El filtrado por rol y por línea lo hace RLS sobre
+   * `tasks`, y `task_links` hereda de ella con su `exists` (D4). Repetir esa
+   * condición en TypeScript sería el segundo sitio donde desincronizarse.
+   */
+  async relatedTasks(
+    organizationId: string,
+    entityType: TaskLinkType,
+    entityId: string,
+  ): Promise<RelatedTask[]> {
+    const { data, error } = await this.supabase
+      .from("task_links")
+      .select(
+        "task:tasks (id, title, due_at, closed_at, archived_at, status:statuses (name))",
+      )
+      .eq("organization_id", organizationId)
+      .eq("entity_type", entityType)
+      .eq("entity_id", entityId)
+      .is("archived_at", null)
+      .overrideTypes<
+        {
+          task: {
+            id: string;
+            title: string;
+            due_at: string | null;
+            closed_at: string | null;
+            archived_at: string | null;
+            status: { name: string } | null;
+          } | null;
+        }[]
+      >();
+
+    if (error) {
+      throw new Error(
+        `No se pudieron cargar las tareas relacionadas: ${error.message}`,
+      );
+    }
+
+    return (data ?? [])
+      .map((row) => row.task)
+      .filter((task): task is NonNullable<typeof task> => task !== null)
+      .filter((task) => task.archived_at === null)
+      .map((task) => ({
+        id: task.id,
+        title: task.title,
+        statusName: task.status?.name ?? null,
+        dueAt: task.due_at,
+        closedAt: task.closed_at,
+      }));
+  }
+
+  /**
+   * Cuántos vínculos y cuántos entregables tiene cada tarea del tablero.
+   *
+   * Dos consultas para todo el tablero, no dos por tarjeta. Nada de esto se
+   * almacena (convención nº 4): se cuenta al leer, y la tarjeta solo necesita
+   * saber si hay o no hay.
+   */
+  async boardBadges(
+    organizationId: string,
+    taskIds: string[],
+  ): Promise<
+    Map<string, { links: number; deliverables: number; pending: number }>
+  > {
+    const badges = new Map<
+      string,
+      { links: number; deliverables: number; pending: number }
+    >();
+    if (taskIds.length === 0) return badges;
+
+    const [{ data: links }, { data: deliverables }] = await Promise.all([
+      this.supabase
+        .from("task_links")
+        .select("task_id")
+        .eq("organization_id", organizationId)
+        .in("task_id", taskIds)
+        .is("archived_at", null)
+        .overrideTypes<{ task_id: string }[]>(),
+      this.supabase
+        .from("task_deliverables")
+        .select("task_id, fulfilled_at")
+        .eq("organization_id", organizationId)
+        .in("task_id", taskIds)
+        .is("archived_at", null)
+        .overrideTypes<{ task_id: string; fulfilled_at: string | null }[]>(),
+    ]);
+
+    const blank = { links: 0, deliverables: 0, pending: 0 };
+
+    for (const row of links ?? []) {
+      const current = badges.get(row.task_id) ?? blank;
+      badges.set(row.task_id, { ...current, links: current.links + 1 });
+    }
+    for (const row of deliverables ?? []) {
+      const current = badges.get(row.task_id) ?? blank;
+      badges.set(row.task_id, {
+        ...current,
+        deliverables: current.deliverables + 1,
+        // Lo que decide si el asistente se abre al soltar en una columna
+        // final: no cuántos hay, sino cuántos quedan sin cumplir (D7).
+        pending: current.pending + (row.fulfilled_at === null ? 1 : 0),
+      });
+    }
+
+    return badges;
+  }
+
+  /** Los entregables declarados de una tarea, cumplidos y pendientes. */
+  async deliverables(
+    organizationId: string,
+    taskId: string,
+  ): Promise<Deliverable[]> {
+    const { data, error } = await this.supabase
+      .from("task_deliverables")
+      .select("id, task_id, deliverable_type, fulfilled_type, fulfilled_id, fulfilled_at")
+      .eq("organization_id", organizationId)
+      .eq("task_id", taskId)
+      .is("archived_at", null)
+      .order("created_at", { ascending: true })
+      .overrideTypes<
+        {
+          id: string;
+          task_id: string;
+          deliverable_type: DeliverableType;
+          fulfilled_type: string | null;
+          fulfilled_id: string | null;
+          fulfilled_at: string | null;
+        }[]
+      >();
+
+    if (error) {
+      throw new Error(`No se pudieron cargar los entregables: ${error.message}`);
+    }
+
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      taskId: row.task_id,
+      deliverableType: row.deliverable_type,
+      fulfilledType: row.fulfilled_type,
+      fulfilledId: row.fulfilled_id,
+      fulfilledAt: row.fulfilled_at,
+    }));
+  }
+
+  /**
+   * Declara un entregable esperado.
+   *
+   * El `unique (task_id, deliverable_type)` de la base impide el segundo del
+   * mismo tipo; aquí no se comprueba antes para no dejar una ventana entre la
+   * comprobación y la escritura.
+   */
+  async declareDeliverable(
+    organizationId: string,
+    taskId: string,
+    type: DeliverableType,
+  ): Promise<void> {
+    const { error } = await this.supabase.from("task_deliverables").insert({
+      task_id: taskId,
+      organization_id: organizationId,
+      deliverable_type: type,
+    });
+
+    if (error) {
+      throw new Error(`No se pudo declarar el entregable: ${error.message}`);
+    }
+  }
+
+  /**
+   * Retira un entregable declarado y aún no cumplido.
+   *
+   * Archiva la fila, no la borra (convención nº 3). El `is("fulfilled_at",
+   * null)` es lo que hace que retirar uno ya cumplido no toque ninguna fila:
+   * lo creado no se deshace desde aquí.
+   */
+  async withdrawDeliverable(
+    organizationId: string,
+    taskId: string,
+    type: DeliverableType,
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from("task_deliverables")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("organization_id", organizationId)
+      .eq("task_id", taskId)
+      .eq("deliverable_type", type)
+      .is("fulfilled_at", null)
+      .is("archived_at", null);
+
+    if (error) {
+      throw new Error(`No se pudo retirar el entregable: ${error.message}`);
     }
   }
 

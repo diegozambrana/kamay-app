@@ -40,6 +40,8 @@ export function TasksScreen({
   assigneeId,
   tagId,
   statusId,
+  linkFilter,
+  withoutDeliverables,
   includeArchived,
   today,
 }: {
@@ -57,6 +59,10 @@ export function TasksScreen({
   assigneeId: string;
   tagId: string;
   statusId: string;
+  /** "" | "any" | "none": tareas con algún vínculo, sin ninguno, o todas. */
+  linkFilter: string;
+  /** Solo las que se cerraron sin crear nada de lo declarado. */
+  withoutDeliverables: boolean;
   includeArchived: boolean;
   today: string;
 }) {
@@ -177,6 +183,33 @@ export function TasksScreen({
               ))}
             </select>
           </Field>
+
+          <Field className="w-44">
+            <FieldLabel htmlFor="task-link">Vínculo</FieldLabel>
+            <select
+              id="task-link"
+              value={linkFilter}
+              onChange={(event) => updateParams({ link: event.target.value || null })}
+              className="h-9 rounded-lg border bg-background px-2 text-sm"
+            >
+              <option value="">Todas</option>
+              <option value="any">Con algún vínculo</option>
+              <option value="none">Sin vínculos</option>
+            </select>
+          </Field>
+
+          {/* La marca de *cerrada sin entregables* es discreta en la tarjeta;
+              lo que la hace localizable es este filtro (KAM-21). */}
+          <label className="flex items-center gap-2 pb-2 text-sm">
+            <Checkbox
+              checked={withoutDeliverables}
+              onCheckedChange={(checked) =>
+                updateParams({ nodeliv: checked ? "1" : null })
+              }
+              aria-label="Cerradas sin entregables"
+            />
+            Cerradas sin entregables
+          </label>
 
           <label className="flex items-center gap-2 pb-2 text-sm">
             <Checkbox

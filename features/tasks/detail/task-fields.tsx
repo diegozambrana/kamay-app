@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import type { UpdateTaskFieldInput } from "@/actions/tasks";
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { opensClosingWizard } from "@/lib/tasks/deliverables";
 import type { BusinessLine, Status, Task } from "@/types";
 
 /** Un valor de `Select` no puede ser cadena vacía: se usa este centinela. */
@@ -23,6 +25,8 @@ export type TaskFieldsProps = {
   businessLines: BusinessLine[];
   assignees: { userId: string; displayName: string | null }[];
   onSave: (input: UpdateTaskFieldInput) => Promise<{ error: string } | undefined>;
+  /** Cuántos entregables quedan sin cumplir: decide si el cierre abre V19. */
+  pendingDeliverables: number;
   readOnly?: boolean;
 };
 
@@ -40,11 +44,13 @@ export function TaskFields({
   businessLines,
   assignees,
   onSave,
+  pendingDeliverables,
   readOnly = false,
 }: TaskFieldsProps) {
   const [title, setTitle] = useState(task.title);
   const [error, setError] = useState<string | null>(null);
   const [, startSaving] = useTransition();
+  const router = useRouter();
 
   function save(input: UpdateTaskFieldInput, onFail?: () => void) {
     setError(null);
@@ -55,6 +61,25 @@ export function TaskFields({
         onFail?.();
       }
     });
+  }
+
+  /**
+   * Cambiar a un estado de tipo `final` con entregables sin cumplir abre el
+   * asistente en vez de cerrar en silencio (design D7).
+   *
+   * Es la segunda entrada a V19, y usa la **misma** decisión que el tablero:
+   * `opensClosingWizard`. El asistente vive en esta misma pantalla; llevarlo
+   * a la dirección es lo que permite llegar también desde el tablero.
+   */
+  function changeStatus(value: string) {
+    const destination = statuses.find((status) => status.id === value);
+
+    if (destination && opensClosingWizard(destination.kind, pendingDeliverables)) {
+      router.push(`/tasks/${task.id}?close=${value}`);
+      return;
+    }
+
+    save({ taskId: task.id, field: "statusId", value });
   }
 
   /** La fecha viaja como `YYYY-MM-DD`; el input nativo ya la da así. */
@@ -90,9 +115,7 @@ export function TaskFields({
           <Select
             value={task.statusId}
             disabled={readOnly}
-            onValueChange={(value) =>
-              save({ taskId: task.id, field: "statusId", value })
-            }
+            onValueChange={(value) => changeStatus(value)}
           >
             <SelectTrigger id="task-status">
               <SelectValue />

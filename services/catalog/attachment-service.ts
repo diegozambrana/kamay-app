@@ -35,6 +35,21 @@ export type NewAttachment = {
 };
 
 /**
+ * Un objeto ya copiado en Storage, esperando su fila.
+ *
+ * Viaja hasta la RPC de cierre, que la inserta dentro de la transacción: la
+ * base no habla con Storage, así que la copia va por delante y la fila detrás.
+ */
+export type CopiedAttachment = {
+  id: string;
+  bucket: string;
+  storagePath: string;
+  fileName: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+};
+
+/**
  * Acceso a `attachments` y a los buckets de Storage.
  *
  * Los buckets son privados: nada se muestra por URL pública, se firma cada
@@ -252,5 +267,58 @@ export class AttachmentService {
     }
 
     return urls;
+  }
+
+  /**
+   * Copia el objeto de un adjunto a la carpeta de otro registro y devuelve la
+   * fila que habría que insertar para él.
+   *
+   * **Copia el objeto, no comparte el existente.** `attachments` lleva
+   * `unique (bucket, storage_path)`: dos filas no pueden apuntar al mismo
+   * archivo, y esa restricción existe para que ningún objeto quede con dos
+   * dueños o con ninguno. A cambio, cada registro queda con archivos propios:
+   * retocar la foto del producto no cambia la de la tarea.
+   *
+   * No inserta la fila. Quien llama la escribe dentro de su transacción —el
+   * cierre con entregables lo hace en una sola RPC— y retira el objeto si algo
+   * falla después, que es el mismo trato que `upload()` ya establece.
+   */
+  async copyToEntity(
+    organizationId: string,
+    source: Attachment,
+    entityType: AttachmentEntityType,
+    entityId: string,
+  ): Promise<CopiedAttachment> {
+    const id = crypto.randomUUID();
+    const storagePath = AttachmentService.storagePath(
+      organizationId,
+      entityType,
+      entityId,
+      id,
+      source.fileName,
+    );
+
+    const { error } = await this.supabase.storage
+      .from(source.bucket)
+      .copy(source.storagePath, storagePath);
+
+    if (error) {
+      throw new Error(`No se pudo copiar el adjunto: ${error.message}`);
+    }
+
+    return {
+      id,
+      bucket: source.bucket,
+      storagePath,
+      fileName: source.fileName,
+      mimeType: source.mimeType ?? null,
+      sizeBytes: source.sizeBytes ?? null,
+    };
+  }
+
+  /** Retira objetos copiados que se quedaron sin fila. */
+  async removeObjects(bucket: string, storagePaths: string[]): Promise<void> {
+    if (storagePaths.length === 0) return;
+    await this.supabase.storage.from(bucket).remove(storagePaths);
   }
 }

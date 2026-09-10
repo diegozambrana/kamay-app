@@ -45,6 +45,7 @@ export default async function ContactsPage({
       roleFilter={roleFilter}
       search={search}
       includeArchived={includeArchived}
+      timezone={context.membership.organization.timezone}
       selectedId={params.id ?? null}
       role={context.membership.role}
     />

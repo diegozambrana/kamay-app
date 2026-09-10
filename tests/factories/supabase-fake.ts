@@ -102,6 +102,7 @@ export class FakeClient {
 
   storageResults: {
     upload?: { error: { message: string } | null };
+    copy?: { error: { message: string } | null };
     signed?: { data: { path: string; signedUrl: string }[] | null; error: unknown };
   } = {};
 
@@ -110,6 +111,10 @@ export class FakeClient {
       upload: async (...args: unknown[]) => {
         this.storageCalls.push({ bucket, method: "upload", args });
         return this.storageResults.upload ?? { error: null };
+      },
+      copy: async (...args: unknown[]) => {
+        this.storageCalls.push({ bucket, method: "copy", args });
+        return this.storageResults.copy ?? { error: null };
       },
       remove: async (...args: unknown[]) => {
         this.storageCalls.push({ bucket, method: "remove", args });

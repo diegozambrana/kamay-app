@@ -11,6 +11,7 @@ import { BusinessLineService } from "@/services/configuration/business-line-serv
 import { UnitService } from "@/services/configuration/unit-service";
 import { ItemLastCostService } from "@/services/expenses/item-last-cost-service";
 import { MovementService } from "@/services/inventory/movement-service";
+import { TaskService } from "@/services/tasks/task-service";
 
 export const metadata = { title: "Ítem · Catálogo · Kamay" };
 
@@ -97,6 +98,15 @@ export default async function ItemDetailPage({
       : [],
   ]);
 
+  // El otro lado del vínculo (KAM-21). Un activo se vincula como `asset` y un
+  // ítem corriente como `item`, así que se pregunta por el tipo que
+  // corresponde a este ítem.
+  const relatedTasks = await new TaskService(context.supabase).relatedTasks(
+    context.organizationId,
+    item.kind === "asset" ? "asset" : "item",
+    item.id,
+  );
+
   // El bucket es privado: cada lectura se firma, y una firma que falla deja la
   // tarjeta sin imagen en vez de tumbar la página.
   const signed = await attachments.signedUrls(photoRows);
@@ -113,6 +123,7 @@ export default async function ItemDetailPage({
       lines={lines}
       units={units}
       history={history}
+      relatedTasks={relatedTasks}
       role={context.membership.role}
       timeZone={context.membership.organization.timezone}
       balance={balance}

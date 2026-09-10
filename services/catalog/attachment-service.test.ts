@@ -238,3 +238,88 @@ describe("AttachmentService.countActive", () => {
     ).rejects.toThrow(/No se pudieron contar los adjuntos/);
   });
 });
+
+/**
+ * KAM-21 · Llevar un adjunto de una tarea al registro que la tarea creó.
+ *
+ * Cubre el diseño D6: `attachments` lleva `unique (bucket, storage_path)`, así
+ * que compartir el objeto entre dos filas no es posible y la copia es real.
+ */
+describe("AttachmentService.copyToEntity", () => {
+  const source = {
+    id: ATTACHMENT,
+    organizationId: ORG,
+    entityType: "task" as const,
+    entityId: "55555555-5555-5555-5555-555555555555",
+    bucket: "attachments",
+    storagePath: `${ORG}/task/55555555-5555-5555-5555-555555555555/${ATTACHMENT}.jpg`,
+    fileName: "taza.jpg",
+    mimeType: "image/jpeg",
+    sizeBytes: 120000,
+    uploadedBy: USER,
+    createdAt: "2026-09-09T12:00:00Z",
+    archivedAt: null,
+  };
+
+  it("copia el objeto a la carpeta del destino y no reutiliza la ruta de origen", async () => {
+    const client = new FakeClient([]);
+    const copied = await new AttachmentService(client.asSupabase()).copyToEntity(
+      ORG,
+      source,
+      "item",
+      ITEM,
+    );
+
+    // La ruta nueva cuelga del ítem, no de la tarea: una fila con la ruta de
+    // origen chocaría contra `unique (bucket, storage_path)`.
+    expect(copied.storagePath).not.toBe(source.storagePath);
+    expect(copied.storagePath).toBe(`${ORG}/item/${ITEM}/${copied.id}.jpg`);
+    expect(copied.id).not.toBe(source.id);
+  });
+
+  it("copia dentro del mismo bucket, de la ruta vieja a la nueva", async () => {
+    const client = new FakeClient([]);
+    const copied = await new AttachmentService(client.asSupabase()).copyToEntity(
+      ORG,
+      source,
+      "item",
+      ITEM,
+    );
+
+    expect(client.storageCalls).toEqual([
+      {
+        bucket: "attachments",
+        method: "copy",
+        args: [source.storagePath, copied.storagePath],
+      },
+    ]);
+  });
+
+  it("conserva nombre, tipo y peso del original", async () => {
+    const client = new FakeClient([]);
+    const copied = await new AttachmentService(client.asSupabase()).copyToEntity(
+      ORG,
+      source,
+      "item",
+      ITEM,
+    );
+
+    expect(copied.fileName).toBe("taza.jpg");
+    expect(copied.mimeType).toBe("image/jpeg");
+    expect(copied.sizeBytes).toBe(120000);
+  });
+
+  it("no devuelve nada que insertar si la copia falla", async () => {
+    const client = new FakeClient([]);
+    client.storageResults.copy = { error: { message: "sin espacio" } };
+
+    await expect(
+      new AttachmentService(client.asSupabase()).copyToEntity(
+        ORG,
+        source,
+        "item",
+        ITEM,
+      ),
+    ).rejects.toThrow("No se pudo copiar el adjunto");
+  });
+});

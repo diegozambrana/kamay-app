@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OrderWithTotal } from "@/services/orders/order-service";
 import type { Status } from "@/types";
 
+import type { RelatedTask } from "@/services/tasks/task-service";
+
 import { OrderDetail } from "./order-detail";
 
 const moved = vi.fn(async (input: unknown) => void input);
@@ -61,9 +63,13 @@ const order = {
   paid: 0,
 } as unknown as OrderWithTotal;
 
-function renderDetail(overrides: Partial<typeof order> = {}) {
+function renderDetail(
+  overrides: Partial<typeof order> = {},
+  relatedTasks: RelatedTask[] = [],
+) {
   return render(
     <OrderDetail
+      relatedTasks={relatedTasks}
       order={{ ...order, ...overrides } as OrderWithTotal}
       lines={[]}
       statuses={[registrado, entregado]}
@@ -116,5 +122,38 @@ describe("OrderDetail · crear tarea para este pedido", () => {
     // dispara el cambio de estado es la del propio pedido (convención nº 10).
     expect(moved).not.toHaveBeenCalled();
     expect(screen.getByTestId("create-task-for-order")).toBeInTheDocument();
+  });
+});
+
+/**
+ * KAM-21 · El bloque *Tareas relacionadas* en el detalle del pedido.
+ *
+ * Escenarios del delta spec `orders`, requisito "Detalle del pedido":
+ * «Bloque de tareas relacionadas», «Pedido sin tareas relacionadas».
+ */
+describe("tareas relacionadas del pedido", () => {
+  const tarea = (id: string, title: string): RelatedTask => ({
+    id,
+    title,
+    statusName: "En curso",
+    dueAt: null,
+    closedAt: null,
+  });
+
+  // «Bloque de tareas relacionadas»
+  it("lista las tareas vinculadas con su estado actual", () => {
+    renderDetail({}, [tarea("1", "Diseñar arte"), tarea("2", "Revisar filamento")]);
+
+    expect(screen.getByText("Tareas relacionadas")).toBeInTheDocument();
+    expect(screen.getByText("Diseñar arte")).toBeInTheDocument();
+    expect(screen.getByText("Revisar filamento")).toBeInTheDocument();
+  });
+
+  // «Pedido sin tareas relacionadas»
+  it("sin tareas vinculadas el bloque se rinde vacío", () => {
+    renderDetail({}, []);
+
+    expect(screen.getByText("Tareas relacionadas")).toBeInTheDocument();
+    expect(screen.getByTestId("empty-related-tasks")).toBeInTheDocument();
   });
 });

@@ -5,6 +5,20 @@ import type { AssetExpense } from "@/services/assets/asset-service";
 
 import { AssetDetailPanel, type AssetDetailView } from "./asset-detail-panel";
 
+const relatedTasksFor = vi.fn(async () => [
+  {
+    id: "t1",
+    title: "Cambiar boquilla de la impresora",
+    statusName: "Por hacer",
+    dueAt: null,
+    closedAt: null,
+  },
+]);
+
+vi.mock("@/actions/tasks", () => ({
+  relatedTasksFor: (...args: unknown[]) => relatedTasksFor(...(args as [])),
+}));
+
 vi.mock("@/actions/assets", () => ({
   linkExpenseToAsset: vi.fn(async () => undefined),
   saveAssetDetails: vi.fn(async () => undefined),
@@ -144,5 +158,38 @@ describe("AssetDetailPanel", () => {
     expect(entries).toHaveLength(2);
     expect(entries[0]).toHaveAttribute("data-action", "updated");
     expect(entries[1]).toHaveAttribute("data-action", "created");
+  });
+});
+
+/**
+ * KAM-21 · El bloque *Tareas relacionadas* en el panel de V12.
+ *
+ * Escenarios del delta spec `assets`, requisito "Detalle del activo en panel":
+ * «Tareas relacionadas del activo», «Activo sin tareas relacionadas»; y del
+ * delta `task-links-deliverables` → «El panel del activo muestra sus tareas».
+ *
+ * La pantalla ya es solo del dueño (KAM-19), así que aquí no hay ningún filtro
+ * de rol que probar: el que importa —el ayudante no ve el vínculo a un activo—
+ * vive en `TaskService.links` y se prueba allí.
+ */
+describe("tareas relacionadas del activo", () => {
+  it("lista las tareas que apuntan al activo", async () => {
+    render(
+      <AssetDetailPanel detail={detail} timezone="America/La_Paz" onClose={vi.fn()} />,
+    );
+
+    expect(
+      await screen.findByText("Cambiar boquilla de la impresora"),
+    ).toBeInTheDocument();
+    expect(relatedTasksFor).toHaveBeenCalledWith("asset", PRINTER);
+  });
+
+  it("un activo que ninguna tarea referencia rinde el bloque vacío", async () => {
+    relatedTasksFor.mockResolvedValueOnce([]);
+    render(
+      <AssetDetailPanel detail={detail} timezone="America/La_Paz" onClose={vi.fn()} />,
+    );
+
+    expect(await screen.findByTestId("empty-related-tasks")).toBeInTheDocument();
   });
 });

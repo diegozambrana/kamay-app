@@ -2,9 +2,14 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { opensClosingWizard } from "@/lib/tasks/deliverables";
 import type { BusinessLine, Status, Task } from "@/types";
 
 import { TaskFields } from "./task-fields";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }),
+}));
 
 afterEach(cleanup);
 
@@ -26,6 +31,7 @@ function task(overrides: Partial<Task> = {}): Task {
     dueAt: "2026-09-20T00:00:00Z",
     remindAt: null,
     closedAt: null,
+    closedWithoutDeliverables: false,
     createdBy: ANA,
     createdAt: "2026-09-07T10:00:00Z",
     archivedAt: null,
@@ -56,6 +62,7 @@ function renderFields(
       businessLines={lines}
       assignees={assignees}
       onSave={onSave}
+      pendingDeliverables={0}
       readOnly={overrides.archivedAt !== undefined && overrides.archivedAt !== null}
     />,
   );
@@ -136,5 +143,25 @@ describe("campos con guardado propio", () => {
     expect(screen.getByLabelText("Título")).toBeDisabled();
     expect(screen.getByLabelText("Fecha límite")).toBeDisabled();
     expect(screen.getByLabelText("Recordatorio")).toBeDisabled();
+  });
+});
+
+/**
+ * KAM-21 · La segunda entrada al asistente de cierre.
+ *
+ * Escenario del delta spec `task-links-deliverables`, requisito "Entrar en un
+ * estado final con entregables pendientes abre el asistente" → «Cambiar el
+ * estado desde el detalle abre el asistente».
+ *
+ * La decisión es la misma función que usa el tablero (`opensClosingWizard`,
+ * design D7); aquí se fija que el detalle la consulta con el tipo del estado
+ * destino y no con su nombre.
+ */
+describe("cambiar a un estado final desde el detalle", () => {
+  it("con entregables pendientes abre el asistente, y sin ellos no", () => {
+    // *Entregado* es `final` en esta organización; *Terminado* es `in_progress`.
+    expect(opensClosingWizard("final", 1)).toBe(true);
+    expect(opensClosingWizard("final", 0)).toBe(false);
+    expect(opensClosingWizard("in_progress", 1)).toBe(false);
   });
 });

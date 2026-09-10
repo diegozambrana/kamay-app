@@ -1,4 +1,5 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useBoardStore } from "@/stores/board-store";
@@ -57,6 +58,10 @@ function task(overrides: Partial<BoardTask> = {}): BoardTask {
     tags: [],
     lineName: "Sublimación",
     lineColor: "blue",
+    linkCount: 0,
+    deliverableCount: 0,
+    pendingDeliverableCount: 0,
+    closedWithoutDeliverables: false,
     ...overrides,
   };
 }
@@ -74,6 +79,8 @@ function renderScreen(props: Partial<Parameters<typeof TasksScreen>[0]> = {}) {
       quickAddLineId={SUBLI}
       view="board"
       search=""
+      linkFilter=""
+      withoutDeliverables={false}
       assigneeId=""
       tagId=""
       statusId=""
@@ -235,5 +242,61 @@ describe("TasksScreen · vistas y filtros", () => {
     // Acotado a la fila: "Haciendo" también es una opción del filtro de estado.
     const row = screen.getByTestId("task-row");
     expect(within(row).getByText("Haciendo")).toBeInTheDocument();
+  });
+});
+
+/**
+ * KAM-21 · Los filtros nuevos y la entrada al asistente desde el tablero.
+ *
+ * Escenarios del delta spec `tasks`, requisito "Vistas lista y calendario y
+ * filtros del tablero": «Filtro por vínculo», «Filtro de cerradas sin
+ * entregables»; y del delta `task-links-deliverables` → «El filtro la
+ * encuentra».
+ *
+ * El filtrado ocurre en el servidor (la página lee `?link=` y `?nodeliv=`);
+ * lo que aquí se verifica es que los controles existen y que llevan su
+ * elección a la dirección, que es donde los filtros viven.
+ */
+describe("filtros de vínculo y de cierre sin entregables", () => {
+  // «Filtro por vínculo»
+  it("el filtro por vínculo viaja en la dirección", async () => {
+    pushed.length = 0;
+    renderScreen();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText("Vínculo"),
+      "any",
+    );
+
+    expect(pushed.at(-1)).toContain("link=any");
+  });
+
+  it("ofrece acotar a las que tienen algún vínculo y a las que no", () => {
+    renderScreen();
+
+    const select = screen.getByLabelText("Vínculo");
+    expect(
+      within(select).getByRole("option", { name: "Con algún vínculo" }),
+    ).toBeInTheDocument();
+    expect(
+      within(select).getByRole("option", { name: "Sin vínculos" }),
+    ).toBeInTheDocument();
+  });
+
+  // «Filtro de cerradas sin entregables» y «El filtro la encuentra»
+  it("el filtro de cerradas sin entregables viaja en la dirección", async () => {
+    pushed.length = 0;
+    renderScreen();
+
+    await userEvent.click(screen.getByLabelText("Cerradas sin entregables"));
+
+    expect(pushed.at(-1)).toContain("nodeliv=1");
+  });
+
+  it("los filtros llegan aplicados desde la dirección", () => {
+    renderScreen({ linkFilter: "any", withoutDeliverables: true });
+
+    expect(screen.getByLabelText("Vínculo")).toHaveValue("any");
+    expect(screen.getByLabelText("Cerradas sin entregables")).toBeChecked();
   });
 });

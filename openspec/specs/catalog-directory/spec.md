@@ -216,7 +216,7 @@ El catálogo SHALL ser una página completa con pestañas por tipo de ítem —i
 
 ### Requirement: Pantalla de detalle de ítem (V11)
 
-El detalle de un ítem SHALL mostrar sus datos generales —tipo, unidad, categoría, línea o "Compartido", precio de venta referencial, mínimo y descripción—, la lista de sus variantes con alta, edición y archivado, y el historial de cambios leído de la bitácora. Para un ítem de tipo insumo SHALL mostrar además su saldo derivado, sus movimientos de inventario y la evolución de precios de compra, según define la capacidad de inventario; la evolución de precios SHALL ser solo para la persona dueña. Para un ítem de tipo activo, y solo ante la persona dueña, SHALL mostrar además sus datos de activo con la posibilidad de registrarlos y editarlos, y el acceso a la pantalla de activos. SHALL NOT mostrar proveedores habituales ni tareas relacionadas.
+El detalle de un ítem SHALL mostrar sus datos generales —tipo, unidad, categoría, línea o "Compartido", precio de venta referencial, mínimo y descripción—, la lista de sus variantes con alta, edición y archivado, un bloque de **tareas relacionadas** con las tareas que referencian a ese ítem —con su estado actual y su fecha límite cuando la tenga, y con paso a su detalle—, y el historial de cambios leído de la bitácora. Para un ítem de tipo insumo SHALL mostrar además su saldo derivado, sus movimientos de inventario y la evolución de precios de compra, según define la capacidad de inventario; la evolución de precios SHALL ser solo para la persona dueña. Para un ítem de tipo activo, y solo ante la persona dueña, SHALL mostrar además sus datos de activo con la posibilidad de registrarlos y editarlos, y el acceso a la pantalla de activos. SHALL NOT mostrar proveedores habituales.
 
 #### Scenario: Variantes gestionadas desde el detalle
 
@@ -238,10 +238,10 @@ El detalle de un ítem SHALL mostrar sus datos generales —tipo, unidad, catego
 - **WHEN** el usuario abre el detalle de un ítem de tipo producto o activo
 - **THEN** no existen secciones de saldo, movimientos ni evolución de precios de compra
 
-#### Scenario: Sin proveedores habituales ni tareas relacionadas
+#### Scenario: Sin proveedores habituales
 
 - **WHEN** el usuario abre el detalle de un ítem
-- **THEN** no existen secciones de proveedores habituales ni de tareas relacionadas
+- **THEN** no existe ninguna sección de proveedores habituales
 
 #### Scenario: Los datos de activo en el detalle de un activo
 
@@ -253,9 +253,19 @@ El detalle de un ítem SHALL mostrar sus datos generales —tipo, unidad, catego
 - **WHEN** un ayudante abre el detalle de un ítem de tipo activo
 - **THEN** el detalle no contiene sección de datos de activo, ni vacía ni rotulada
 
+#### Scenario: Tareas relacionadas en el detalle
+
+- **WHEN** el usuario abre el detalle de un ítem que dos tareas referencian
+- **THEN** el bloque de tareas relacionadas las lista con su estado actual y lleva al detalle de cada una
+
+#### Scenario: Ítem sin tareas relacionadas
+
+- **WHEN** el usuario abre el detalle de un ítem que ninguna tarea referencia
+- **THEN** el bloque de tareas relacionadas se rinde con su mensaje de lista sin contenido
+
 ### Requirement: Pantalla de contactos (V13)
 
-Los contactos SHALL presentarse como una página de dos paneles: a la izquierda la lista buscable con filtro por rol y filtro "Ver archivados"; a la derecha el detalle del contacto seleccionado, con sus roles, sus datos y sus notas, editable en el sitio. Elegir un contacto SHALL actualizar el panel derecho sin abandonar la página.
+Los contactos SHALL presentarse como una página de dos paneles: a la izquierda la lista buscable con filtro por rol y filtro "Ver archivados"; a la derecha el detalle del contacto seleccionado, con sus roles, sus datos y sus notas, editable en el sitio, y un bloque de **tareas relacionadas** con las tareas que referencian a ese contacto —con su estado actual y su fecha límite cuando la tenga, y con paso a su detalle—. Elegir un contacto SHALL actualizar el panel derecho sin abandonar la página, incluido su bloque de tareas relacionadas.
 
 #### Scenario: Selección sin abandonar la pantalla
 
@@ -266,6 +276,16 @@ Los contactos SHALL presentarse como una página de dos paneles: a la izquierda 
 
 - **WHEN** el usuario filtra por proveedores
 - **THEN** la lista muestra solo contactos marcados como proveedor, incluidos los que además son clientes
+
+#### Scenario: Tareas relacionadas en el panel
+
+- **WHEN** el usuario elige un contacto que una tarea referencia
+- **THEN** el panel derecho muestra esa tarea en su bloque de tareas relacionadas
+
+#### Scenario: El bloque sigue al contacto elegido
+
+- **WHEN** el usuario cambia de contacto en la lista
+- **THEN** el bloque de tareas relacionadas pasa a mostrar las del contacto recién elegido
 
 ### Requirement: Creación de contactos al vuelo
 

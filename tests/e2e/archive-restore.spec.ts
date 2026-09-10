@@ -57,7 +57,15 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     ).toHaveCount(1);
 
     // ── Archivar: desaparece del listado y de los buscadores ──────────────
+    // Desde KAM-21 archivar avisa primero qué tareas referencian al ítem. El
+    // aviso informa, no impide: confirmarlo archiva igual. Este ítem es nuevo
+    // y ninguna tarea lo apunta, así que el aviso llega sin lista.
     await page.getByRole("button", { name: "Archivar" }).first().click();
+    await expect(page.getByTestId("archive-warning")).toBeVisible();
+    await page
+      .getByTestId("archive-warning")
+      .getByRole("button", { name: "Archivar" })
+      .click();
     await expect(page.getByTestId("item-archived-badge")).toBeVisible();
     // Un archivado no se edita: la única acción es devolverlo.
     await expect(page.getByRole("button", { name: "Editar" })).toHaveCount(0);
@@ -113,8 +121,14 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     await expect(row).toHaveCount(1);
     await row.click();
 
+    // Mismo aviso que en el ítem (KAM-21): enumera y deja seguir.
     await page
       .getByTestId("contact-detail")
+      .getByRole("button", { name: "Archivar" })
+      .click();
+    await expect(page.getByTestId("archive-warning")).toBeVisible();
+    await page
+      .getByTestId("archive-warning")
       .getByRole("button", { name: "Archivar" })
       .click();
     await expect(

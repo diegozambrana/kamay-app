@@ -3,6 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { TaskDetail } from "@/features/tasks/detail/task-detail";
 import { getSessionContext } from "@/lib/auth/session-context";
 import { AttachmentService } from "@/services/catalog/attachment-service";
+import { ContactService } from "@/services/catalog/contact-service";
+import { ItemService } from "@/services/catalog/item-service";
+import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { StatusService } from "@/services/configuration/status-service";
 import { TaskService } from "@/services/tasks/task-service";
@@ -23,8 +26,11 @@ export const metadata = { title: "Tarea · Kamay" };
  */
 export default async function TaskDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  /** `close=<statusId>` abre el asistente de cierre (KAM-21, design D7). */
+  searchParams: Promise<{ close?: string }>;
 }) {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
@@ -39,7 +45,9 @@ export default async function TaskDetailPage({
 
   const statusService = new StatusService(context.supabase);
 
-  const [statuses, allStatuses, businessLines, assignees, history] =
+  const isOwner = context.membership.role === "owner";
+
+  const [statuses, allStatuses, businessLines, assignees, history, links, deliverables] =
     await Promise.all([
       // El juego de la línea de ESTA tarea: es lo que puede ofrecerse como
       // destino al cambiar de estado desde el detalle.
@@ -52,6 +60,11 @@ export default async function TaskDetailPage({
       // Un solo historial (convención nº 7): sale de `activity_log`. Para el
       // ayudante llega vacío por RLS, y el bloque lo dice sin dar error.
       tasks.history(context.organizationId, task.id),
+      // Los vínculos se resuelven contra sus destinos al leer: nada de lo que
+      // se muestra está copiado en `task_links` (D2). El activo se omite para
+      // quien no es dueño (D9).
+      tasks.links(context.organizationId, task.id, isOwner),
+      tasks.deliverables(context.organizationId, task.id),
     ]);
 
   // Los buckets son privados: nada se muestra por URL pública, se firma cada
@@ -63,6 +76,30 @@ export default async function TaskDetailPage({
     task.id,
   );
   const signed = await attachmentService.signedUrls(files);
+
+  /**
+   * Lo que los formularios de egreso del asistente necesitan y la tarea no
+   * sabe: `create_expense` exige proveedor y líneas para una compra, y
+   * categoría e importe para un gasto.
+   *
+   * Solo se cargan si hay un cierre en curso: la pantalla se abre muchas veces
+   * al día y estas tres consultas solo sirven para el diálogo.
+   */
+  const closingStatusId = (await searchParams).close ?? null;
+
+  const [suppliers, expenseCategories, supplies] = closingStatusId
+    ? await Promise.all([
+        new ContactService(context.supabase).list(context.organizationId, {
+          role: "supplier",
+        }),
+        new ExpenseCategoryService(context.supabase).listActive(
+          context.organizationId,
+        ),
+        new ItemService(context.supabase).list(context.organizationId, {
+          kind: "supply",
+        }),
+      ])
+    : [[], [], []];
 
   const assigneeNames = new Map(
     assignees.map((person) => [person.userId, person.displayName]),
@@ -92,6 +129,13 @@ export default async function TaskDetailPage({
           : null,
         url: signed.get(file.id) ?? null,
       }))}
+      links={links}
+      deliverables={deliverables}
+      isOwner={isOwner}
+      suppliers={suppliers.map((c) => ({ id: c.id, name: c.name }))}
+      expenseCategories={expenseCategories.map((c) => ({ id: c.id, name: c.name }))}
+      supplies={supplies.map((i) => ({ id: i.id, name: i.name }))}
+      closingStatusId={closingStatusId}
       history={history}
       timezone={context.membership.organization.timezone}
     />

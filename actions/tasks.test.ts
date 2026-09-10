@@ -62,6 +62,7 @@ function task(overrides: Partial<Task> = {}): Task {
     dueAt: "2026-09-20T00:00:00Z",
     remindAt: null,
     closedAt: null,
+    closedWithoutDeliverables: false,
     createdBy: USER,
     createdAt: "2026-09-07T10:00:00Z",
     archivedAt: null,

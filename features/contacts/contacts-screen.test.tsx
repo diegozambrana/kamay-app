@@ -13,6 +13,20 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+const relatedTasksFor = vi.fn(async () => [
+  {
+    id: "t1",
+    title: "Revisar filamento",
+    statusName: "En curso",
+    dueAt: null,
+    closedAt: null,
+  },
+]);
+
+vi.mock("@/actions/tasks", () => ({
+  relatedTasksFor: (...args: unknown[]) => relatedTasksFor(...(args as [])),
+}));
+
 vi.mock("@/actions/contacts", () => ({
   createContact: vi.fn(async () => undefined),
   updateContact: vi.fn(async () => undefined),
@@ -48,6 +62,7 @@ function renderScreen(
       roleFilter="all"
       search=""
       includeArchived={false}
+      timezone="America/La_Paz"
       selectedId={selectedId}
       role={role}
     />,
@@ -130,5 +145,38 @@ describe("ContactsScreen", () => {
 
     expect(screen.getByRole("button", { name: "Editar" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Archivar" })).toBeNull();
+  });
+});
+
+/**
+ * KAM-21 · El bloque *Tareas relacionadas* en el panel derecho de V13.
+ *
+ * Escenarios del delta spec `catalog-directory`, requisito "Pantalla de
+ * contactos (V13)": «Tareas relacionadas en el panel», «El bloque sigue al
+ * contacto elegido».
+ */
+describe("tareas relacionadas del contacto", () => {
+  const andina = contact({ name: "Distribuidora Andina" });
+  const ana = contact({ name: "Ana Quispe", isCustomer: true });
+
+  // «Tareas relacionadas en el panel»
+  it("muestra las tareas que apuntan al contacto elegido", async () => {
+    renderScreen([andina], "owner", andina.id);
+
+    expect(await screen.findByText("Revisar filamento")).toBeInTheDocument();
+    expect(relatedTasksFor).toHaveBeenCalledWith("contact", andina.id);
+  });
+
+  // «El bloque sigue al contacto elegido»
+  it("al cambiar de contacto pregunta por el nuevo, sin abandonar la página", async () => {
+    relatedTasksFor.mockClear();
+    renderScreen([andina, ana], "owner", andina.id);
+
+    await screen.findByText("Revisar filamento");
+    await userEvent.click(screen.getByRole("button", { name: /Ana Quispe/ }));
+
+    expect(relatedTasksFor).toHaveBeenLastCalledWith("contact", ana.id);
+    // La lista sigue visible: no se navegó a ninguna parte.
+    expect(screen.getByTestId("contact-detail")).toBeInTheDocument();
   });
 });

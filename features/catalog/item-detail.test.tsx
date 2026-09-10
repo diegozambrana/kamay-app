@@ -14,6 +14,8 @@ import type {
   Unit,
 } from "@/types";
 
+import type { RelatedTask } from "@/services/tasks/task-service";
+
 import { ItemDetail } from "./item-detail";
 import type { ItemPhoto } from "./item-photos";
 
@@ -119,9 +121,11 @@ function renderDetail(
   variants: ItemVariant[] = [],
   photos: ItemPhoto[] = [],
   inventory: InventoryProps = {},
+  relatedTasks: RelatedTask[] = [],
 ) {
   return render(
     <ItemDetail
+      relatedTasks={relatedTasks}
       item={item(overrides)}
       variants={variants}
       photos={photos}
@@ -176,13 +180,45 @@ describe("ItemDetail", () => {
     expect(screen.queryByText(/evolución de precios/i)).toBeNull();
   });
 
-  // Escenario "Sin proveedores habituales ni tareas relacionadas": siguen
-  // siendo de KAM-21 y no se insinúan aquí.
-  it("no muestra proveedores habituales ni tareas relacionadas", () => {
+  // Escenario "Sin proveedores habituales". KAM-21 levantó la mitad de esta
+  // prohibición —las tareas relacionadas ya se muestran, y su escenario está
+  // abajo—; los proveedores habituales siguen fuera.
+  it("no muestra proveedores habituales", () => {
     renderDetail({}, "owner", [], [], { balance: BALANCE });
 
     expect(screen.queryByText(/proveedores habituales/i)).toBeNull();
-    expect(screen.queryByText(/tareas relacionadas/i)).toBeNull();
+  });
+
+  // Escenarios "Tareas relacionadas en el detalle" e "Ítem sin tareas
+  // relacionadas" (delta `catalog-directory` de KAM-21).
+  it("muestra las tareas que apuntan al ítem, con su estado actual", () => {
+    renderDetail({}, "owner", [], [], {}, [
+      {
+        id: "t1",
+        title: "Set de 6 tazas artesanales",
+        statusName: "En curso",
+        dueAt: null,
+        closedAt: null,
+      },
+      {
+        id: "t2",
+        title: "Revisar filamento",
+        statusName: "Por hacer",
+        dueAt: null,
+        closedAt: null,
+      },
+    ]);
+
+    expect(screen.getByText("Set de 6 tazas artesanales")).toBeInTheDocument();
+    expect(screen.getByText("Revisar filamento")).toBeInTheDocument();
+    expect(screen.getByText("En curso")).toBeInTheDocument();
+  });
+
+  it("un ítem que ninguna tarea referencia rinde el bloque vacío", () => {
+    renderDetail();
+
+    expect(screen.getByText(/tareas relacionadas/i)).toBeInTheDocument();
+    expect(screen.getByTestId("empty-related-tasks")).toBeInTheDocument();
   });
 
   // Escenario "Secciones de inventario en un insumo".

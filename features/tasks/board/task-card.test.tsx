@@ -15,6 +15,10 @@ function card(overrides: Partial<TaskCardData> = {}): TaskCardData {
     tags: [],
     lineName: "Alfarería",
     lineColor: "amber",
+    linkCount: 0,
+    deliverableCount: 0,
+    pendingDeliverableCount: 0,
+    closedWithoutDeliverables: false,
     ...overrides,
   } as TaskCardData;
 }
@@ -84,5 +88,65 @@ describe("apertura del detalle desde la tarjeta", () => {
     fireEvent.pointerDown(tarjeta, { clientX: 340, clientY: 120 });
     fireEvent.click(tarjeta, { clientX: 340, clientY: 120 });
     expect(onOpen).toHaveBeenCalledOnce();
+  });
+});
+
+/**
+ * KAM-21 · Íconos de vínculos y entregables, y la marca de cierre sin nada.
+ *
+ * Escenarios del delta spec `tasks`, requisito "Tarjeta de tarea": «Íconos de
+ * vínculos y entregables», «Una tarea sin vínculos ni entregables no muestra
+ * sus íconos», «La marca de cerrada sin entregables es sobria».
+ */
+describe("tarjeta: vínculos, entregables y marca", () => {
+  function renderWith(overrides: Partial<TaskCardData>) {
+    render(
+      <TaskCard
+        task={card(overrides)}
+        today="2026-09-07"
+        showLine={false}
+        onOpen={vi.fn()}
+      />,
+    );
+  }
+
+  // «Íconos de vínculos y entregables»
+  it("señala que hay vínculos y entregables", () => {
+    renderWith({ linkCount: 2, deliverableCount: 1 });
+
+    expect(screen.getByTestId("card-links")).toBeInTheDocument();
+    expect(screen.getByTestId("card-deliverables")).toBeInTheDocument();
+  });
+
+  it("no repite el número: en la tarjeta importa si hay, no cuántos", () => {
+    renderWith({ linkCount: 7, deliverableCount: 3 });
+
+    expect(screen.queryByText("7")).toBeNull();
+    expect(screen.queryByText("3")).toBeNull();
+  });
+
+  // «Una tarea sin vínculos ni entregables no muestra sus íconos»
+  it("sin vínculos ni entregables no pinta ninguno de los dos", () => {
+    renderWith({ linkCount: 0, deliverableCount: 0 });
+
+    expect(screen.queryByTestId("card-links")).toBeNull();
+    expect(screen.queryByTestId("card-deliverables")).toBeNull();
+  });
+
+  // «La marca de cerrada sin entregables es sobria»
+  it("la marca de cerrada sin entregables no se rinde como alerta", () => {
+    renderWith({ closedWithoutDeliverables: true });
+
+    const marca = screen.getByTestId("card-closed-without-deliverables");
+    expect(marca).toHaveTextContent("Sin entregables");
+    // Ni rol de alerta ni color de error: es una nota al margen.
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(marca.className).not.toMatch(/destructive/);
+  });
+
+  it("una tarea que cerró creando lo suyo no lleva marca", () => {
+    renderWith({ closedWithoutDeliverables: false });
+
+    expect(screen.queryByTestId("card-closed-without-deliverables")).toBeNull();
   });
 });

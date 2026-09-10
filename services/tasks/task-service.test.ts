@@ -546,3 +546,329 @@ describe("TaskService.listPending", () => {
     ).rejects.toThrow(/No se pudieron cargar los pendientes/);
   });
 });
+
+/**
+ * KAM-21 · Vínculos resueltos, buscador único y tareas relacionadas.
+ *
+ * Escenarios del delta spec `task-links-deliverables`:
+ * - "El vínculo refleja el estado actual del registro, nunca una copia" → «El
+ *   estado del pedido cambia después de vincularlo», «El nombre del registro
+ *   cambia después de vincularlo», «El ayudante no ve el vínculo a un activo».
+ * - "Los registros vinculados muestran sus tareas relacionadas" → «El ayudante
+ *   solo ve lo que le corresponde» (parte de consulta).
+ */
+const ASSET = "77777777-7777-4777-8777-777777777777";
+const ITEM = "88888888-8888-4888-8888-888888888888";
+
+describe("TaskService.links", () => {
+  it("resuelve el pedido contra su tabla, no contra una copia del vínculo", async () => {
+    const client = new FakeClient([
+      { data: [{ entity_type: "order", entity_id: ORDER }], error: null },
+      {
+        data: [
+          {
+            id: ORDER,
+            code: 142,
+            archived_at: null,
+            status: { name: "En producción" },
+          },
+        ],
+        error: null,
+      },
+    ]);
+
+    const links = await new TaskService(client.asSupabase()).links(
+      ORG,
+      TASK,
+      true,
+    );
+
+    // El estado sale de `orders`/`statuses` al leer: si el pedido cambia de
+    // estado después de vincularlo, esto muestra el nuevo.
+    expect(client.tables).toEqual(["task_links", "orders"]);
+    expect(links).toEqual([
+      {
+        entityType: "order",
+        entityId: ORDER,
+        label: "Pedido #142",
+        statusName: "En producción",
+        archived: false,
+      },
+    ]);
+  });
+
+  it("no pide a task_links ninguna columna copiada del destino", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+
+    await new TaskService(client.asSupabase()).links(ORG, TASK, true);
+
+    // Tipo e identificador y nada más: si aquí apareciera `name` o `status`,
+    // el vínculo estaría guardando una copia.
+    expect(client.queries[0].argsOf("select")?.[0]).toBe(
+      "entity_type, entity_id",
+    );
+  });
+
+  it("solo devuelve los vínculos vigentes", async () => {
+    const client = new FakeClient([{ data: [], error: null }]);
+
+    await new TaskService(client.asSupabase()).links(ORG, TASK, true);
+
+    expect(client.queries[0].has("is", "archived_at", null)).toBe(true);
+  });
+
+  it("toma el nombre actual del ítem, no el del momento del vínculo", async () => {
+    const client = new FakeClient([
+      { data: [{ entity_type: "item", entity_id: ITEM }], error: null },
+      {
+        data: [{ id: ITEM, name: "Taza para sublimación 11oz", archived_at: null }],
+        error: null,
+      },
+    ]);
+
+    const links = await new TaskService(client.asSupabase()).links(
+      ORG,
+      TASK,
+      true,
+    );
+
+    expect(links[0].label).toBe("Taza para sublimación 11oz");
+  });
+
+  it("señala el destino archivado en vez de esconderlo", async () => {
+    const client = new FakeClient([
+      { data: [{ entity_type: "contact", entity_id: "c1" }], error: null },
+      {
+        data: [{ id: "c1", name: "Ana Quispe", archived_at: "2026-09-01T00:00:00Z" }],
+        error: null,
+      },
+    ]);
+
+    const links = await new TaskService(client.asSupabase()).links(
+      ORG,
+      TASK,
+      true,
+    );
+
+    expect(links).toHaveLength(1);
+    expect(links[0].archived).toBe(true);
+  });
+
+  // «El ayudante no ve el vínculo a un activo»
+  it("omite el activo para quien no es dueño, sin dejar hueco", async () => {
+    const client = new FakeClient([
+      {
+        data: [
+          { entity_type: "asset", entity_id: ASSET },
+          { entity_type: "order", entity_id: ORDER },
+        ],
+        error: null,
+      },
+      {
+        data: [{ id: ORDER, code: 7, archived_at: null, status: { name: "En cola" } }],
+        error: null,
+      },
+    ]);
+
+    const links = await new TaskService(client.asSupabase()).links(
+      ORG,
+      TASK,
+      false,
+    );
+
+    // Ni siquiera se consulta `items` por el activo: no hay nada que rotular.
+    expect(client.tables).toEqual(["task_links", "orders"]);
+    expect(links.map((l) => l.entityType)).toEqual(["order"]);
+  });
+
+  it("la persona dueña sí ve el activo", async () => {
+    const client = new FakeClient([
+      { data: [{ entity_type: "asset", entity_id: ASSET }], error: null },
+      { data: [{ id: ASSET, name: "Impresora 3D", archived_at: null }], error: null },
+    ]);
+
+    const links = await new TaskService(client.asSupabase()).links(
+      ORG,
+      TASK,
+      true,
+    );
+
+    expect(links.map((l) => l.entityType)).toEqual(["asset"]);
+    expect(links[0].label).toBe("Impresora 3D");
+  });
+
+  it("una consulta por tipo, no una por vínculo", async () => {
+    const client = new FakeClient([
+      {
+        data: [
+          { entity_type: "item", entity_id: "i1" },
+          { entity_type: "item", entity_id: "i2" },
+          { entity_type: "item", entity_id: "i3" },
+        ],
+        error: null,
+      },
+      {
+        data: [
+          { id: "i1", name: "Uno", archived_at: null },
+          { id: "i2", name: "Dos", archived_at: null },
+          { id: "i3", name: "Tres", archived_at: null },
+        ],
+        error: null,
+      },
+    ]);
+
+    await new TaskService(client.asSupabase()).links(ORG, TASK, true);
+
+    expect(client.tables).toEqual(["task_links", "items"]);
+  });
+});
+
+describe("TaskService.unlink", () => {
+  it("archiva la fila en vez de borrarla", async () => {
+    const client = new FakeClient([{ data: null, error: null }]);
+
+    await new TaskService(client.asSupabase()).unlink(ORG, TASK, "order", ORDER);
+
+    const update = client.queries[0].argsOf("update")?.[0] as Record<string, unknown>;
+    expect(update).toHaveProperty("archived_at");
+    expect(client.queries[0].calls.map((c) => c.method)).not.toContain("delete");
+  });
+});
+
+describe("TaskService.searchLinkTargets", () => {
+  it("un término vacío no consulta nada", async () => {
+    const client = new FakeClient([]);
+
+    expect(
+      await new TaskService(client.asSupabase()).searchLinkTargets(ORG, "  ", true),
+    ).toEqual([]);
+    expect(client.tables).toEqual([]);
+  });
+
+  it("no ofrece activos a quien no es dueño", async () => {
+    const client = new FakeClient([
+      { data: [], error: null },
+      { data: [], error: null },
+      {
+        data: [
+          { id: ASSET, name: "Impresora 3D", kind: "asset" },
+          { id: ITEM, name: "Impresión de prueba", kind: "product" },
+        ],
+        error: null,
+      },
+      { data: [], error: null },
+    ]);
+
+    const found = await new TaskService(client.asSupabase()).searchLinkTargets(
+      ORG,
+      "impres",
+      false,
+    );
+
+    expect(found.map((f) => f.entityType)).toEqual(["item"]);
+  });
+
+  it("ofrece el activo como activo a la persona dueña", async () => {
+    const client = new FakeClient([
+      { data: [], error: null },
+      { data: [], error: null },
+      { data: [{ id: ASSET, name: "Impresora 3D", kind: "asset" }], error: null },
+      { data: [], error: null },
+    ]);
+
+    const found = await new TaskService(client.asSupabase()).searchLinkTargets(
+      ORG,
+      "impres",
+      true,
+    );
+
+    expect(found).toEqual([
+      { entityType: "asset", entityId: ASSET, label: "Impresora 3D", hint: "Activo" },
+    ]);
+  });
+
+  it("no ofrece registros archivados", async () => {
+    const client = new FakeClient([]);
+
+    await new TaskService(client.asSupabase()).searchLinkTargets(ORG, "taza", true);
+
+    for (const query of client.queries) {
+      expect(query.has("is", "archived_at", null)).toBe(true);
+    }
+  });
+});
+
+describe("TaskService.relatedTasks", () => {
+  it("una sola consulta, y el filtro de rol lo hace RLS", async () => {
+    const client = new FakeClient([
+      {
+        data: [
+          {
+            task: {
+              id: TASK,
+              title: "Diseñar arte",
+              due_at: "2026-09-20T00:00:00Z",
+              closed_at: null,
+              archived_at: null,
+              status: { name: "En curso" },
+            },
+          },
+        ],
+        error: null,
+      },
+    ]);
+
+    const tasks = await new TaskService(client.asSupabase()).relatedTasks(
+      ORG,
+      "order",
+      ORDER,
+    );
+
+    expect(client.tables).toEqual(["task_links"]);
+    expect(tasks).toEqual([
+      {
+        id: TASK,
+        title: "Diseñar arte",
+        statusName: "En curso",
+        dueAt: "2026-09-20T00:00:00Z",
+        closedAt: null,
+      },
+    ]);
+  });
+
+  // «El ayudante solo ve lo que le corresponde»: RLS devuelve la fila del
+  // vínculo sin su tarea cuando esa tarea no está a su alcance.
+  it("descarta el vínculo cuya tarea no está a la vista", async () => {
+    const client = new FakeClient([
+      { data: [{ task: null }], error: null },
+    ]);
+
+    expect(
+      await new TaskService(client.asSupabase()).relatedTasks(ORG, "item", ITEM),
+    ).toEqual([]);
+  });
+
+  it("no lista tareas archivadas", async () => {
+    const client = new FakeClient([
+      {
+        data: [
+          {
+            task: {
+              id: TASK,
+              title: "Vieja",
+              due_at: null,
+              closed_at: null,
+              archived_at: "2026-08-01T00:00:00Z",
+              status: null,
+            },
+          },
+        ],
+        error: null,
+      },
+    ]);
+
+    expect(
+      await new TaskService(client.asSupabase()).relatedTasks(ORG, "item", ITEM),
+    ).toEqual([]);
+  });
+});

@@ -14,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { RelatedTasksPanel } from "@/features/tasks/links/related-tasks-panel";
 import { hasAttributableLine } from "@/lib/assets/recovery";
 import { formatCalendarDate, formatDateTime } from "@/lib/format/datetime";
 import type { ActivityEntry, AssetRecovery } from "@/types";
@@ -221,6 +222,22 @@ export function AssetDetailPanel({
             notes={notes}
             suppliers={suppliers}
           />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tareas relacionadas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* El panel elige en cliente, así que el bloque sigue a la
+                  selección. La pantalla ya es solo del dueño (KAM-19), de modo
+                  que aquí no hace falta ningún filtro de rol añadido. */}
+              <RelatedTasksPanel
+                entityType="asset"
+                entityId={asset.itemId}
+                timezone={timezone}
+              />
+            </CardContent>
+          </Card>
 
           {history.length > 0 && (
             <Card>

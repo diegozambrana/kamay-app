@@ -17,6 +17,14 @@ import { MarkdownEditor } from "@/features/tasks/editor/markdown-editor";
 import type { ActivityEntry, BusinessLine, Status, Task } from "@/types";
 
 import { TaskFields } from "./task-fields";
+import { useRouter } from "next/navigation";
+
+import { ClosingDialog } from "@/features/tasks/deliverables/closing-dialog";
+import { DeliverablesSection } from "@/features/tasks/deliverables/deliverables-section";
+import { TaskLinks } from "@/features/tasks/links/task-links";
+import type { Deliverable } from "@/lib/tasks/deliverables";
+import type { ResolvedTaskLink } from "@/services/tasks/task-service";
+
 import { TaskHistory } from "./task-history";
 
 export type TaskDetailProps = {
@@ -25,6 +33,22 @@ export type TaskDetailProps = {
   businessLines: BusinessLine[];
   assignees: { userId: string; displayName: string | null }[];
   attachments: TaskAttachment[];
+  /** Los vínculos resueltos contra sus destinos (KAM-21). */
+  links: ResolvedTaskLink[];
+  /** Los entregables declarados de la tarea (KAM-21). */
+  deliverables: Deliverable[];
+  isOwner: boolean;
+  /** Lo que los formularios de egreso del asistente necesitan. */
+  suppliers: { id: string; name: string }[];
+  expenseCategories: { id: string; name: string }[];
+  supplies: { id: string; name: string }[];
+  /**
+   * El estado de tipo `final` al que se llevó la tarea desde el tablero.
+   *
+   * Llega en la dirección (`?close=`) porque el asistente necesita datos que
+   * el tablero no carga (design D7). `null` = no hay cierre en curso.
+   */
+  closingStatusId: string | null;
   history: ActivityEntry[];
   timezone: string;
 };
@@ -36,9 +60,8 @@ export type TaskDetailProps = {
  * tablero, desde una notificación, desde un ítem o desde un contacto, y una
  * dirección compartible es lo que hace que esos enlaces existan.
  *
- * La sección *Vínculos* del diseño de V18 no está: la construye KAM-21. Se
- * deja sin ranura en lugar de pintarla inerte, porque una sección vacía aquí
- * solo ocuparía pantalla sin nada que verificar.
+ * Las secciones *Vínculos* y *Entregables esperados* son de KAM-21, que las
+ * encendió en la ranura que esta pantalla había dejado sin pintar.
  */
 export function TaskDetail({
   task,
@@ -46,10 +69,23 @@ export function TaskDetail({
   businessLines,
   assignees,
   attachments,
+  links,
+  deliverables,
+  isOwner,
+  suppliers,
+  expenseCategories,
+  supplies,
+  closingStatusId,
   history,
   timezone,
 }: TaskDetailProps) {
+  const router = useRouter();
   const archivada = task.archivedAt !== null;
+
+  /** Quita `?close=` sin recargar: cancelar deja la tarea como estaba. */
+  function dismissClosing() {
+    router.replace(`/tasks/${task.id}`);
+  }
 
   return (
     <MainContainer
@@ -71,6 +107,9 @@ export function TaskDetail({
             <TaskFields
               task={task}
               statuses={statuses}
+              pendingDeliverables={
+                deliverables.filter((d) => d.fulfilledAt === null).length
+              }
               businessLines={businessLines}
               assignees={assignees}
               onSave={updateTaskField}
@@ -114,6 +153,29 @@ export function TaskDetail({
 
         <Card>
           <CardHeader>
+            <CardTitle>Vínculos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TaskLinks taskId={task.id} links={links} readOnly={archivada} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Entregables esperados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DeliverablesSection
+              taskId={task.id}
+              deliverables={deliverables}
+              isOwner={isOwner}
+              readOnly={archivada}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Historial</CardTitle>
           </CardHeader>
           <CardContent>
@@ -121,6 +183,31 @@ export function TaskDetail({
           </CardContent>
         </Card>
       </div>
+
+      {closingStatusId !== null && (
+        <ClosingDialog
+          open
+          taskId={task.id}
+          statusId={closingStatusId}
+          task={{
+            title: task.title,
+            businessLineId: task.businessLineId,
+            bodyMarkdown: task.bodyMarkdown,
+            attachments: attachments.map((file) => ({
+              id: file.id,
+              fileName: file.fileName,
+            })),
+          }}
+          deliverables={deliverables}
+          suppliers={suppliers}
+          expenseCategories={expenseCategories}
+          supplies={supplies}
+          onCancel={dismissClosing}
+          onClosed={() => {
+            router.push("/tasks");
+          }}
+        />
+      )}
     </MainContainer>
   );
 }

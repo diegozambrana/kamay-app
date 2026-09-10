@@ -7,6 +7,8 @@ import { useRef, useState, useTransition } from "react";
 
 import { linkExpenseToAsset } from "@/actions/assets";
 import { archiveExpense, unarchiveExpense } from "@/actions/expenses";
+import { relatedTasksFor } from "@/actions/tasks";
+import type { RelatedTask } from "@/services/tasks/task-service";
 import { MainContainer } from "@/components/layout/main-container";
 import {
   AlertDialog,
@@ -159,6 +161,8 @@ function DetailBody({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  /** Las tareas que referencian este egreso, para el aviso al archivar (D5). */
+  const [linkedTasks, setLinkedTasks] = useState<RelatedTask[]>([]);
   const [pending, startTransition] = useTransition();
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -208,7 +212,18 @@ function DetailBody({
             variant="outline"
             disabled={pending}
             data-testid={archived ? "unarchive-expense" : "archive-expense"}
-            onClick={() => (archived ? toggleArchived() : setConfirming(true))}
+            onClick={() => {
+              if (archived) {
+                toggleArchived();
+                return;
+              }
+              // Se pregunta antes de abrir: el aviso enumera qué tareas
+              // apuntan aquí, y ninguna queda rota al archivar (D5).
+              void relatedTasksFor("expense", expense.id).then((tasks) => {
+                setLinkedTasks(tasks);
+                setConfirming(true);
+              });
+            }}
           >
             {archived ? "Desarchivar" : "Archivar"}
           </Button>
@@ -465,6 +480,21 @@ function DetailBody({
               queda archivado con sus líneas y su historial.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {linkedTasks.length > 0 && (
+            <div className="text-muted-foreground flex flex-col gap-1 text-sm">
+              <p>
+                {linkedTasks.length === 1
+                  ? "Una tarea apunta a este egreso y seguirá apuntando:"
+                  : `${linkedTasks.length} tareas apuntan a este egreso y seguirán apuntando:`}
+              </p>
+              <ul data-testid="archive-warning-tasks">
+                {linkedTasks.map((task) => (
+                  <li key={task.id}>· {task.title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction data-testid="confirm-archive" onClick={toggleArchived}>

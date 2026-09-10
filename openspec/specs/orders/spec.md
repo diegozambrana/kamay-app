@@ -439,7 +439,7 @@ La vista por omisión —cuando la dirección no declara ninguna— SHALL depend
 
 ### Requirement: Detalle del pedido
 
-El detalle de un pedido SHALL mostrar su número, cliente, línea de negocio, canal de venta, modo de entrega, sus líneas vigentes con cantidad y precio unitario, el total derivado, la fecha comprometida y la fecha del hecho, las notas, las imágenes de referencia y el historial del pedido leído de la bitácora. El detalle SHALL incluir además un bloque de **cobros y saldo** con la lista de cobros registrados, el saldo pendiente derivado, el estado de pago y la acción *Registrar cobro*. El detalle SHALL permitir cambiar el estado del pedido, navegar al cliente, abrir la edición del pedido y cancelarlo. El detalle SHALL ofrecer además la acción *Crear tarea para este pedido*, que abre el formulario de alta de tarea prellenado desde el pedido y deja la decisión de crearla en manos de la persona.
+El detalle de un pedido SHALL mostrar su número, cliente, línea de negocio, canal de venta, modo de entrega, sus líneas vigentes con cantidad y precio unitario, el total derivado, la fecha comprometida y la fecha del hecho, las notas, las imágenes de referencia y el historial del pedido leído de la bitácora. El detalle SHALL incluir además un bloque de **cobros y saldo** con la lista de cobros registrados, el saldo pendiente derivado, el estado de pago y la acción *Registrar cobro*. El detalle SHALL incluir además un bloque de **tareas relacionadas** con las tareas que referencian a ese pedido, cada una con su estado actual y su fecha límite cuando la tenga, y con paso a su detalle. El detalle SHALL permitir cambiar el estado del pedido, navegar al cliente, abrir la edición del pedido y cancelarlo. El detalle SHALL ofrecer además la acción *Crear tarea para este pedido*, que abre el formulario de alta de tarea prellenado desde el pedido y deja la decisión de crearla en manos de la persona.
 
 Ningún cambio de estado del pedido SHALL crear, mover ni cerrar una tarea: la acción explícita SHALL ser la única vía por la que un pedido origina una tarea.
 
@@ -457,6 +457,16 @@ Ningún cambio de estado del pedido SHALL crear, mover ni cerrar una tarea: la a
 
 - **WHEN** se abre el detalle de un pedido sin ningún cobro
 - **THEN** el bloque muestra el saldo pendiente igual al total y ofrece la acción *Registrar cobro*
+
+#### Scenario: Bloque de tareas relacionadas
+
+- **WHEN** se abre el detalle de un pedido con dos tareas vinculadas
+- **THEN** el bloque de tareas relacionadas las lista con su estado actual y lleva al detalle de cada una
+
+#### Scenario: Pedido sin tareas relacionadas
+
+- **WHEN** se abre el detalle de un pedido que ninguna tarea referencia
+- **THEN** el bloque de tareas relacionadas se rinde con su mensaje de lista sin contenido
 
 #### Scenario: Historial
 

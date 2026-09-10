@@ -26,11 +26,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PaymentBlock } from "@/features/payments/payment-block";
+import { RelatedTasks } from "@/features/tasks/links/related-tasks";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { formatDateTime } from "@/lib/format/datetime";
 import { isOverdue } from "@/lib/orders/overdue";
 import type { OrderItemWithNames } from "@/services/orders/order-item-service";
 import type { OrderWithTotal } from "@/services/orders/order-service";
+import type { RelatedTask } from "@/services/tasks/task-service";
 import { cn } from "@/lib/utils";
 import type {
   ActivityEntry,
@@ -72,6 +74,7 @@ export function OrderDetail({
   images,
   payments,
   canVoidPayments,
+  relatedTasks,
   history,
   today,
   timezone,
@@ -89,6 +92,8 @@ export function OrderDetail({
   payments: Payment[];
   /** Anular es del dueño: lo decide la base, aquí solo se ofrece o no. */
   canVoidPayments: boolean;
+  /** Las tareas que apuntan a este pedido (KAM-21). */
+  relatedTasks: RelatedTask[];
   history: ActivityEntry[];
   today: string;
   timezone: string;
@@ -371,6 +376,15 @@ export function OrderDetail({
 
       {/* Un solo historial (convención nº 7). Para el ayudante llega vacío
           por RLS, así que el bloque no se muestra. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tareas relacionadas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RelatedTasks tasks={relatedTasks} timezone={timezone} />
+        </CardContent>
+      </Card>
+
       {history.length > 0 && (
         <Card>
           <CardHeader>

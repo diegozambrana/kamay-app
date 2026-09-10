@@ -158,14 +158,7 @@ export type TaskLink = {
   entityId: string;
 };
 
-/**
- * Una tarea tal como la lee el tablero.
- *
- * No lleva `bodyMarkdown`, `remindAt` ni `closedWithoutDeliverables`: las
- * columnas existen en la base desde KAM-15, pero las escriben y las leen
- * KAM-16, KAM-17 y KAM-21. Añadirlas aquí antes de que alguien las use sería
- * invitar a leerlas vacías.
- */
+/** Una tarea tal como la lee el tablero. */
 export type Task = {
   id: string;
   organizationId: string;
@@ -180,6 +173,13 @@ export type Task = {
   /** Recordatorio en ISO. La base exige que haya fecha límite para fijarlo. */
   remindAt: string | null;
   closedAt: string | null;
+  /**
+   * Se cerró teniendo entregables declarados y no se creó ninguno.
+   *
+   * La escribe `close_task_with_deliverables` y la baja el trigger al reabrir:
+   * nunca la aplicación (KAM-21).
+   */
+  closedWithoutDeliverables: boolean;
   createdBy: string | null;
   createdAt: string;
   archivedAt: string | null;

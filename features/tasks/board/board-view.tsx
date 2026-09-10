@@ -5,6 +5,7 @@ import { useTransition } from "react";
 
 import { moveTaskToStatus } from "@/actions/tasks";
 import { KanbanBoard, type KanbanColumn } from "@/components/board/kanban-board";
+import { opensClosingWizard } from "@/lib/tasks/deliverables";
 import { Badge } from "@/components/ui/badge";
 import { displayedPlacement, useBoardStore } from "@/stores/board-store";
 import type { Status } from "@/types";
@@ -92,6 +93,29 @@ export function BoardView({
   });
 
   function moveCard(taskId: string, statusId: string) {
+    /**
+     * Soltar en una columna de tipo `final` con entregables sin cumplir no
+     * cierra la tarea: abre el asistente (design D7).
+     *
+     * El asistente vive en el detalle y no aquí porque necesita el cuerpo de
+     * la tarea, sus adjuntos, los proveedores, las categorías y los insumos —
+     * datos que el tablero no carga y que preacargar por tarjeta sería
+     * absurdo—. Se navega con el estado destino en la dirección y el diálogo
+     * abre allí. **El movimiento no se envía**: si se cancela, la tarea sigue
+     * donde estaba, que es lo que el requisito promete.
+     */
+    const task = tasks.find((candidate) => candidate.id === taskId);
+    const destination = statuses.find((status) => status.id === statusId);
+
+    if (
+      task &&
+      destination &&
+      opensClosingWizard(destination.kind, task.pendingDeliverableCount)
+    ) {
+      router.push(`/tasks/${taskId}?close=${statusId}`);
+      return;
+    }
+
     // La tarjeta se mueve ya; el servidor confirma después.
     move(taskId, statusId);
 

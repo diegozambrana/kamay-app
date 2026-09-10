@@ -50,6 +50,9 @@ import {
   PriceHistorySection,
   type PurchasePrice,
 } from "@/features/inventory/price-history-section";
+import { ArchiveWarning } from "@/features/tasks/links/archive-warning";
+import { RelatedTasks } from "@/features/tasks/links/related-tasks";
+import type { RelatedTask } from "@/services/tasks/task-service";
 
 import { ItemFormDialog } from "./item-form-dialog";
 import { ItemPhotos, type ItemPhoto } from "./item-photos";
@@ -84,6 +87,7 @@ export function ItemDetail({
   lines,
   units,
   history,
+  relatedTasks,
   role,
   timeZone,
   balance = null,
@@ -102,6 +106,8 @@ export function ItemDetail({
   units: Unit[];
   /** Vacío para el ayudante: la bitácora solo la lee el dueño. */
   history: ActivityEntry[];
+  /** Las tareas que apuntan a este ítem (KAM-21). */
+  relatedTasks: RelatedTask[];
   role: Role;
   /** Solo para los insumos; `null` en productos y activos. */
   balance?: ItemBalance | null;
@@ -137,6 +143,14 @@ export function ItemDetail({
       if (result?.error) setError(result.error);
     });
   }
+
+  /**
+   * Archivar avisa primero qué tareas referencian al ítem (D5). Las tareas ya
+   * están cargadas, así que el aviso no cuesta una consulta más.
+   *
+   * Desarchivar no avisa: no hay nada que romper al devolver un registro.
+   */
+  const [confirmingArchive, setConfirmingArchive] = useState(false);
 
   return (
     <MainContainer
@@ -241,7 +255,7 @@ export function ItemDetail({
                     size="sm"
                     variant="outline"
                     disabled={pending}
-                    onClick={() => setArchived(true)}
+                    onClick={() => setConfirmingArchive(true)}
                   >
                     Archivar
                   </Button>
@@ -328,6 +342,17 @@ export function ItemDetail({
         />
       )}
 
+      {/* Tareas relacionadas (KAM-21). KAM-06 prohibía esta sección; el
+          delta de esta tarea es quien levanta esa prohibición. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tareas relacionadas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RelatedTasks tasks={relatedTasks} timezone={timeZone} />
+        </CardContent>
+      </Card>
+
       {/* Historial: convención nº 7, todo sale de `activity_log`. La bitácora
           solo la lee el dueño, así que para el ayudante no hay sección. */}
       {isOwner && (
@@ -374,6 +399,18 @@ export function ItemDetail({
         </Card>
       )}
       </div>
+
+      <ArchiveWarning
+        open={confirmingArchive}
+        onOpenChange={setConfirmingArchive}
+        label={`«${item.name}»`}
+        relatedTasks={relatedTasks}
+        onConfirm={() => {
+          setConfirmingArchive(false);
+          setArchived(true);
+        }}
+      />
+
     </MainContainer>
   );
 }

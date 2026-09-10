@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarIcon, UserIcon } from "lucide-react";
+import { CalendarIcon, LinkIcon, PackageIcon, UserIcon } from "lucide-react";
 import { useRef } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,14 @@ export type TaskCardData = {
   tags: Tag[];
   lineName: string;
   lineColor: LineColor;
+  /** Cuántos vínculos tiene. Solo importa si hay o no hay (KAM-21). */
+  linkCount: number;
+  /** Cuántos entregables declarados tiene (KAM-21). */
+  deliverableCount: number;
+  /** Cuántos quedan sin cumplir: es lo que abre el asistente al cerrar. */
+  pendingDeliverableCount: number;
+  /** Se cerró sin crear nada de lo que había declarado (KAM-21). */
+  closedWithoutDeliverables: boolean;
 };
 
 /** Cómo se pinta cada señal. `none` y `later` no gritan: no hay nada urgente. */
@@ -152,6 +160,39 @@ export function TaskCard({
             {SIGNAL_LABELS[signal] && (
               <span className="sr-only">{SIGNAL_LABELS[signal]}</span>
             )}
+          </span>
+        )}
+
+        {/* Íconos, no recuentos: en una tarjeta lo que importa es si hay algo
+            que mirar dentro, no cuántas cosas (KAM-21). */}
+        {task.linkCount > 0 && (
+          <span
+            className="text-muted-foreground flex items-center gap-1"
+            data-testid="card-links"
+          >
+            <LinkIcon className="size-3" aria-hidden />
+            <span className="sr-only">Tiene vínculos</span>
+          </span>
+        )}
+
+        {task.deliverableCount > 0 && (
+          <span
+            className="text-muted-foreground flex items-center gap-1"
+            data-testid="card-deliverables"
+          >
+            <PackageIcon className="size-3" aria-hidden />
+            <span className="sr-only">Tiene entregables</span>
+          </span>
+        )}
+
+        {/* Discreta: es una nota al margen, no una alerta. Cerrar sin crear
+            nada es una salida legítima que nadie tiene que justificar. */}
+        {task.closedWithoutDeliverables && (
+          <span
+            className="text-muted-foreground text-[11px]"
+            data-testid="card-closed-without-deliverables"
+          >
+            Sin entregables
           </span>
         )}
       </div>

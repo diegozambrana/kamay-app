@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { setContactArchived } from "@/actions/contacts";
+import { relatedTasksFor } from "@/actions/tasks";
+import { ArchiveWarning } from "@/features/tasks/links/archive-warning";
+import { RelatedTasksPanel } from "@/features/tasks/links/related-tasks-panel";
+import type { RelatedTask } from "@/services/tasks/task-service";
 import { MainContainer } from "@/components/layout/main-container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +66,7 @@ export function ContactsScreen({
   search,
   includeArchived,
   selectedId,
+  timezone,
   role,
 }: {
   contacts: Contact[];
@@ -69,6 +74,7 @@ export function ContactsScreen({
   search: string;
   includeArchived: boolean;
   selectedId: string | null;
+  timezone: string;
   role: Role;
 }) {
   const router = useRouter();
@@ -77,6 +83,11 @@ export function ContactsScreen({
   const [showArchived, setShowArchived] = usePendingToggle(includeArchived);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
+  /** El contacto que se va a archivar y las tareas que lo referencian (D5). */
+  const [pendingArchive, setPendingArchive] = useState<{
+    contact: Contact;
+    tasks: RelatedTask[];
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -97,6 +108,17 @@ export function ContactsScreen({
     startTransition(async () => {
       const result = await setContactArchived({ id: contact.id, archived });
       if (result?.error) setError(result.error);
+    });
+  }
+
+  /**
+   * Archivar avisa primero qué tareas referencian al contacto (D5). Desarchivar
+   * no: no hay nada que romper al devolver un registro.
+   */
+  function askToArchive(contact: Contact) {
+    setError(null);
+    void relatedTasksFor("contact", contact.id).then((tasks) => {
+      setPendingArchive({ contact, tasks });
     });
   }
 
@@ -262,7 +284,7 @@ export function ContactsScreen({
                         size="sm"
                         variant="outline"
                         disabled={pending}
-                        onClick={() => archive(current, true)}
+                        onClick={() => askToArchive(current)}
                       >
                         Archivar
                       </Button>
@@ -290,11 +312,36 @@ export function ContactsScreen({
                     <dd>{current.notes ?? "—"}</dd>
                   </div>
                 </dl>
+
+                <div className="mt-6 flex flex-col gap-2">
+                  <h3 className="text-sm font-medium">Tareas relacionadas</h3>
+                  <RelatedTasksPanel
+                    entityType="contact"
+                    entityId={current.id}
+                    timezone={timezone}
+                  />
+                </div>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
+
+      {pendingArchive && (
+        <ArchiveWarning
+          open
+          onOpenChange={(open) => {
+            if (!open) setPendingArchive(null);
+          }}
+          label={`a ${pendingArchive.contact.name}`}
+          relatedTasks={pendingArchive.tasks}
+          onConfirm={() => {
+            const target = pendingArchive.contact;
+            setPendingArchive(null);
+            archive(target, true);
+          }}
+        />
+      )}
 
       <ContactFormDialog
         open={creating}

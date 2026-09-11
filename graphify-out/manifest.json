@@ -3379,6 +3379,34 @@
     "mtime": 1788959315.0049822,
     "hash": "92311291cd16a600fc338090525f1986"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-10-kam-22-activity-screen-retention/tasks.md": {
+    "mtime": 1789092651.6373234,
+    "hash": "2eed93d02d839d38a8654a24df1980c7"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-10-kam-22-activity-screen-retention/design.md": {
+    "mtime": 1789074891.1717007,
+    "hash": "c30781f692bfb0710b260151e17b450a"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-10-kam-22-activity-screen-retention/proposal.md": {
+    "mtime": 1789072907.5278301,
+    "hash": "e4c49cfc1b5323bc1174d65d409ab911"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-10-kam-22-activity-screen-retention/specs/org-configuration/spec.md": {
+    "mtime": 1789072907.529496,
+    "hash": "f239eafeb84c56655afd3a158a16a42c"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-10-kam-22-activity-screen-retention/specs/activity-retention/spec.md": {
+    "mtime": 1789072907.528654,
+    "hash": "fec3447bbad7d9d62ace8997947937b4"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-10-kam-22-activity-screen-retention/specs/activity-log/spec.md": {
+    "mtime": 1789072907.5282962,
+    "hash": "9c975a6c38bf746212f4c087107ac99f"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-10-kam-22-activity-screen-retention/specs/activity-screen/spec.md": {
+    "mtime": 1789072907.5290868,
+    "hash": "49c2c4f8e4fe7dfd91211f8a2af38685"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-26-kam-06-catalog-directory/tasks.md": {
     "mtime": 1787782884.0514276,
     "hash": "ed4d22fbc077ea423ede4b696d6f50b3"
@@ -3510,34 +3538,6 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-08-kam-16-task-detail-markdown-attachments/specs/task-detail/spec.md": {
     "mtime": 1788838584.3278303,
     "hash": "43c33a94926e4920c4de351f7e86946f"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-22-activity-screen-retention/tasks.md": {
-    "mtime": 1789092651.6373234,
-    "hash": "2eed93d02d839d38a8654a24df1980c7"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-22-activity-screen-retention/design.md": {
-    "mtime": 1789074891.1717007,
-    "hash": "c30781f692bfb0710b260151e17b450a"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-22-activity-screen-retention/proposal.md": {
-    "mtime": 1789072907.5278301,
-    "hash": "e4c49cfc1b5323bc1174d65d409ab911"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-22-activity-screen-retention/specs/org-configuration/spec.md": {
-    "mtime": 1789072907.529496,
-    "hash": "f239eafeb84c56655afd3a158a16a42c"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-22-activity-screen-retention/specs/activity-retention/spec.md": {
-    "mtime": 1789072907.528654,
-    "hash": "fec3447bbad7d9d62ace8997947937b4"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-22-activity-screen-retention/specs/activity-log/spec.md": {
-    "mtime": 1789072907.5282962,
-    "hash": "9c975a6c38bf746212f4c087107ac99f"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-22-activity-screen-retention/specs/activity-screen/spec.md": {
-    "mtime": 1789072907.5290868,
-    "hash": "49c2c4f8e4fe7dfd91211f8a2af38685"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/tasks.md": {
     "mtime": 1789072907.5333226,

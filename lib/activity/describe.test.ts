@@ -96,3 +96,63 @@ describe("recordHref", () => {
     expect(recordHref("tabla_del_futuro", "abc")).toBeNull();
   });
 });
+
+/**
+ * KAM-22 · Las tablas y rutas que faltaban.
+ *
+ * Entre KAM-17 y KAM-21 la bitácora pasó a auditar siete tablas más sin que
+ * nadie tocara la redacción, y `tasks` era una de ellas: un evento de tarea se
+ * leía «Alguien editó un registro».
+ */
+describe("las tablas que llegaron con KAM-17 a KAM-21", () => {
+  it("una tarea se nombra tarea, no «un registro»", () => {
+    expect(
+      describeEvent({
+        action: "updated",
+        tableName: "tasks",
+        actorName: "Julio",
+        recordLabel: "Primera quema",
+      }),
+    ).toBe("Julio editó la tarea Primera quema");
+  });
+
+  it.each([
+    ["tags", "la etiqueta"],
+    ["invitations", "la invitación"],
+    ["inventory_movements", "el movimiento de inventario"],
+    ["membership_lines", "el acceso a la línea"],
+    ["task_links", "el vínculo de la tarea"],
+    ["task_deliverables", "el entregable de la tarea"],
+  ])("%s se nombra por lo que es", (table, subject) => {
+    const sentence = describeEvent({
+      action: "created",
+      tableName: table,
+      actorName: "Diego",
+    });
+
+    expect(sentence).toBe(`Diego registró ${subject}`);
+    expect(sentence).not.toContain("un registro");
+  });
+});
+
+describe("recordHref con las pantallas que ya existen", () => {
+  it("la tarea tiene página propia", () => {
+    expect(recordHref("tasks", "t1")).toBe("/tasks/t1");
+  });
+
+  it("el contacto se abre seleccionado en su lista de dos paneles", () => {
+    expect(recordHref("contacts", "c1")).toBe("/contacts?id=c1");
+  });
+
+  // `asset_details.id` es `generated always as (item_id) stored`, que KAM-19
+  // añadió para que el trigger de auditoría tuviera un `id`: el `record_id`
+  // del evento es el del ítem, y el enlace es directo.
+  it("el activo se abre seleccionado en su lista", () => {
+    expect(recordHref("asset_details", "a1")).toBe("/assets?selected=a1");
+  });
+
+  it("lo que no tiene pantalla propia se cuenta sin enlace", () => {
+    expect(recordHref("order_items", "li1")).toBeNull();
+    expect(recordHref("payments", "p1")).toBeNull();
+  });
+});

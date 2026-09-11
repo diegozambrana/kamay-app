@@ -72,9 +72,20 @@ test.describe.serial("cobros y saldo de un pedido (V4)", () => {
     await expect(page.getByTestId("payment-entry")).toHaveCount(1);
 
     // Scenario: El cobro queda en la bitácora.
+    //
+    // Hasta KAM-22 esto buscaba «Registrado» en el historial del pedido, que
+    // solo muestra eventos de `orders`: coincidía con el alta del pedido, no
+    // con el cobro. Ahora que V23 existe se comprueba el cobro de verdad, en la
+    // bitácora filtrada por movimientos de dinero.
     await expect(
-      page.getByTestId("history-entry").filter({ hasText: "Registrado" }).first(),
+      page.getByTestId("history-entry").filter({ hasText: "registró el pedido" }).first(),
     ).toBeVisible();
+    const detalle = page.url();
+    await page.goto("/activity?type=payments&action=created");
+    await expect(
+      page.getByTestId("activity-row").filter({ hasText: "registró el movimiento de dinero" }).first(),
+    ).toBeVisible();
+    await page.goto(detalle);
 
     // ── Cobro final del saldo ─────────────────────────────────────────────
     await page.getByTestId("register-payment").click();

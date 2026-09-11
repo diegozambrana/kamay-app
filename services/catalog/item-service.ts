@@ -7,7 +7,7 @@ import {
   variantFromRow,
   type VariantRow,
 } from "@/services/catalog/item-variant-service";
-import type { ActivityEntry, Item, ItemKind, ItemVariant } from "@/types";
+import type { Item, ItemKind, ItemVariant } from "@/types";
 
 type ItemRow = {
   id: string;
@@ -270,34 +270,5 @@ export class ItemService {
         `No se pudo ${archived ? "archivar" : "desarchivar"} el ítem: ${error.message}`,
       );
     }
-  }
-
-  /**
-   * Historial del ítem (V11). Convención nº 7: todo lo que muestra "qué pasó
-   * aquí" lee de `activity_log` y de ninguna otra fuente. La bitácora solo es
-   * legible por el dueño; para el ayudante esto devuelve vacío por RLS.
-   */
-  async history(organizationId: string, id: string): Promise<ActivityEntry[]> {
-    const { data, error } = await this.supabase
-      .from("activity_log")
-      .select("id, action, actor_id, actor_label, changes, occurred_at")
-      .eq("organization_id", organizationId)
-      .eq("table_name", "items")
-      .eq("record_id", id)
-      .order("occurred_at", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      throw new Error(`No se pudo cargar el historial: ${error.message}`);
-    }
-
-    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
-      id: row.id as number,
-      action: row.action as ActivityEntry["action"],
-      actorId: (row.actor_id as string | null) ?? null,
-      actorLabel: (row.actor_label as string | null) ?? null,
-      changes: (row.changes as Record<string, unknown> | null) ?? null,
-      occurredAt: row.occurred_at as string,
-    }));
   }
 }

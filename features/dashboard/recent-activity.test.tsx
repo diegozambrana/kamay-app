@@ -68,27 +68,23 @@ describe("RecentActivity", () => {
   it("un evento cuyo registro ya no es alcanzable se cuenta igual, sin enlace", () => {
     render(<RecentActivity items={[item(1, { href: null })]} timezone={TZ} />);
 
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    // El único enlace que queda es el de la bitácora, en la cabecera: el
+    // evento se cuenta, pero no lleva a ninguna parte.
+    const enlaces = screen.getAllByRole("link");
+    expect(enlaces).toHaveLength(1);
+    expect(enlaces[0]).toHaveAccessibleName("Ver la bitácora");
     expect(screen.getByText(/cambió el estado del pedido/)).toBeInTheDocument();
   });
 
-  it("declara que la pantalla de bitácora aún no existe en vez de enlazar a la nada", () => {
+  // Hasta KAM-22 esta prueba exigía lo contrario: que la salida se nombrara
+  // sin enlazar, porque V23 no existía. Ya existe.
+  it("enlaza la bitácora completa", () => {
     render(<RecentActivity items={[item(1)]} timezone={TZ} />);
-
-    expect(screen.getByText(/La bitácora completa llega/)).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Ver la bitácora" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("cuando la bitácora exista, la enlaza", () => {
-    render(
-      <RecentActivity items={[item(1)]} timezone={TZ} logHref="/activity" />,
-    );
 
     expect(
       screen.getByRole("link", { name: "Ver la bitácora" }),
     ).toHaveAttribute("href", "/activity");
+    expect(screen.queryByText(/La bitácora completa llega/)).toBeNull();
   });
 
   it("sin eventos lo dice, en vez de dejar un hueco", () => {

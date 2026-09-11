@@ -5,6 +5,7 @@ import { getSessionContext } from "@/lib/auth/session-context";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { AssetService } from "@/services/assets/asset-service";
 import { ContactService } from "@/services/catalog/contact-service";
+import { loadRecordHistory } from "@/services/activity/record-history";
 import { ItemService } from "@/services/catalog/item-service";
 import { ItemVariantService } from "@/services/catalog/item-variant-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
@@ -51,9 +52,17 @@ export default async function ItemDetailPage({
     new BusinessLineService(context.supabase).listActive(context.organizationId),
     new UnitService(context.supabase).listActive(context.organizationId),
     // La bitácora solo la lee el dueño: para el ayudante RLS devuelve vacío.
+    // La misma lectura que `/activity` filtrada por este ítem, para que los
+    // eventos y su orden coincidan.
     context.membership.role === "owner"
-      ? new ItemService(context.supabase).history(context.organizationId, item.id)
-      : Promise.resolve([]),
+      ? loadRecordHistory(context.supabase, {
+          organizationId: context.organizationId,
+          tableName: "items",
+          recordId: item.id,
+          timezone: context.membership.organization.timezone,
+          currency: context.membership.organization.currency,
+        })
+      : Promise.resolve({ items: [], activityHref: "" }),
     attachments.listForEntities(context.organizationId, "item", [item.id]),
   ]);
 

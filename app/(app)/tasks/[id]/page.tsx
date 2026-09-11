@@ -8,6 +8,7 @@ import { ItemService } from "@/services/catalog/item-service";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { StatusService } from "@/services/configuration/status-service";
+import { loadRecordHistory } from "@/services/activity/record-history";
 import { TaskService } from "@/services/tasks/task-service";
 
 export const metadata = { title: "Tarea · Kamay" };
@@ -59,7 +60,14 @@ export default async function TaskDetailPage({
       tasks.assignees(context.organizationId),
       // Un solo historial (convención nº 7): sale de `activity_log`. Para el
       // ayudante llega vacío por RLS, y el bloque lo dice sin dar error.
-      tasks.history(context.organizationId, task.id),
+      // La misma lectura que `/activity` filtrada por esta tarea.
+      loadRecordHistory(context.supabase, {
+        organizationId: context.organizationId,
+        tableName: "tasks",
+        recordId: task.id,
+        timezone: context.membership.organization.timezone,
+        currency: context.membership.organization.currency,
+      }),
       // Los vínculos se resuelven contra sus destinos al leer: nada de lo que
       // se muestra está copiado en `task_links` (D2). El activo se omite para
       // quien no es dueño (D9).

@@ -59,7 +59,7 @@ function data(overrides: Partial<ExpenseDetailData> = {}): ExpenseDetailData {
     assetOptions: [{ itemId: PRINTER, name: "Impresora 3D" }],
     receipts: [],
     payments: [],
-    history: [],
+    history: { items: [], activityHref: "/activity" },
     ...overrides,
   };
 }

@@ -230,10 +230,16 @@ test.describe("detalle de tarea (V18)", () => {
       await writeBody(page, "Notas de la hornada.");
       await page.reload();
 
-      // Lo más reciente encabeza la lista.
+      // Lo más reciente encabeza la lista, y desde KAM-22 cada entrada se lee
+      // como una frase con su autor —la misma redacción que la bitácora
+      // general— en vez de un rótulo suelto («Editada», «Registrada»).
       const filas = page.getByTestId("history-entry");
-      await expect(filas.first()).toContainText("Editada");
-      await expect(filas.last()).toContainText("Registrada");
+      await expect(filas.first()).toContainText("editó la tarea");
+      await expect(filas.last()).toContainText("registró la tarea");
+      await expect(filas.first()).toContainText("Geeko");
+
+      // Y el bloque lleva a la bitácora filtrada por esta tarea (KAM-22).
+      await expect(page.getByTestId("activity-link")).toBeVisible();
     });
 
     /**

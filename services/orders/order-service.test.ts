@@ -198,18 +198,6 @@ describe("OrderService.setArchived", () => {
   });
 });
 
-describe("OrderService.history", () => {
-  it("lee de activity_log y de ninguna otra fuente (convención nº 7)", async () => {
-    const client = new FakeClient([{ data: [], error: null }]);
-    await new OrderService(client.asSupabase()).history(ORG, ORDER);
-
-    expect(client.tables[0]).toBe("activity_log");
-    const query = client.queries[0];
-    expect(query.has("eq", "table_name", "orders")).toBe(true);
-    expect(query.has("eq", "record_id", ORDER)).toBe(true);
-  });
-});
-
 describe("OrderItemService", () => {
   it("calcula el total de línea desde cantidad y precio registrados", async () => {
     const client = new FakeClient([

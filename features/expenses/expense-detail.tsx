@@ -23,6 +23,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RecordHistory } from "@/components/activity/record-history";
+import type { RecordHistory as RecordHistoryData } from "@/services/activity/record-history";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -48,19 +50,11 @@ import { cn } from "@/lib/utils";
 import { PaymentBlock } from "@/features/payments/payment-block";
 import type { ExpenseItemWithNames } from "@/services/expenses/expense-item-service";
 import type { ExpenseWithTotal } from "@/services/expenses/expense-service";
-import type { ActivityEntry, BusinessLine, Contact, Payment } from "@/types";
+import type { BusinessLine, Contact, Payment } from "@/types";
 
 import { useReceiptUploadStore } from "./receipt-upload-store";
 
 export const KIND_LABELS = { purchase: "Compra", expense: "Gasto" } as const;
-
-const ACTION_LABELS: Record<ActivityEntry["action"], string> = {
-  created: "Registrado",
-  updated: "Editado",
-  status_changed: "Cambió de estado",
-  archived: "Archivado",
-  unarchived: "Desarchivado",
-};
 
 export type ReceiptView = {
   id: string;
@@ -87,7 +81,7 @@ export type ExpenseDetailData = {
   receipts: ReceiptView[];
   /** Movimientos del egreso, anulados incluidos. */
   payments: Payment[];
-  history: ActivityEntry[];
+  history: RecordHistoryData;
 };
 
 /**
@@ -437,36 +431,20 @@ function DetailBody({
         </CardContent>
       </Card>
 
-      {/* Un solo historial (convención nº 7): sale de `activity_log`. */}
       {/* Vincular el egreso a un activo (KAM-19). Solo llega aquí la persona
           dueña —el ayudante no lee `expenses`—, así que no hay guardia de rol
           en la pantalla: la impone la RLS de la tabla. */}
       <AssetLinkCard expense={expense} asset={asset} options={assetOptions} />
 
-      {history.length > 0 && (
+      {/* Un solo historial (convención nº 7): la misma lectura y la misma
+          redacción que la bitácora general. */}
+      {history.items.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Historial</CardTitle>
           </CardHeader>
           <CardContent>
-            <ol className="flex flex-col gap-2 text-sm">
-              {history.map((entry) => (
-                <li
-                  key={entry.id}
-                  data-testid="history-entry"
-                  data-action={entry.action}
-                  className="flex flex-wrap items-baseline gap-2"
-                >
-                  <span className="font-medium">{ACTION_LABELS[entry.action]}</span>
-                  <span className="text-muted-foreground">
-                    {formatDateTime(entry.occurredAt, timezone)}
-                  </span>
-                  {entry.actorLabel && (
-                    <span className="text-muted-foreground">· {entry.actorLabel}</span>
-                  )}
-                </li>
-              ))}
-            </ol>
+            <RecordHistory history={history} timezone={timezone} />
           </CardContent>
         </Card>
       )}

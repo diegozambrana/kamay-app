@@ -534,3 +534,55 @@ test.describe("V14 · reportes, fuera del alcance del ayudante", () => {
     expect(response.status()).toBe(403);
   });
 });
+
+/**
+ * KAM-22 · V23 · Bitácora.
+ *
+ * Escenarios del delta spec `activity-screen` § La bitácora es una página
+ * completa reservada a la persona dueña → «El ayudante es redirigido», «La
+ * bitácora no aparece en el menú del ayudante».
+ *
+ * Se amplía este archivo en vez de montar otro: aquí ya están las dos
+ * sesiones y la comprobación en las dos superficies.
+ */
+test.describe("bitácora reservada al dueño", () => {
+  // Scenario: La bitácora no aparece en el menú del ayudante
+  test("no aparece en su menú, en ninguna de las dos superficies", async ({
+    page,
+    isMobile,
+  }) => {
+    await login(page, GEEKO_ASSISTANT);
+
+    if (isMobile) {
+      await page.getByRole("button", { name: "Más" }).click();
+      await expect(page.getByRole("link", { name: "Bitácora" })).toHaveCount(0);
+      return;
+    }
+
+    await expect(page.getByRole("link", { name: "Bitácora" })).toHaveCount(0);
+  });
+
+  // Scenario: El ayudante es redirigido
+  test("por dirección directa va a su aterrizaje, sin ver ningún evento", async ({
+    page,
+  }) => {
+    await login(page, GEEKO_ASSISTANT);
+    await page.goto("/activity");
+
+    await page.waitForURL(/\/(auth\/login|dashboard|quick)/);
+    await expect(page.getByTestId("activity-row")).toHaveCount(0);
+    await expect(page.getByText(/no autorizado/i)).toHaveCount(0);
+  });
+
+  test("la exportación de la bitácora tampoco responde al ayudante", async ({
+    page,
+  }) => {
+    await login(page, GEEKO_ASSISTANT);
+
+    // Mismo guardián que la página: ocultar la entrada del menú sin cerrar la
+    // ruta de descarga dejaría abierta la puerta trasera.
+    const response = await page.request.get("/activity/export");
+
+    expect(response.status()).toBe(403);
+  });
+});

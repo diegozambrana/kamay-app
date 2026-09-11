@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { linkExpenseToAsset } from "@/actions/assets";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { RecordHistory } from "@/components/activity/record-history";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Sheet,
@@ -16,21 +17,14 @@ import {
 } from "@/components/ui/sheet";
 import { RelatedTasksPanel } from "@/features/tasks/links/related-tasks-panel";
 import { hasAttributableLine } from "@/lib/assets/recovery";
-import { formatCalendarDate, formatDateTime } from "@/lib/format/datetime";
-import type { ActivityEntry, AssetRecovery } from "@/types";
+import { formatCalendarDate } from "@/lib/format/datetime";
+import type { AssetRecovery } from "@/types";
 
 import type { AssetExpense } from "@/services/assets/asset-service";
+import type { RecordHistory as RecordHistoryData } from "@/services/activity/record-history";
 
 import { AssetDetailsForm } from "./asset-details-form";
 import { RecoveryBar } from "./recovery-bar";
-
-const ACTION_LABELS: Record<ActivityEntry["action"], string> = {
-  created: "Registrado",
-  updated: "Editado",
-  status_changed: "Cambió de estado",
-  archived: "Archivado",
-  unarchived: "Desarchivado",
-};
 
 /** El activo abierto, con todo lo que el panel muestra, resuelto en el servidor. */
 export type AssetDetailView = {
@@ -40,7 +34,7 @@ export type AssetDetailView = {
   notes: string | null;
   /** Los egresos que le pertenecen, de los dos papeles. */
   expenses: AssetExpense[];
-  history: ActivityEntry[];
+  history: RecordHistoryData;
   /** Proveedores vigentes, para el formulario de datos. */
   suppliers: { id: string; name: string }[];
 };
@@ -239,30 +233,15 @@ export function AssetDetailPanel({
             </CardContent>
           </Card>
 
-          {history.length > 0 && (
+          {/* Un solo historial (convención nº 7): la misma lectura y la
+              misma redacción que la bitácora general (KAM-22, design D11). */}
+          {history.items.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Historial</CardTitle>
               </CardHeader>
               <CardContent>
-                <ol className="flex flex-col gap-2 text-sm">
-                  {history.map((entry) => (
-                    <li
-                      key={entry.id}
-                      data-testid="history-entry"
-                      data-action={entry.action}
-                      className="flex flex-wrap items-baseline gap-2"
-                    >
-                      <span className="font-medium">{ACTION_LABELS[entry.action]}</span>
-                      <span className="text-muted-foreground">
-                        {formatDateTime(entry.occurredAt, timezone)}
-                      </span>
-                      {entry.actorLabel && (
-                        <span className="text-muted-foreground">· {entry.actorLabel}</span>
-                      )}
-                    </li>
-                  ))}
-                </ol>
+                <RecordHistory history={history} timezone={timezone} />
               </CardContent>
             </Card>
           )}

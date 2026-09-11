@@ -6,6 +6,7 @@ import { AssetsScreen, type AssetRowView } from "@/features/assets/assets-screen
 import type { AssetDetailView } from "@/features/assets/asset-detail-panel";
 import { getOwnerContext } from "@/lib/auth/session-context";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
+import { loadRecordHistory } from "@/services/activity/record-history";
 import { AssetService } from "@/services/assets/asset-service";
 import { ContactService } from "@/services/catalog/contact-service";
 import { ItemService } from "@/services/catalog/item-service";
@@ -82,7 +83,14 @@ export default async function AssetsPage({
       const [details, expenses, history] = await Promise.all([
         assetService.details(context.organizationId, asset.itemId),
         assetService.expenses(context.organizationId, asset.itemId),
-        assetService.history(context.organizationId, asset.itemId),
+        // La misma lectura que `/activity` filtrada por este activo.
+        loadRecordHistory(context.supabase, {
+          organizationId: context.organizationId,
+          tableName: "asset_details",
+          recordId: asset.itemId,
+          timezone: context.membership.organization.timezone,
+          currency: context.membership.organization.currency,
+        }),
       ]);
 
       // Con archivados: un activo vigente puede haberse comprado a un

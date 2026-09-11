@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { OrderFormValues, OrderLineValues } from "@/lib/orders/schema";
 import type {
-  ActivityEntry,
   DeliveryMode,
   Order,
   OrderKind,
@@ -360,35 +359,5 @@ export class OrderService {
       .eq("id", id);
 
     if (error) throw error;
-  }
-
-  /**
-   * El historial del pedido. Un solo historial (convención nº 7): todo lo que
-   * muestre "qué pasó aquí" lee de `activity_log` y de ninguna otra fuente.
-   * La bitácora solo es legible por el dueño; para el ayudante devuelve vacío
-   * por RLS.
-   */
-  async history(organizationId: string, id: string): Promise<ActivityEntry[]> {
-    const { data, error } = await this.supabase
-      .from("activity_log")
-      .select("id, action, actor_id, actor_label, changes, occurred_at")
-      .eq("organization_id", organizationId)
-      .eq("table_name", "orders")
-      .eq("record_id", id)
-      .order("occurred_at", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      throw new Error(`No se pudo cargar el historial: ${error.message}`);
-    }
-
-    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
-      id: row.id as number,
-      action: row.action as ActivityEntry["action"],
-      actorId: (row.actor_id as string | null) ?? null,
-      actorLabel: (row.actor_label as string | null) ?? null,
-      changes: (row.changes as Record<string, unknown> | null) ?? null,
-      occurredAt: row.occurred_at as string,
-    }));
   }
 }

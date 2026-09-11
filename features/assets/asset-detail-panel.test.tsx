@@ -75,24 +75,27 @@ const detail: AssetDetailView = {
       occurredAt: "2026-03-01T16:00:00.000Z",
     }),
   ],
-  history: [
-    {
-      id: 2,
-      action: "updated",
-      actorId: null,
-      actorLabel: "Diego",
-      changes: null,
-      occurredAt: "2026-03-12T16:00:00.000Z",
-    },
-    {
-      id: 1,
-      action: "created",
-      actorId: null,
-      actorLabel: "Diego",
-      changes: null,
-      occurredAt: "2026-03-01T16:00:00.000Z",
-    },
-  ],
+  // Desde KAM-22 el bloque es el compartido: recibe los eventos ya redactados
+  // por `loadRecordHistory()`, con la misma frase que la bitácora general.
+  history: {
+    activityHref: "/activity?type=asset_details&q=90000000-0000-0000-0000-000000000021",
+    items: [
+      {
+        id: 2,
+        action: "updated",
+        sentence: "Diego editó el activo",
+        occurredAt: "2026-03-12T16:00:00.000Z",
+        detail: { kind: "rows" as const, rows: [] },
+      },
+      {
+        id: 1,
+        action: "created",
+        sentence: "Diego registró el activo",
+        occurredAt: "2026-03-01T16:00:00.000Z",
+        detail: { kind: "rows" as const, rows: [] },
+      },
+    ],
+  },
   suppliers: [],
 };
 
@@ -158,6 +161,22 @@ describe("AssetDetailPanel", () => {
     expect(entries).toHaveLength(2);
     expect(entries[0]).toHaveAttribute("data-action", "updated");
     expect(entries[1]).toHaveAttribute("data-action", "created");
+  });
+
+  // KAM-22 · Escenario de `activity-screen` § Toda pantalla de detalle con
+  // historial lo lee de la bitácora y lleva a ella → «El activo se suma a la
+  // redacción común».
+  it("dice lo mismo que la bitácora y lleva a ella filtrada por este activo", () => {
+    render(<AssetDetailPanel detail={detail} timezone="America/La_Paz" onClose={vi.fn()} />);
+
+    const entries = screen.getAllByTestId("history-entry");
+    expect(entries[0]).toHaveTextContent("Diego editó el activo");
+    expect(entries[1]).toHaveTextContent("Diego registró el activo");
+
+    expect(screen.getByTestId("activity-link")).toHaveAttribute(
+      "href",
+      "/activity?type=asset_details&q=90000000-0000-0000-0000-000000000021",
+    );
   });
 });
 

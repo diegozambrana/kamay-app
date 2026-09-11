@@ -15,24 +15,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RecordHistory } from "@/components/activity/record-history";
+import type { RecordHistory as RecordHistoryData } from "@/services/activity/record-history";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ITEM_KIND_SINGULAR, SHARED_LINE_LABEL } from "@/lib/catalog/labels";
-import { formatDateTime } from "@/lib/format/datetime";
 import type {
-  ActivityEntry,
   AssetDetails,
   BusinessLine,
   InventoryMovement,
@@ -57,14 +49,6 @@ import type { RelatedTask } from "@/services/tasks/task-service";
 import { ItemFormDialog } from "./item-form-dialog";
 import { ItemPhotos, type ItemPhoto } from "./item-photos";
 import { VariantsList } from "./variants-list";
-
-const ACTION_LABELS: Record<ActivityEntry["action"], string> = {
-  created: "Creado",
-  updated: "Editado",
-  status_changed: "Cambio de estado",
-  archived: "Archivado",
-  unarchived: "Desarchivado",
-};
 
 /**
  * V11 · Detalle de ítem. Datos generales, variantes, inventario e historial.
@@ -105,7 +89,7 @@ export function ItemDetail({
   lines: BusinessLine[];
   units: Unit[];
   /** Vacío para el ayudante: la bitácora solo la lee el dueño. */
-  history: ActivityEntry[];
+  history: RecordHistoryData;
   /** Las tareas que apuntan a este ítem (KAM-21). */
   relatedTasks: RelatedTask[];
   role: Role;
@@ -353,48 +337,24 @@ export function ItemDetail({
         </CardContent>
       </Card>
 
-      {/* Historial: convención nº 7, todo sale de `activity_log`. La bitácora
-          solo la lee el dueño, así que para el ayudante no hay sección. */}
+      {/* Historial: convención nº 7, todo sale de `activity_log`, por la misma
+          lectura y la misma redacción que la bitácora general. La bitácora
+          solo la lee el dueño, así que para el ayudante no hay sección.
+
+          Hasta KAM-22 esta tabla listaba los campos como
+          `Object.keys(changes).join(", ")`: nombres de columna crudos en
+          pantalla, que es justo lo que el requisito prohíbe. */}
       {isOwner && (
         <Card>
           <CardHeader>
             <CardTitle>Historial</CardTitle>
           </CardHeader>
           <CardContent>
-            {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Todavía no hay movimientos registrados.
-              </p>
-            ) : (
-              <Table data-testid="item-history">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Qué pasó</TableHead>
-                    <TableHead>Campos</TableHead>
-                    <TableHead className="text-right">Cuándo</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {history.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell className="font-medium">
-                        {ACTION_LABELS[entry.action]}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {entry.changes
-                          ? Object.keys(entry.changes).join(", ")
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        <time dateTime={entry.occurredAt}>
-                          {formatDateTime(entry.occurredAt, timeZone)}
-                        </time>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            <RecordHistory
+              history={history}
+              timezone={timeZone}
+              emptyMessage="Todavía no hay movimientos registrados."
+            />
           </CardContent>
         </Card>
       )}

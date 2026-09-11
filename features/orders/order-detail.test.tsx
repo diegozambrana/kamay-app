@@ -81,7 +81,7 @@ function renderDetail(
       images={[]}
       payments={[]}
       canVoidPayments={false}
-      history={[]}
+      history={{ items: [], activityHref: "/activity" }}
       today="2026-09-07"
       timezone="America/La_Paz"
     />,

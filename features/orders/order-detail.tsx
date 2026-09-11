@@ -9,6 +9,7 @@ import { MainContainer } from "@/components/layout/main-container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RecordHistory } from "@/components/activity/record-history";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -32,10 +33,10 @@ import { formatDateTime } from "@/lib/format/datetime";
 import { isOverdue } from "@/lib/orders/overdue";
 import type { OrderItemWithNames } from "@/services/orders/order-item-service";
 import type { OrderWithTotal } from "@/services/orders/order-service";
+import type { RecordHistory as RecordHistoryData } from "@/services/activity/record-history";
 import type { RelatedTask } from "@/services/tasks/task-service";
 import { cn } from "@/lib/utils";
 import type {
-  ActivityEntry,
   BusinessLine,
   Contact,
   Payment,
@@ -46,14 +47,6 @@ import type {
 import { CancelOrderButton } from "./cancel-order-button";
 
 const DELIVERY_LABELS = { pickup: "Recojo", delivery: "Delivery" } as const;
-
-const ACTION_LABELS: Record<ActivityEntry["action"], string> = {
-  created: "Registrado",
-  updated: "Editado",
-  status_changed: "Cambió de estado",
-  archived: "Archivado",
-  unarchived: "Desarchivado",
-};
 
 export type OrderImage = { id: string; fileName: string; url: string | null };
 
@@ -94,7 +87,7 @@ export function OrderDetail({
   canVoidPayments: boolean;
   /** Las tareas que apuntan a este pedido (KAM-21). */
   relatedTasks: RelatedTask[];
-  history: ActivityEntry[];
+  history: RecordHistoryData;
   today: string;
   timezone: string;
 }) {
@@ -374,8 +367,6 @@ export function OrderDetail({
         </CardContent>
       </Card>
 
-      {/* Un solo historial (convención nº 7). Para el ayudante llega vacío
-          por RLS, así que el bloque no se muestra. */}
       <Card>
         <CardHeader>
           <CardTitle>Tareas relacionadas</CardTitle>
@@ -385,32 +376,17 @@ export function OrderDetail({
         </CardContent>
       </Card>
 
-      {history.length > 0 && (
+      {/* Un solo historial (convención nº 7): la misma lectura y la misma
+          redacción que la bitácora general, para que los eventos y su orden
+          coincidan con `/activity` filtrada por este pedido. Para el ayudante
+          llega vacío por RLS, así que el bloque no se muestra. */}
+      {history.items.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Historial</CardTitle>
           </CardHeader>
           <CardContent>
-            <ol className="flex flex-col gap-2 text-sm">
-              {history.map((entry) => (
-                <li
-                  key={entry.id}
-                  data-testid="history-entry"
-                  data-action={entry.action}
-                  className="flex flex-wrap items-baseline gap-2"
-                >
-                  <span className="font-medium">{ACTION_LABELS[entry.action]}</span>
-                  <span className="text-muted-foreground">
-                    {formatDateTime(entry.occurredAt, timezone)}
-                  </span>
-                  {entry.actorLabel && (
-                    <span className="text-muted-foreground">
-                      · {entry.actorLabel}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ol>
+            <RecordHistory history={history} timezone={timezone} />
           </CardContent>
         </Card>
       )}

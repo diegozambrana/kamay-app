@@ -6,9 +6,10 @@
  * quiere `orders.status_changed`, quiere "Diego cambió el estado del pedido
  * #142".
  *
- * Es una función pura y vive en `lib/` a propósito: no toca Supabase, se
- * prueba sin base de datos y KAM-22 la hereda para V23 en vez de escribir una
- * segunda redacción que acabaría diciendo otra cosa.
+ * Es una función pura y vive en `lib/` a propósito: no toca Supabase y se
+ * prueba sin base de datos. La comparten el panel, V23 y los cinco bloques de
+ * historial contextual, para que un mismo evento no se lea de dos maneras
+ * según la pantalla desde la que se mire.
  */
 
 /** Lo que hace falta para redactar. Menos que un `ActivityEntry` completo. */
@@ -48,6 +49,13 @@ const SUBJECTS: Record<string, string> = {
   memberships: "la persona del equipo",
   attachments: "el adjunto",
   asset_details: "el activo",
+  tasks: "la tarea",
+  tags: "la etiqueta",
+  invitations: "la invitación",
+  inventory_movements: "el movimiento de inventario",
+  membership_lines: "el acceso a la línea",
+  task_links: "el vínculo de la tarea",
+  task_deliverables: "el entregable de la tarea",
 };
 
 /**
@@ -138,7 +146,29 @@ export function recordHref(
       return `/expenses/${recordId}`;
     case "items":
       return `/catalog/${recordId}`;
+    case "tasks":
+      return `/tasks/${recordId}`;
+    // El contacto no tiene página propia: se selecciona en la lista de dos
+    // paneles, y el panel derecho es su detalle.
+    case "contacts":
+      return `/contacts?id=${recordId}`;
+    // El activo se abre seleccionado en su lista. Funciona porque
+    // `asset_details.id` es una columna generada `as (item_id) stored` que
+    // KAM-19 añadió para que el trigger de auditoría tuviera un `id`: el
+    // `record_id` del evento **es** el del ítem, no uno propio.
+    case "asset_details":
+      return `/assets?selected=${recordId}`;
     default:
       return null;
   }
 }
+
+/**
+ * El diccionario de sujetos, expuesto solo para la prueba de cobertura.
+ *
+ * `tests/integration/activity-fields-coverage.test.ts` compara esta lista con
+ * las tablas que de verdad llevan el trigger `audit`, para que una tabla nueva
+ * no se lea como «un registro» sin que nadie se entere. No se usa fuera de
+ * ahí: quien redacta llama a `describeEvent()`.
+ */
+export const SUBJECTS_FOR_TESTS: Readonly<Record<string, string>> = SUBJECTS;

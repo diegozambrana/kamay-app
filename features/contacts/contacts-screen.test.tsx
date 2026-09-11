@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Contact, Role } from "@/types";
 
+import type { RecordHistory } from "@/services/activity/record-history";
+
 import { ContactsScreen } from "./contacts-screen";
 
 const push = vi.fn();
@@ -55,6 +57,7 @@ function renderScreen(
   contacts: Contact[],
   role: Role = "owner",
   selectedId: string | null = null,
+  history: RecordHistory | null = null,
 ) {
   return render(
     <ContactsScreen
@@ -63,6 +66,7 @@ function renderScreen(
       search=""
       includeArchived={false}
       timezone="America/La_Paz"
+      history={history}
       selectedId={selectedId}
       role={role}
     />,
@@ -178,5 +182,66 @@ describe("tareas relacionadas del contacto", () => {
     expect(relatedTasksFor).toHaveBeenLastCalledWith("contact", ana.id);
     // La lista sigue visible: no se navegó a ninguna parte.
     expect(screen.getByTestId("contact-detail")).toBeInTheDocument();
+  });
+});
+
+/**
+ * KAM-22 · V13 estrena historial.
+ *
+ * Escenarios de `activity-screen` § Toda pantalla de detalle con historial lo
+ * lee de la bitácora y lleva a ella → «El contacto estrena historial», «Del
+ * historial a la bitácora filtrada».
+ */
+describe("historial del contacto", () => {
+  const HREF = "/activity?type=contacts&q=c1";
+
+  // Scenario: El contacto estrena historial
+  it("muestra los cambios del contacto abierto, leídos de la bitácora", () => {
+    renderScreen([contact({ id: "c1", name: "Insumos del Sur" })], "owner", "c1", {
+      activityHref: HREF,
+      items: [
+        {
+          id: 1,
+          action: "created",
+          sentence: "Diego registró el contacto",
+          occurredAt: "2026-09-07T14:00:00Z",
+          detail: { kind: "rows", rows: [] },
+        },
+      ],
+    });
+
+    const entradas = screen.getAllByTestId("history-entry");
+    expect(entradas).toHaveLength(1);
+    expect(entradas[0]).toHaveTextContent("Diego registró el contacto");
+  });
+
+  // Scenario: Del historial a la bitácora filtrada
+  it("lleva a la bitácora filtrada por este contacto", () => {
+    renderScreen([contact({ id: "c1" })], "owner", "c1", {
+      activityHref: HREF,
+      items: [
+        {
+          id: 1,
+          action: "created",
+          sentence: "Diego registró el contacto",
+          occurredAt: "2026-09-07T14:00:00Z",
+          detail: { kind: "rows", rows: [] },
+        },
+      ],
+    });
+
+    expect(screen.getByTestId("activity-link")).toHaveAttribute("href", HREF);
+  });
+
+  // Al ayudante RLS le devuelve cero filas: mensaje de lista sin contenido,
+  // nunca un error.
+  it("sin eventos se rinde vacío, no como error", () => {
+    renderScreen([contact({ id: "c1" })], "assistant", "c1", {
+      activityHref: HREF,
+      items: [],
+    });
+
+    expect(screen.getByTestId("empty-history")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

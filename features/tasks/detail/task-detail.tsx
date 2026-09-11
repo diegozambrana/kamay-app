@@ -14,7 +14,7 @@ import {
   type TaskAttachment,
 } from "@/features/tasks/attachments/attachment-panel";
 import { MarkdownEditor } from "@/features/tasks/editor/markdown-editor";
-import type { ActivityEntry, BusinessLine, Status, Task } from "@/types";
+import type { BusinessLine, Status, Task } from "@/types";
 
 import { TaskFields } from "./task-fields";
 import { useRouter } from "next/navigation";
@@ -24,6 +24,8 @@ import { DeliverablesSection } from "@/features/tasks/deliverables/deliverables-
 import { TaskLinks } from "@/features/tasks/links/task-links";
 import type { Deliverable } from "@/lib/tasks/deliverables";
 import type { ResolvedTaskLink } from "@/services/tasks/task-service";
+
+import type { RecordHistory as RecordHistoryData } from "@/services/activity/record-history";
 
 import { TaskHistory } from "./task-history";
 
@@ -49,7 +51,7 @@ export type TaskDetailProps = {
    * el tablero no carga (design D7). `null` = no hay cierre en curso.
    */
   closingStatusId: string | null;
-  history: ActivityEntry[];
+  history: RecordHistoryData;
   timezone: string;
 };
 

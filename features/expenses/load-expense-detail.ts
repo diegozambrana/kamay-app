@@ -10,6 +10,7 @@ import { ExpenseItemService } from "@/services/expenses/expense-item-service";
 import { ExpenseService } from "@/services/expenses/expense-service";
 import { OrderService } from "@/services/orders/order-service";
 import { PaymentService } from "@/services/payments/payment-service";
+import { loadRecordHistory } from "@/services/activity/record-history";
 
 import type { ExpenseDetailData } from "./expense-detail";
 
@@ -23,6 +24,7 @@ export async function loadExpenseDetail(
   id: string,
 ): Promise<ExpenseDetailData | null> {
   const { supabase, organizationId } = context;
+  const { timezone, currency } = context.membership.organization;
 
   const expenses = new ExpenseService(supabase);
   const expense = await expenses.getById(organizationId, id);
@@ -56,7 +58,14 @@ export async function loadExpenseDetail(
       // Movimientos del egreso, anulados incluidos: el bloque los muestra
       // tachados. Lo que cuenta en `paid` lo decide la vista, no esta lista.
       new PaymentService(supabase).listForExpense(organizationId, expense.id),
-      expenses.history(organizationId, expense.id),
+      // La misma lectura que `/activity` filtrada por este egreso.
+      loadRecordHistory(supabase, {
+        organizationId,
+        tableName: "expenses",
+        recordId: expense.id,
+        timezone,
+        currency,
+      }),
     ]);
 
   /**

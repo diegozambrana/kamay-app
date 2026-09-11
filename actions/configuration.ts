@@ -4,6 +4,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import {
+  type RetentionSettingsInput,
+  retentionSettingsSchema,
+} from "@/lib/activity/retention";
+
 import { getOwnerContext } from "@/lib/auth/session-context";
 import { allocationSettingsSchema } from "@/lib/reports/allocation-schema";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
@@ -11,6 +16,7 @@ import { ExpenseCategoryService } from "@/services/configuration/expense-categor
 import { SalesChannelService } from "@/services/configuration/sales-channel-service";
 import { UnitService } from "@/services/configuration/unit-service";
 import { OrganizationService } from "@/services/organization-service";
+import { RetentionPolicyService } from "@/services/activity/retention-service";
 import { AllocationRuleService } from "@/services/configuration/allocation-rule-service";
 import { LINE_COLORS } from "@/types";
 
@@ -321,6 +327,34 @@ export async function updateGeneralSettings(
     );
   } catch {
     return { error: "No se pudo guardar la organización. Intenta de nuevo." };
+  }
+
+  revalidateConfiguration();
+}
+
+/**
+ * La política de retención del detalle de la bitácora (KAM-22, design D9).
+ *
+ * Guarda dentro de `organizations.settings`, fusionando: ese `jsonb` lo
+ * comparte con la regla de reparto y con las preferencias, y sustituirlo
+ * entero borraría lo de al lado.
+ */
+export async function updateRetentionPolicy(
+  input: RetentionSettingsInput,
+): Promise<ActionResult> {
+  const parsed = retentionSettingsSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  try {
+    await new RetentionPolicyService(context.supabase).save(
+      context.organizationId,
+      parsed.data,
+    );
+  } catch {
+    return { error: "No se pudo guardar la retención. Intenta de nuevo." };
   }
 
   revalidateConfiguration();

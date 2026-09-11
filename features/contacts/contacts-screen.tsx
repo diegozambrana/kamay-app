@@ -7,6 +7,8 @@ import { useState, useTransition } from "react";
 import { setContactArchived } from "@/actions/contacts";
 import { relatedTasksFor } from "@/actions/tasks";
 import { ArchiveWarning } from "@/features/tasks/links/archive-warning";
+import { RecordHistory } from "@/components/activity/record-history";
+import type { RecordHistory as RecordHistoryData } from "@/services/activity/record-history";
 import { RelatedTasksPanel } from "@/features/tasks/links/related-tasks-panel";
 import type { RelatedTask } from "@/services/tasks/task-service";
 import { MainContainer } from "@/components/layout/main-container";
@@ -66,6 +68,7 @@ export function ContactsScreen({
   search,
   includeArchived,
   selectedId,
+  history,
   timezone,
   role,
 }: {
@@ -74,6 +77,8 @@ export function ContactsScreen({
   search: string;
   includeArchived: boolean;
   selectedId: string | null;
+  /** El historial del contacto seleccionado, o `null` si no hay ninguno. */
+  history: RecordHistoryData | null;
   timezone: string;
   role: Role;
 }) {
@@ -321,6 +326,20 @@ export function ContactsScreen({
                     timezone={timezone}
                   />
                 </div>
+
+                {/* Un solo historial (convención nº 7). V13 lo estrena con
+                    KAM-22: hasta entonces el contacto era la única pantalla
+                    de detalle sin él. Para el ayudante llega vacío por RLS. */}
+                {history && (
+                  <div className="mt-6 flex flex-col gap-2">
+                    <h3 className="text-sm font-medium">Historial</h3>
+                    <RecordHistory
+                      history={history}
+                      timezone={timezone}
+                      emptyMessage="Todavía no hay movimientos registrados."
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

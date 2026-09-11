@@ -24,14 +24,30 @@ afterEach(cleanup);
  * taller la conserven.
  */
 describe("SettingsNav", () => {
-  it("la persona dueña ve las ocho secciones", () => {
+  // Atado a la lista de secciones y no a un número escrito a mano: ese número
+  // se rompió al añadir Estados, al añadir Notificaciones y otra vez al añadir
+  // Retención (KAM-22), y cada vez señalaba la prueba en lugar del cambio.
+  it("la persona dueña ve todas las secciones", () => {
     render(<SettingsNav isOwner />);
 
-    expect(screen.getAllByRole("link")).toHaveLength(8);
-    expect(screen.getByRole("link", { name: "General" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Notificaciones" }),
-    ).toBeInTheDocument();
+    expect(screen.getAllByRole("link")).toHaveLength(
+      SETTINGS_SECTIONS.length,
+    );
+    for (const section of SETTINGS_SECTIONS) {
+      expect(
+        screen.getByRole("link", { name: section.label }),
+      ).toBeInTheDocument();
+    }
+  });
+
+  // KAM-22: la retención es del taller, no de la persona.
+  it("Retención es del dueño y lleva a su sección", () => {
+    render(<SettingsNav isOwner />);
+
+    expect(screen.getByRole("link", { name: "Retención" })).toHaveAttribute(
+      "href",
+      "/settings/retention",
+    );
   });
 
   // Scenario: El ayudante configura las suyas

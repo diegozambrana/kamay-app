@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type {
-  ActivityEntry,
   AssetDetails,
   AssetExpenseRole,
   AssetRecovery,
@@ -248,38 +247,5 @@ export class AssetService {
       archivedAt: row.archived_at,
       total: totals.get(row.id) ?? 0,
     }));
-  }
-
-  /** El historial del activo, leído de la única bitácora (convención nº 7). */
-  async history(organizationId: string, itemId: string): Promise<ActivityEntry[]> {
-    const { data, error } = await this.supabase
-      .from("activity_log")
-      .select("id, action, actor_id, actor_label, changes, occurred_at")
-      .eq("organization_id", organizationId)
-      .eq("table_name", "asset_details")
-      .eq("record_id", itemId)
-      .order("occurred_at", { ascending: false });
-
-    if (error) throw error;
-
-    return (data ?? []).map((raw) => {
-      const row = raw as unknown as {
-        id: number;
-        action: ActivityEntry["action"];
-        actor_id: string | null;
-        actor_label: string | null;
-        changes: Record<string, unknown> | null;
-        occurred_at: string;
-      };
-
-      return {
-        id: row.id,
-        action: row.action,
-        actorId: row.actor_id,
-        actorLabel: row.actor_label,
-        changes: row.changes,
-        occurredAt: row.occurred_at,
-      };
-    });
   }
 }

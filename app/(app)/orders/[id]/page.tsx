@@ -11,6 +11,7 @@ import { StatusService } from "@/services/configuration/status-service";
 import { OrderItemService } from "@/services/orders/order-item-service";
 import { OrderService } from "@/services/orders/order-service";
 import { PaymentService } from "@/services/payments/payment-service";
+import { loadRecordHistory } from "@/services/activity/record-history";
 import { TaskService } from "@/services/tasks/task-service";
 
 export const metadata = { title: "Pedido · Kamay" };
@@ -81,9 +82,17 @@ export default async function OrderDetailPage({
     order.id,
   );
 
-  // Un solo historial (convención nº 7): sale de `activity_log`. Para el
-  // ayudante llega vacío por RLS, y el bloque no se muestra.
-  const history = await orders.history(context.organizationId, order.id);
+  // Un solo historial (convención nº 7): sale de `activity_log` por la misma
+  // lectura que la bitácora general, para que los eventos y su orden
+  // coincidan con `/activity` filtrada por este pedido. Para el ayudante llega
+  // vacío por RLS, y el bloque no se muestra.
+  const history = await loadRecordHistory(context.supabase, {
+    organizationId: context.organizationId,
+    tableName: "orders",
+    recordId: order.id,
+    timezone: context.membership.organization.timezone,
+    currency: context.membership.organization.currency,
+  });
 
   // El otro lado del vínculo: qué tareas apuntan a este pedido. RLS decide
   // cuáles ve quien mira; aquí no se filtra por rol ni por línea (D4).

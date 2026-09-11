@@ -5,7 +5,7 @@ import type {
   PurchaseFormValues,
   PurchaseLineValues,
 } from "@/lib/expenses/schema";
-import type { ActivityEntry, AssetExpenseRole, Expense, ExpenseKind } from "@/types";
+import type { AssetExpenseRole, Expense, ExpenseKind } from "@/types";
 
 type ExpenseRow = {
   id: string;
@@ -368,33 +368,5 @@ export class ExpenseService {
       .eq("id", id);
 
     if (error) throw error;
-  }
-
-  /**
-   * El historial del egreso. Un solo historial (convención nº 7): todo lo
-   * que muestre "qué pasó aquí" lee de `activity_log`.
-   */
-  async history(organizationId: string, id: string): Promise<ActivityEntry[]> {
-    const { data, error } = await this.supabase
-      .from("activity_log")
-      .select("id, action, actor_id, actor_label, changes, occurred_at")
-      .eq("organization_id", organizationId)
-      .eq("table_name", "expenses")
-      .eq("record_id", id)
-      .order("occurred_at", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      throw new Error(`No se pudo cargar el historial: ${error.message}`);
-    }
-
-    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
-      id: row.id as number,
-      action: row.action as ActivityEntry["action"],
-      actorId: (row.actor_id as string | null) ?? null,
-      actorLabel: (row.actor_label as string | null) ?? null,
-      changes: (row.changes as Record<string, unknown> | null) ?? null,
-      occurredAt: row.occurred_at as string,
-    }));
   }
 }

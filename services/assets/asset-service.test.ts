@@ -215,40 +215,6 @@ describe("AssetService.details", () => {
   });
 });
 
-describe("AssetService.history", () => {
-  it("lee de la única bitácora, acotado a este activo (convención nº 7)", async () => {
-    const client = new FakeClient([
-      {
-        data: [
-          {
-            id: 7,
-            action: "updated",
-            actor_id: null,
-            actor_label: "Diego",
-            changes: null,
-            occurred_at: "2026-03-12T16:00:00.000Z",
-          },
-        ],
-        error: null,
-      },
-    ]);
-
-    const [entry] = await new AssetService(client.asSupabase()).history(ORG, PRINTER);
-
-    expect(client.tables[0]).toBe("activity_log");
-    expect(client.queries[0].has("eq", "table_name", "asset_details")).toBe(true);
-    expect(client.queries[0].has("eq", "record_id", PRINTER)).toBe(true);
-    expect(client.queries[0].has("eq", "organization_id", ORG)).toBe(true);
-    expect(entry.action).toBe("updated");
-    expect(entry.actorLabel).toBe("Diego");
-  });
-
-  it("un activo sin historial devuelve una lista vacía", async () => {
-    const client = new FakeClient([{ data: null, error: null }]);
-    expect(await new AssetService(client.asSupabase()).history(ORG, PRINTER)).toEqual([]);
-  });
-});
-
 /**
  * Los caminos de error no son adorno: si el servicio se los tragara, la
  * pantalla mostraría una lista vacía en vez de decir que algo falló, que es
@@ -316,12 +282,7 @@ describe("AssetService · fallos de la base", () => {
     ).rejects.toEqual({ message: "totales" });
   });
 
-  it("history propaga el error", async () => {
-    const client = new FakeClient([{ data: null, error: { message: "boom" } }]);
-    await expect(new AssetService(client.asSupabase()).history(ORG, PRINTER)).rejects.toEqual({
-      message: "boom",
-    });
-  });
+  
 
   it("un numérico ilegible cuenta como cero, no como NaN en la barra", async () => {
     const client = new FakeClient([

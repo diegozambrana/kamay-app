@@ -149,13 +149,18 @@ describe("OwnerDashboard", () => {
 
   // Scenario: Del movimiento a la bitácora — mientras V23 no exista, el panel
   // lo declara en vez de enlazar a una ruta que no está.
-  it("declara los destinos que todavía no existen en vez de enlazar a la nada", () => {
+  // Scenario: Del movimiento a la bitácora (delta `dashboard`)
+  //
+  // Hasta KAM-22 esta prueba exigía que la bitácora se nombrara **sin**
+  // enlazar, porque V23 no existía. Existe: el panel la enlaza, y lo que
+  // sigue declarándose sin enlace es lo que de verdad no ha llegado.
+  it("enlaza la bitácora y declara lo que todavía no existe", () => {
     renderOwner();
 
-    expect(screen.getByText(/La bitácora completa llega/)).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "Ver la bitácora" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: "Ver la bitácora" }),
+    ).toHaveAttribute("href", "/activity");
+    expect(screen.queryByText(/La bitácora completa llega/)).toBeNull();
     expect(
       screen.queryByRole("link", { name: /informe comparativo/ }),
     ).not.toBeInTheDocument();

@@ -2,6 +2,7 @@ import {
   ChartColumnIcon,
   ClipboardListIcon,
   FactoryIcon,
+  HistoryIcon,
   HomeIcon,
   LayoutDashboardIcon,
   ListChecksIcon,
@@ -147,6 +148,17 @@ export const NAV_ENTRIES: NavEntry[] = [
     href: "/assets",
     label: "Activos",
     icon: FactoryIcon,
+    roles: ["owner"],
+    mobile: "more",
+  },
+  {
+    // Grupo "Sistema" del mapa §4.1, junto a Configuración: **solo el dueño**.
+    // `activity_log` solo tiene política de lectura para `is_owner`, así que
+    // al ayudante la pantalla le devolvería cero filas aunque llegara; ocultar
+    // la entrada es la cortesía, no la protección (KAM-22).
+    href: "/activity",
+    label: "Bitácora",
+    icon: HistoryIcon,
     roles: ["owner"],
     mobile: "more",
   },

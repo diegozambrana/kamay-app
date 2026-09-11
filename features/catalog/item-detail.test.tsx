@@ -131,7 +131,7 @@ function renderDetail(
       photos={photos}
       lines={[LINE]}
       units={[UNIT]}
-      history={[]}
+      history={{ items: [], activityHref: "/activity" }}
       role={role}
       timeZone="America/La_Paz"
       {...inventory}

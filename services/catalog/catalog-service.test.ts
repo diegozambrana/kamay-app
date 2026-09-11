@@ -107,15 +107,8 @@ describe("ItemService", () => {
     expect(query.has("eq", "organization_id", ORG)).toBe(true);
   });
 
-  it("el historial lee de la bitácora, no de una tabla propia", async () => {
-    const client = new FakeClient([{ data: [], error: null }]);
-    await new ItemService(client.asSupabase()).history(ORG, ITEM);
+  
 
-    expect(client.tables[0]).toBe("activity_log");
-    const query = client.queries[0];
-    expect(query.has("eq", "table_name", "items")).toBe(true);
-    expect(query.has("eq", "record_id", ITEM)).toBe(true);
-  });
 });
 
 describe("ItemVariantService", () => {

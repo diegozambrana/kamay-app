@@ -22,13 +22,12 @@ import {
   upcomingWindow,
 } from "@/lib/dashboard/period";
 import { ActivityService } from "@/services/activity/activity-service";
+import { LabelService } from "@/services/activity/label-service";
 import { ContactService } from "@/services/catalog/contact-service";
 import { ItemService } from "@/services/catalog/item-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { UnitService } from "@/services/configuration/unit-service";
 import { DashboardService } from "@/services/dashboard/dashboard-service";
-import { InvitationService } from "@/services/invitation-service";
-import { OrderService } from "@/services/orders/order-service";
 import { PaymentService } from "@/services/payments/payment-service";
 import { TaskService } from "@/services/tasks/task-service";
 import { ALL_LINES } from "@/types";
@@ -179,35 +178,25 @@ export default async function DashboardPage() {
     businessLineId: activeLineId,
   });
 
-  // Quién hizo cada cosa: el nombre de la persona, no su identificador.
-  const members = await new InvitationService(supabase).listMembers(
-    organizationId,
-  );
-  const memberNames = new Map(
-    members.map((member) => [member.userId, member.displayName]),
-  );
-
-  // El rótulo humano del registro. Hoy solo los pedidos tienen uno —el
-  // "#142"—; el resto se cuenta sin él antes que con un identificador.
-  const orderIds = activity
-    .filter((entry) => entry.tableName === "orders")
-    .map((entry) => entry.recordId);
-  const orderCodes = await new OrderService(supabase).codesFor(
-    organizationId,
-    orderIds,
-  );
+  // Quién hizo cada cosa y cómo se llama lo que tocó, resuelto en lote por la
+  // misma pieza que usa V23 (design D4). Antes esto se resolvía aquí a mano y
+  // solo para los pedidos, así que todo lo demás se contaba sin rótulo.
+  const labels = new LabelService(supabase);
+  const [recordLabels, actorNames] = await Promise.all([
+    labels.forRecords(organizationId, activity),
+    labels.people(
+      organizationId,
+      activity.map((entry) => entry.actorId).filter((id) => id !== null),
+    ),
+  ]);
 
   const activityItems: ActivityItem[] = activity.map((entry) => ({
     id: entry.id,
     action: entry.action,
     tableName: entry.tableName,
-    actorName: entry.actorId
-      ? (memberNames.get(entry.actorId) ?? null)
-      : null,
+    actorName: entry.actorId ? (actorNames.get(entry.actorId) ?? null) : null,
     actorLabel: entry.actorLabel,
-    recordLabel: orderCodes.has(entry.recordId)
-      ? `#${orderCodes.get(entry.recordId)}`
-      : null,
+    recordLabel: recordLabels.get(entry.recordId) ?? null,
     occurredAt: entry.occurredAt,
     href: recordHref(entry.tableName, entry.recordId),
   }));

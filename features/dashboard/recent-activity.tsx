@@ -24,35 +24,29 @@ export type ActivityItem = {
  * este componente, y `activity_log` tampoco le devolvería una fila.
  *
  * Cada evento se lee como una frase, no como jerga: la redacción vive en
- * `lib/activity/describe.ts` para que V23 (KAM-22) diga exactamente lo mismo
- * en vez de inventar su propia forma de contarlo.
+ * `lib/activity/describe.ts`, y desde KAM-22 la comparten esta tarjeta, V23 y
+ * los cinco bloques de historial de las pantallas de detalle.
  */
 export function RecentActivity({
   items,
   timezone,
-  logHref,
+  logHref = "/activity",
 }: {
   items: readonly ActivityItem[];
   timezone: string;
-  /** Ausente mientras V23 no exista (KAM-22). */
+  /** Por defecto V23, que existe desde KAM-22. */
   logHref?: string;
 }) {
   return (
     <Card data-testid="recent-activity">
       <CardHeader>
         <CardTitle>Últimos movimientos</CardTitle>
-        {logHref ? (
-          <Link
-            href={logHref}
-            className="text-xs text-muted-foreground underline-offset-4 hover:underline"
-          >
-            Ver la bitácora
-          </Link>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            La bitácora completa llega con la pantalla de actividad.
-          </p>
-        )}
+        <Link
+          href={logHref}
+          className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+        >
+          Ver la bitácora
+        </Link>
       </CardHeader>
 
       <CardContent>

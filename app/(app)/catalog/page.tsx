@@ -12,6 +12,8 @@ import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ItemService } from "@/services/catalog/item-service";
 import { MovementService } from "@/services/inventory/movement-service";
 import { ALL_LINES, type ItemKind } from "@/types";
+import { joinsCatalogWindow } from "@/lib/catalog/window";
+import { resolveLimit, takeWindow } from "@/lib/pagination";
 
 export const metadata = { title: "Catálogo · Kamay" };
 
@@ -28,6 +30,9 @@ export default async function CatalogPage({
     line?: string;
     q?: string;
     archived?: string;
+    limit?: string;
+    /** El ítem recién creado desde esta pantalla. */
+    created?: string;
   }>;
 }) {
   const context = await getSessionContext();
@@ -52,16 +57,34 @@ export default async function CatalogPage({
       ? requested
       : (lines.find((line) => line.id === requested)?.id ?? "all");
 
-  const items = await new ItemService(context.supabase).list(
-    context.organizationId,
-    {
+  // Una ventana del catálogo, no el catálogo entero (KAM-23,
+  // `performance-budget`): una fila de más dice si hay más.
+  const limit = resolveLimit(params.limit);
+  const itemService = new ItemService(context.supabase);
+  const window = takeWindow(
+    await itemService.list(context.organizationId, {
       kind,
       businessLineId:
         lineFilter === "all" ? null : (lineFilter as string | "shared"),
       search,
       includeArchived,
-    },
+      limit: limit + 1,
+    }),
+    limit,
   );
+  // Lo recién creado puede caer fuera de la ventana alfabética: se trae aparte
+  // para que no parezca perdido, si los filtros vigentes lo habrían mostrado.
+  // Va al final, que es donde lo pone el orden: fuera de la ventana significa
+  // después de toda ella.
+  const created =
+    params.created && !window.rows.some((item) => item.id === params.created)
+      ? await itemService.findById(context.organizationId, params.created)
+      : null;
+  const items =
+    created &&
+    joinsCatalogWindow(created, { kind, lineFilter, search, includeArchived })
+      ? [...window.rows, created]
+      : window.rows;
 
   // Las miniaturas: los buckets son privados, así que cada lectura se firma.
   // Se piden en lote para no encadenar una petición por fila.
@@ -71,7 +94,7 @@ export default async function CatalogPage({
     "item",
     items.map((item) => item.id),
   );
-  const signed = await attachments.signedUrls(photos);
+  const signed = await attachments.signedThumbnailUrls(photos);
 
   // La foto vigente de un ítem es la más reciente: `listForEntities` ya
   // entrega de la más nueva a la más vieja, así que la primera gana.
@@ -123,6 +146,8 @@ export default async function CatalogPage({
       includeArchived={includeArchived}
       role={context.membership.role}
       activeLineId={activeLine === ALL_LINES ? null : activeLine}
+      limit={limit}
+      hasMore={window.hasMore}
     />
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { setBrowserMonitoringScope } from "@/lib/monitoring/report-error";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { MembershipWithOrganization, Organization } from "@/types";
 
@@ -24,6 +25,8 @@ export function OrganizationProvider({
 
   useEffect(() => {
     useOrganizationStore.setState({ organization, memberships });
+    // Cada reporte de error del navegador lleva la organización activa.
+    setBrowserMonitoringScope({ organizationId: organization.id });
   }, [organization, memberships]);
 
   return children;

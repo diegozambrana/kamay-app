@@ -76,6 +76,7 @@ export function BoardView({
 
     return {
       id: status.id,
+      label: status.name,
       sortable: status.isQueue,
       items: ordered,
       attributes: {
@@ -147,6 +148,7 @@ export function BoardView({
       columns={columns}
       onMove={moveCard}
       onReorder={reorderCard}
+      itemLabel={(order) => `Pedido #${order.code}`}
       renderCard={(order) => (
         <OrderCard order={order} today={today} position={positions.get(order.id)} />
       )}

@@ -1,7 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -33,7 +33,7 @@ test.describe("alta rápida de tarea (V17)", () => {
   test.skip(({ isMobile }) => Boolean(isMobile), "el tablero es de escritorio; en móvil manda V20");
 
   test("crear una tarea toma 3 interacciones o menos", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/tasks");
 
@@ -68,7 +68,7 @@ test.describe("alta rápida de tarea (V17)", () => {
   });
 
   test("el alta rápida no pide ningún dato más que el título", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/tasks");
 
@@ -81,7 +81,7 @@ test.describe("alta rápida de tarea (V17)", () => {
   });
 
   test("la tarea persiste al recargar", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/tasks");
 

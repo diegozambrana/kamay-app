@@ -51,12 +51,15 @@ describe("SettingsNav", () => {
   });
 
   // Scenario: El ayudante configura las suyas
-  it("el ayudante ve solo Notificaciones", () => {
+  it("el ayudante ve solo lo suyo: Notificaciones y Exportar", () => {
     render(<SettingsNav isOwner={false} />);
 
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAttribute("href", "/settings/notifications");
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/settings/notifications",
+      // KAM-23: cada quien exporta lo que su rol puede leer.
+      "/settings/export",
+    ]);
   });
 
   // Scenario: Las demás secciones de configuración siguen siendo del dueño
@@ -76,10 +79,10 @@ describe("SettingsNav", () => {
     }
   });
 
-  it("solo Notificaciones está declarada como abierta a ambos roles", () => {
+  it("solo Notificaciones y Exportar están declaradas como abiertas a ambos roles", () => {
     const abiertas = SETTINGS_SECTIONS.filter((s) => !s.ownerOnly);
 
-    expect(abiertas.map((s) => s.href)).toEqual(["/settings/notifications"]);
+    expect(abiertas.map((s) => s.href)).toEqual(["/settings/notifications", "/settings/export"]);
   });
 });
 
@@ -108,7 +111,9 @@ describe("guardia de rol de cada sección de configuración", () => {
 
   it("cada sección del taller exige ser dueño por su cuenta", () => {
     const sinGuardia = sectionDirs()
-      .filter((dir) => dir !== "notifications")
+      // Las dos secciones de la persona: sus avisos (KAM-17) y su exportación
+      // (KAM-23), que RLS recorta a lo que su rol lee.
+      .filter((dir) => dir !== "notifications" && dir !== "export")
       .filter((dir) => {
         const source = readFileSync(`${SETTINGS_DIR}/${dir}/page.tsx`, "utf8");
         return !CALLS_OWNER_GUARD.test(source);

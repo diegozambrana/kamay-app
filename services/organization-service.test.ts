@@ -79,3 +79,36 @@ describe("OrganizationService", () => {
     ).rejects.toThrow(/No se pudo guardar la organización/);
   });
 });
+
+describe("OrganizationService.listActiveForJobs", () => {
+  const page = (count: number, offset = 0) =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `org-${offset + index}`,
+      timezone: "America/La_Paz",
+    }));
+
+  it("sigue leyendo páginas hasta agotarlas: nadie queda fuera por el tope de filas", async () => {
+    const client = new FakeClient([
+      { data: page(500), error: null },
+      { data: page(500, 500), error: null },
+      { data: page(3, 1000), error: null },
+    ]);
+
+    const organizations = await new OrganizationService(client.asSupabase()).listActiveForJobs();
+
+    expect(organizations).toHaveLength(1003);
+    expect(client.queries.map((query) => query.argsOf("range"))).toEqual([
+      [0, 499],
+      [500, 999],
+      [1000, 1499],
+    ]);
+    expect(client.queries[0].has("is", "archived_at", null)).toBe(true);
+  });
+
+  it("una página que falla se reporta, no se toma por el final", async () => {
+    const client = new FakeClient([{ data: null, error: { message: "sin conexión" } }]);
+    await expect(
+      new OrganizationService(client.asSupabase()).listActiveForJobs(),
+    ).rejects.toThrow("sin conexión");
+  });
+});

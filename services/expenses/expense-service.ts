@@ -6,6 +6,7 @@ import type {
   PurchaseLineValues,
 } from "@/lib/expenses/schema";
 import type { AssetExpenseRole, Expense, ExpenseKind } from "@/types";
+import { chunk } from "@/lib/pagination";
 
 type ExpenseRow = {
   id: string;
@@ -112,19 +113,19 @@ export class ExpenseService {
     const totals = new Map<string, ExpenseTotals>();
     if (expenses.length === 0) return totals;
 
-    const { data, error } = await this.supabase
-      .from("expense_totals")
-      .select("expense_id, total, paid")
-      .in(
-        "expense_id",
-        expenses.map((expense) => expense.id),
-      );
-
-    if (error) {
-      throw new Error(`No se pudieron calcular los totales: ${error.message}`);
+    // En tandas, como los totales de pedidos: un periodo largo trae
+    // identificadores de sobra para desbordar la dirección (KAM-23).
+    const batches = await Promise.all(
+      chunk(expenses.map((expense) => expense.id)).map((ids) =>
+        this.supabase.from("expense_totals").select("expense_id, total, paid").in("expense_id", ids),
+      ),
+    );
+    const failed = batches.find((batch) => batch.error);
+    if (failed?.error) {
+      throw new Error(`No se pudieron calcular los totales: ${failed.error.message}`);
     }
 
-    for (const row of (data ?? []) as {
+    for (const row of batches.flatMap((batch) => batch.data ?? []) as {
       expense_id: string;
       total: number | string;
       paid: number | string;
@@ -150,14 +151,19 @@ export class ExpenseService {
     }
 
     if (archivedPurchases.length > 0) {
-      const { data: lines, error: linesError } = await this.supabase
-        .from("expense_items")
-        .select("expense_id, quantity, unit_price")
-        .in("expense_id", archivedPurchases);
-
-      if (linesError) {
-        throw new Error(`No se pudieron calcular los totales: ${linesError.message}`);
+      const lineBatches = await Promise.all(
+        chunk(archivedPurchases).map((ids) =>
+          this.supabase
+            .from("expense_items")
+            .select("expense_id, quantity, unit_price")
+            .in("expense_id", ids),
+        ),
+      );
+      const linesFailed = lineBatches.find((batch) => batch.error);
+      if (linesFailed?.error) {
+        throw new Error(`No se pudieron calcular los totales: ${linesFailed.error.message}`);
       }
+      const lines = lineBatches.flatMap((batch) => batch.data ?? []);
 
       for (const id of archivedPurchases) totals.set(id, { ...NO_MONEY });
       for (const line of (lines ?? []) as {

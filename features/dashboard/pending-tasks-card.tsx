@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 
 export type PendingCounts = {
   overdue: number;
@@ -38,9 +40,16 @@ export function PendingTasksCard({ counts }: { counts: PendingCounts }) {
           // Ceros reales, no un marcador: aquí sí se sabe que no hay nada, y
           // decirlo es información. Es la diferencia con la tarjeta de
           // insumos, donde un cero significaría "no falta nada" sin saberlo.
-          <p className="text-sm text-muted-foreground">
-            No tienes tareas pendientes.
-          </p>
+          <EmptyState
+            testId="card-empty"
+            className="p-4"
+            title="No tienes tareas pendientes."
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/tasks/new">Anotar una tarea</Link>
+              </Button>
+            }
+          />
         ) : (
           <dl className="flex gap-6">
             <Count

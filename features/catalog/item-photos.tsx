@@ -102,6 +102,8 @@ export function ItemPhotos({
                 {photo.url ? (
                   // eslint-disable-next-line @next/next/no-img-element -- URL firmada y efímera: no pasa por el optimizador
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={photo.url}
                     alt={`Fotografía de ${photo.fileName}`}
                     className="aspect-square w-full rounded-lg border object-cover"

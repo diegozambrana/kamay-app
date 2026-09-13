@@ -56,6 +56,7 @@ const NO_UNIT = "none";
 export function ItemFormDialog({
   open,
   onOpenChange,
+  onCreated,
   item,
   lines,
   units,
@@ -64,6 +65,8 @@ export function ItemFormDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Tras crear —no al editar—, con el id del ítem nuevo. */
+  onCreated?: (id: string) => void;
   item?: Item;
   lines: BusinessLine[];
   units: Unit[];
@@ -128,6 +131,7 @@ export function ItemFormDialog({
         }
       }
 
+      if (!item) onCreated?.(itemId);
       onOpenChange(false);
     });
   }

@@ -64,7 +64,9 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+# KAM-23 · `seeds/performance.sql` siembra «Kamay Rendimiento», un año de
+# trabajo de un taller real para medir el presupuesto de carga del panel.
+sql_paths = ["./seed.sql", "./seeds/performance.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
@@ -169,7 +171,11 @@ enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
 # Kamay no tiene registro público: las cuentas se crean por invitación (KAM-02, D7).
-enable_signup = false
+# Abierto a propósito desde KAM-23: con el alta cerrada aquí, Auth rechazaba
+# también a la persona invitada y ninguna invitación a alguien sin cuenta se
+# podía aceptar. La puerta la guarda el hook `before_user_created` de abajo,
+# que solo deja pasar un correo con invitación vigente.
+enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
@@ -205,8 +211,8 @@ web3 = 30
 [auth.email]
 # Allow/disallow new user signups via email to your project.
 # Debe quedar en true: en el CLI este flag habilita el proveedor de email completo
-# (inicio de sesión y recuperación). El registro público ya está bloqueado por
-# el `enable_signup = false` global de [auth].
+# (inicio de sesión y recuperación). El registro público lo bloquea el hook
+# `before_user_created` (KAM-23).
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
@@ -270,9 +276,12 @@ max_frequency = "5s"
 # inactivity_timeout = "8h"
 
 # This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
-# [auth.hook.before_user_created]
-# enabled = true
-# uri = "pg-functions://postgres/auth/before-user-created-hook"
+# KAM-23 · Solo una invitación vigente crea una cuenta
+# (20260911120000_signup_requires_invitation.sql). El proyecto alojado se
+# configura igual, en Authentication → Hooks: ver docs/despliegue.md.
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/hook_before_user_created"
 
 # This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
 # [auth.hook.custom_access_token]

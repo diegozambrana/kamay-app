@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ContactFormValues } from "@/lib/catalog/schema";
 import { normalizeForSearch } from "@/lib/search/normalize";
 import type { Contact, ContactRoleFilter } from "@/types";
+import { chunk } from "@/lib/pagination";
 
 type ContactRow = {
   id: string;
@@ -24,6 +25,12 @@ export type ContactFilters = {
   role?: ContactRoleFilter;
   search?: string;
   includeArchived?: boolean;
+  /**
+   * Cuántas filas traer como máximo. La pantalla del directorio pide una
+   * ventana (`limit + 1` para saber si hay más); los selectores de los
+   * formularios, por ahora, el directorio entero.
+   */
+  limit?: number;
 };
 
 /**
@@ -68,15 +75,49 @@ export class ContactService {
       query = query.like("search_name", `%${term}%`);
     }
 
-    const { data, error } = await query
-      .order("name", { ascending: true })
-      .overrideTypes<ContactRow[]>();
+    let ordered = query.order("name", { ascending: true });
+    if (filters.limit !== undefined) ordered = ordered.limit(filters.limit);
+
+    const { data, error } = await ordered.overrideTypes<ContactRow[]>();
 
     if (error) {
       throw new Error(`No se pudo cargar el directorio: ${error.message}`);
     }
 
     return (data ?? []).map((row) => this.toEntity(row as ContactRow));
+  }
+
+  /**
+   * El nombre de cada contacto pedido, archivados incluidos —un pedido viejo
+   * sigue nombrando a su cliente aunque ya no esté vigente—.
+   *
+   * Para las pantallas que solo necesitan nombrar lo que muestran: pedir el
+   * directorio entero para eso crecía con él (KAM-23, spec
+   * `performance-budget`). Va en tandas por la misma razón que los totales.
+   */
+  async namesFor(organizationId: string, ids: readonly string[]): Promise<Map<string, string>> {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return new Map();
+
+    const batches = await Promise.all(
+      chunk(unique).map((batch) =>
+        this.supabase
+          .from("contacts")
+          .select("id, name")
+          .eq("organization_id", organizationId)
+          .in("id", batch),
+      ),
+    );
+    const failed = batches.find((batch) => batch.error);
+    if (failed?.error) {
+      throw new Error(`No se pudo cargar el directorio: ${failed.error.message}`);
+    }
+
+    return new Map(
+      batches.flatMap((batch) =>
+        (batch.data ?? []).map((row) => [row.id as string, row.name as string] as const),
+      ),
+    );
   }
 
   async findById(organizationId: string, id: string): Promise<Contact | null> {

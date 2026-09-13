@@ -1,7 +1,9 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geekoForBlock } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
+
+import { signedInClient } from "./helpers/fresh-org";
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -72,15 +74,21 @@ async function createOwnOrder(page: Page, nota: string): Promise<string> {
  */
 async function tasksMentioning(page: Page, code: string): Promise<number> {
   await page.goto(`/tasks?view=list&archived=1&q=${encodeURIComponent(code)}`);
+  // Con la búsqueda puesta, cero resultados es el vacío de filtrado, no el
+  // inicial (KAM-23, `view-states`).
   await expect(
-    page.getByTestId("tasks-list").or(page.getByText("No hay tareas que mostrar.")),
+    page.getByTestId("tasks-list").or(page.getByTestId("filtered-empty-state")),
   ).toBeVisible();
   return page.getByTestId("task-row").count();
 }
 
 /** El número visible del pedido abierto, tal como lo muestra su detalle. */
 async function orderCode(page: Page): Promise<string> {
-  const heading = await page.getByRole("heading", { level: 1 }).first().textContent();
+  // La dirección cambia en cuanto aparece el esqueleto del detalle
+  // (`loading.tsx`); el número llega con el detalle. Se espera a él.
+  const title = page.getByRole("heading", { level: 1 }).first();
+  await expect(title).toContainText(/#\d+/);
+  const heading = await title.textContent();
   const match = heading?.match(/#(\d+)/);
   if (!match) throw new Error(`no se encontró el número del pedido en «${heading}»`);
   return `#${match[1]}`;
@@ -101,7 +109,7 @@ test.describe.serial("pedidos y tareas no se sincronizan", () => {
   test.skip(({ isMobile }) => Boolean(isMobile), "usa el selector de línea del menú lateral");
 
   test("recorrer un pedido por sus estados no crea ninguna tarea", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
 
     await createOwnOrder(page, `Independencia ${Date.now()}`);
@@ -145,7 +153,7 @@ test.describe.serial("pedidos y tareas no se sincronizan", () => {
   });
 
   test("cerrar una tarea vinculada no mueve su pedido", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
 
     // Se crea la tarea desde el pedido, que es la única vía que los relaciona.
@@ -195,10 +203,11 @@ test.describe.serial("pedidos y tareas no se sincronizan", () => {
   });
 
   test("archivar un pedido no toca sus tareas vinculadas", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
 
-    await createOwnOrder(page, `Archivable ${Date.now()}`);
+    const orderUrl = await createOwnOrder(page, `Archivable ${Date.now()}`);
+    const orderId = orderUrl.split("/").pop()!;
 
     // Una tarea vinculada al pedido, con título propio de esta ejecución.
     const titulo = `Sobrevive ${Date.now()}`;
@@ -208,16 +217,20 @@ test.describe.serial("pedidos y tareas no se sincronizan", () => {
     await page.getByTestId("save-task").click();
     await page.waitForURL(/\/tasks$/);
 
-    await page.goBack();
-    await page.goBack();
-
-    const archivar = page.getByRole("button", { name: /Archivar/i });
-    if (await archivar.count()) {
-      await archivar.first().click();
-      const confirmar = page.getByRole("button", { name: /Archivar|Confirmar/i }).last();
-      if (await confirmar.count()) await confirmar.click();
-      await page.waitForTimeout(400);
-    }
+    // El detalle de pedido no ofrece archivar —los pedidos se cancelan—, así
+    // que el archivado se prepara con la sesión de la dueña, bajo RLS, por el
+    // mismo camino que `archiveOrder()`. Hasta KAM-23 esta prueba buscaba un
+    // botón que no existe y, al no encontrarlo, no archivaba nada: pasaba sin
+    // probar lo que dice.
+    const owner = await signedInClient(geekoForBlock().owner);
+    const { data: archived, error } = await owner
+      .from("orders")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", orderId)
+      .select("id, archived_at")
+      .single();
+    expect(error).toBeNull();
+    expect(archived?.archived_at).not.toBeNull();
 
     // La tarea sigue vigente: no se archivó de rebote. Se busca sin incluir
     // archivadas a propósito — si el archivado se hubiera propagado, aquí no

@@ -73,7 +73,7 @@ export default async function OrderDetailPage({
   const files = await attachments.listForEntities(context.organizationId, "order", [
     order.id,
   ]);
-  const signed = await attachments.signedUrls(files);
+  const signed = await attachments.signedThumbnailUrls(files);
 
   // Los movimientos del pedido, anulados incluidos: el bloque los muestra
   // tachados. Lo que cuenta en `paid` lo decide la vista, no esta lista.

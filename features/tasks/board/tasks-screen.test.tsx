@@ -17,6 +17,7 @@ vi.mock("@/actions/tasks", () => ({
 
 const pushed: string[] = [];
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/tasks",
   useRouter: () => ({ push: (url: string) => pushed.push(url) }),
   useSearchParams: () => new URLSearchParams(),
 }));

@@ -4,11 +4,26 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function Table({
+  className,
+  scrollLabel,
+  ...props
+}: React.ComponentProps<"table"> & {
+  /**
+   * KAM-23 · Nombre de la región desplazable. Una tabla sin nada enfocable
+   * dentro que no cabe a lo ancho no se puede recorrer con el teclado
+   * (scrollable-region-focusable); con esto el contenedor se vuelve una
+   * región enfocable y con nombre. Las tablas con controles no lo necesitan.
+   */
+  scrollLabel?: string
+}) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="relative w-full overflow-x-auto rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      {...(scrollLabel
+        ? { role: "region", "aria-label": scrollLabel, tabIndex: 0 }
+        : {})}
     >
       <table
         data-slot="table"

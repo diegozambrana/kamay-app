@@ -308,3 +308,24 @@ describe("MyTasksScreen · reprogramar y deslizar", () => {
     expect(postponeTask).not.toHaveBeenCalled();
   });
 });
+
+describe("MyTasksScreen · estados transversales (view-states)", () => {
+  it("quitar el filtro devuelve la lista", async () => {
+    renderScreen([task()]);
+
+    await userEvent.type(screen.getByRole("searchbox", { name: /Buscar/ }), "nada de nada");
+    await userEvent.click(screen.getByRole("button", { name: "Quitar filtros" }));
+
+    expect(screen.queryByTestId("my-tasks-empty")).not.toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: /Buscar/ })).toHaveValue("");
+  });
+
+  it("sin pendientes ofrece anotar una tarea", () => {
+    renderScreen([]);
+
+    expect(screen.getByRole("link", { name: "Anotar una tarea" })).toHaveAttribute(
+      "href",
+      "/tasks/new",
+    );
+  });
+});

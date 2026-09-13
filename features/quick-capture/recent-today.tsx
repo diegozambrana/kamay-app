@@ -10,6 +10,7 @@ import {
   type RecentCapture,
 } from "@/lib/quick-capture/recent";
 import { useSyncStore } from "@/stores/sync-store";
+import { EmptyState } from "@/components/shared/empty-state";
 
 const KIND_LABELS: Record<CaptureKind, string> = {
   order: "Pedido",
@@ -68,9 +69,9 @@ export function RecentToday({
 
   if (rows.length === 0) {
     return (
-      <p data-testid="recent-today-empty" className="text-sm text-muted-foreground">
-        Todavía no registraste nada hoy.
-      </p>
+      <div data-testid="recent-today-empty">
+        <EmptyState testId="card-empty" className="p-4" title="Todavía no registraste nada hoy." />
+      </div>
     );
   }
 

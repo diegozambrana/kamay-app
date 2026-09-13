@@ -12,6 +12,9 @@ import { useState } from "react";
 
 import { selectBusinessLine } from "@/actions/business-line-context";
 import { MainContainer } from "@/components/layout/main-container";
+import { EmptyState } from "@/components/shared/empty-state";
+import { FilteredEmptyState } from "@/components/shared/filtered-empty-state";
+import { LoadMore } from "@/components/shared/load-more";
 import { OutstandingSummary } from "@/features/payments/outstanding-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useFilterState } from "@/hooks/use-filter-state";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { cn } from "@/lib/utils";
 import { ALL_LINES, type BusinessLine, type OutstandingByLine, type Status } from "@/types";
@@ -28,6 +32,12 @@ import { CalendarView } from "./calendar-view";
 import { ListView } from "./list-view";
 
 type View = "board" | "list" | "calendar";
+
+/**
+ * Los parámetros que estrechan el resultado. `view` y `archived` no: el
+ * primero cambia la forma y el segundo ensancha (design D2).
+ */
+const ORDER_FILTERS = ["q"] as const;
 
 /**
  * V3 · Pantalla de pedidos. Los filtros y la vista viven en la dirección, de
@@ -45,6 +55,8 @@ export function OrdersScreen({
   search,
   includeArchived,
   today,
+  closedLimit,
+  hasMoreClosed,
 }: {
   orders: BoardOrder[];
   /** El juego resuelto de la línea activa: las columnas del tablero. */
@@ -59,10 +71,16 @@ export function OrdersScreen({
   search: string;
   includeArchived: boolean;
   today: string;
+  /** Cuántos pedidos cerrados trae la ventana (KAM-23). */
+  closedLimit: number;
+  /** Si hay pedidos cerrados más antiguos que los que se muestran. */
+  hasMoreClosed: boolean;
 }) {
   const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const { hasActiveFilters, clearFilters } = useFilterState(ORDER_FILTERS);
+  const activeLineName = lines.find((line) => line.id === activeLineId)?.name;
 
   function updateParams(changes: Record<string, string | null>) {
     const next = new URLSearchParams(params.toString());
@@ -123,6 +141,9 @@ export function OrdersScreen({
           <FieldLabel htmlFor="orders-search">Buscar</FieldLabel>
           <Input
             id="orders-search"
+            // La clave lo reinicia cuando «Quitar filtros» vacía la dirección:
+            // un campo no controlado conservaría el texto viejo.
+            key={search}
             defaultValue={search}
             placeholder="Número o cliente"
             onBlur={(event) => updateParams({ q: event.target.value })}
@@ -147,7 +168,29 @@ export function OrdersScreen({
         </Alert>
       )}
 
-      {view === "board" ? (
+      {orders.length === 0 ? (
+        // Sin pedidos, las tres vistas dicen lo mismo: el vacío inicial o el
+        // de filtrado, según haya filtros —nunca según el conteo (design D2)—.
+        hasActiveFilters ? (
+          <FilteredEmptyState
+            description="Ningún pedido coincide con la búsqueda."
+            onClearFilters={clearFilters}
+          />
+        ) : (
+          <EmptyState
+            title={
+              activeLineName
+                ? `Aún no hay pedidos en ${activeLineName}`
+                : "Aún no hay pedidos"
+            }
+            action={
+              <Button asChild>
+                <Link href="/orders/new">Crear pedido</Link>
+              </Button>
+            }
+          />
+        )
+      ) : view === "board" ? (
         activeLineId ? (
           <BoardView
             orders={orders}
@@ -169,6 +212,14 @@ export function OrdersScreen({
         />
       ) : (
         <CalendarView orders={orders} today={today} />
+      )}
+
+      {hasMoreClosed && (
+        <LoadMore
+          param="closed"
+          limit={closedLimit}
+          shownLabel={`todos los pedidos abiertos y los ${closedLimit} cerrados más recientes`}
+        />
       )}
       </div>
     </MainContainer>

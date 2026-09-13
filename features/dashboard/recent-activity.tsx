@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { describeEvent } from "@/lib/activity/describe";
 import { formatDateTime } from "@/lib/format/datetime";
+import { EmptyState } from "@/components/shared/empty-state";
 
 /** Un evento ya resuelto: con nombre de persona y rótulo del registro. */
 export type ActivityItem = {
@@ -51,9 +52,7 @@ export function RecentActivity({
 
       <CardContent>
         {items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Todavía no hay movimientos registrados.
-          </p>
+          <EmptyState testId="card-empty" className="p-4" title="Todavía no hay movimientos registrados." />
         ) : (
           <ul className="flex flex-col gap-1">
             {items.map((item) => {

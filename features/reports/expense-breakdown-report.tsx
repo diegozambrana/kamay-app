@@ -84,8 +84,8 @@ export function ExpenseBreakdownReport({
         }))}
       />
 
-      <div className="overflow-x-auto">
-        <Table>
+      <div>
+        <Table scrollLabel="Tabla de «En qué se va el dinero»">
           <TableHeader>
             <TableRow>
               <TableHead>

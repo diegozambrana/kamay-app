@@ -384,6 +384,8 @@ function DetailBody({
                   {receipt.url ? (
                     // eslint-disable-next-line @next/next/no-img-element -- URL firmada y efímera
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={receipt.url}
                       alt={receipt.fileName}
                       className="h-28 w-40 rounded-md border object-cover"

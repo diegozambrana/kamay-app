@@ -346,6 +346,8 @@ export function OrderDetail({
                   {image.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={image.url}
                       alt={image.fileName}
                       className="h-28 w-40 rounded-md border object-cover"

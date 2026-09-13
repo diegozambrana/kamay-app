@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { OrderCard } from "./order-card";
 import type { BoardOrder } from "./board-view";
+import { EmptyState } from "@/components/shared/empty-state";
 
 /**
  * Vista de calendario: los pedidos agrupados por fecha comprometida. Los que
@@ -29,11 +30,7 @@ export function CalendarView({
   const days = [...byDate.keys()].sort();
 
   if (orders.length === 0) {
-    return (
-      <p className="py-12 text-center text-sm text-muted-foreground">
-        No hay pedidos que mostrar.
-      </p>
-    );
+    return <EmptyState title="No hay pedidos que mostrar" />;
   }
 
   return (

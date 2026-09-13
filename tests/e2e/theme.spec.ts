@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 
 test("la página vacía carga y el tema alterna y persiste", async ({ page }) => {
   await page.goto("/");

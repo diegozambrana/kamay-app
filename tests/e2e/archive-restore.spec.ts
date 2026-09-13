@@ -1,9 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test"; // dueña de Geeko Store
-const GEEKO_ASSISTANT = "ayudante@kamay.test"; // ayudante de Geeko Store
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -28,7 +27,7 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
   test("archivar y desarchivar devuelve el ítem intacto con sus variantes", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // ── Crear un ítem y darle una variante ────────────────────────────────
     const name = uniqueName("Taza de prueba");
@@ -83,7 +82,16 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     await page.goto("/catalog?kind=product&archived=1");
     const archivedRow = page.getByTestId("catalog-row").filter({ hasText: name });
     await expect(archivedRow).toHaveAttribute("data-archived", "true");
+
+    // Como en el contacto de abajo: se espera a que el servidor confirme el
+    // desarchivado antes de salir. Navegar con la acción en vuelo dejaba que el
+    // listado se leyera antes de guardarse, y la fila no aparecía (KAM-23).
+    const unarchived = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" && response.url().includes("/catalog"),
+    );
     await rowAction(page, name, "Desarchivar");
+    await unarchived;
 
     await page.goto("/catalog?kind=product");
     await expect(
@@ -102,11 +110,7 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
   });
 
   test("un contacto archivado vuelve entero desde el filtro", async ({ page }) => {
-    // La espera de abajo reintenta hasta 30 s: con el límite por omisión, que
-    // es ese mismo, la prueba moría antes de que el bucle pudiera repetir.
-    test.setTimeout(90_000);
-
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     const name = uniqueName("Proveedor de prueba");
     await page.goto("/contacts");
@@ -139,26 +143,29 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     const archived = page.getByTestId("contact-row").filter({ hasText: name });
     await expect(archived).toHaveAttribute("data-archived", "true");
     await archived.click();
-    await page.getByRole("button", { name: "Desarchivar" }).click();
 
-    // Desarchivar sigue en vuelo cuando se suelta el botón: navegar de
-    // inmediato la cancelaba a mitad y el contacto seguía archivado. Se
-    // reintenta hasta que el servidor lo ha guardado; si no llegara a
-    // guardarse nunca, esto sigue fallando.
-    await expect(async () => {
-      await page.goto("/contacts");
-      await page.getByTestId("contact-row").filter({ hasText: name }).click();
-      // Vuelve con sus datos, no como un contacto en blanco.
-      await expect(page.getByTestId("contact-detail")).toContainText(
-        "+591 70012345",
-      );
-    }).toPass({ timeout: 30_000 });
+    // Se espera a que el servidor confirme el desarchivado antes de salir de la
+    // pantalla. Navegar con la acción aún en vuelo la cancelaba y el contacto
+    // se quedaba archivado para siempre: la versión anterior reintentaba la
+    // navegación durante 30 s, pero cada reintento buscaba un contacto que ya
+    // nunca iba a volver (KAM-23, intermitencia corregida en su causa).
+    const unarchived = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" && response.url().includes("/contacts"),
+    );
+    await page.getByRole("button", { name: "Desarchivar" }).click();
+    await unarchived;
+
+    await page.goto("/contacts");
+    await page.getByTestId("contact-row").filter({ hasText: name }).click();
+    // Vuelve con sus datos, no como un contacto en blanco.
+    await expect(page.getByTestId("contact-detail")).toContainText("+591 70012345");
   });
 
   test("el ayudante crea y edita, pero no se le ofrece archivar", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     // Crear un ítem: el ayudante sí puede.
     const itemName = uniqueName("Insumo del ayudante");
@@ -208,7 +215,7 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
   test("la foto adjunta aparece como miniatura y archivar pide confirmación", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     const name = uniqueName("Ítem con foto");
     await page.goto("/catalog?kind=product");
@@ -274,7 +281,7 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
   });
 
   test("buscar sin tilde encuentra el ítem con tilde", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     await page.goto("/catalog?kind=supply&q=sublimacion");
 
@@ -286,7 +293,7 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
   test("crear un contacto al vuelo lo deja seleccionado sin perder el formulario", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // El buscador reutilizable se estrena en el alta de contacto de V13: se
     // comprueba que el nombre tecleado que no existe ofrece crearlo.

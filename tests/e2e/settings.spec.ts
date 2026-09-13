@@ -1,9 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test"; // dueña de Geeko Store
-const GEEKO_ASSISTANT = "ayudante@kamay.test"; // ayudante de Geeko Store
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -24,7 +23,7 @@ test.describe("configuración de la organización", () => {
   test("la línea creada queda disponible en el selector con su color", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     await page.goto("/settings/lines");
     const name = uniqueName("Serigrafía");
@@ -44,7 +43,7 @@ test.describe("configuración de la organización", () => {
   test("la selección de línea se conserva al cambiar de sección y entre sesiones", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     await page.getByTestId("line-selector").click();
     await page.getByRole("menuitem", { name: "Alfarería" }).click();
@@ -63,12 +62,12 @@ test.describe("configuración de la organización", () => {
     // Se limpian solo las cookies de sesión de Supabase: la de línea (D4) debe
     // sobrevivir, que es justamente lo que verifica el criterio.
     await page.context().clearCookies({ name: /^sb-/ });
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await expect(page.getByTestId("line-selector")).toContainText("Alfarería");
   });
 
   test("la línea compartida no ofrece archivar", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/settings/lines");
 
     const general = page.getByTestId("line-list").getByRole("listitem").filter({
@@ -79,7 +78,7 @@ test.describe("configuración de la organización", () => {
   });
 
   test("la línea archivada desaparece del selector", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/settings/lines");
 
     const name = uniqueName("Temporal");
@@ -98,7 +97,7 @@ test.describe("configuración de la organización", () => {
   });
 
   test("las secciones de V15 están todas presentes", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/settings");
     await expect(page).toHaveURL(/\/settings\/general$/);
 
@@ -121,7 +120,7 @@ test.describe("configuración cerrada al ayudante", () => {
   test("el ayudante que entra por dirección directa termina fuera", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     await page.goto("/settings");
     await expect(page).not.toHaveURL(/\/settings/);
@@ -134,7 +133,7 @@ test.describe("configuración cerrada al ayudante", () => {
   test("el ayudante no tiene la entrada de configuración en su menú", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     const nav = page.getByRole("navigation", { name: "Navegación principal" });
     await expect(nav.getByRole("link", { name: "Panel" })).toBeVisible();

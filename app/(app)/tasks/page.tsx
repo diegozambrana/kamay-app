@@ -12,6 +12,7 @@ import { StatusService } from "@/services/configuration/status-service";
 import { TagService } from "@/services/tasks/tag-service";
 import { TaskService } from "@/services/tasks/task-service";
 import { ALL_LINES, type Status } from "@/types";
+import { resolveLimit } from "@/lib/pagination";
 
 export const metadata = { title: "Tareas · Kamay" };
 
@@ -38,6 +39,7 @@ export default async function TasksPage({
     archived?: string;
     link?: string;
     nodeliv?: string;
+    closed?: string;
   }>;
 }) {
   const context = await getSessionContext();
@@ -81,14 +83,18 @@ export default async function TasksPage({
   );
 
   const taskService = new TaskService(context.supabase);
-  const [tasks, assignees, tags] = await Promise.all([
-    taskService.listForBoard(context.organizationId, {
+  // Todo lo abierto y, de lo cerrado, las más recientes: lo hecho crece sin
+  // fin (KAM-23, `performance-budget`). «Mostrar más» amplía con `?closed=`.
+  const closedLimit = resolveLimit(params.closed);
+  const [{ tasks, hasMoreClosed }, assignees, tags] = await Promise.all([
+    taskService.listBoardWindow(context.organizationId, {
       businessLineId: activeLineId,
       assigneeId: assigneeId || undefined,
       tagId: tagId || undefined,
       statusId: statusId || undefined,
       search,
       includeArchived,
+      closedLimit,
     }),
     taskService.assignees(context.organizationId),
     new TagService(context.supabase).listAll(context.organizationId),
@@ -170,6 +176,8 @@ export default async function TasksPage({
       includeArchived={includeArchived}
       // "Hoy" en la zona horaria de la organización, no en la del navegador.
       today={todayInTimezone(context.membership.organization.timezone)}
+      closedLimit={closedLimit}
+      hasMoreClosed={hasMoreClosed}
     />
   );
 }

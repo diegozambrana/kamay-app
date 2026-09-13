@@ -10,7 +10,7 @@ import {
 } from "@/lib/activity/export";
 import { parseFilters } from "@/lib/activity/filters";
 import { getOwnerContext } from "@/lib/auth/session-context";
-import { toCsv } from "@/lib/reports/csv";
+import { toCsv } from "@/lib/export/csv";
 import {
   ActivityService,
   PAGE_SIZE,

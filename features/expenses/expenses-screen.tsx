@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { MainContainer } from "@/components/layout/main-container";
+import { EmptyState } from "@/components/shared/empty-state";
+import { FilteredEmptyState } from "@/components/shared/filtered-empty-state";
 import { OutstandingSummary } from "@/features/payments/outstanding-summary";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useFilterState } from "@/hooks/use-filter-state";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ExpenseSummary } from "@/lib/expenses/totals";
 import type { ExpenseWithTotal } from "@/services/expenses/expense-service";
@@ -40,6 +43,14 @@ export type ExpenseRowView = ExpenseWithTotal & {
   /** El proveedor de la compra o la categoría del gasto. */
   counterpartyName: string | null;
 };
+
+/**
+ * Los parámetros que estrechan la bandeja. `archived` ensancha y `selected`
+ * solo abre el panel; ninguno de los dos es un filtro (design D2). Sin
+ * periodo en la dirección, la bandeja muestra el mes en curso: por eso el
+ * vacío sin filtros habla de «este mes» y no de «ningún egreso».
+ */
+const EXPENSE_FILTERS = ["kind", "contact", "category", "from", "to"] as const;
 
 /**
  * V7 · Bandeja de egresos. Compras y gastos en una sola lista cronológica;
@@ -73,6 +84,7 @@ export function ExpensesScreen({
   const router = useRouter();
   const params = useSearchParams();
   const isMobile = useIsMobile();
+  const { hasActiveFilters, clearFilters } = useFilterState(EXPENSE_FILTERS);
   const uploads = useReceiptUploadStore((state) => state.uploads);
 
   // Salir con un comprobante a medio subir avisa (design D4). El egreso ya
@@ -138,9 +150,22 @@ export function ExpensesScreen({
         <Summary summary={summary} />
 
         {rows.length === 0 ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            No hay egresos en este periodo.
-          </p>
+          hasActiveFilters ? (
+            <FilteredEmptyState
+              description="Ningún egreso coincide con el tipo, el proveedor, la categoría o el periodo elegidos."
+              onClearFilters={clearFilters}
+            />
+          ) : (
+            <EmptyState
+              title="Aún no hay egresos este mes"
+              description="Las compras y los gastos que registres aparecerán aquí."
+              action={
+                <Button asChild>
+                  <Link href="/expenses/costs/new">Registrar gasto</Link>
+                </Button>
+              }
+            />
+          )
         ) : isMobile ? (
           <ul className="flex flex-col gap-3" data-testid="expense-cards">
             {rows.map((row) => (

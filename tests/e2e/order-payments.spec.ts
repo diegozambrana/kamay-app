@@ -1,8 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geekoForBlock } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -23,24 +23,19 @@ async function openSeedOrder(page: Page, code: string) {
   await page.waitForURL(/\/orders\/[0-9a-f-]+$/);
 }
 
-/**
- * El pedido #5 de la semilla (12 × 45 = 540) es el único que esta prueba
- * toca: ninguna otra suite afirma su estado ni su dinero, y todas corren en
- * paralelo contra la misma semilla.
- */
+/** El pedido #5 de la semilla (12 × 45 = 540): el que estas pruebas cobran. */
 const ORDER = "#5";
 const TOTAL = "540.00";
 
-// En serie y en un solo proyecto: estas pruebas MUEVEN el dinero del pedido
-// #5 y la semilla es compartida, así que dos proyectos corriéndolas a la vez
-// se pisarían. Mismo motivo —y misma solución— que el bloque en serie de
-// `order-board.spec.ts`. El diálogo no tiene camino propio en móvil: es el
-// mismo componente y las pruebas de componente ya lo cubren.
+// En serie y sobre una sola copia de Geeko para el bloque (`geekoForBlock`):
+// las dos pruebas mueven el dinero del pedido #5 de esa copia, una detrás de
+// otra. El diálogo no tiene camino propio en móvil: es el mismo componente y
+// las pruebas de componente ya lo cubren.
 test.describe.serial("cobros y saldo de un pedido (V4)", () => {
-  test.skip(({ isMobile }) => Boolean(isMobile), "la semilla del dinero es compartida");
+  test.skip(({ isMobile }) => Boolean(isMobile), "el diálogo es el mismo en móvil");
 
   test("anticipo, saldo, cobro final y anulación", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await openSeedOrder(page, ORDER);
 
     // ── Punto de partida: sin cobros, el saldo es el total ────────────────
@@ -140,7 +135,7 @@ test.describe.serial("cobros y saldo de un pedido (V4)", () => {
   });
 
   test("el sobrepago se advierte pero se permite", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     // #5 quedó saldado por la prueba anterior (serial): cualquier cobro
     // adicional es, por definición, un sobrepago.
     await openSeedOrder(page, ORDER);

@@ -9,6 +9,7 @@ import { CatalogScreen, type CatalogRow } from "./catalog-screen";
 const push = vi.fn();
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/catalog",
   useRouter: () => ({ push }),
   useSearchParams: () => new URLSearchParams(),
 }));

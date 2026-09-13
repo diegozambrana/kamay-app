@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { EmptyState } from "@/components/shared/empty-state";
+
 /** Como el panel (KAM-14): la moneda va en la cabecera, no en cada celda. */
 export function money(value: number): string {
   return value.toFixed(2);
@@ -12,14 +14,11 @@ export function percent(value: number | null): string {
 
 /**
  * Un informe vacío lo dice; no se deja el hueco en blanco ni se inventan
- * filas. Es la misma decisión que el resto de las pantallas de listado.
+ * filas. Desde KAM-23 es el mismo vacío de toda la aplicación
+ * (`EmptyState`), no una variante propia de los informes.
  */
 export function EmptyReport({ children }: { children: ReactNode }) {
-  return (
-    <p className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-      {children}
-    </p>
-  );
+  return <EmptyState testId="report-empty" title={children} />;
 }
 
 /**

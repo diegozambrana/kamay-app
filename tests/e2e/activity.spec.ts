@@ -1,8 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -35,7 +35,7 @@ test.describe("bitácora de actividad", () => {
   test("la cabecera declara la inmutabilidad y la retención vigente", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/activity");
 
     const aviso = page.getByTestId("activity-notice");
@@ -49,7 +49,7 @@ test.describe("bitácora de actividad", () => {
   test("filtrar deja el filtro en la dirección, y volver atrás lo recupera", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/activity");
     await expect(page.getByTestId("activity-row").first()).toBeVisible();
 
@@ -75,7 +75,7 @@ test.describe("bitácora de actividad", () => {
   test("la fila se despliega con el antes y el después en español", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/activity?type=items");
 
     const primera = page.getByTestId("activity-row").first();
@@ -102,7 +102,7 @@ test.describe("bitácora de actividad", () => {
   test("desarchivar desde el evento devuelve el registro y queda registrado", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // Un contacto propio de esta corrida, para no depender de la semilla ni
     // pisar a otra prueba. El montaje es el de `archive-restore.spec.ts`.
@@ -158,13 +158,14 @@ test.describe("bitácora de actividad", () => {
   test("un filtro sin resultados se distingue del vacío inicial", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/activity?q=999999999");
 
     await expect(page.getByTestId("activity-no-matches")).toBeVisible();
     await expect(page.getByTestId("activity-empty")).toHaveCount(0);
+    // El vacío de filtrado trae su propia salida (KAM-23, `view-states`).
     await expect(
-      page.getByRole("link", { name: "Quitar los filtros" }).first(),
+      page.getByTestId("activity-no-matches").getByRole("link", { name: "Quitar filtros" }),
     ).toBeVisible();
   });
 });

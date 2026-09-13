@@ -1,8 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko, geekoForBlock } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -22,10 +22,10 @@ async function selectLine(page: Page, name: string) {
   await expect(page.getByTestId("line-selector")).toBeEnabled();
 }
 
-// En serie y en un solo proyecto: la prueba de reordenamiento MUEVE las
-// tarjetas de la cola de Sublimación que las demás afirman, y la semilla es
-// compartida. El bloque entero se salta en móvil (no hay selector de línea),
-// así que solo escritorio la ejecuta y no hay dos proyectos compitiendo.
+// En serie y sobre una sola copia de Geeko para todo el bloque
+// (`geekoForBlock`): la prueba de reordenamiento MUEVE las tarjetas de la cola
+// de Sublimación que las demás afirman, y va la última. Ninguna otra suite ve
+// esa copia. El bloque se salta en móvil: no hay selector de línea.
 test.describe.serial("tablero de pedidos (V3)", () => {
   // En móvil el selector vive en la tira de contexto y lleva su propio
   // identificador (`line-selector-mobile`), así que el helper de aquí —que
@@ -34,7 +34,7 @@ test.describe.serial("tablero de pedidos (V3)", () => {
   test.skip(({ isMobile }) => Boolean(isMobile), "este helper usa el selector del menú lateral");
 
   test("cada línea muestra exactamente sus columnas", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
 
     // ── Sublimación: sus seis estados más Cancelado ───────────────────────
     await selectLine(page, "Sublimación");
@@ -74,7 +74,7 @@ test.describe.serial("tablero de pedidos (V3)", () => {
   });
 
   test("la alerta de retraso ignora los estados de espera", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/orders?view=list");
 
@@ -101,7 +101,7 @@ test.describe.serial("tablero de pedidos (V3)", () => {
   test("la cola se numera por llegada, no por fecha comprometida", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/orders");
 
@@ -129,7 +129,7 @@ test.describe.serial("tablero de pedidos (V3)", () => {
   test("con la línea Todas el tablero pide elegir, pero lista y calendario cruzan", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Todas");
     await page.goto("/orders");
 
@@ -148,7 +148,7 @@ test.describe.serial("tablero de pedidos (V3)", () => {
   test("los filtros sobreviven al cambio de vista y Ver archivados funciona", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/orders");
 
@@ -179,7 +179,7 @@ test.describe.serial("tablero de pedidos (V3)", () => {
   test("reordenar la cola renumera al resto y persiste al recargar", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/orders");
 
@@ -221,7 +221,7 @@ test.describe("señal de pago e indicador Por cobrar (KAM-10)", () => {
   test("la tarjeta muestra la señal de pago y la cabecera lo pendiente", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/orders");
 
@@ -230,8 +230,8 @@ test.describe("señal de pago e indicador Por cobrar (KAM-10)", () => {
     const carta = (code: number) =>
       page.locator(`[data-testid="order-card"][data-order-code="${code}"]`);
 
-    // El #3 de la semilla está saldado (90 de 90). Ninguna otra suite lo
-    // mueve ni le registra cobros, así que su señal es estable.
+    // El #3 de la semilla está saldado (90 de 90), y la copia de esta prueba
+    // es solo suya.
     await expect(carta(3).getByTestId("payment-status")).toHaveAttribute(
       "data-status",
       "paid",
@@ -264,7 +264,7 @@ test.describe("tablero de pedidos en móvil", () => {
   test("el aviso del tablero permite elegir línea sin la barra superior", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     // El tablero se pide explícitamente: desde KAM-13 la vista por omisión en
     // el celular es la lista, y el kanban es la alternativa.
     await page.goto("/orders?view=board");

@@ -24,6 +24,8 @@ export type TaskAttachment = {
   uploadedByName: string | null;
   /** URL firmada: los buckets son privados, nada se muestra por URL pública. */
   url: string | null;
+  /** La miniatura para pintarla; el original sigue en `url`, para abrirlo. */
+  thumbnailUrl?: string | null;
 };
 
 export type AttachmentPanelProps = {
@@ -194,7 +196,9 @@ export function AttachmentPanel({
             {esImagen(attachment.mimeType) && attachment.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={attachment.url}
+                loading="lazy"
+                decoding="async"
+                src={attachment.thumbnailUrl ?? attachment.url}
                 alt={attachment.fileName}
                 data-testid="attachment-thumbnail"
                 className="size-12 shrink-0 rounded object-cover"

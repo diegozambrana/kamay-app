@@ -17,10 +17,24 @@ export default defineConfig({
     {
       name: "desktop",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: /deployment\.spec\.ts/,
     },
     {
       name: "mobile",
       use: { ...devices["Pixel 7"] },
+      testIgnore: /deployment\.spec\.ts/,
+    },
+    {
+      // Simula un despliegue cambiando `public/sw.js` en disco, así que no
+      // puede correr junto a las demás: ninguna otra prueba debe ver cambiar su
+      // service worker a mitad de camino (KAM-23). Solo corre con
+      // `E2E_DEPLOYMENT=1`, en su propio paso de CI después de la suite. No se
+      // declara como dependiente de `desktop` y `mobile`: Playwright no repite
+      // (`--repeat-each`) los proyectos de los que otro depende, y el trabajo
+      // de estabilidad se habría quedado repitiendo solo esta prueba.
+      name: "deployment",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /deployment\.spec\.ts/,
     },
   ],
   webServer: {

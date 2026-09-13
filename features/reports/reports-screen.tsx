@@ -81,7 +81,7 @@ export function ReportsScreen({
           >
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
               <div>
-                <h3 className="text-base font-medium">{TITLES[id]}</h3>
+                <h2 className="text-base font-medium">{TITLES[id]}</h2>
                 <p className="text-sm text-muted-foreground">
                   {DESCRIPTIONS[id]}
                 </p>

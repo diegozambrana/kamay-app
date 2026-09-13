@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { TaskCard } from "./task-card";
 import type { BoardTask } from "./board-view";
+import { EmptyState } from "@/components/shared/empty-state";
 
 /**
  * Vista de calendario: las tareas agrupadas por fecha límite. Las que no
@@ -31,11 +32,7 @@ export function CalendarView({
   const days = [...byDate.keys()].sort();
 
   if (tasks.length === 0) {
-    return (
-      <p className="py-12 text-center text-sm text-muted-foreground">
-        No hay tareas que mostrar.
-      </p>
-    );
+    return <EmptyState title="No hay tareas que mostrar" />;
   }
 
   return (

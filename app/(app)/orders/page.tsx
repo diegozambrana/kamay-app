@@ -13,6 +13,7 @@ import { StatusService } from "@/services/configuration/status-service";
 import { OrderItemService } from "@/services/orders/order-item-service";
 import { OrderService } from "@/services/orders/order-service";
 import { PaymentService } from "@/services/payments/payment-service";
+import { resolveLimit } from "@/lib/pagination";
 import { ALL_LINES, type Status } from "@/types";
 
 export const metadata = { title: "Pedidos · Kamay" };
@@ -31,7 +32,7 @@ type View = (typeof VIEWS)[number];
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; q?: string; archived?: string }>;
+  searchParams: Promise<{ view?: string; q?: string; archived?: string; closed?: string }>;
 }) {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
@@ -73,20 +74,6 @@ export default async function OrdersPage({
       )
     : [];
 
-  const orders = await new OrderService(context.supabase).list(
-    context.organizationId,
-    { businessLineId: activeLineId, search, includeArchived },
-  );
-
-  // El cliente de cada tarjeta, en una sola consulta en vez de una por fila.
-  const contacts = await new ContactService(context.supabase).list(
-    context.organizationId,
-    { includeArchived: true },
-  );
-  const contactNames = new Map(contacts.map((c) => [c.id, c.name]));
-
-  const lineColors = new Map(lines.map((line) => [line.id, line.color]));
-
   // El `kind` del estado de cada pedido. Se leen todos los del flujo y no
   // solo el juego resuelto: con "Todas" activa conviven pedidos de líneas
   // distintas, y un pedido antiguo puede estar en un estado ya archivado.
@@ -95,6 +82,32 @@ export default async function OrdersPage({
     "order",
   );
   const statusKinds = new Map(allStatuses.map((s) => [s.id, s.kind]));
+
+  // Todo lo abierto y, de lo entregado y lo cancelado, solo lo reciente: es
+  // lo que crece sin fin (KAM-23, `performance-budget`). «Mostrar más» amplía
+  // la ventana con `?closed=`.
+  const closedLimit = resolveLimit(params.closed);
+  const { orders, hasMoreClosed } = await new OrderService(context.supabase).listWindow(
+    context.organizationId,
+    {
+      businessLineId: activeLineId,
+      search,
+      includeArchived,
+      closedStatusIds: allStatuses
+        .filter((status) => status.kind === "final" || status.kind === "cancelled")
+        .map((status) => status.id),
+      closedLimit,
+    },
+  );
+
+  // El cliente de cada tarjeta, en lote y solo de lo que se muestra.
+  const contactNames = await new ContactService(context.supabase).namesFor(
+    context.organizationId,
+    orders.flatMap((order) => (order.contactId ? [order.contactId] : [])),
+  );
+
+  const lineColors = new Map(lines.map((line) => [line.id, line.color]));
+
 
   // El resumen de las líneas, en lote: una consulta para todas las tarjetas.
   const summaries = await new OrderItemService(context.supabase).summariesFor(
@@ -130,6 +143,8 @@ export default async function OrdersPage({
       // "Hoy" en la zona horaria de la organización, no en la del navegador:
       // se resuelve en el servidor y viaja como dato (design.md D5).
       today={todayInTimezone(context.membership.organization.timezone)}
+      closedLimit={closedLimit}
+      hasMoreClosed={hasMoreClosed}
     />
   );
 }

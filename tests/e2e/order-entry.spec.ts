@@ -1,8 +1,8 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Locator, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 /** El detalle de un pedido, para distinguirlo de `/orders/new`. */
 const ORDER_DETAIL = /\/orders\/[0-9a-f]{8}-[0-9a-f-]+$/;
@@ -77,7 +77,7 @@ test.describe("alta de pedidos (V5)", () => {
   }) => {
     test.skip(Boolean(isMobile), "el selector de línea del menú es de escritorio");
 
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.getByTestId("line-selector").click();
     await page.getByRole("menuitem", { name: "Sublimación" }).click();
     await expect(page.getByTestId("line-selector")).toBeEnabled();
@@ -132,7 +132,7 @@ test.describe("alta de pedidos (V5)", () => {
   });
 
   test("un pedido admite varias líneas del catálogo", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders/new");
 
     await elegirLinea(page, "Sublimación");
@@ -157,7 +157,7 @@ test.describe("alta de pedidos (V5)", () => {
   test("el alta mínima se guarda sin fecha, canal ni modo de entrega", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders/new");
 
     await elegirLinea(page, "Alfarería");
@@ -182,7 +182,7 @@ test.describe("alta de pedidos (V5)", () => {
   test("guardar sin cliente o sin líneas se impide señalando el campo", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders/new");
 
     await elegirLinea(page, "Alfarería");
@@ -207,7 +207,7 @@ test.describe("alta de pedidos (V5)", () => {
 
   /** Criterio 3: crear el cliente con nombre y teléfono sin salir del alta. */
   test("el cliente se crea al vuelo sin perder lo escrito", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders/new");
 
     await elegirLinea(page, "Alfarería");
@@ -244,7 +244,7 @@ test.describe("alta de pedidos (V5)", () => {
   test("«Guardar y crear otro» conserva línea y canal, y limpia lo demás", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders/new");
 
     await elegirLinea(page, "Alfarería");
@@ -280,7 +280,7 @@ test.describe("alta de pedidos (V5)", () => {
   test("salir con datos escritos pide confirmación antes de descartar", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders?view=list&q=Colegio");
 
     await page.getByTestId("new-order").click();
@@ -304,7 +304,7 @@ test.describe("alta de pedidos (V5)", () => {
   });
 
   test("sin cambios, cancelar sale sin preguntar", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders?view=list");
 
     await page.getByTestId("new-order").click();
@@ -327,7 +327,7 @@ test.describe("alta de pedidos (V5)", () => {
   }) => {
     test.skip(!isMobile, "solo aplica al formato móvil");
 
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     await page.goto("/orders");
     await expect(page.getByTestId("bottom-bar")).toBeVisible();

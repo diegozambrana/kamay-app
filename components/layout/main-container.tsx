@@ -1,11 +1,3 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
-
 type MainContainerProps = {
   /**
    * `ReactNode` y no `string`: el detalle de pedido compone el número con sus
@@ -15,12 +7,6 @@ type MainContainerProps = {
   description?: React.ReactNode;
   /** Zona de acciones, alineada a la derecha del título. */
   action?: React.ReactNode;
-  loading?: boolean;
-  /** Sin datos que mostrar todavía. `error` manda sobre esto. */
-  isEmpty?: boolean;
-  emptyTitle?: string;
-  emptyDescription?: string;
-  error?: string;
   children: React.ReactNode;
 };
 
@@ -42,22 +28,25 @@ type MainContainerProps = {
  * sus elementos permanentes— y allí no hay barra que despejar: se apoya a
  * 24 px del borde y ocupa 56 px, así que `md:pb-24` basta para que no tape
  * la última fila de ninguna pantalla.
+ *
+ * Los estados de carga, vacío y error **no** viven aquí. Hasta KAM-23 este
+ * contenedor declaraba `loading`, `isEmpty` y `error`, pero ninguna vista los
+ * usaba: el «Cargando…» era texto, el vacío no llevaba acción y el error no
+ * ofrecía reintentar. Ahora hay una sola implementación de cada estado, en
+ * `components/shared/`, y el nivel de ruta la cablea (`loading.tsx`,
+ * `error.tsx`).
  */
 export function MainContainer({
   title,
   description,
   action,
-  loading = false,
-  isEmpty = false,
-  emptyTitle = "Todavía no hay nada aquí",
-  emptyDescription,
-  error,
   children,
 }: MainContainerProps) {
   return (
     <main className="min-w-0 flex-1 p-4 pb-36 md:p-6 md:pb-24">
-      {/* El encabezado se rinde también mientras carga: si desapareciera, la
-          pantalla daría un salto al llegar los datos. */}
+      {/* El encabezado se rinde también mientras carga (`RouteLoading`) y
+          cuando falla (`RouteError`): si desapareciera, la pantalla daría un
+          salto al llegar los datos. */}
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{title}</h1>
@@ -68,27 +57,7 @@ export function MainContainer({
         {action && <div className="flex items-center gap-2">{action}</div>}
       </div>
 
-      {error ? (
-        <Alert variant="destructive" role="alert">
-          <AlertTitle>No se pudo cargar</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : loading ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">
-          Cargando…
-        </p>
-      ) : isEmpty ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>{emptyTitle}</EmptyTitle>
-            {emptyDescription && (
-              <EmptyDescription>{emptyDescription}</EmptyDescription>
-            )}
-          </EmptyHeader>
-        </Empty>
-      ) : (
-        children
-      )}
+      {children}
     </main>
   );
 }

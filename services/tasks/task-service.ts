@@ -7,6 +7,7 @@ import type {
 } from "@/lib/tasks/deliverables";
 import type { TaskInput } from "@/lib/tasks/schema";
 import type { Tag, Task, TaskLinkType } from "@/types";
+import { chunk, OPEN_WORK_CAP, takeWindow } from "@/lib/pagination";
 
 type TaskRow = {
   id: string;
@@ -129,6 +130,59 @@ export class TaskService {
     organizationId: string,
     filters: TaskFilters = {},
   ): Promise<Task[]> {
+    const { data, error } = await this.boardQuery(organizationId, filters)
+      .order("created_at", { ascending: false })
+      .overrideTypes<TaskRow[]>();
+
+    if (error) {
+      throw new Error(`No se pudieron cargar las tareas: ${error.message}`);
+    }
+
+    return this.byTag((data ?? []).map(toTask), filters.tagId);
+  }
+
+  /**
+   * La ventana de tareas del tablero, la lista y el calendario (KAM-23, spec
+   * `performance-budget`): **todo lo abierto y, de lo cerrado, solo lo
+   * reciente**. Lo hecho crece sin fin; lo pendiente lo acota el propio
+   * taller, y ninguna ventana puede esconder una tarea que sigue abierta. Lo
+   * abierto lleva igualmente un techo, como red contra una consulta
+   * desbocada.
+   */
+  async listBoardWindow(
+    organizationId: string,
+    filters: TaskFilters & { closedLimit: number },
+  ): Promise<{ tasks: Task[]; hasMoreClosed: boolean }> {
+    const { closedLimit, ...rest } = filters;
+
+    const [open, closed] = await Promise.all([
+      this.boardQuery(organizationId, rest)
+        .is("closed_at", null)
+        .order("created_at", { ascending: false })
+        .limit(OPEN_WORK_CAP)
+        .overrideTypes<TaskRow[]>(),
+      this.boardQuery(organizationId, rest)
+        .not("closed_at", "is", null)
+        .order("closed_at", { ascending: false })
+        .limit(closedLimit + 1)
+        .overrideTypes<TaskRow[]>(),
+    ]);
+
+    const failed = open.error ?? closed.error;
+    if (failed) {
+      throw new Error(`No se pudieron cargar las tareas: ${failed.message}`);
+    }
+
+    const window = takeWindow(closed.data ?? [], closedLimit);
+    const tasks = [...(open.data ?? []), ...window.rows]
+      .map(toTask)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+    return { tasks: this.byTag(tasks, rest.tagId), hasMoreClosed: window.hasMore };
+  }
+
+  /** Organización, filtros y archivado: la base de las listas del tablero. */
+  private boardQuery(organizationId: string, filters: TaskFilters) {
     // organization_id explícito aunque RLS ya filtre (convención nº 2).
     let query = this.supabase
       .from("tasks")
@@ -143,22 +197,14 @@ export class TaskService {
     if (!filters.includeArchived) query = query.is("archived_at", null);
     if (filters.search) query = query.ilike("title", `%${filters.search}%`);
 
-    const { data, error } = await query
-      .order("created_at", { ascending: false })
-      .overrideTypes<TaskRow[]>();
+    return query;
+  }
 
-    if (error) {
-      throw new Error(`No se pudieron cargar las tareas: ${error.message}`);
-    }
-
-    const tasks = (data ?? []).map(toTask);
-
+  private byTag(tasks: Task[], tagId: string | undefined): Task[] {
     // La etiqueta filtra en memoria: en PostgREST, filtrar por una tabla
     // anidada recortaría las etiquetas de las filas que sí pasan, y la tarjeta
     // dejaría de mostrar las demás etiquetas de la tarea.
-    return filters.tagId
-      ? tasks.filter((task) => task.tags.some((tag) => tag.id === filters.tagId))
-      : tasks;
+    return tagId ? tasks.filter((task) => task.tags.some((tag) => tag.id === tagId)) : tasks;
   }
 
   /**
@@ -775,30 +821,44 @@ export class TaskService {
     >();
     if (taskIds.length === 0) return badges;
 
-    const [{ data: links }, { data: deliverables }] = await Promise.all([
-      this.supabase
-        .from("task_links")
-        .select("task_id")
-        .eq("organization_id", organizationId)
-        .in("task_id", taskIds)
-        .is("archived_at", null)
-        .overrideTypes<{ task_id: string }[]>(),
-      this.supabase
-        .from("task_deliverables")
-        .select("task_id, fulfilled_at")
-        .eq("organization_id", organizationId)
-        .in("task_id", taskIds)
-        .is("archived_at", null)
-        .overrideTypes<{ task_id: string; fulfilled_at: string | null }[]>(),
-    ]);
+    // En tandas, como toda consulta por lista de identificadores: con un año
+    // de tareas, un solo `in (…)` desborda la dirección de la petición
+    // (KAM-23). Y un error no se traga: sin él, el tablero perdía en silencio
+    // las insignias y el asistente de cierre dejaba de abrirse.
+    const batches = await Promise.all(
+      chunk(taskIds).map((ids) =>
+        Promise.all([
+          this.supabase
+            .from("task_links")
+            .select("task_id")
+            .eq("organization_id", organizationId)
+            .in("task_id", ids)
+            .is("archived_at", null)
+            .overrideTypes<{ task_id: string }[]>(),
+          this.supabase
+            .from("task_deliverables")
+            .select("task_id, fulfilled_at")
+            .eq("organization_id", organizationId)
+            .in("task_id", ids)
+            .is("archived_at", null)
+            .overrideTypes<{ task_id: string; fulfilled_at: string | null }[]>(),
+        ]),
+      ),
+    );
+    const failed = batches.flat().find((batch) => batch.error);
+    if (failed?.error) {
+      throw new Error(`No se pudieron cargar los vínculos: ${failed.error.message}`);
+    }
+    const links = batches.flatMap(([batch]) => batch.data ?? []);
+    const deliverables = batches.flatMap(([, batch]) => batch.data ?? []);
 
     const blank = { links: 0, deliverables: 0, pending: 0 };
 
-    for (const row of links ?? []) {
+    for (const row of links) {
       const current = badges.get(row.task_id) ?? blank;
       badges.set(row.task_id, { ...current, links: current.links + 1 });
     }
-    for (const row of deliverables ?? []) {
+    for (const row of deliverables) {
       const current = badges.get(row.task_id) ?? blank;
       badges.set(row.task_id, {
         ...current,

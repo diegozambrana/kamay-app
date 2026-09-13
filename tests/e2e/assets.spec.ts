@@ -1,8 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 /** La prensa de tazas de la semilla: Sublimación, 900 de costo, 120 de mantenimiento. */
 const PRENSA = "Prensa de tazas";
@@ -42,7 +42,7 @@ test.describe("V12 · activos y recuperación de inversión", () => {
   test("la lista muestra costo, mantenimiento y barra de cada máquina", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/assets");
 
     const prensa = card(page, PRENSA);
@@ -68,7 +68,7 @@ test.describe("V12 · activos y recuperación de inversión", () => {
   test("una línea que aún no genera margen muestra 0 % sin errores", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/assets");
 
     await expect(card(page, IMPRESORA).getByTestId("recovery-bar")).toHaveAttribute(
@@ -78,7 +78,7 @@ test.describe("V12 · activos y recuperación de inversión", () => {
   });
 
   test("el detalle muestra sus egresos y el desglose del costo", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/assets");
     await card(page, PRENSA).click();
 
@@ -94,7 +94,7 @@ test.describe("V12 · activos y recuperación de inversión", () => {
   test("un gasto vinculado sube el costo del activo y la barra retrocede", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     /*
      * Este caso escribe, así que se hace su propio activo en vez de tocar la
@@ -166,7 +166,7 @@ test.describe("V12 · activos y recuperación de inversión", () => {
   test("un activo se declara desde el detalle de su ítem en el catálogo", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // Un ítem de tipo activo nuevo, sin datos declarados todavía.
     const nombre = `Guillotina ${Date.now()}`;

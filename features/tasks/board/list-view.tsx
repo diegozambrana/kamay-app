@@ -6,6 +6,7 @@ import { dueSignal } from "@/lib/tasks/overdue";
 import { cn } from "@/lib/utils";
 
 import type { BoardTask } from "./board-view";
+import { EmptyState } from "@/components/shared/empty-state";
 
 /**
  * Vista de lista: las mismas tareas, en una tabla densa.
@@ -28,11 +29,7 @@ export function ListView({
   showLine: boolean;
 }) {
   if (tasks.length === 0) {
-    return (
-      <p className="py-12 text-center text-sm text-muted-foreground">
-        No hay tareas que mostrar.
-      </p>
-    );
+    return <EmptyState title="No hay tareas que mostrar" />;
   }
 
   return (

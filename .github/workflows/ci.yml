@@ -47,10 +47,15 @@ jobs:
           get() { { grep -E "^$1=" /tmp/supabase.env || true; } | head -n1 | cut -d= -f2- | tr -d '"'; }
           ANON="$(get PUBLISHABLE_KEY)"; [ -n "$ANON" ] || ANON="$(get ANON_KEY)"
           SERVICE="$(get SECRET_KEY)"; [ -n "$SERVICE" ] || SERVICE="$(get SERVICE_ROLE_KEY)"
+          CRON="$(openssl rand -hex 24)"; echo "::add-mask::$CRON"
           {
             echo "NEXT_PUBLIC_SUPABASE_URL=$(get API_URL)"
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE"
+            # `next start` es producción: sin estas dos no arranca (lib/env.ts).
+            # El secreto se genera en cada ejecución y no sale del runner.
+            echo "CRON_SECRET=$CRON"
+            echo "APP_URL=http://localhost:3010"
           } >> "$GITHUB_ENV"
 
       - name: Integration tests (app)
@@ -62,11 +67,27 @@ jobs:
       - name: Build
         run: npm run build
 
+      # La clave de service role no puede aparecer en nada de lo que se sirve
+      # al navegador (KAM-23, design D14).
+      - name: Service role fuera del paquete del navegador
+        run: npm run check:bundle
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # La auditoría de accesibilidad va dentro de la suite y bloquea el PR.
+      # La medición de rendimiento (`@performance`) no: corre en el trabajo de
+      # estabilidad, porque el tiempo de un runner compartido varía demasiado
+      # para decidir un PR (KAM-23, design D12).
       - name: End-to-end tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --grep-invert @performance
+
+      # Aparte y al final: simula un despliegue cambiando `public/sw.js` en
+      # disco, y ninguna otra prueba debe verlo (KAM-23).
+      - name: Service worker tras un despliegue
+        run: npx playwright test --project deployment
+        env:
+          E2E_DEPLOYMENT: "1"
 
       - uses: actions/upload-artifact@v4
         if: failure()

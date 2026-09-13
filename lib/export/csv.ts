@@ -1,5 +1,9 @@
 /**
- * Serialización de un informe a hoja de cálculo (KAM-20, design D8).
+ * Serialización a hoja de cálculo: los informes (KAM-20, design D8), la
+ * bitácora filtrada y su purga (KAM-22) y la exportación completa (KAM-23).
+ *
+ * Vivía en `lib/reports/` y se mudó aquí con su tercer consumidor, como KAM-22
+ * dejó anotado.
  *
  * CSV escrito a mano, sin dependencia: son unas decenas de líneas, y una
  * librería de XLSX añadiría peso y superficie de mantenimiento para producir
@@ -29,7 +33,9 @@ export type CsvTable = {
   rows: Array<Array<string | number | null>>;
 };
 
-const BOM = "﻿";
+/** Sin él, Excel abre «Sublimación» como «SublimaciÃ³n». */
+export const CSV_BOM = "﻿";
+const BOM = CSV_BOM;
 
 /** RFC 4180: se cita si hay coma, comilla o salto; la comilla se duplica. */
 function escapeCell(value: string | number | null): string {
@@ -44,8 +50,21 @@ function escapeCell(value: string | number | null): string {
   return needsQuotes ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
-function line(cells: Array<string | number | null>): string {
+/** Una fila CSV, sin salto final: para quien escribe una tabla por partes. */
+export function csvLine(cells: Array<string | number | null>): string {
   return cells.map(escapeCell).join(",");
+}
+
+const line = csvLine;
+
+/**
+ * Una tabla sola: encabezados en la primera fila y una fila por registro. Es
+ * la forma de la exportación completa (KAM-23), pensada para abrirse o
+ * importarse en una hoja de cálculo sin quitar nada antes.
+ */
+export function toTableCsv(table: CsvTable): string {
+  const rows = [line(table.headers), ...table.rows.map(line)];
+  return BOM + rows.join("\r\n") + "\r\n";
 }
 
 /**

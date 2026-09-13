@@ -1,11 +1,10 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Locator, type Page } from "./helpers/test";
 
 import { noisePng } from "./helpers/png";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
-const GEEKO_ASSISTANT = "ayudante@kamay.test";
 
 const MB = 1024 * 1024;
 
@@ -44,7 +43,7 @@ test.describe("egresos (V7, V8, V9)", () => {
   test("registrar un gasto toma cinco interacciones o menos y aparece en la bandeja", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/expenses");
 
     // Se cuentan las interacciones a mano, no a ojo (criterio 8 del backlog).
@@ -83,7 +82,7 @@ test.describe("egresos (V7, V8, V9)", () => {
   }) => {
     test.skip(Boolean(isMobile), "este recorrido usa el selector de línea del menú lateral");
 
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await selectLine(page, "Todas");
 
     await page.goto("/expenses/costs/new");
@@ -117,7 +116,7 @@ test.describe("egresos (V7, V8, V9)", () => {
   }) => {
     test.skip(Boolean(isMobile), "este recorrido usa el selector de línea del menú lateral");
 
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await selectLine(page, "Sublimación");
     await page.goto("/expenses/purchases/new");
 
@@ -193,7 +192,7 @@ test.describe("egresos (V7, V8, V9)", () => {
   });
 
   test("sin proveedor la compra no se guarda y el campo queda señalado", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/expenses/purchases/new");
 
     await page.getByLabel("Agregar insumo o activo").fill("Arcilla");
@@ -212,7 +211,7 @@ test.describe("egresos (V7, V8, V9)", () => {
     test.skip(Boolean(isMobile), "la compresión de una imagen grande se mide una vez, en escritorio");
     test.setTimeout(120_000);
 
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/expenses/costs/new");
 
     const amount = uniqueAmount();
@@ -245,7 +244,7 @@ test.describe("egresos (V7, V8, V9)", () => {
   });
 
   test("un archivo que no es una imagen se rechaza antes de guardar", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/expenses/costs/new");
 
     await page.locator('input[type="file"]').setInputFiles({
@@ -264,7 +263,7 @@ test.describe("egresos cerrados al ayudante", () => {
   test("el ayudante no tiene la entrada en su menú", async ({ page, isMobile }) => {
     test.skip(Boolean(isMobile), "el menú lateral es de escritorio");
 
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     const nav = page.getByRole("navigation", { name: "Navegación principal" });
     await expect(nav.getByRole("link", { name: "Pedidos" })).toBeVisible();
@@ -274,7 +273,7 @@ test.describe("egresos cerrados al ayudante", () => {
   test("el ayudante que entra por dirección directa termina en su aterrizaje", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     await page.goto("/expenses");
     await expect(page).not.toHaveURL(/\/expenses/);

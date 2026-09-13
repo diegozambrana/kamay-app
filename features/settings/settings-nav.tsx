@@ -23,6 +23,8 @@ export const SETTINGS_SECTIONS = [
   { href: "/settings/members", label: "Usuarios y roles", ownerOnly: true },
   { href: "/settings/retention", label: "Retención", ownerOnly: true },
   { href: "/settings/notifications", label: "Notificaciones", ownerOnly: false },
+  // KAM-23 · Para los dos roles: cada quien exporta lo que puede leer.
+  { href: "/settings/export", label: "Exportar", ownerOnly: false },
 ] as const;
 
 /**

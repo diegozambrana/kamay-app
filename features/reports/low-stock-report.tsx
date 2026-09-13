@@ -44,8 +44,8 @@ export function LowStockReport({
           declarado no se vigilan.
         </EmptyReport>
       ) : (
-        <div className="overflow-x-auto">
-          <Table>
+        <div>
+          <Table scrollLabel="Tabla de «Insumos por acabarse»">
             <TableHeader>
               <TableRow>
                 <TableHead>Insumo</TableHead>

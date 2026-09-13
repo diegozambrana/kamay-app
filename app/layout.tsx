@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kamay",
   description: "Gestión operativa para emprendimientos de producción propia",
+  // La misma señal que la cabecera `X-Robots-Tag` de `next.config.ts`, dentro
+  // del documento: la leen también los rastreadores que ignoran cabeceras.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

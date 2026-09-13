@@ -76,12 +76,13 @@ export function TaskCard({
    * Abrir el detalle de la tarea (V18).
    *
    * El manejador vive en la propia tarjeta y no en un `<button>` que la
-   * envuelva: el contenedor que pinta el tablero ya lleva `role="button"` —se
-   * lo pone dnd-kit para poder arrastrar con el teclado—, y meter un control
-   * dentro de otro control es HTML inválido además de una trampa para el
-   * puntero, que es de quien depende el arrastre.
+   * envuelva: meter la tarjeta entera en un control deja dentro los enlaces y
+   * el menú «Mover a…» que la acompaña, que es un control dentro de otro.
+   * Desde KAM-23 la tarjeta es además un enlace para el teclado —se enfoca con
+   * el tabulador y se abre con Enter—: hasta entonces solo el contenedor de
+   * dnd-kit era enfocable, y no hacía nada al pulsar Enter.
    *
-   * **Solo se invoca si el puntero no se movió**: ver `DRAG_SLOP`.
+   * **Con puntero, solo se invoca si no se movió**: ver `DRAG_SLOP`.
    */
   onOpen?: () => void;
 }) {
@@ -96,6 +97,15 @@ export function TaskCard({
       data-testid="task-card"
       data-task-id={task.id}
       data-due-signal={signal}
+      role={onOpen ? "link" : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+      aria-label={onOpen ? `Abrir la tarea «${task.title}»` : undefined}
+      onKeyDown={(event) => {
+        if (onOpen && event.key === "Enter") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
       onPointerDown={(event) => {
         origin.current = { x: event.clientX, y: event.clientY };
       }}
@@ -115,7 +125,7 @@ export function TaskCard({
         }
         onOpen?.();
       }}
-      className="flex flex-col gap-2 rounded-lg border bg-card p-3 shadow-xs"
+      className="flex flex-col gap-2 rounded-lg border bg-card p-3 shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <div className="flex items-start gap-2">
         {showLine && (

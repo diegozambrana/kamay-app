@@ -8,10 +8,13 @@ import { ExpensesScreen, type ExpenseRowView } from "./expenses-screen";
 import { useReceiptUploadStore } from "./receipt-upload-store";
 
 const push = vi.fn();
+/** La dirección que ve la pantalla. */
+let searchParams = "kind=purchase";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, refresh: vi.fn() }),
-  useSearchParams: () => new URLSearchParams("kind=purchase"),
+  usePathname: () => "/expenses",
+  useSearchParams: () => new URLSearchParams(searchParams),
 }));
 
 vi.mock("@/actions/expenses", () => ({
@@ -98,6 +101,7 @@ function setMobile(isMobile: boolean) {
 }
 
 beforeEach(() => {
+  searchParams = "kind=purchase";
   push.mockReset();
   setMobile(false);
   useReceiptUploadStore.setState({ uploads: {} });
@@ -178,8 +182,23 @@ describe("ExpensesScreen (V7)", () => {
     expect(within(rows[1]).queryByTestId("receipt-pending")).toBeNull();
   });
 
-  it("sin egresos en el periodo lo dice en vez de dejar la tabla vacía", () => {
+  // «Filtering to zero results shows the filtered-empty state»
+  it("filtrada y sin egresos ofrece quitar filtros en vez de dejar la tabla vacía", () => {
+    searchParams = "kind=purchase";
     renderScreen([]);
-    expect(screen.getByText("No hay egresos en este periodo.")).toBeInTheDocument();
+    expect(screen.getByTestId("filtered-empty-state")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quitar filtros" })).toBeInTheDocument();
+  });
+
+  // «Empty view offers its creation action»
+  it("sin filtros y sin egresos este mes ofrece registrar uno", () => {
+    searchParams = "archived=1";
+    renderScreen([]);
+    const empty = screen.getByTestId("empty-state");
+    expect(empty).toHaveTextContent("Aún no hay egresos este mes");
+    expect(within(empty).getByRole("link", { name: "Registrar gasto" })).toHaveAttribute(
+      "href",
+      "/expenses/costs/new",
+    );
   });
 });

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format/datetime";
 import { destinationOf } from "@/lib/notifications/destination";
@@ -55,13 +56,20 @@ export function NotificationList({
   );
 
   if (groups.length === 0) {
+    // Sin filtros en la bandeja: el único vacío posible es el inicial, y su
+    // acción es decidir qué avisos llegan.
     return (
-      <p
-        data-testid="notifications-empty"
-        className="px-4 text-sm text-muted-foreground"
-      >
-        No tienes avisos.
-      </p>
+      <div data-testid="notifications-empty" className="px-4">
+        <EmptyState
+          title="No tienes avisos."
+          description="Aquí llega lo que vence, lo que se te asigna y lo que lleva tiempo quieto."
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link href="/settings/notifications">Elegir qué avisos recibir</Link>
+            </Button>
+          }
+        />
+      </div>
     );
   }
 

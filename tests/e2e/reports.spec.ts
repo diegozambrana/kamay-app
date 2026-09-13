@@ -1,11 +1,10 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko, historico } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 // Organización con doce meses de movimientos: es la que da materia a los
 // informes y la que mide el presupuesto del criterio 8.
-const HISTORY_OWNER = "historico@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -23,11 +22,11 @@ test.describe("V14 · Reportes", () => {
   test("la dueña entra por dirección directa y ve los cinco informes", async ({
     page,
   }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     await page.goto("/reports");
 
     await expect(
-      page.getByRole("heading", { name: "Reportes", level: 2 }),
+      page.getByRole("heading", { name: "Reportes", level: 1 }),
     ).toBeVisible();
 
     for (const title of [
@@ -42,7 +41,7 @@ test.describe("V14 · Reportes", () => {
   });
 
   test("el enlace reproduce el recorte que se compartió", async ({ page }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
 
     const url = "/reports?preset=custom&from=2026-01-12&to=2026-02-20";
     await page.goto(url);
@@ -55,7 +54,7 @@ test.describe("V14 · Reportes", () => {
   test("cambiar el periodo recalcula y queda en la dirección", async ({
     page,
   }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     await page.goto("/reports");
 
     await page.getByLabel("Periodo").click();
@@ -65,7 +64,7 @@ test.describe("V14 · Reportes", () => {
   });
 
   test("un rango invertido se rechaza y no recalcula", async ({ page }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     await page.goto("/reports?preset=custom&from=2026-04-20&to=2026-03-12");
 
     await expect(
@@ -76,7 +75,7 @@ test.describe("V14 · Reportes", () => {
   test("el comparativo lleva su leyenda de reparto y avisa de que no se filtra", async ({
     page,
   }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     await page.goto("/reports");
 
     await expect(page.getByTestId("allocation-legend")).toBeVisible();
@@ -88,10 +87,10 @@ test.describe("V14 · Reportes", () => {
   test("insumos por acabarse dice que muestra el saldo de hoy, sin leyenda de reparto", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/reports");
 
-    const section = page.getByRole("region", { name: "Insumos por acabarse" });
+    const section = page.getByRole("region", { name: "Insumos por acabarse", exact: true });
     await expect(
       section.getByText("Muestra el saldo de hoy"),
     ).toBeVisible();
@@ -103,12 +102,12 @@ test.describe("V14 · Reportes", () => {
   test("el ranking se ordena por unidades y por margen sin perder columnas", async ({
     page,
   }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     // Un periodo con ventas: el mes en curso tiene cobros de pedidos
     // anteriores, que es otra cosa (los informes de dinero miden en caja).
     await page.goto("/reports?preset=this-year");
 
-    const section = page.getByRole("region", { name: "Qué se vende más" });
+    const section = page.getByRole("region", { name: "Qué se vende más", exact: true });
     await expect(section.getByRole("button", { name: "Unidades" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -128,10 +127,10 @@ test.describe("V14 · Reportes", () => {
   test("la exportación descarga lo que se ve, con su contexto", async ({
     page,
   }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     await page.goto("/reports");
 
-    const section = page.getByRole("region", { name: "Comparativo entre líneas" });
+    const section = page.getByRole("region", { name: "Comparativo entre líneas", exact: true });
     const download = page.waitForEvent("download");
     await section.getByRole("link", { name: "Exportar" }).click();
     const file = await download;
@@ -151,10 +150,10 @@ test.describe("V14 · Reportes", () => {
   });
 
   test("una fila de rentabilidad abre su pedido", async ({ page }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     await page.goto("/reports?preset=this-year");
 
-    const section = page.getByRole("region", { name: "Rentabilidad" });
+    const section = page.getByRole("region", { name: "Rentabilidad", exact: true });
     const link = section.getByRole("table").getByRole("link").first();
     await expect(link).toBeVisible();
     await link.click();
@@ -165,10 +164,10 @@ test.describe("V14 · Reportes", () => {
   test("una fila de egresos abre la bandeja filtrada por el mismo periodo", async ({
     page,
   }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     await page.goto("/reports?preset=this-year");
 
-    const section = page.getByRole("region", { name: "En qué se va el dinero" });
+    const section = page.getByRole("region", { name: "En qué se va el dinero", exact: true });
     await section.getByRole("table").getByRole("link").first().click();
 
     await expect(page).toHaveURL(/\/expenses\?.*from=\d{4}-\d{2}-\d{2}/);
@@ -177,7 +176,7 @@ test.describe("V14 · Reportes", () => {
   test("el informe responde en menos de 3 segundos con doce meses", async ({
     page,
   }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
 
     const started = Date.now();
     await page.goto("/reports?preset=this-year");
@@ -197,7 +196,7 @@ test.describe("V14 · en pantalla estrecha", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test("se ve un informe por vez, con su conmutador", async ({ page }) => {
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
     await page.goto("/reports");
 
     const tabs = page.getByRole("tablist", { name: "Informes" });
@@ -206,19 +205,19 @@ test.describe("V14 · en pantalla estrecha", () => {
 
     // El comparativo es el que se muestra al abrir.
     await expect(
-      page.getByRole("region", { name: "Comparativo entre líneas" }),
+      page.getByRole("region", { name: "Comparativo entre líneas", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("region", { name: "Rentabilidad" }),
+      page.getByRole("region", { name: "Rentabilidad", exact: true }),
     ).toBeHidden();
 
     await tabs.getByRole("tab", { name: "Rentabilidad" }).click();
 
     await expect(
-      page.getByRole("region", { name: "Rentabilidad" }),
+      page.getByRole("region", { name: "Rentabilidad", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("region", { name: "Comparativo entre líneas" }),
+      page.getByRole("region", { name: "Comparativo entre líneas", exact: true }),
     ).toBeHidden();
   });
 });

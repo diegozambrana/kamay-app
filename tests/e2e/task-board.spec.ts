@@ -1,7 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geekoForBlock } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -110,7 +110,7 @@ test.describe.serial("tablero de tareas (V17)", () => {
     // Dos arrastres con su ida y vuelta al servidor: con la suite completa en
     // paralelo, el límite por omisión se queda corto.
     test.setTimeout(60_000);
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, LINEA);
     await page.goto("/tasks");
     await waitForBoardReady(page);
@@ -149,7 +149,7 @@ test.describe.serial("tablero de tareas (V17)", () => {
 
   test("retroceder desde el estado final vuelve a abrir la tarea", async ({ page }) => {
     test.setTimeout(60_000);
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, LINEA);
     await page.goto("/tasks");
     await waitForBoardReady(page);
@@ -170,7 +170,7 @@ test.describe.serial("tablero de tareas (V17)", () => {
   test("las columnas son el juego de estados de la línea, no una lista fija", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, LINEA);
     await page.goto("/tasks");
 
@@ -185,7 +185,7 @@ test.describe.serial("tablero de tareas (V17)", () => {
   test("la vista de lista y la de calendario muestran las mismas tareas", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, LINEA);
 
     await page.goto("/tasks?view=list");
@@ -197,7 +197,7 @@ test.describe.serial("tablero de tareas (V17)", () => {
   });
 
   test("los filtros sobreviven al cambio de vista", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, LINEA);
 
     await page.goto(`/tasks?view=list&q=${encodeURIComponent(titulo)}`);

@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { MainContainer } from "@/components/layout/main-container";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import type { AssetRecovery, LineColor } from "@/types";
 
@@ -76,14 +78,18 @@ export function AssetsScreen({
       }
     >
       {assets.length === 0 ? (
-        <Empty data-testid="assets-empty">
-          <EmptyTitle>Todavía no hay activos</EmptyTitle>
-          <EmptyDescription>
-            Una máquina es un ítem de tipo activo del catálogo con su costo y su
-            fecha de compra declarados. Puedes declararlos desde el detalle del
-            ítem, o al registrar la compra.
-          </EmptyDescription>
-        </Empty>
+        // Sin filtros que quitar: «Ver archivados» ensancha, no estrecha.
+        <div data-testid="assets-empty">
+          <EmptyState
+            title="Todavía no hay activos"
+            description="Una máquina es un ítem de tipo activo del catálogo con su costo y su fecha de compra declarados. Puedes declararlos desde el detalle del ítem, o al registrar la compra."
+            action={
+              <Button asChild>
+                <Link href="/catalog?kind=asset">Ver los activos del catálogo</Link>
+              </Button>
+            }
+          />
+        </div>
       ) : (
         // Una columna en el celular y hasta tres en escritorio: las tarjetas se
         // apilan sin desplazamiento horizontal en 390 px.

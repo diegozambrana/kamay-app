@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { sortByUrgency } from "@/lib/inventory/stock";
 import type { ItemBalance } from "@/types";
+import { EmptyState } from "@/components/shared/empty-state";
 
 /**
  * Un insumo bajo mínimo, listo para rendir: el saldo viene de la vista y el
@@ -38,9 +39,7 @@ export function LowStockCard({ items }: { items: readonly LowStockItem[] }) {
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Ningún insumo está por debajo de su mínimo.
-          </p>
+          <EmptyState testId="card-empty" className="p-4" title="Ningún insumo está por debajo de su mínimo." />
         ) : (
           <ul className="flex flex-col gap-2" data-testid="low-stock-list">
             {rows.map((row) => (

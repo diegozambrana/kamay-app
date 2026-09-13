@@ -16,8 +16,10 @@ import { describe, expect, it } from "vitest";
 
 /** Quién puede importar `lib/supabase/admin.ts`, y por qué. */
 const ALLOWED = [
-  // El trabajo programado: el disparo del cron, autorizado por secreto.
+  // Los trabajos programados: el disparo del cron, autorizado por secreto.
   "app/api/notifications/",
+  // La retención mensual de la bitácora (KAM-22, agendada en KAM-23).
+  "app/api/activity/retention/",
   // El único servicio que escribe notificaciones (design D5).
   "services/notifications/",
 ];

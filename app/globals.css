@@ -60,7 +60,9 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* KAM-23 · 0.51 y no 0.556: sobre `--muted` el gris del token daba 4,34:1,
+     por debajo del mínimo AA; así queda en torno a 5,5:1. */
+  --muted-foreground: oklch(0.51 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);

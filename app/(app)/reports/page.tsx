@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { MainContainer } from "@/components/layout/main-container";
 import { ExpenseBreakdownReport } from "@/features/reports/expense-breakdown-report";
 import { LineComparisonReport } from "@/features/reports/line-comparison-report";
 import { LowStockReport } from "@/features/reports/low-stock-report";
@@ -151,15 +152,14 @@ export default async function ReportsPage({
     REPORT_IDS.map((id) => [id, exportHref(id)]),
   ) as Record<ReportId, string>;
 
+  // Dentro de `MainContainer` como toda página: hasta KAM-23 esta era la única
+  // sin región principal ni `<h1>`, y la auditoría de accesibilidad lo marca.
   return (
+    <MainContainer
+      title="Reportes"
+      description={`Del ${period.from} al ${period.to}. Los cinco informes usan este mismo periodo, así que sus cifras cuadran entre sí.`}
+    >
     <section className="space-y-6">
-      <div>
-        <h2 className="text-lg font-medium">Reportes</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Del {period.from} al {period.to}. Los cinco informes usan este mismo
-          periodo, así que sus cifras cuadran entre sí.
-        </p>
-      </div>
 
       <ReportHeader
         lines={lines}
@@ -220,5 +220,6 @@ export default async function ReportsPage({
         }}
       />
     </section>
+    </MainContainer>
   );
 }

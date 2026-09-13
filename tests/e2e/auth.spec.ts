@@ -1,10 +1,9 @@
-import { expect, test, type Page } from "@playwright/test";
+import { addOrganizationFor, createFreshOrganization, E2E_PASSWORD } from "./helpers/fresh-org";
+import { expect, test, type Page } from "./helpers/test";
 
-// Usuarios de supabase/seed.sql (contraseña común de desarrollo).
-const PASSWORD = "kamay123";
-const OWNER = "owner@kamay.test"; // una sola organización
-const MULTI = "multi@kamay.test"; // dos organizaciones
-const RECOVERY = "recovery@kamay.test"; // solo para la prueba de recuperación
+// Cada prueba entra con una dueña propia (KAM-23): la de recuperación cambia
+// la contraseña, y ninguna otra puede depender de lo que esa deje.
+const PASSWORD = E2E_PASSWORD;
 
 const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54424";
 
@@ -36,7 +35,8 @@ test.describe("aterrizaje por dispositivo y cascarón", () => {
     isMobile,
   }) => {
     test.skip(isMobile, "solo escritorio");
-    await login(page, OWNER);
+    const owner = await createFreshOrganization();
+    await login(page, owner.email);
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.getByTestId("top-bar")).toBeVisible();
     await expect(page.getByTestId("bottom-bar")).toBeHidden();
@@ -47,7 +47,8 @@ test.describe("aterrizaje por dispositivo y cascarón", () => {
     isMobile,
   }) => {
     test.skip(!isMobile, "solo móvil");
-    await login(page, OWNER);
+    const owner = await createFreshOrganization();
+    await login(page, owner.email);
     await expect(page).toHaveURL(/\/quick$/);
     await expect(page.getByTestId("bottom-bar")).toBeVisible();
     await expect(page.getByTestId("top-bar")).toBeHidden();
@@ -59,19 +60,21 @@ test.describe("selección de organización", () => {
     page,
     isMobile,
   }) => {
-    await login(page, MULTI);
+    const owner = await createFreshOrganization();
+    const feria = `Feria ${owner.organizationName}`;
+    await addOrganizationFor(owner, feria);
+
+    await login(page, owner.email);
     await expect(page).toHaveURL(/\/auth\/select-org/);
     await expect(
-      page.getByRole("button", { name: "Taller Kamay" }),
+      page.getByRole("button", { name: owner.organizationName, exact: true }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Kamay Feria" }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: feria, exact: true })).toBeVisible();
 
-    await page.getByRole("button", { name: "Kamay Feria" }).click();
+    await page.getByRole("button", { name: feria, exact: true }).click();
     await expect(page).toHaveURL(isMobile ? /\/quick$/ : /\/dashboard$/);
     if (!isMobile) {
-      await expect(page.getByTestId("top-bar")).toContainText("Kamay Feria");
+      await expect(page.getByTestId("top-bar")).toContainText(feria);
     }
   });
 
@@ -79,7 +82,8 @@ test.describe("selección de organización", () => {
     page,
     isMobile,
   }) => {
-    await login(page, OWNER);
+    const owner = await createFreshOrganization();
+    await login(page, owner.email);
     await expect(page).toHaveURL(isMobile ? /\/quick$/ : /\/dashboard$/);
   });
 });
@@ -90,7 +94,8 @@ test.describe("sesión", () => {
     isMobile,
   }) => {
     test.skip(isMobile, "solo escritorio");
-    await login(page, OWNER);
+    const owner = await createFreshOrganization();
+    await login(page, owner.email);
     await expect(page).toHaveURL(/\/dashboard$/);
 
     await page.goto("/quick");
@@ -109,7 +114,8 @@ test.describe("sesión", () => {
     isMobile,
   }) => {
     test.skip(isMobile, "solo escritorio");
-    await login(page, OWNER);
+    const owner = await createFreshOrganization();
+    await login(page, owner.email);
     await expect(page).toHaveURL(/\/dashboard$/);
 
     // Sesión expirada: se invalidan las cookies (D · expiración).
@@ -118,7 +124,7 @@ test.describe("sesión", () => {
     await page.goto("/quick");
     await expect(page).toHaveURL(/\/auth\/login\?next=%2Fquick/);
 
-    await page.getByLabel("Correo electrónico").fill(OWNER);
+    await page.getByLabel("Correo electrónico").fill(owner.email);
     await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
     await page.getByRole("button", { name: "Entrar" }).click();
 
@@ -135,39 +141,47 @@ test.describe("recuperación de contraseña", () => {
   }) => {
     test.skip(isMobile, "solo escritorio");
 
+    // Una usuaria propia: el correo que se busca en Mailpit es solo suyo, y
+    // la contraseña que se cambia no la usa nadie más.
+    const { email: recovery } = await createFreshOrganization();
+
     await page.goto("/auth/forgot-password");
-    await page.getByLabel("Correo electrónico").fill(RECOVERY);
+    await page.getByLabel("Correo electrónico").fill(recovery);
     await page.getByRole("button", { name: "Enviar enlace" }).click();
     await expect(
       page.getByText(/recibirás un enlace/i),
     ).toBeVisible();
 
     // El correo se captura en Mailpit (servidor de correo local de Supabase).
+    // La espera se ancla a que el correo llegue, no a un tiempo fijo:
+    // `expect.poll` vuelve a preguntar hasta que haya enlace o venza el plazo.
     let confirmUrl: string | null = null;
-    const deadline = Date.now() + 15_000;
-    while (!confirmUrl && Date.now() < deadline) {
-      const list = await request.get(
-        `${MAILPIT}/api/v1/search?query=to:${RECOVERY}`,
-      );
-      const { messages } = await list.json();
-      if (messages?.length) {
-        const detail = await request.get(
-          `${MAILPIT}/api/v1/message/${messages[0].ID}`,
-        );
-        const { HTML } = await detail.json();
-        const match = HTML?.match(
-          /http:\/\/localhost:3010\/auth\/confirm[^"']+/,
-        );
-        if (match) confirmUrl = match[0].replace(/&amp;/g, "&");
-      }
-      if (!confirmUrl) await page.waitForTimeout(500);
-    }
-    expect(confirmUrl, "no llegó el correo de recuperación").not.toBeNull();
+    await expect
+      .poll(
+        async () => {
+          const list = await request.get(
+            `${MAILPIT}/api/v1/search?query=to:${recovery}`,
+          );
+          const { messages } = await list.json();
+          if (!messages?.length) return null;
+          const detail = await request.get(
+            `${MAILPIT}/api/v1/message/${messages[0].ID}`,
+          );
+          const { HTML } = await detail.json();
+          const match = HTML?.match(
+            /http:\/\/localhost:3010\/auth\/confirm[^"']+/,
+          );
+          confirmUrl = match ? match[0].replace(/&amp;/g, "&") : null;
+          return confirmUrl;
+        },
+        { message: "no llegó el correo de recuperación", timeout: 15_000 },
+      )
+      .not.toBeNull();
 
     await page.goto(confirmUrl!);
     await expect(page).toHaveURL(/\/auth\/reset-password/);
 
-    // Supabase rechaza reutilizar la contraseña anterior: una nueva por corrida.
+    // Supabase rechaza reutilizar la contraseña anterior.
     const newPassword = `kamay-${Date.now()}`;
     await page.getByLabel("Nueva contraseña").fill(newPassword);
     await page.getByLabel("Repite la contraseña").fill(newPassword);

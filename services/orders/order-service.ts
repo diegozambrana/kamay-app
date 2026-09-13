@@ -6,6 +6,7 @@ import type {
   Order,
   OrderKind,
 } from "@/types";
+import { chunk, OPEN_WORK_CAP, takeWindow } from "@/lib/pagination";
 
 /**
  * Una línea como la esperan `create_order` y `update_order`: nombres de
@@ -112,17 +113,21 @@ export class OrderService {
   private async totalsFor(orderIds: string[]): Promise<Map<string, OrderTotals>> {
     if (orderIds.length === 0) return new Map();
 
-    const { data, error } = await this.supabase
-      .from("order_totals")
-      .select("order_id, total, paid")
-      .in("order_id", orderIds);
-
-    if (error) {
-      throw new Error(`No se pudieron calcular los totales: ${error.message}`);
+    // En tandas: con un año de pedidos, un solo `in (…)` desbordó la dirección
+    // de la petición (414, hallazgo de KAM-23).
+    const batches = await Promise.all(
+      chunk(orderIds).map((ids) =>
+        this.supabase.from("order_totals").select("order_id, total, paid").in("order_id", ids),
+      ),
+    );
+    const failed = batches.find((batch) => batch.error);
+    if (failed?.error) {
+      throw new Error(`No se pudieron calcular los totales: ${failed.error.message}`);
     }
+    const data = batches.flatMap((batch) => batch.data ?? []);
 
     const totals = new Map<string, OrderTotals>();
-    for (const row of (data ?? []) as {
+    for (const row of data as {
       order_id: string;
       total: number | string;
       paid: number | string;
@@ -136,6 +141,25 @@ export class OrderService {
     organizationId: string,
     filters: OrderFilters = {},
   ): Promise<OrderWithTotal[]> {
+    const orders = await this.query(organizationId, filters);
+    const totals = await this.totalsFor(orders.map((order) => order.id));
+
+    return orders.map((order) => ({
+      ...order,
+      ...(totals.get(order.id) ?? NO_MONEY),
+    }));
+  }
+
+  /**
+   * La consulta base de toda lista de pedidos: la organización, el invariante
+   * de tipo, los filtros y el archivado. `window` añade lo que la ventana de
+   * `listWindow` necesita encima sin repetir lo demás.
+   */
+  private async query(
+    organizationId: string,
+    filters: OrderFilters,
+    window: { excludeStatusIds?: string[]; onlyStatusIds?: string[]; limit?: number } = {},
+  ): Promise<Order[]> {
     let query = this.supabase
       .from("orders")
       .select(COLUMNS)
@@ -158,19 +182,63 @@ export class OrderService {
     // Lo archivado no aparece salvo que se pida: es la regla de todo listado.
     if (!filters.includeArchived) query = query.is("archived_at", null);
 
-    const { data, error } = await query.order("occurred_at", { ascending: false });
+    if (window.excludeStatusIds?.length) {
+      query = query.not("status_id", "in", `(${window.excludeStatusIds.join(",")})`);
+    }
+    if (window.onlyStatusIds) query = query.in("status_id", window.onlyStatusIds);
+
+    let ordered = query.order("occurred_at", { ascending: false });
+    if (window.limit !== undefined) ordered = ordered.limit(window.limit);
+
+    const { data, error } = await ordered;
 
     if (error) {
       throw new Error(`No se pudieron cargar los pedidos: ${error.message}`);
     }
 
-    const orders = (data ?? []).map((row) => this.toEntity(row as unknown as OrderRow));
+    return (data ?? []).map((row) => this.toEntity(row as unknown as OrderRow));
+  }
+
+  /**
+   * La ventana de pedidos de las vistas V3 —tablero, lista y calendario—
+   * (KAM-23, spec `performance-budget`).
+   *
+   * **Todo lo abierto, y de lo cerrado solo lo reciente.** El trabajo en
+   * curso de un taller está acotado por su capacidad, y ninguna ventana puede
+   * sacar del tablero un pedido que sigue en cola; lo entregado y lo cancelado,
+   * en cambio, crece sin fin y es lo que se recorta: los `closedLimit` más
+   * recientes, y «Mostrar más» amplía la ventana.
+   *
+   * Lo abierto lleva igualmente un techo (`OPEN_WORK_CAP`), como red contra
+   * una consulta desbocada, no como límite de producto.
+   */
+  async listWindow(
+    organizationId: string,
+    filters: OrderFilters & { closedStatusIds: string[]; closedLimit: number },
+  ): Promise<{ orders: OrderWithTotal[]; hasMoreClosed: boolean }> {
+    const { closedStatusIds, closedLimit, ...rest } = filters;
+
+    const [open, closed] = await Promise.all([
+      this.query(organizationId, rest, {
+        excludeStatusIds: closedStatusIds,
+        limit: OPEN_WORK_CAP,
+      }),
+      closedStatusIds.length > 0
+        ? this.query(organizationId, rest, {
+            onlyStatusIds: closedStatusIds,
+            limit: closedLimit + 1,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const window = takeWindow(closed, closedLimit);
+    const orders = [...open, ...window.rows];
     const totals = await this.totalsFor(orders.map((order) => order.id));
 
-    return orders.map((order) => ({
-      ...order,
-      ...(totals.get(order.id) ?? NO_MONEY),
-    }));
+    return {
+      orders: orders.map((order) => ({ ...order, ...(totals.get(order.id) ?? NO_MONEY) })),
+      hasMoreClosed: window.hasMore,
+    };
   }
 
   /**

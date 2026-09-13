@@ -6,6 +6,7 @@ import { AssetsScreen, type AssetRowView } from "./assets-screen";
 const push = vi.fn();
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/assets",
   useRouter: () => ({ push, refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(""),
 }));

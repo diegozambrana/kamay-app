@@ -7,9 +7,21 @@ import {
   unarchiveConfigurationItem,
   type ActionResult,
 } from "@/actions/configuration";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 
 export type ConfigEntity = "line" | "channel" | "category" | "unit";
+
+/**
+ * El vacío de cada catálogo, dicho por su nombre. La acción que corresponde
+ * es el formulario de alta, que cada sección pinta justo encima de la lista.
+ */
+const EMPTY_TITLES: Record<ConfigEntity, string> = {
+  line: "Aún no hay líneas de negocio",
+  channel: "Aún no hay canales de venta",
+  category: "Aún no hay categorías de gasto",
+  unit: "Aún no hay unidades de medida",
+};
 
 export type ConfigItem = {
   id: string;
@@ -58,37 +70,39 @@ export function ConfigList({
         </p>
       )}
 
-      <ul data-testid={`${entity}-list`} className="divide-y rounded-lg border">
-        {active.map((item) => (
-          <li key={item.id} className="flex items-center gap-2 px-3 py-2">
-            {item.leading}
-            <span className="flex-1 text-sm">{item.label}</span>
-            <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
-              Editar
-            </Button>
-            {!item.protected && (
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={pending}
-                onClick={() =>
-                  run(() =>
-                    archiveConfigurationItem({ entity, id: item.id }),
-                  )
-                }
-              >
-                Archivar
+      {active.length === 0 ? (
+        // Un `div` no puede ir dentro de la lista: el vacío la sustituye.
+        <EmptyState
+          title={EMPTY_TITLES[entity]}
+          description="Escribe el nombre arriba y pulsa Crear."
+        />
+      ) : (
+        <ul data-testid={`${entity}-list`} className="divide-y rounded-lg border">
+          {active.map((item) => (
+            <li key={item.id} className="flex items-center gap-2 px-3 py-2">
+              {item.leading}
+              <span className="flex-1 text-sm">{item.label}</span>
+              <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
+                Editar
               </Button>
-            )}
-          </li>
-        ))}
-
-        {active.length === 0 && (
-          <li className="px-3 py-6 text-center text-sm text-muted-foreground">
-            Todavía no hay nada aquí.
-          </li>
-        )}
-      </ul>
+              {!item.protected && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() =>
+                    run(() =>
+                      archiveConfigurationItem({ entity, id: item.id }),
+                    )
+                  }
+                >
+                  Archivar
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {archived.length > 0 && (
         <div>

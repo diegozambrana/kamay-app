@@ -12,6 +12,9 @@ import {
   type DataTableColumn,
 } from "@/components/data-table/data-table";
 import { MainContainer } from "@/components/layout/main-container";
+import { EmptyState } from "@/components/shared/empty-state";
+import { FilteredEmptyState } from "@/components/shared/filtered-empty-state";
+import { LoadMore } from "@/components/shared/load-more";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useFilterState, useSearchReset } from "@/hooks/use-filter-state";
 import { usePendingToggle } from "@/hooks/use-pending-toggle";
 import { ITEM_KIND_LABELS, SHARED_LINE_LABEL } from "@/lib/catalog/labels";
 import {
@@ -56,6 +60,13 @@ export type CatalogRow = Item & {
 };
 
 /**
+ * Los parámetros que estrechan el catálogo: la búsqueda y la línea propia de
+ * esta pantalla. `kind` es la pestaña —siempre hay una— y `archived`
+ * ensancha; ninguno es un filtro (design D2).
+ */
+const CATALOG_FILTERS = ["q", "line"] as const;
+
+/**
  * V10 · Catálogo. El alcance vive en la dirección (`?kind=&line=&q=&archived=`)
  * para que el listado sea enlazable y el servidor entregue exactamente lo que
  * se pide.
@@ -76,6 +87,8 @@ export function CatalogScreen({
   includeArchived,
   role,
   activeLineId,
+  limit = 50,
+  hasMore = false,
 }: {
   items: CatalogRow[];
   lines: BusinessLine[];
@@ -86,6 +99,10 @@ export function CatalogScreen({
   includeArchived: boolean;
   role: Role;
   activeLineId: string | null;
+  /** Cuántos ítems trae la ventana (KAM-23). */
+  limit?: number;
+  /** Si el catálogo tiene más de los que se muestran. */
+  hasMore?: boolean;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -94,6 +111,8 @@ export function CatalogScreen({
   const [showArchived, setShowArchived] = usePendingToggle(includeArchived);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const { hasActiveFilters, clearFilters } = useFilterState(CATALOG_FILTERS);
+  const { searchKey, armSearchReset } = useSearchReset(search);
 
   const isOwner = role === "owner";
   const lineName = (id: string | null) =>
@@ -241,6 +260,7 @@ export function CatalogScreen({
         <Field className="w-56">
           <FieldLabel htmlFor="catalog-search">Buscar</FieldLabel>
           <Input
+            key={searchKey}
             id="catalog-search"
             data-testid="catalog-search"
             defaultValue={search}
@@ -305,6 +325,13 @@ export function CatalogScreen({
       <ItemFormDialog
         open={adding}
         onOpenChange={setAdding}
+        // Lo nuevo se ve aunque caiga fuera de la ventana alfabética: la
+        // página lo trae aparte (`joinsCatalogWindow`).
+        onCreated={(id) => {
+          const next = new URLSearchParams(params.toString());
+          next.set("created", id);
+          router.replace(`/catalog?${next.toString()}`, { scroll: false });
+        }}
         lines={lines}
         units={units}
         defaultKind={kind}
@@ -335,11 +362,31 @@ export function CatalogScreen({
           "data-archived": item.archivedAt !== null,
           className: item.archivedAt !== null ? "text-muted-foreground" : undefined,
         })}
-        empty={{
-          title: "Nada por aquí",
-          description: `No hay ${ITEM_KIND_LABELS[kind].toLowerCase()} que coincidan con los filtros.`,
-        }}
+        empty={
+          hasActiveFilters ? (
+            <FilteredEmptyState
+              description={`Ninguno de los ${ITEM_KIND_LABELS[kind].toLowerCase()} coincide con la búsqueda o la línea elegidas.`}
+              onClearFilters={() => {
+                armSearchReset();
+                clearFilters();
+              }}
+            />
+          ) : (
+            <EmptyState
+              title={`Aún no hay ${ITEM_KIND_LABELS[kind].toLowerCase()} en el catálogo`}
+              action={
+                <Button type="button" onClick={() => setAdding(true)}>
+                  Crear el primer ítem
+                </Button>
+              }
+            />
+          )
+        }
       />
+
+      {hasMore && (
+        <LoadMore limit={limit} shownLabel={`los primeros ${limit} por orden alfabético`} />
+      )}
       </div>
     </MainContainer>
   );

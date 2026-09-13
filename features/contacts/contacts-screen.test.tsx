@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -11,6 +11,7 @@ import { ContactsScreen } from "./contacts-screen";
 const push = vi.fn();
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/contacts",
   useRouter: () => ({ push }),
   useSearchParams: () => new URLSearchParams(),
 }));
@@ -243,5 +244,17 @@ describe("historial del contacto", () => {
 
     expect(screen.getByTestId("empty-history")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("ContactsScreen · estados transversales (view-states)", () => {
+  // «Empty view offers its creation action»
+  it("sin contactos ni filtros ofrece crear el primero", () => {
+    renderScreen([]);
+    const empty = screen.getByTestId("empty-state");
+    expect(empty).toHaveTextContent("Aún no hay contactos");
+    expect(
+      within(empty).getByRole("button", { name: "Crear el primer contacto" }),
+    ).toBeInTheDocument();
   });
 });

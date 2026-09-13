@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 
 import { FakeClient } from "@/tests/factories/supabase-fake";
@@ -292,6 +293,12 @@ describe("AttachmentService.copyToEntity", () => {
         method: "copy",
         args: [source.storagePath, copied.storagePath],
       },
+      // La miniatura viaja con el original (KAM-23).
+      {
+        bucket: "attachments",
+        method: "copy",
+        args: [`${source.storagePath}.thumb.webp`, `${copied.storagePath}.thumb.webp`],
+      },
     ]);
   });
 
@@ -321,5 +328,116 @@ describe("AttachmentService.copyToEntity", () => {
         ITEM,
       ),
     ).rejects.toThrow("No se pudo copiar el adjunto");
+  });
+});
+
+/** KAM-23 · Miniaturas (`performance-budget` → *Images are served optimized*). */
+describe("AttachmentService · miniaturas", () => {
+  async function jpeg(width: number, height: number): Promise<ArrayBuffer> {
+    const buffer = await sharp({
+      create: { width, height, channels: 3, background: { r: 200, g: 120, b: 40 } },
+    })
+      .jpeg()
+      .toBuffer();
+    return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+  }
+
+  it("una foto subida deja su miniatura WebP junto al original", async () => {
+    const client = new FakeClient([{ data: row, error: null }]);
+    await new AttachmentService(client.asSupabase()).upload(ORG, USER, {
+      ...newPhoto,
+      body: await jpeg(1200, 900),
+    });
+
+    const uploads = client.storageCalls.filter((call) => call.method === "upload");
+    expect(uploads.map((call) => call.args[0])).toEqual([
+      `${ORG}/item/${ITEM}/${ATTACHMENT}.jpg`,
+      `${ORG}/item/${ITEM}/${ATTACHMENT}.jpg.thumb.webp`,
+    ]);
+    expect(uploads[1].args[2]).toMatchObject({ contentType: "image/webp" });
+  });
+
+  it("un archivo que no es imagen no deja miniatura", async () => {
+    const client = new FakeClient([{ data: { ...row, mime_type: "application/pdf" }, error: null }]);
+    await new AttachmentService(client.asSupabase()).upload(ORG, USER, {
+      ...newPhoto,
+      fileName: "factura.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(client.storageCalls.filter((call) => call.method === "upload")).toHaveLength(1);
+  });
+
+  it("si la miniatura no se puede subir, la subida del original sigue valiendo", async () => {
+    const client = new FakeClient([{ data: row, error: null }]);
+    client.storageResults.upload = { error: null };
+    let calls = 0;
+    const original = client.storage.from;
+    client.storage.from = (bucket: string) => {
+      const api = original(bucket);
+      return {
+        ...api,
+        upload: async (...args: unknown[]) => {
+          calls += 1;
+          if (calls === 2) throw new Error("Storage caído");
+          return api.upload(...args);
+        },
+      };
+    };
+
+    await expect(
+      new AttachmentService(client.asSupabase()).upload(ORG, USER, {
+        ...newPhoto,
+        body: await jpeg(800, 600),
+      }),
+    ).resolves.toMatchObject({ id: ATTACHMENT });
+  });
+
+  it("firma la miniatura si existe y el original si no", async () => {
+    const withThumb = { ...row, id: "a1", storage_path: `${ORG}/item/${ITEM}/a1.jpg` };
+    const withoutThumb = { ...row, id: "a2", storage_path: `${ORG}/item/${ITEM}/a2.jpg` };
+    const client = new FakeClient([]);
+    client.storageResults.signed = {
+      data: [
+        { path: `${withThumb.storage_path}.thumb.webp`, signedUrl: "https://s/a1-thumb" },
+        { path: withThumb.storage_path, signedUrl: "https://s/a1" },
+        // La miniatura de a2 no existe: vuelve sin URL.
+        { path: `${withoutThumb.storage_path}.thumb.webp`, signedUrl: "" },
+        { path: withoutThumb.storage_path, signedUrl: "https://s/a2" },
+      ],
+      error: null,
+    };
+
+    const service = new AttachmentService(client.asSupabase());
+    const urls = await service.signedThumbnailUrls(
+      [withThumb, withoutThumb].map((attachment) => ({
+        id: attachment.id,
+        organizationId: ORG,
+        entityType: "item" as const,
+        entityId: ITEM,
+        bucket: attachment.bucket,
+        storagePath: attachment.storage_path,
+        fileName: attachment.file_name,
+        mimeType: attachment.mime_type,
+        sizeBytes: attachment.size_bytes,
+        uploadedBy: USER,
+        createdAt: attachment.created_at,
+        archivedAt: null,
+      })),
+    );
+
+    expect(urls.get("a1")).toBe("https://s/a1-thumb");
+    expect(urls.get("a2")).toBe("https://s/a2");
+    // Una sola petición de firma por bucket, miniatura y original juntos.
+    expect(client.storageCalls.filter((call) => call.method === "createSignedUrls")).toHaveLength(1);
+  });
+
+  it("retirar objetos huérfanos se lleva también sus miniaturas", async () => {
+    const client = new FakeClient([]);
+    await new AttachmentService(client.asSupabase()).removeObjects("attachments", ["o/p/1.jpg"]);
+
+    expect(client.storageCalls).toEqual([
+      { bucket: "attachments", method: "remove", args: [["o/p/1.jpg", "o/p/1.jpg.thumb.webp"]] },
+    ]);
   });
 });

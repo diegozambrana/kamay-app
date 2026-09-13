@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Locator, type Page } from "./helpers/test";
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
 
@@ -23,8 +24,6 @@ import ws from "ws";
  */
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
-const GEEKO_ASSISTANT = "ayudante@kamay.test";
 
 /**
  * Umbrales de tiempo, holgados y a propósito.
@@ -35,8 +34,14 @@ const GEEKO_ASSISTANT = "ayudante@kamay.test";
  */
 const VUELTA_MAX_MS = 1_000;
 const VENTAS_SIN_RED = 20;
-/** La vigésima venta no puede costar más de tres veces lo que costó la primera. */
+/** Las últimas ventas no pueden costar más de tres veces lo que costaron las primeras. */
 const DEGRADACION_MAX = 3;
+
+function mediana(valores: number[]): number {
+  const orden = [...valores].sort((a, b) => a - b);
+  const medio = Math.floor(orden.length / 2);
+  return orden.length % 2 ? orden[medio] : (orden[medio - 1] + orden[medio]) / 2;
+}
 
 /**
  * Cuenta en la base cuántas de ESAS ventas existen, como usuario autenticado.
@@ -63,7 +68,7 @@ async function contarVentasDirectas(ids: readonly string[]): Promise<number> {
     realtime: { transport: ws as unknown as typeof WebSocket },
   });
   const { error: authError } = await db.auth.signInWithPassword({
-    email: GEEKO_OWNER,
+    email: geeko().owner,
     password: PASSWORD,
   });
   if (authError) throw new Error(`No se pudo entrar: ${authError.message}`);
@@ -195,7 +200,7 @@ async function venderUno(page: Page) {
 
 test.describe("modo feria", () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
   });
 
   // ── Criterio 1 ──────────────────────────────────────────────────────────
@@ -305,11 +310,18 @@ test.describe("modo feria", () => {
       duraciones.push(Date.now() - inicio);
     }
 
-    // Sin degradación perceptible: la última no cuesta un múltiplo de la
-    // primera. Umbral holgado, ver arriba.
-    const primera = Math.max(duraciones[0], 1);
-    const ultima = duraciones[duraciones.length - 1];
-    expect(ultima).toBeLessThan(primera * DEGRADACION_MAX);
+    // Sin degradación perceptible: las últimas no cuestan un múltiplo de las
+    // primeras. Se comparan **medianas de cinco**, no una venta contra otra:
+    // una sola primera venta de 160 ms convertía cualquier pausa del
+    // recolector en «degradación», y la prueba fallaba también sin este
+    // cambio (KAM-23, intermitencia corregida en su causa). Una degradación de
+    // verdad —una cola que crece, un repintado que empeora— es una tendencia,
+    // y la mediana la conserva.
+    const primeras = mediana(duraciones.slice(0, 5));
+    const ultimas = mediana(duraciones.slice(-5));
+    expect(ultimas, `primeras ${duraciones.slice(0, 5)} · últimas ${duraciones.slice(-5)}`).toBeLessThan(
+      Math.max(primeras, 1) * DEGRADACION_MAX,
+    );
 
     // El indicador dice exactamente cuántas faltan: nada se perdió en silencio.
     await expect(page.getByTestId("fair-pending-count")).toHaveText(String(VENTAS_SIN_RED));
@@ -403,7 +415,7 @@ test.describe("el modo feria se abre sin red", () => {
   test.skip(!process.env.CI, "necesita la compilación de producción");
 
   test.beforeEach(async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
   });
 
   test("recargar sin red conserva las ventas pendientes", async ({ page, context }) => {
@@ -463,7 +475,7 @@ test("el ayudante puede atender el puesto", async ({ page }) => {
     // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
     // agotarse nunca y el caso lento se contaba como fallo.
     test.setTimeout(120_000);
-  await login(page, GEEKO_ASSISTANT);
+  await login(page, geeko().assistant);
   await abrirFeria(page);
 
   await venderUno(page);

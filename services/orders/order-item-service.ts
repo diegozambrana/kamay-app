@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { OrderItem } from "@/types";
+import { chunk } from "@/lib/pagination";
 
 type OrderItemRow = {
   id: string;
@@ -101,21 +102,28 @@ export class OrderItemService {
   ): Promise<Map<string, string>> {
     if (orderIds.length === 0) return new Map();
 
-    const { data, error } = await this.supabase
-      .from("order_items")
-      .select("order_id, description, quantity, items(name)")
-      .eq("organization_id", organizationId)
-      .in("order_id", orderIds)
-      .is("archived_at", null)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      throw new Error(`No se pudieron cargar las líneas: ${error.message}`);
+    // En tandas, como los totales: una sola lista de identificadores de un año
+    // de pedidos desborda la dirección de la petición (KAM-23).
+    const batches = await Promise.all(
+      chunk(orderIds).map((ids) =>
+        this.supabase
+          .from("order_items")
+          .select("order_id, description, quantity, items(name)")
+          .eq("organization_id", organizationId)
+          .in("order_id", ids)
+          .is("archived_at", null)
+          .order("created_at", { ascending: true }),
+      ),
+    );
+    const failed = batches.find((batch) => batch.error);
+    if (failed?.error) {
+      throw new Error(`No se pudieron cargar las líneas: ${failed.error.message}`);
     }
+    const data = batches.flatMap((batch) => batch.data ?? []);
 
     const parts = new Map<string, string[]>();
 
-    for (const raw of data ?? []) {
+    for (const raw of data) {
       const row = raw as unknown as {
         order_id: string;
         description: string | null;

@@ -74,8 +74,8 @@ export function ProfitabilityReport({
         </span>
       </div>
 
-      <div className="overflow-x-auto">
-        <Table>
+      <div>
+        <Table scrollLabel="Tabla de «Rentabilidad»">
           <TableHeader>
             <TableRow>
               <TableHead>Pedido</TableHead>

@@ -17,8 +17,17 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { ArrowRightLeftIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 /**
@@ -32,6 +41,11 @@ import { cn } from "@/lib/utils";
  */
 export type KanbanColumn<T> = {
   id: string;
+  /**
+   * El nombre de la columna en texto: el menú «Mover a…» de cada tarjeta lo
+   * ofrece como destino (KAM-23, alternativa de teclado al arrastre).
+   */
+  label: string;
   /** Cabecera de la columna: título, contador, lo que haga falta. */
   header: React.ReactNode;
   items: T[];
@@ -64,6 +78,7 @@ export function KanbanBoard<T extends { id: string }>({
   renderOverlay,
   onMove,
   onReorder,
+  itemLabel,
   testId,
 }: {
   /**
@@ -77,6 +92,8 @@ export function KanbanBoard<T extends { id: string }>({
   renderOverlay: (item: T) => React.ReactNode;
   onMove: (itemId: string, toColumnId: string) => void;
   onReorder?: (itemId: string, columnId: string, overItemId: string) => void;
+  /** Cómo se nombra una tarjeta en el menú «Mover a…»: «Pedido #12». */
+  itemLabel: (item: T) => string;
   testId: string;
 }) {
   const [active, setActive] = useState<T | null>(null);
@@ -156,7 +173,14 @@ export function KanbanBoard<T extends { id: string }>({
           mueve (`user-auth` — "No app screen scrolls horizontally"). */}
       <div data-testid={testId} className="flex gap-3 overflow-x-auto pb-4">
         {columns.map((column) => (
-          <BoardColumn key={column.id} column={column} renderCard={renderCard} />
+          <BoardColumn
+            key={column.id}
+            column={column}
+            columns={columns}
+            renderCard={renderCard}
+            itemLabel={itemLabel}
+            onMove={onMove}
+          />
         ))}
       </div>
 
@@ -173,10 +197,16 @@ export function KanbanBoard<T extends { id: string }>({
 
 function BoardColumn<T extends { id: string }>({
   column,
+  columns,
   renderCard,
+  itemLabel,
+  onMove,
 }: {
   column: KanbanColumn<T>;
+  columns: KanbanColumn<T>[];
   renderCard: (item: T, columnId: string) => React.ReactNode;
+  itemLabel: (item: T) => string;
+  onMove: (itemId: string, toColumnId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -201,7 +231,17 @@ function BoardColumn<T extends { id: string }>({
           strategy={verticalListSortingStrategy}
         >
           {column.items.map((item) => (
-            <DraggableCard key={item.id} itemId={item.id}>
+            <DraggableCard
+              key={item.id}
+              itemId={item.id}
+              moveMenu={
+                <CardMoveMenu
+                  itemLabel={itemLabel(item)}
+                  targets={columns.filter((candidate) => candidate.id !== column.id)}
+                  onMove={(toColumnId) => onMove(item.id, toColumnId)}
+                />
+              }
+            >
               {renderCard(item, column.id)}
             </DraggableCard>
           ))}
@@ -215,14 +255,24 @@ function BoardColumn<T extends { id: string }>({
 
 function DraggableCard({
   itemId,
+  moveMenu,
   children,
 }: {
   itemId: string;
+  moveMenu: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
+  const { listeners, setNodeRef, transform, isDragging } = useSortable({
     id: itemId,
   });
+
+  // Los `attributes` de `useSortable` no se reparten: son `role="button"`,
+  // `tabindex` e instrucciones para el arrastre con teclado de dnd-kit, y este
+  // tablero no monta ese sensor. El contenedor quedaba enfocable sin hacer
+  // nada al pulsar Enter, envolviendo el enlace de la tarjeta —un control
+  // dentro de otro— y anunciando instrucciones que no funcionaban (KAM-23,
+  // auditoría de accesibilidad). La vía de teclado es el menú «Mover a…»; el
+  // contenedor solo sostiene el arrastre con puntero.
 
   // La tarjeta suele ser un enlace al detalle, así que soltar tras arrastrar
   // dispararía la navegación además del movimiento. Se recuerda que hubo
@@ -245,12 +295,62 @@ function DraggableCard({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={cn(isDragging && "opacity-50")}
+      className={cn("group/card relative", isDragging && "opacity-50")}
       onClickCapture={onClickCapture}
       {...listeners}
-      {...attributes}
     >
       {children}
+      {moveMenu}
     </div>
+  );
+}
+
+/**
+ * La alternativa de teclado al arrastre (KAM-23, spec `accessibility`).
+ *
+ * Mover una tarjeta de columna es la acción central del tablero, y sin puntero
+ * no había forma de hacerlo. El menú llama al mismo `onMove` que el arrastre,
+ * así que el efecto sobre el registro —estado, bitácora, asistente de cierre—
+ * es idéntico.
+ *
+ * Aparece al pasar el puntero o al llegar con el tabulador, para no cargar el
+ * tablero de botones; su nombre accesible dice qué tarjeta mueve.
+ */
+function CardMoveMenu({
+  itemLabel,
+  targets,
+  onMove,
+}: {
+  itemLabel: string;
+  targets: { id: string; label: string }[];
+  onMove: (toColumnId: string) => void;
+}) {
+  if (targets.length === 0) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="secondary"
+          size="icon"
+          data-testid="card-move-menu"
+          aria-label={`Mover ${itemLabel} a otra columna`}
+          // El arrastre no debe arrancar desde el botón.
+          onPointerDown={(event) => event.stopPropagation()}
+          className="absolute right-1 bottom-1 size-7 opacity-0 shadow-xs transition-opacity group-hover/card:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+        >
+          <ArrowRightLeftIcon className="size-3.5" aria-hidden />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Mover a</DropdownMenuLabel>
+        {targets.map((target) => (
+          <DropdownMenuItem key={target.id} onSelect={() => onMove(target.id)}>
+            {target.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

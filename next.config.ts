@@ -65,7 +65,12 @@ const nextConfig: NextConfig = {
  */
 export default function config(phase: string): NextConfig {
   const onVercel = Boolean(process.env.VERCEL);
-  if (phase === PHASE_PRODUCTION_BUILD || (phase === PHASE_PRODUCTION_SERVER && !onVercel)) {
+  // `next typegen` —dentro de `npm run typecheck`— carga este archivo con la
+  // misma fase que una compilación, y en CI corre antes de que existan las
+  // variables: generar tipos no despliega nada y no se valida.
+  const typegen = process.argv.includes("typegen");
+  const building = phase === PHASE_PRODUCTION_BUILD && !typegen;
+  if (building || (phase === PHASE_PRODUCTION_SERVER && !onVercel)) {
     assertEnv(process.env, "production");
   }
   return nextConfig;

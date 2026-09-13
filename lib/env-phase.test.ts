@@ -15,8 +15,11 @@ function stubEnv(values: Record<string, string | undefined>) {
   for (const [name, value] of Object.entries(values)) vi.stubEnv(name, value);
 }
 
+const argv = process.argv;
+
 afterEach(() => {
   vi.unstubAllEnvs();
+  process.argv = argv;
 });
 
 /**
@@ -48,6 +51,12 @@ describe("next.config valida el entorno", () => {
   it("dentro de Vercel no se valida al arrancar: el proxy no recibe las variables de servidor", () => {
     stubEnv({ ...COMPLETE, CRON_SECRET: undefined, SUPABASE_SERVICE_ROLE_KEY: undefined, VERCEL: "1" });
     expect(() => config(PHASE_PRODUCTION_SERVER)).not.toThrow();
+  });
+
+  it("`next typegen` carga la fase de compilación, pero no despliega nada y no valida", () => {
+    stubEnv({ ...COMPLETE, NEXT_PUBLIC_SUPABASE_URL: undefined, CRON_SECRET: undefined });
+    process.argv = [...argv.slice(0, 2), "typegen"];
+    expect(() => config(PHASE_PRODUCTION_BUILD)).not.toThrow();
   });
 
   it("en desarrollo no exige las de producción", () => {

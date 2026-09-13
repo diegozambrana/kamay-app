@@ -1,17 +1,11 @@
 import type { Instrumentation } from "next";
 
 import { ORG_COOKIE } from "@/constants/auth";
-import { assertEnv } from "@/lib/env";
 import { reportError } from "@/lib/monitoring/report-error";
 
-/**
- * Se ejecuta una vez al levantar cada instancia del servidor, antes de atender
- * ninguna petición: el sitio donde un entorno incompleto debe fallar —con el
- * nombre de lo que falta— y no en la primera operación de alguien (KAM-23).
- */
-export function register() {
-  assertEnv(process.env, process.env.NODE_ENV);
-}
+// Las variables de entorno se validan al compilar, en `next.config.ts`, y no
+// aquí: `register()` corre también en el proxy, que en Vercel no recibe las
+// variables de servidor (KAM-23).
 
 /**
  * Todo error no controlado del servidor —al rendir, en una ruta, en una acción

@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { PHASE_PRODUCTION_BUILD, PHASE_PRODUCTION_SERVER } from "next/constants";
+
+import { assertEnv } from "./lib/env";
 
 /**
  * El service worker no se compila aquí: lo construye `serwist.config.mjs` en
@@ -48,4 +51,22 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Las variables requeridas se validan **al compilar** y al arrancar con
+ * `next start` (KAM-23, `lib/env.ts`). Compilar es el primer momento posible:
+ * en Vercel, un entorno incompleto hace fallar el despliegue nombrando lo que
+ * falta, y la versión anterior sigue sirviendo.
+ *
+ * No se valida en `instrumentation.ts`: ahí corre también el proxy, que en
+ * Vercel no recibe las variables de servidor, y el primer despliegue respondió
+ * 500 a todo por eso. Tampoco al arrancar dentro de Vercel, donde las
+ * funciones no vuelven a ejecutar este archivo sino la configuración ya
+ * compilada.
+ */
+export default function config(phase: string): NextConfig {
+  const onVercel = Boolean(process.env.VERCEL);
+  if (phase === PHASE_PRODUCTION_BUILD || (phase === PHASE_PRODUCTION_SERVER && !onVercel)) {
+    assertEnv(process.env, "production");
+  }
+  return nextConfig;
+}

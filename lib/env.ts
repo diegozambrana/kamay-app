@@ -2,7 +2,8 @@ import { z } from "zod";
 
 /**
  * Las variables de entorno que la aplicación necesita, comprobadas **al
- * arrancar** y no en la primera operación que las use (KAM-23, design D14).
+ * compilar y al arrancar** (`next.config.ts`) y no en la primera operación
+ * que las use (KAM-23, design D14).
  *
  * Sin esto, un despliegue al que le falta `SUPABASE_SERVICE_ROLE_KEY` arranca
  * sano y falla horas después, en el trabajo programado; y uno sin

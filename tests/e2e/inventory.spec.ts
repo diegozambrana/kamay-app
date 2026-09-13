@@ -1,9 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
-const GEEKO_ASSISTANT = "ayudante@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -78,7 +77,7 @@ test.describe("inventario suave (KAM-18)", () => {
    * nace con saldo cero y sube solo al registrarla.
    */
   test("compra, consumo y ajuste: el saldo cuadra en cada paso", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const supply = await createSupply(page);
 
     // Un insumo sin movimientos aparece con saldo cero, no ausente.
@@ -137,7 +136,7 @@ test.describe("inventario suave (KAM-18)", () => {
    * menos, contadas desde que el diálogo está a la vista.
    */
   test("registrar un consumo toma tres interacciones o menos", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await createSupply(page);
     await count(page, "20"); // saldo de partida, sin contar como interacción
     await expect.poll(() => balanceOf(page)).toBe(20);
@@ -162,7 +161,7 @@ test.describe("inventario suave (KAM-18)", () => {
 
   // Escenarios "No se pide explicación" y "Conteo que coincide con el saldo".
   test("el conteo no pide motivo, y si coincide lo dice sin fallar", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await createSupply(page);
 
     await page.getByRole("button", { name: "Ajuste por conteo" }).click();
@@ -184,7 +183,7 @@ test.describe("inventario suave (KAM-18)", () => {
   test("un consumo duplicado se corrige con un ajuste, y ambos quedan a la vista", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await createSupply(page);
     await count(page, "30");
     await expect.poll(() => balanceOf(page)).toBe(30);
@@ -213,7 +212,7 @@ test.describe("inventario suave (KAM-18)", () => {
   test("cruzar el mínimo enciende panel y catálogo, y volver por encima los apaga", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const supply = await createSupply(page, { minStock: "10" });
 
     // Nace en cero, que ya está bajo su mínimo de 10.
@@ -250,7 +249,7 @@ test.describe("inventario suave (KAM-18)", () => {
   // Escenarios "El ayudante no ve precios de compra" y "El ayudante registra
   // consumo": el recorte lo hace RLS, no una condición en la interfaz.
   test("el ayudante registra consumo y no ve ninguna cifra de compra", async ({ page }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     const supply = await createSupply(page);
 

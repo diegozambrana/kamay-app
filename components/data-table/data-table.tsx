@@ -28,12 +28,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import {
   Table,
   TableBody,
   TableCell,
@@ -106,7 +100,12 @@ export type DataTableProps<T> = {
   onAction?: (actionId: string, row: T) => void;
   /** Atributos por fila (`data-archived`, por ejemplo). */
   rowProps?: (row: T) => React.ComponentProps<typeof TableRow>;
-  empty?: { title: string; description?: string };
+  /**
+   * Lo que se rinde sin filas: un `EmptyState` o un `FilteredEmptyState` de
+   * `components/shared/`. La tabla no decide cuál —no sabe si hay filtros—,
+   * solo cede el sitio (KAM-23, design D2).
+   */
+  empty?: React.ReactNode;
   className?: string;
   "data-testid"?: string;
 };
@@ -142,16 +141,7 @@ export function DataTable<T>({
   const hasActions = actions.length > 0 && onAction !== undefined;
 
   if (rows.length === 0 && empty) {
-    return (
-      <Empty className={cn("border border-dashed", className)}>
-        <EmptyHeader>
-          <EmptyTitle>{empty.title}</EmptyTitle>
-          {empty.description && (
-            <EmptyDescription>{empty.description}</EmptyDescription>
-          )}
-        </EmptyHeader>
-      </Empty>
-    );
+    return <div className={className}>{empty}</div>;
   }
 
   function run(action: DataTableAction<T>, row: T) {

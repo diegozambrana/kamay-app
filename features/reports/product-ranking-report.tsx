@@ -48,8 +48,8 @@ export function ProductRankingReport({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
+    <div>
+      <Table scrollLabel="Tabla de «Qué se vende más»">
         <TableHeader>
           <TableRow>
             <TableHead>Producto</TableHead>

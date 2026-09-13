@@ -1,7 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geekoForBlock } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -72,7 +72,7 @@ test.describe.serial("crear tarea para este pedido (V4 → alta)", () => {
   test.skip(({ isMobile }) => Boolean(isMobile), "usa el selector de línea del menú lateral");
 
   test("el formulario llega prellenado desde el pedido", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
     await createOwnOrder(page, `Prellenado ${Date.now()}`);
 
@@ -100,7 +100,7 @@ test.describe.serial("crear tarea para este pedido (V4 → alta)", () => {
   test("todo lo prellenado se puede cambiar, y el vínculo se guarda", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
     await createOwnOrder(page, `Prellenado ${Date.now()}`);
     await page.getByTestId("create-task-for-order").click();
@@ -121,7 +121,7 @@ test.describe.serial("crear tarea para este pedido (V4 → alta)", () => {
   });
 
   test("el vínculo se puede quitar antes de guardar", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await selectLine(page, "Sublimación");
     await createOwnOrder(page, `Prellenado ${Date.now()}`);
     await page.getByTestId("create-task-for-order").click();

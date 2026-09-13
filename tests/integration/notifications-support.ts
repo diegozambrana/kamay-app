@@ -69,11 +69,15 @@ export async function userIdByEmail(
   admin: SupabaseClient,
   email: string,
 ): Promise<string> {
-  const { data, error } = await admin.auth.admin.listUsers({ perPage: 200 });
-  if (error) throw new Error(`No se pudieron listar usuarios: ${error.message}`);
+  // Por páginas: las copias de la semilla que crea la suite e2e (KAM-23)
+  // dejan cientos de usuarias, y la de la semilla ya no cabe en la primera.
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw new Error(`No se pudieron listar usuarios: ${error.message}`);
 
-  const user = data.users.find((candidate) => candidate.email === email);
-  if (!user) throw new Error(`No existe el usuario ${email} en la semilla.`);
-
-  return user.id;
+    const user = data.users.find((candidate) => candidate.email === email);
+    if (user) return user.id;
+    if (data.users.length < 1000) break;
+  }
+  throw new Error(`No existe el usuario ${email} en la semilla.`);
 }

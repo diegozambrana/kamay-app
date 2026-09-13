@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { makeThumbnail, THUMBNAIL_MIME, thumbnailPath } from "@/lib/attachments/thumbnail";
+
 import type { Attachment, AttachmentEntityType } from "@/types";
+import { chunk } from "@/lib/pagination";
 
 type AttachmentRow = {
   id: string;
@@ -103,21 +106,30 @@ export class AttachmentService {
   ): Promise<Attachment[]> {
     if (entityIds.length === 0) return [];
 
-    const { data, error } = await this.supabase
-      .from("attachments")
-      .select(COLUMNS)
-      .eq("organization_id", organizationId)
-      .eq("entity_type", entityType)
-      .in("entity_id", entityIds)
-      .is("archived_at", null)
-      .order("created_at", { ascending: false })
-      .overrideTypes<AttachmentRow[]>();
-
-    if (error) {
-      throw new Error(`No se pudieron cargar los adjuntos: ${error.message}`);
+    // En tandas: una lista de identificadores larga desborda la dirección de
+    // la petición (KAM-23). El orden «más nuevo primero» se rehace al juntar.
+    const batches = await Promise.all(
+      chunk(entityIds).map((ids) =>
+        this.supabase
+          .from("attachments")
+          .select(COLUMNS)
+          .eq("organization_id", organizationId)
+          .eq("entity_type", entityType)
+          .in("entity_id", ids)
+          .is("archived_at", null)
+          .order("created_at", { ascending: false })
+          .overrideTypes<AttachmentRow[]>(),
+      ),
+    );
+    const failed = batches.find((batch) => batch.error);
+    if (failed?.error) {
+      throw new Error(`No se pudieron cargar los adjuntos: ${failed.error.message}`);
     }
 
-    return (data ?? []).map((row) => this.toEntity(row as AttachmentRow));
+    return batches
+      .flatMap((batch) => batch.data ?? [])
+      .sort((a, b) => (b as AttachmentRow).created_at.localeCompare((a as AttachmentRow).created_at))
+      .map((row) => this.toEntity(row as AttachmentRow));
   }
 
   /** Adjuntos vigentes de un registro, del más nuevo al más viejo. */
@@ -208,7 +220,31 @@ export class AttachmentService {
       throw new Error(`No se pudo registrar el adjunto: ${error.message}`);
     }
 
+    await this.storeThumbnail(input.bucket, storagePath, input.body, input.mimeType);
+
     return this.toEntity(data as AttachmentRow);
+  }
+
+  /**
+   * La miniatura de una imagen, junto al original (KAM-23). Va después de la
+   * fila y **no puede fallar la subida**: sin miniatura, las pantallas firman
+   * el original, que es como estaban.
+   */
+  private async storeThumbnail(
+    bucket: string,
+    storagePath: string,
+    body: ArrayBuffer | Blob,
+    mimeType: string | null,
+  ): Promise<void> {
+    const thumbnail = await makeThumbnail(body, mimeType);
+    if (!thumbnail) return;
+    await this.supabase.storage
+      .from(bucket)
+      .upload(thumbnailPath(storagePath), thumbnail, {
+        contentType: THUMBNAIL_MIME,
+        upsert: true,
+      })
+      .catch(() => undefined);
   }
 
   async setArchived(
@@ -270,6 +306,49 @@ export class AttachmentService {
   }
 
   /**
+   * URLs firmadas para **pintar** los adjuntos: la de su miniatura si la
+   * tiene, la del original si no —una subida anterior a KAM-23, o un archivo
+   * que no es una imagen—. Miniatura y original se firman en la misma
+   * petición por bucket: la que no existe vuelve sin URL, y esa es la señal.
+   */
+  async signedThumbnailUrls(
+    attachments: Attachment[],
+  ): Promise<Map<string, string>> {
+    const urls = new Map<string, string>();
+    const byBucket = new Map<string, Attachment[]>();
+    for (const attachment of attachments) {
+      const group = byBucket.get(attachment.bucket) ?? [];
+      group.push(attachment);
+      byBucket.set(attachment.bucket, group);
+    }
+
+    for (const [bucket, group] of byBucket) {
+      const paths = group.flatMap((attachment) => [
+        thumbnailPath(attachment.storagePath),
+        attachment.storagePath,
+      ]);
+      const { data, error } = await this.supabase.storage
+        .from(bucket)
+        .createSignedUrls(paths, SIGNED_URL_TTL);
+      if (error || !data) continue;
+
+      const signed = new Map(
+        data.flatMap((entry) =>
+          entry.path && entry.signedUrl ? [[entry.path, entry.signedUrl] as const] : [],
+        ),
+      );
+      for (const attachment of group) {
+        const url =
+          signed.get(thumbnailPath(attachment.storagePath)) ??
+          signed.get(attachment.storagePath);
+        if (url) urls.set(attachment.id, url);
+      }
+    }
+
+    return urls;
+  }
+
+  /**
    * Copia el objeto de un adjunto a la carpeta de otro registro y devuelve la
    * fila que habría que insertar para él.
    *
@@ -306,6 +385,13 @@ export class AttachmentService {
       throw new Error(`No se pudo copiar el adjunto: ${error.message}`);
     }
 
+    // La miniatura viaja con el original, si la tiene; si no, la copia se
+    // pinta con el original igual que su fuente.
+    await this.supabase.storage
+      .from(source.bucket)
+      .copy(thumbnailPath(source.storagePath), thumbnailPath(storagePath))
+      .catch(() => undefined);
+
     return {
       id,
       bucket: source.bucket,
@@ -319,6 +405,9 @@ export class AttachmentService {
   /** Retira objetos copiados que se quedaron sin fila. */
   async removeObjects(bucket: string, storagePaths: string[]): Promise<void> {
     if (storagePaths.length === 0) return;
-    await this.supabase.storage.from(bucket).remove(storagePaths);
+    // Con sus miniaturas: pedir retirar una que no existe no es un error.
+    await this.supabase.storage
+      .from(bucket)
+      .remove([...storagePaths, ...storagePaths.map(thumbnailPath)]);
   }
 }

@@ -118,7 +118,7 @@ export default async function ItemDetailPage({
 
   // El bucket es privado: cada lectura se firma, y una firma que falla deja la
   // tarjeta sin imagen en vez de tumbar la página.
-  const signed = await attachments.signedUrls(photoRows);
+  const signed = await attachments.signedThumbnailUrls(photoRows);
   const photos = photoRows.map((photo) => ({
     ...photo,
     url: signed.get(photo.id) ?? null,

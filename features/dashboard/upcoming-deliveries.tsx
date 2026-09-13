@@ -9,6 +9,8 @@ import { isOverdue } from "@/lib/orders/overdue";
 import { cn } from "@/lib/utils";
 import type { UpcomingDelivery } from "@/services/dashboard/dashboard-service";
 import type { LineColor } from "@/types";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 
 const DELIVERY_LABELS = { pickup: "Recojo", delivery: "Delivery" } as const;
 
@@ -65,9 +67,16 @@ export function UpcomingDeliveries({
 
       <CardContent>
         {sorted.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No hay entregas comprometidas para los próximos días.
-          </p>
+          <EmptyState
+            testId="card-empty"
+            className="p-4"
+            title="No hay entregas comprometidas para los próximos días."
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/orders/new">Crear pedido</Link>
+              </Button>
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-1">
             {sorted.map((delivery) => {

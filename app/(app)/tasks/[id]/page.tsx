@@ -83,7 +83,11 @@ export default async function TaskDetailPage({
     "task",
     task.id,
   );
-  const signed = await attachmentService.signedUrls(files);
+  // El original, para abrirlo; la miniatura, para pintarlo (KAM-23).
+  const [signed, thumbnails] = await Promise.all([
+    attachmentService.signedUrls(files),
+    attachmentService.signedThumbnailUrls(files),
+  ]);
 
   /**
    * Lo que los formularios de egreso del asistente necesitan y la tarea no
@@ -136,6 +140,7 @@ export default async function TaskDetailPage({
           ? (assigneeNames.get(file.uploadedBy) ?? null)
           : null,
         url: signed.get(file.id) ?? null,
+        thumbnailUrl: thumbnails.get(file.id) ?? null,
       }))}
       links={links}
       deliverables={deliverables}

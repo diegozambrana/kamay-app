@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 /**
  * KAM-13 · Registro rápido y navegación móvil, en un teléfono de verdad.
@@ -24,8 +25,6 @@ test.beforeEach(({ isMobile }) => {
 });
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
-const GEEKO_ASSISTANT = "ayudante@kamay.test";
 
 const ANCHO = 390;
 
@@ -87,14 +86,14 @@ async function pedidosEncolados(page: Page): Promise<string[]> {
 
 test.describe("V16 · registro rápido", () => {
   test("entrar en el celular aterriza en el registro rápido", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     await expect(page).toHaveURL(/\/quick$/);
     await expect(page.getByTestId("quick-grid")).toBeVisible();
   });
 
   test("la retícula cabe en 390 px con sus seis destinos", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     expect(page.viewportSize()?.width).toBe(ANCHO);
     await expect(page.getByTestId("quick-grid").locator("> *")).toHaveCount(6);
@@ -114,7 +113,7 @@ test.describe("V16 · registro rápido", () => {
   });
 
   test("registrar un gasto y verlo encabezar Registrado hoy", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // Dos toques desde la pantalla de inicio: el destino y guardar.
     await page.getByTestId("quick-destination-cost").click();
@@ -151,7 +150,7 @@ test.describe("V16 · registro rápido", () => {
   test("al ayudante la retícula no le ofrece egresos, ni por dirección", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     await expect(page.getByTestId("quick-destination-purchase")).toHaveCount(0);
     await expect(page.getByTestId("quick-destination-cost")).toHaveCount(0);
@@ -165,7 +164,7 @@ test.describe("V16 · registro rápido", () => {
 
 test.describe("modo feria: la ida y la vuelta", () => {
   test("se entra desde V16 y se vuelve a V16", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     await page.getByTestId("quick-destination-direct-sale").click();
     await page.waitForURL(/\/fair$/);
@@ -181,7 +180,7 @@ test.describe("modo feria: la ida y la vuelta", () => {
   });
 
   test("no hay otra puerta al modo feria", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     for (const ruta of ["/dashboard", "/orders", "/catalog", "/contacts", "/expenses"]) {
       await page.goto(ruta);
@@ -195,7 +194,7 @@ test.describe("modo feria: la ida y la vuelta", () => {
 
 test.describe("barra inferior y panel Más", () => {
   test("cuatro ranuras, con Tareas hacia Mis pendientes", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders");
 
     const ranuras = page.getByTestId("bottom-bar").locator("> *");
@@ -207,7 +206,7 @@ test.describe("barra inferior y panel Más", () => {
   });
 
   test("Más abre el resto de secciones y se cierra al elegir", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders");
 
     await page.getByTestId("bottom-bar-more").click();
@@ -225,7 +224,7 @@ test.describe("barra inferior y panel Más", () => {
   }) => {
     // El indicador de sincronización de KAM-11 vive arriba; la barra y el
     // flotante, abajo. Reestructurar la barra no puede desalojarlo.
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders");
 
     await expect(page.getByTestId("mobile-context-bar")).toBeVisible();
@@ -236,7 +235,7 @@ test.describe("barra inferior y panel Más", () => {
 
 test.describe("+ Registrar desde cualquier pantalla", () => {
   test("un gasto desde el catálogo son dos toques", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/catalog");
 
     await page.getByTestId("register-button").click();
@@ -246,7 +245,7 @@ test.describe("+ Registrar desde cualquier pantalla", () => {
   });
 
   test("un pedido desde los egresos son dos toques", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/expenses");
 
     await page.getByTestId("register-button").click();
@@ -260,7 +259,7 @@ test.describe("pedidos en el celular", () => {
   test("la lista es la vista por omisión y el tablero sigue disponible", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders");
 
     // La lista rinde una tabla por grupo de estado y todas comparten el
@@ -305,7 +304,7 @@ test.describe("ninguna pantalla se desplaza a lo ancho en 390 px", () => {
   ];
 
   test("recorrido completo", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     for (const ruta of RUTAS) {
       await page.goto(ruta);
@@ -335,7 +334,7 @@ test.describe("Registrado hoy cuenta lo que no se ha enviado", () => {
     // mismo; y con la red viva se puede navegar a `/quick`, que es donde
     // vive la lista. Con el navegador desconectado, en desarrollo no hay
     // service worker que sirva el cascarón y la propia navegación falla.
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     await page.goto("/orders/new");
     await page.getByTestId("line-select").click();

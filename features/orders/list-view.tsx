@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import type { Status } from "@/types";
 
 import type { BoardOrder } from "./board-view";
+import { EmptyState } from "@/components/shared/empty-state";
 
 const DELIVERY_LABELS = { pickup: "Recojo", delivery: "Delivery" } as const;
 
@@ -41,11 +42,7 @@ export function ListView({
   const router = useRouter();
 
   if (statuses.length === 0) {
-    return (
-      <p className="py-12 text-center text-sm text-muted-foreground">
-        No hay pedidos que mostrar.
-      </p>
-    );
+    return <EmptyState title="No hay pedidos que mostrar" />;
   }
 
   function onAction(actionId: string, order: BoardOrder) {
@@ -159,7 +156,7 @@ export function ListView({
                 "data-order-code": order.code,
                 className: order.archivedAt ? "text-muted-foreground" : undefined,
               })}
-              empty={{ title: "Sin pedidos en este estado" }}
+              empty={<EmptyState testId="status-empty" title="Sin pedidos en este estado" />}
             />
           </section>
         );

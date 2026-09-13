@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 /**
  * KAM-11 · Registrar sin conexión.
@@ -22,7 +23,6 @@ import { expect, test, type Page } from "@playwright/test";
  */
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 /**
  * Cantidades irrepetibles.
@@ -92,7 +92,7 @@ test.describe("captura sin conexión", () => {
     // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
     // agotarse nunca y el caso lento se contaba como fallo.
     test.setTimeout(120_000);
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders/new");
 
     const total = await llenarPedido(page, cantidadUnica());
@@ -161,10 +161,10 @@ test.describe("captura sin conexión", () => {
   }) => {
     // Mismo motivo que arriba: el vaciado puede tardar un barrido completo.
     test.setTimeout(120_000);
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
-    // Un insumo propio: el saldo es justo lo que esta prueba mide, y los
-    // sembrados los mueven otras pruebas en paralelo.
+    // Un insumo propio: el saldo es justo lo que esta prueba mide, y así no
+    // depende del que la semilla deja en los sembrados.
     const nombre = `Insumo sin red ${Date.now()}`;
     await page.goto("/catalog?kind=supply");
     await page.getByRole("button", { name: "Nuevo ítem" }).click();
@@ -229,7 +229,7 @@ test.describe("captura sin conexión", () => {
     // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
     // agotarse nunca y el caso lento se contaba como fallo.
     test.setTimeout(120_000);
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders/new");
     await context.setOffline(true);
 
@@ -283,7 +283,7 @@ test.describe("el cascarón se abre sin red", () => {
     page,
     context,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders");
 
     // El service worker toma el control antes de servir nada sin red.
@@ -308,7 +308,7 @@ test.describe("el cascarón se abre sin red", () => {
     // por omisión de la prueba es 30 s: sin ampliarlo, esa espera no podía
     // agotarse nunca y el caso lento se contaba como fallo.
     test.setTimeout(120_000);
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/orders/new");
     await page.evaluate(() => navigator.serviceWorker.ready);
     await llenarPedido(page, cantidadUnica());

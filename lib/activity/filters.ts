@@ -12,13 +12,14 @@
 import { isCivilDate, startOfDayInTimezone, startOfNextDayInTimezone } from "@/lib/expenses/period";
 import { ALL_LINES, type ActiveLine } from "@/types";
 
-/** Las cinco acciones que `activity_log` admite hoy, más «todas». */
+/** Las seis acciones que `activity_log` admite hoy, más «todas». */
 export const ACTIONS = [
   "created",
   "updated",
   "status_changed",
   "archived",
   "unarchived",
+  "exported",
 ] as const;
 export type ActivityAction = (typeof ACTIONS)[number];
 

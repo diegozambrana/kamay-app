@@ -80,7 +80,7 @@ export async function loadExpenseDetail(
     : null;
 
   // El bucket es privado: cada lectura se firma.
-  const signed = await new AttachmentService(supabase).signedUrls(receipts);
+  const signed = await new AttachmentService(supabase).signedThumbnailUrls(receipts);
 
   return {
     expense,

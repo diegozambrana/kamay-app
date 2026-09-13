@@ -29,6 +29,7 @@ const ACTION_LABELS: Record<string, string> = {
   status_changed: "Cambió de estado",
   archived: "Archivó",
   unarchived: "Desarchivó",
+  exported: "Exportó",
 };
 
 export type FilterOption = { value: string; label: string };

@@ -6,7 +6,7 @@ import { getOwnerContext } from "@/lib/auth/session-context";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { todayInTimezone } from "@/lib/orders/overdue";
 import { allocateSharedExpenses } from "@/lib/reports/allocation";
-import { type CsvTable, csvFilename, toCsv } from "@/lib/reports/csv";
+import { type CsvTable, csvFilename, toCsv } from "@/lib/export/csv";
 import { marginOf } from "@/lib/reports/margin";
 import { resolveReportPeriod } from "@/lib/reports/period";
 import { ContactService } from "@/services/catalog/contact-service";

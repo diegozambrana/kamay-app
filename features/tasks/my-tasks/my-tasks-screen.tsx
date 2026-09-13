@@ -1,8 +1,12 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 
 import { completeTask, postponeTask, uncompleteTask } from "@/actions/tasks";
+import { EmptyState } from "@/components/shared/empty-state";
+import { FilteredEmptyState } from "@/components/shared/filtered-empty-state";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { groupByDue } from "@/lib/tasks/groups";
 
@@ -104,12 +108,28 @@ export function MyTasksScreen({
         className="max-w-sm"
       />
 
+      {/* La búsqueda de esta vista es local —no viaja en la dirección—, pero
+          la regla es la misma que en el resto: el estado lo decide si hay
+          filtro, no el conteo (design D2). */}
       {total === 0 ? (
-        <p data-testid="my-tasks-empty" className="text-sm text-muted-foreground">
-          {search.trim()
-            ? "Ninguna tarea coincide con lo que buscas."
-            : "No tienes tareas pendientes."}
-        </p>
+        <div data-testid="my-tasks-empty">
+          {search.trim() ? (
+            <FilteredEmptyState
+              description="Ninguna tarea coincide con lo que buscas."
+              onClearFilters={() => setSearch("")}
+            />
+          ) : (
+            <EmptyState
+              title="No tienes tareas pendientes."
+              description="Lo que se te asigne, o lo que anotes para ti, aparecerá aquí agrupado por fecha."
+              action={
+                <Button asChild>
+                  <Link href="/tasks/new">Anotar una tarea</Link>
+                </Button>
+              }
+            />
+          )}
+        </div>
       ) : (
         groups.map((group) => (
           <section key={group.key} data-testid={`group-${group.key}`}>

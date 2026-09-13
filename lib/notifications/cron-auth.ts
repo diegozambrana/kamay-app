@@ -3,8 +3,9 @@ import { timingSafeEqual } from "node:crypto";
 /**
  * ¿La petición trae la credencial del cron?
  *
- * Es la única puerta del sistema que corre con service role, así que se
- * comprueba con cuidado:
+ * Los trabajos programados —el resumen diario y la retención mensual— son las
+ * únicas puertas del sistema que corren con service role, así que se comprueba
+ * con cuidado:
  *
  * - **En tiempo constante**, para no filtrar el secreto carácter a carácter a
  *   quien pueda medir la respuesta.

@@ -1,7 +1,7 @@
 /**
  * La exportación de la bitácora: su techo y su nombre de archivo.
  *
- * **No hay serializador CSV aquí.** `toCsv()` de `lib/reports/csv.ts` ya
+ * **No hay serializador CSV aquí.** `toCsv()` de `lib/export/csv.ts` ya
  * resuelve el escapado de RFC 4180, el BOM que evita que Excel abra
  * «Sublimación» como «SublimaciÃ³n» y las cifras sin formato de moneda; KAM-20
  * lo escribió y funciona (design D6). Lo único que la bitácora no puede

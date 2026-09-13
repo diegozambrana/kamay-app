@@ -63,8 +63,8 @@ export function LineComparisonReport({
         }))}
       />
 
-      <div className="overflow-x-auto">
-        <Table>
+      <div>
+        <Table scrollLabel="Tabla de «Comparativo entre líneas»">
           <TableHeader>
             <TableRow>
               <TableHead>Línea</TableHead>

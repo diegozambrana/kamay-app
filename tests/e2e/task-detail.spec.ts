@@ -1,9 +1,10 @@
-import { expect, test, type Page } from "@playwright/test";
+import { signedInClient } from "./helpers/fresh-org";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 import { noisePng } from "./helpers/png";
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 const MB = 1024 * 1024;
 
 async function login(page: Page, email: string) {
@@ -77,7 +78,7 @@ test.describe("detalle de tarea (V18)", () => {
     test.skip(({ isMobile }) => Boolean(isMobile), "se llega desde el tablero, que es de escritorio");
 
     test("se llega desde el tablero y la dirección es compartible", async ({ page }) => {
-      await login(page, GEEKO_OWNER);
+      await login(page, geeko().owner);
       const { title, url } = await createTask(page, "Detalle desde tablero");
 
       // Se llega desde el tablero.
@@ -91,7 +92,7 @@ test.describe("detalle de tarea (V18)", () => {
     });
 
     test("editar el cuerpo con la barra y verlo en la vista previa", async ({ page }) => {
-      await login(page, GEEKO_OWNER);
+      await login(page, geeko().owner);
       await createTask(page, "Cuerpo con negrita");
 
       const area = page.getByLabel("Descripción");
@@ -112,7 +113,7 @@ test.describe("detalle de tarea (V18)", () => {
     });
 
     test("marcar una casilla persiste y no toca las demás", async ({ page }) => {
-      await login(page, GEEKO_OWNER);
+      await login(page, geeko().owner);
       await createTask(page, "Hornada con pasos");
 
       await writeBody(
@@ -150,7 +151,7 @@ test.describe("detalle de tarea (V18)", () => {
     });
 
     test("adjuntar una imagen grande sin dejar de editar el cuerpo", async ({ page }) => {
-      await login(page, GEEKO_OWNER);
+      await login(page, geeko().owner);
       await createTask(page, "Tarea con adjunto");
 
       // Un PNG de ruido de 2000 × 2000: pesa unos 12 MB y el navegador lo
@@ -177,7 +178,7 @@ test.describe("detalle de tarea (V18)", () => {
     });
 
     test("quitar un adjunto libera ranura y no lo borra", async ({ page }) => {
-      await login(page, GEEKO_OWNER);
+      await login(page, geeko().owner);
       await createTask(page, "Tarea con adjunto retirado");
 
       const subir = (name: string) =>
@@ -205,7 +206,7 @@ test.describe("detalle de tarea (V18)", () => {
     });
 
     test("cambiar el responsable no exige guardar nada más", async ({ page }) => {
-      await login(page, GEEKO_OWNER);
+      await login(page, geeko().owner);
       await createTask(page, "Tarea reasignada");
 
       await page.getByLabel("Responsable").click();
@@ -219,7 +220,7 @@ test.describe("detalle de tarea (V18)", () => {
     });
 
     test("el historial sale de la bitácora, con la creación primero", async ({ page }) => {
-      await login(page, GEEKO_OWNER);
+      await login(page, geeko().owner);
       await createTask(page, "Tarea con historial");
 
       // Una tarea recién creada ya tiene su primera entrada.
@@ -261,13 +262,40 @@ test.describe("detalle de tarea (V18)", () => {
     test.skip(({ isMobile }) => !isMobile, "el criterio es de 390 px");
 
     test("ocupa la pantalla completa y no se desplaza en horizontal", async ({ page }) => {
-      await login(page, GEEKO_OWNER);
+      // Una tarea propia: la semilla de Geeko no trae ninguna, y esta prueba
+      // no puede depender de las que dejen otras. Se prepara con la sesión de
+      // la dueña, bajo RLS, como la crearía la aplicación.
+      const titulo = `Tarea en el celular ${Date.now()}`;
+      const owner = await signedInClient(geeko().owner);
+      const { data: linea } = await owner
+        .from("business_lines")
+        .select("id")
+        .eq("organization_id", geeko().organizationId)
+        .eq("name", "Sublimación")
+        .single();
+      const { data: estado } = await owner
+        .from("statuses")
+        .select("id")
+        .eq("organization_id", geeko().organizationId)
+        .eq("flow", "task")
+        .eq("kind", "initial")
+        .is("business_line_id", null)
+        .single();
+      const { error } = await owner.from("tasks").insert({
+        organization_id: geeko().organizationId,
+        business_line_id: linea?.id,
+        title: titulo,
+        status_id: estado?.id,
+      });
+      if (error) throw new Error(`tarea: ${error.message}`);
+
+      await login(page, geeko().owner);
 
       // Sin elegir línea: la vista de lista cruza todas, y el selector móvil
       // vive en la tira de contexto, que no es lo que se está probando aquí.
       // Se llega por dirección porque en móvil la puerta de las tareas es V20.
       await page.goto("/tasks?view=list");
-      const fila = page.getByTestId("task-row").first();
+      const fila = page.getByTestId("task-row").filter({ hasText: titulo });
       await expect(fila).toBeVisible();
       const id = await fila.getAttribute("data-task-id");
       await page.goto(`/tasks/${id}`);

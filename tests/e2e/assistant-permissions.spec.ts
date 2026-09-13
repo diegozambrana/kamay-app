@@ -1,13 +1,11 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko, geekoForBlock, historico } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
-const GEEKO_ASSISTANT = "ayudante@kamay.test";
 // Organización aparte con doce meses de movimientos (supabase/seed.sql): los
 // datos que el presupuesto de carga necesita no viven en Geeko Store, cuyas
 // filas son fixtures de las suites de tablero, alta y feria.
-const HISTORY_OWNER = "historico@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -22,7 +20,7 @@ const MONEY = /\d+\.\d{2}/;
 
 test.describe("V2 · panel del ayudante", () => {
   test("no hay un solo monto en su pantalla", async ({ page }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
     await page.goto("/dashboard");
 
     await expect(page.getByTestId("assistant-dashboard")).toBeVisible();
@@ -38,7 +36,7 @@ test.describe("V2 · panel del ayudante", () => {
   test("recibe su propia composición, no la del dueño con huecos", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
     await page.goto("/dashboard");
 
     // Las piezas del dueño no existen en su árbol: ni vacías ni ocultas.
@@ -56,7 +54,7 @@ test.describe("V2 · panel del ayudante", () => {
   });
 
   test("la composición llega ya decidida desde el servidor", async ({ page }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     // Sin JavaScript no hay forma de retirar nada después: lo que llega en el
     // HTML es lo definitivo. Si el recorte se hiciera al hidratar, las piezas
@@ -75,7 +73,7 @@ test.describe("V2 · panel del ayudante", () => {
   }) => {
     test.skip(Boolean(isMobile), "la barra superior es de escritorio");
 
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
     await page.goto("/dashboard");
 
     await expect(page.getByTestId("notification-bell")).toBeVisible();
@@ -87,7 +85,7 @@ test.describe("V2 · panel de la persona dueña", () => {
   test("muestra las cuatro cifras y el comparativo de todas las líneas", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     await expect(page.getByTestId("owner-dashboard")).toBeVisible();
@@ -115,7 +113,7 @@ test.describe("V2 · panel de la persona dueña", () => {
   test("Por cobrar ignora el periodo: cuenta saldos de meses anteriores", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     // La semilla deja saldos vivos de pedidos anteriores al mes en curso. Si
@@ -133,7 +131,7 @@ test.describe("V2 · panel de la persona dueña", () => {
   }) => {
     test.skip(Boolean(isMobile), "el selector de línea vive en la tira de contexto");
 
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     const income = page.getByTestId("indicator-income-amount");
@@ -160,7 +158,7 @@ test.describe("V2 · panel de la persona dueña", () => {
   });
 
   test("los últimos movimientos se leen como frases", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     const activity = page.getByTestId("recent-activity");
@@ -175,7 +173,7 @@ test.describe("V2 · panel de la persona dueña", () => {
   test("las entregas próximas no traen pedidos ya entregados", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     const deliveries = page.getByTestId("upcoming-deliveries");
@@ -201,7 +199,7 @@ test.describe("V2 · panel de la persona dueña", () => {
     // servidor, y el segundo mediría la contención, no el panel.
     test.skip(Boolean(isMobile), "el presupuesto se mide en escritorio");
 
-    await login(page, HISTORY_OWNER);
+    await login(page, historico().owner);
 
     // Doce meses de pedidos, egresos y movimientos (KAM-14, criterio 6). Se
     // mide la carga de la ruta hasta que la pantalla está realmente
@@ -220,7 +218,7 @@ test.describe("V2 · panel de la persona dueña", () => {
   test("al panel no le queda ningún marcador de posición", async ({ page }) => {
     // KAM-17 retiró el de pendientes y KAM-18 el de insumos: las dos piezas
     // muestran contenido real y llevan a su pantalla.
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     await expect(page.getByTestId("low-stock-card")).toContainText(
@@ -241,7 +239,7 @@ test.describe("V2 · panel de la persona dueña", () => {
   }) => {
     test.skip(Boolean(isMobile), "la barra superior es de escritorio");
 
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     // La campana es un componente de cliente: pulsarla antes de que hidrate
@@ -268,7 +266,7 @@ test.describe("V2 · el panel en un teléfono", () => {
   test("se apila en una columna y no desplaza horizontalmente", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     await expect(page.getByTestId("owner-dashboard")).toBeVisible();
@@ -284,7 +282,7 @@ test.describe("V2 · el panel en un teléfono", () => {
   test("entrar desde el teléfono sigue aterrizando en el registro rápido", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // El panel es alcanzable desde "Más", pero la puerta de entrada del
     // celular sigue siendo V16 (mapa §4.2).
@@ -298,7 +296,7 @@ test.describe("V2 · el botón + Registrar de escritorio", () => {
   test("registrar una compra desde el panel son dos interacciones", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     const button = page.getByTestId("register-button");
@@ -315,7 +313,7 @@ test.describe("V2 · el botón + Registrar de escritorio", () => {
   test("el flotante no tapa controles del panel ni del tablero", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     for (const route of ["/dashboard", "/orders"]) {
       await page.goto(route);
@@ -382,7 +380,7 @@ test.describe.serial("tareas del ayudante por línea", () => {
   test("el dueño crea una tarea en cada línea y restringe al ayudante", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
 
     for (const [linea, titulo] of [
       ["Alfarería", enAlfareria],
@@ -416,7 +414,7 @@ test.describe.serial("tareas del ayudante por línea", () => {
   });
 
   test("el ayudante ve su línea y no la que no le toca", async ({ page }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geekoForBlock().assistant);
 
     // La lista cruza todas las líneas, así que muestra todo lo que puede ver.
     await page.goto("/tasks?view=list");
@@ -428,7 +426,7 @@ test.describe.serial("tareas del ayudante por línea", () => {
   test("manipular la dirección no le devuelve lo que RLS le quitó", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geekoForBlock().assistant);
 
     // Filtrar explícitamente por el título de la tarea prohibida: si el recorte
     // viviera en la interfaz y no en la base, aquí aparecería.
@@ -441,7 +439,7 @@ test.describe.serial("tareas del ayudante por línea", () => {
   test("el dueño le devuelve todas las líneas y vuelve a verlo todo", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geekoForBlock().owner);
     await page.goto("/settings/members");
 
     const fila = page
@@ -467,7 +465,7 @@ test.describe("V12 · activos, fuera del alcance del ayudante", () => {
     page,
     isMobile,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     if (isMobile) {
       await page.getByRole("button", { name: "Más" }).click();
@@ -481,7 +479,7 @@ test.describe("V12 · activos, fuera del alcance del ayudante", () => {
   test("por dirección directa va a su aterrizaje, sin pantalla de acceso denegado", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
     await page.goto("/assets");
 
     await page.waitForURL(/\/(auth\/login|dashboard|quick)/);
@@ -500,7 +498,7 @@ test.describe("V14 · reportes, fuera del alcance del ayudante", () => {
     page,
     isMobile,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     if (isMobile) {
       await page.getByRole("button", { name: "Más" }).click();
@@ -514,7 +512,7 @@ test.describe("V14 · reportes, fuera del alcance del ayudante", () => {
   test("por dirección directa va a su aterrizaje, y ninguna cifra llega", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
     await page.goto("/reports");
 
     await page.waitForURL(/\/(auth\/login|dashboard|quick)/);
@@ -523,7 +521,7 @@ test.describe("V14 · reportes, fuera del alcance del ayudante", () => {
   });
 
   test("la exportación tampoco responde al ayudante", async ({ page }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     // La ruta de descarga lleva el mismo guardián que la página: si solo
     // ocultáramos la entrada del menú, esta dirección sería la puerta trasera.
@@ -551,7 +549,7 @@ test.describe("bitácora reservada al dueño", () => {
     page,
     isMobile,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     if (isMobile) {
       await page.getByRole("button", { name: "Más" }).click();
@@ -566,7 +564,7 @@ test.describe("bitácora reservada al dueño", () => {
   test("por dirección directa va a su aterrizaje, sin ver ningún evento", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
     await page.goto("/activity");
 
     await page.waitForURL(/\/(auth\/login|dashboard|quick)/);
@@ -577,12 +575,84 @@ test.describe("bitácora reservada al dueño", () => {
   test("la exportación de la bitácora tampoco responde al ayudante", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     // Mismo guardián que la página: ocultar la entrada del menú sin cerrar la
     // ruta de descarga dejaría abierta la puerta trasera.
     const response = await page.request.get("/activity/export");
 
     expect(response.status()).toBe(403);
+  });
+});
+
+/**
+ * KAM-23 · Toda ruta reservada a la persona dueña, de una vez.
+ *
+ * Escenario del delta `project-foundation` → *The seven end-to-end journeys
+ * are covered and pass* → «The assistant journey covers every restricted
+ * route»: para cada ruta reservada, que no aparece en el menú y que la
+ * dirección directa redirige sin pantalla de acceso denegado.
+ *
+ * Los bloques de arriba prueban a fondo cada pantalla que nació con su
+ * restricción (activos, reportes, bitácora). Este recorre la lista completa,
+ * que es donde se cuela la ruta que alguien añade sin guardián.
+ */
+const OWNER_ONLY_MENU = ["Egresos", "Reportes", "Activos", "Bitácora", "Configuración"];
+
+const OWNER_ONLY_ROUTES = [
+  "/expenses",
+  "/expenses/costs/new",
+  "/expenses/purchases/new",
+  "/assets",
+  "/reports",
+  "/activity",
+  "/settings",
+  "/settings/general",
+  "/settings/lines",
+  "/settings/channels",
+  "/settings/categories",
+  "/settings/units",
+  "/settings/statuses",
+  "/settings/members",
+  "/settings/retention",
+];
+
+const OWNER_ONLY_DOWNLOADS = [
+  "/reports/export?report=line-comparison&preset=this-month",
+  "/activity/export",
+];
+
+test.describe("toda ruta reservada a la dueña, fuera del alcance del ayudante", () => {
+  test("ninguna entrada reservada aparece en su menú", async ({ page, isMobile }) => {
+    await login(page, geeko().assistant);
+    if (isMobile) await page.getByRole("button", { name: "Más" }).click();
+
+    for (const label of OWNER_ONLY_MENU) {
+      await expect(
+        page.getByRole("link", { name: label, exact: true }),
+        `«${label}» no debería estar en el menú del ayudante`,
+      ).toHaveCount(0);
+    }
+  });
+
+  test("ninguna ruta reservada responde a la dirección directa", async ({ page }) => {
+    await login(page, geeko().assistant);
+
+    for (const route of OWNER_ONLY_ROUTES) {
+      await page.goto(route);
+      await expect(page, `${route} debería redirigir al ayudante`).toHaveURL(
+        /\/(auth\/login|dashboard|quick)(\?.*)?$/,
+      );
+      await expect(page.getByText(/no autorizado/i)).toHaveCount(0);
+    }
+  });
+
+  test("ninguna descarga reservada responde", async ({ page }) => {
+    await login(page, geeko().assistant);
+
+    for (const download of OWNER_ONLY_DOWNLOADS) {
+      const response = await page.request.get(download);
+      expect(response.status(), `${download} debería negarse al ayudante`).toBe(403);
+    }
   });
 });

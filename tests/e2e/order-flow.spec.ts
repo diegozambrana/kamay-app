@@ -1,9 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
-const GEEKO_ASSISTANT = "ayudante@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -18,10 +17,8 @@ async function login(page: Page, email: string) {
  *
  * `exact` no es un detalle: sin él, "#1" también casa con "#10" y "#11".
  *
- * Las pruebas que MUEVEN un pedido usan cada una una línea distinta, y
- * ninguna de las que `order-board.spec.ts` afirma: los dos archivos corren en
- * paralelo contra la misma semilla, así que mover una tarjeta que el otro
- * cuenta lo haría fallar de forma intermitente.
+ * Cada prueba trabaja sobre su propia copia de Geeko (`geeko()`): mover un
+ * pedido aquí no cambia nada de lo que afirma otra suite.
  */
 async function openSeedOrder(page: Page, code: string) {
   await page.goto("/orders?view=list");
@@ -33,7 +30,7 @@ test.describe("recorrido de un pedido (V3 y V4)", () => {
   test("el pedido recorre todos los estados de su línea y el historial lo registra", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     // #10 es de Impresión 3D: su tablero no lo afirma ninguna otra prueba.
     await openSeedOrder(page, "#10");
 
@@ -49,18 +46,35 @@ test.describe("recorrido de un pedido (V3 y V4)", () => {
 
     for (const estado of recorrido) {
       await page.getByTestId("status-select").click();
-      await page.getByRole("option", { name: estado, exact: true }).click();
+      const option = page.getByRole("option", { name: estado, exact: true });
+      // Si el pedido ya está en ese estado —la otra superficie del recorrido
+      // pudo dejarlo ahí—, elegirlo no manda nada al servidor.
+      const alreadyThere = (await page.getByTestId("status-select").textContent())?.includes(estado);
+      const saved = alreadyThere
+        ? Promise.resolve()
+        : page.waitForResponse(
+            (response) =>
+              response.request().method() === "POST" && response.url().includes("/orders/"),
+          );
+      await option.click();
       await expect(page.getByTestId("status-select")).toContainText(estado);
+      // El cambio se ve antes de que el servidor lo guarde; recargar con la
+      // acción en vuelo la cancelaba y el historial salía corto (KAM-23).
+      await saved;
     }
 
     // Cada paso quedó en la bitácora: un solo historial (convención nº 7).
+    // Se espera a que el historial llegue: tras recargar, primero se ve el
+    // esqueleto del detalle.
     await page.reload();
     const cambios = page.locator('[data-testid="history-entry"][data-action="status_changed"]');
-    expect(await cambios.count()).toBeGreaterThanOrEqual(recorrido.length - 1);
+    await expect
+      .poll(() => cambios.count())
+      .toBeGreaterThanOrEqual(recorrido.length - 1);
   });
 
   test("el detalle calcula el total desde las líneas", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // El #1 de la semilla: 3 × 45 + 1 × 55 = 190.
     await openSeedOrder(page, "#1");
@@ -74,7 +88,7 @@ test.describe("recorrido de un pedido (V3 y V4)", () => {
   });
 
   test("un pedido sin líneas muestra total 0, no vacío", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     // #7 se lee, no se mueve: su estado da igual, no tiene líneas nunca.
     await openSeedOrder(page, "#7");
 
@@ -84,7 +98,7 @@ test.describe("recorrido de un pedido (V3 y V4)", () => {
   });
 
   test("el ayudante mueve el pedido pero no ve la bitácora", async ({ page }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
     // #9 es de Alfarería: otra línea, para no cruzarse con el recorrido.
     await openSeedOrder(page, "#9");
 

@@ -2,8 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 import { ORG_COOKIE } from "@/constants/auth";
+import { getRequestMemberships, getRequestUser } from "@/lib/auth/request-user";
 import { createClient } from "@/lib/supabase/server";
-import { MembershipService } from "@/services/membership-service";
 import type { MembershipWithOrganization } from "@/types";
 
 export type SessionContext = {
@@ -20,14 +20,10 @@ export type SessionContext = {
  */
 export async function getSessionContext(): Promise<SessionContext | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getRequestUser();
   if (!user) return null;
 
-  const memberships = await new MembershipService(supabase).listActiveForUser(
-    user.id,
-  );
+  const memberships = await getRequestMemberships(user.id);
   if (memberships.length === 0) return null;
 
   const cookieOrgId = (await cookies()).get(ORG_COOKIE)?.value;

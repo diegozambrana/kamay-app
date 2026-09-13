@@ -32,6 +32,8 @@ export type ItemFilters = {
   businessLineId?: string | "shared" | null;
   search?: string;
   includeArchived?: boolean;
+  /** Cuántas filas como máximo: la pantalla del catálogo pide una ventana. */
+  limit?: number;
 };
 
 /** `numeric` llega como texto desde PostgREST: no se pierde precisión. */
@@ -90,9 +92,10 @@ export class ItemService {
       query = query.like("search_name", `%${term}%`);
     }
 
-    const { data, error } = await query
-      .order("name", { ascending: true })
-      .overrideTypes<ItemRow[]>();
+    let ordered = query.order("name", { ascending: true });
+    if (filters.limit !== undefined) ordered = ordered.limit(filters.limit);
+
+    const { data, error } = await ordered.overrideTypes<ItemRow[]>();
 
     if (error) {
       throw new Error(`No se pudo cargar el catálogo: ${error.message}`);

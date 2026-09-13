@@ -95,7 +95,7 @@ export default async function EditOrderPage({
     "order",
     [order.id],
   );
-  const signed = await attachmentService.signedUrls(files);
+  const signed = await attachmentService.signedThumbnailUrls(files);
 
   const names: Record<string, LineNames> = {};
   for (const line of lines) {

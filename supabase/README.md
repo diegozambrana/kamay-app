@@ -74,33 +74,101 @@ privado `activity-exports`, **vuelve a descargar el archivo y comprueba que
 está completo**, y solo entonces llama a la función. Si la exportación falla o
 no supera la verificación, no se vacía nada.
 
-#### No está agendada, y es a propósito
+#### Agendada con el Cron de Vercel (KAM-23)
 
-KAM-22 dejó la rutina construida y probada; encender el reloj pertenece a
-**KAM-23 · Endurecimiento y puesta en producción**, junto con las copias de
-seguridad y el resto de trabajos programados. Mientras tanto la bitácora crece
-con todo su detalle, que es el estado que ya tenía.
+La rutina corre **sola, el día 1 de cada mes a las 04:00 UTC**, desde la entrada
+de `vercel.json` que llama a `GET /api/activity/retention`
+(`app/api/activity/retention/route.ts`). La ruta:
 
-Para agendarla en producción hace falta:
+1. Rechaza con 401 toda llamada sin `Authorization: Bearer $CRON_SECRET`, y
+   **todas** si `CRON_SECRET` no está configurado —incluida la del propio
+   programador—: sin credencial no se construye ni el cliente de service role.
+2. Recorre las organizaciones vivas con el cliente de service role (la
+   convención nº 2 lo reserva a los trabajos programados) y llama a
+   `RetentionService.run()` **una por una, cada una en su propio `try`**
+   (`services/activity/retention-job.ts`). Una organización cuya exportación
+   falla no deja sin retención a las demás, y tampoco pierde nada: `run()` no
+   vacía ningún detalle si la exportación no se escribió y verificó.
+3. Reporta cada fallo con `reportError()` —el trabajo y la organización, nunca
+   el contenido de la bitácora— y responde **500** si alguna organización
+   falló, aunque las demás se hayan procesado.
 
-1. Habilitar `pg_cron` en el proyecto de Supabase.
-2. Un punto de entrada que corra `RetentionService.run()` por organización con
-   el cliente de service role — una ruta protegida como
-   `app/api/notifications/daily/route.ts`, o una Edge Function.
-3. Agendar la llamada mensual, por ejemplo:
+### El resumen diario lo agenda Supabase Cron (KAM-23)
 
-   ```sql
-   select cron.schedule('kamay-log-retention', '0 3 1 * *', $$
-     select net.http_post(
-       url := '<origen>/api/activity/retention',
-       headers := jsonb_build_object('Authorization', 'Bearer <secreto>')
-     );
-   $$);
-   ```
+El resumen diario de avisos (`GET /api/notifications/daily`) sigue el mismo
+camino y la misma credencial, pero lo dispara **`pg_cron`, cada hora**, desde
+`supabase/migrations/20260913113818_daily_notifications_pg_cron.sql` (con la
+dirección corregida en `20260913143843_daily_notifications_url_from_vault.sql`). Los dos
+puntos de entrada responden a `GET` porque es el método con el que llaman sus
+programadores.
 
-   El `cron.schedule` que el anexo de esquema propone —un `update` directo sobre
-   `activity_log`— **no sirve**: la especificación exige exportar y verificar
-   antes de vaciar, y Postgres no escribe en Storage sin `pg_net` y sin guardar
-   una clave dentro de la base.
-4. Vigilar el resultado: `describeRun()` produce el resumen con cuántos eventos
-   se exportaron, cuántos se vaciaron y dónde quedó el archivo.
+**Por qué dos programadores.** El resumen diario necesita la pasada horaria:
+filtra por la hora local de cada organización, y así una sola entrada sirve a
+cualquier zona horaria sin crecer con cada zona nueva (KAM-17). El plan Hobby
+de Vercel solo admite trabajos **diarios** y rechaza el despliegue completo
+—incluso una vista previa— con «Hobby accounts are limited to daily cron jobs».
+Bajar la frecuencia degradaría el reparto por zona; `pg_cron` no tiene ese
+límite. La retención se queda en `vercel.json` porque una vez al mes cabe de
+sobra, y porque es el trabajo que necesita el service role y la lógica de
+`RetentionService`, no SQL: el `cron.schedule` que el anexo de esquema propone
+—un `update` directo sobre `activity_log`— no sirve, ya que la especificación
+exige exportar y verificar antes de vaciar.
+
+**La dirección y el secreto viven en el Vault, no en la migración**, que se
+comitea. El trabajo solo llama si están los dos. **Se activa después del
+primer despliegue**, cuando se conoce la dirección real de producción —la
+primera versión la escribía a mano y apuntaba a un `vercel.app` ajeno—. En el
+proyecto alojado se cargan una sola vez: la dirección sin barra final y el
+mismo valor que `CRON_SECRET` en Vercel.
+
+```sql
+select vault.create_secret('https://<dominio de producción>', 'kamay_app_url');
+select vault.create_secret('<el CRON_SECRET de producción>', 'kamay_cron_secret');
+```
+
+Mientras falte cualquiera de los dos, el cuerpo del trabajo no devuelve ninguna
+fila y **no llama a nadie**: en local la pasada horaria es inerte. Para cambiar
+de dominio o rotar la credencial, `vault.update_secret()` sobre el mismo
+nombre; la siguiente pasada toma el valor nuevo sin volver a agendarse. Lo
+comprueba `supabase/tests/scheduled_notifications_cron.test.sql`.
+
+**Cómo vigilar su resultado.**
+
+- *Vercel → Project → Settings → Cron Jobs*: la última ejecución de la
+  retención y su código de respuesta. Un 500 significa que al menos una
+  organización falló; el cuerpo de la respuesta lista cuáles (`failed`) y el
+  resumen de cada una que sí se procesó (`succeeded`, con el texto de
+  `describeRun()`: eventos exportados, vaciados y dónde quedó el archivo).
+- *Dashboard → Integrations → Cron*, o `cron.job_run_details`: cada pasada del
+  resumen diario, con su estado y su duración. La respuesta del endpoint no
+  llega ahí —`net.http_get` es asíncrono—, así que el código de respuesta se
+  mira en los registros de la función:
+
+  ```sql
+  select status, return_message, start_time
+    from cron.job_run_details d
+    join cron.job j on j.jobid = d.jobid
+   where j.jobname = 'kamay-daily-notifications'
+   order by start_time desc
+   limit 10;
+  ```
+- *Logs de la función* `/api/activity/retention`: cada fallo aparece como
+  `[kamay] { job: 'activity-retention', organizationId }` junto al error, y va
+  al monitoreo de errores en cuanto esté conectado (`lib/monitoring/report-error.ts`).
+- *Storage → `activity-exports`*: un archivo por organización y corte con lo
+  exportado antes de vaciar; la persona dueña lo recibe también dentro de la
+  exportación completa de V15 (`bitacora-purgada/`).
+
+Una organización que falló se reintenta sola el mes siguiente. Para no esperar,
+se puede llamar a mano con el secreto de producción:
+
+```bash
+curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://<dominio>/api/activity/retention
+```
+
+El Cron de Vercel solo dispara en el despliegue de **producción**: en local y en
+las vistas previas la rutina no corre sola, y la bitácora sigue con todo su
+detalle, que es un estado consistente. El de `pg_cron` vive en el proyecto
+alojado y llama siempre al dominio de producción, de modo que una vista previa
+tampoco genera avisos por su cuenta; en local no llama a nadie, porque el
+secreto no está en el Vault.

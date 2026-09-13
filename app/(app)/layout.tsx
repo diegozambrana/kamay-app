@@ -14,10 +14,10 @@ import { OrganizationProvider } from "@/components/providers/organization-provid
 import { UserProvider } from "@/components/providers/user-provider";
 import { lineCookieName, ORG_COOKIE } from "@/constants/auth";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
+import { getRequestMemberships, getRequestUser } from "@/lib/auth/request-user";
 import { createClient } from "@/lib/supabase/server";
 import { ItemService } from "@/services/catalog/item-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
-import { MembershipService } from "@/services/membership-service";
 import {
   NotificationService,
   groupByType,
@@ -34,14 +34,11 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Una sola validación por petición, compartida con la página (KAM-23).
+  const user = await getRequestUser();
   if (!user) redirect("/auth/login");
 
-  const memberships = await new MembershipService(supabase).listActiveForUser(
-    user.id,
-  );
+  const memberships = await getRequestMemberships(user.id);
 
   if (memberships.length === 0) {
     return (

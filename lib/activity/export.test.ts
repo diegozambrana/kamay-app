@@ -7,7 +7,7 @@ import {
   exportPeriodLabel,
   fitsExport,
 } from "@/lib/activity/export";
-import { toCsv } from "@/lib/reports/csv";
+import { toCsv } from "@/lib/export/csv";
 
 /**
  * KAM-22 · El techo y el nombre de la exportación de la bitácora.
@@ -16,7 +16,7 @@ import { toCsv } from "@/lib/reports/csv";
  * «Un resultado por encima del techo se avisa».
  *
  * «Un valor con separadores no rompe el archivo» **no se reescribe aquí**: lo
- * cubre `lib/reports/csv.test.ts` sobre el mismo `toCsv()` que esta
+ * cubre `lib/export/csv.test.ts` sobre el mismo `toCsv()` que esta
  * exportación usa (design D6). La última prueba de este archivo comprueba que
  * ese caso sigue en pie sobre datos de bitácora, para que reutilizar no sea
  * confiar a ciegas.
@@ -77,7 +77,7 @@ describe("el archivo se abre bien con datos de bitácora", () => {
   });
 
   // Escenario: Un valor con separadores no rompe el archivo
-  // El caso vive en lib/reports/csv.test.ts; aquí se comprueba sobre una frase
+  // El caso vive en lib/export/csv.test.ts; aquí se comprueba sobre una frase
   // de bitácora real, que es donde las comas abundan.
   it("una frase con comas y comillas queda en una sola celda", () => {
     const sentence =

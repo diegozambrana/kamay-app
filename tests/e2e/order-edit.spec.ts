@@ -1,9 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
-const GEEKO_ASSISTANT = "ayudante@kamay.test";
 
 const ORDER_DETAIL = /\/orders\/[0-9a-f]{8}-[0-9a-f-]+$/;
 
@@ -47,7 +46,7 @@ async function crearPedido(
 
 test.describe("edición de pedidos (V5 sobre V4)", () => {
   test("editar cambia la fecha y agrega una línea", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const pedido = await crearPedido(page);
 
     await expect(page.getByTestId("order-total")).toHaveText("60.00");
@@ -87,7 +86,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
   });
 
   test("la línea de negocio se muestra pero no se cambia", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await crearPedido(page);
 
     await page.getByTestId("edit-order").click();
@@ -98,7 +97,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
   });
 
   test("no se puede dejar el pedido sin líneas", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await crearPedido(page);
 
     await page.getByTestId("edit-order").click();
@@ -117,7 +116,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
   test("el ayudante edita la nota y la cantidad, y queda en la bitácora", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
     const pedido = await crearPedido(page);
 
     await page.getByTestId("edit-order").click();
@@ -133,7 +132,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
     await expect(page.getByText("Lo pasa a recoger el lunes.")).toBeVisible();
 
     // La bitácora solo la lee el dueño: se comprueba con su sesión.
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto(pedido);
     await expect(
       page.locator('[data-testid="history-entry"][data-action="updated"]'),
@@ -145,7 +144,7 @@ test.describe("cancelación de pedidos (V4)", () => {
   test("cancelar mueve el pedido al estado de cancelación de su línea", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await crearPedido(page);
 
     await expect(page.getByTestId("status-select")).toContainText("Reservado");
@@ -171,7 +170,7 @@ test.describe("cancelación de pedidos (V4)", () => {
   });
 
   test("un pedido archivado no ofrece editar ni cancelar", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // El pedido archivado de la semilla (#11): se lee, no se toca, así que
     // no hace falta crear uno propio.

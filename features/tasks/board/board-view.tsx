@@ -70,6 +70,7 @@ export function BoardView({
 
     return {
       id: status.id,
+      label: status.name,
       items: ordered,
       attributes: {
         "data-testid": "task-column",
@@ -143,6 +144,7 @@ export function BoardView({
         testId="tasks-board"
         columns={columns}
         onMove={moveCard}
+        itemLabel={(task) => `la tarea «${task.title}»`}
         renderCard={(task) => (
           <TaskCard
             task={task}

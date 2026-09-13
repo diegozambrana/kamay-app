@@ -1,11 +1,7 @@
 import Link from "next/link";
 
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { EmptyState } from "@/components/shared/empty-state";
+import { FilteredEmptyState } from "@/components/shared/filtered-empty-state";
 import { Button } from "@/components/ui/button";
 
 import { ActivityRow, type ActivityRowItem } from "./activity-row";
@@ -95,29 +91,22 @@ export function ActivityList({
  */
 function NoEvents() {
   return (
-    <Empty data-testid="activity-empty">
-      <EmptyHeader>
-        <EmptyTitle>Todavía no hay movimientos</EmptyTitle>
-        <EmptyDescription>
-          En cuanto alguien registre o cambie algo, aparecerá aquí.
-        </EmptyDescription>
-      </EmptyHeader>
-    </Empty>
+    <div data-testid="activity-empty">
+      <EmptyState
+        title="Todavía no hay movimientos"
+        description="En cuanto alguien registre o cambie algo, aparecerá aquí."
+      />
+    </div>
   );
 }
 
 function NoMatches({ clearHref }: { clearHref: string }) {
   return (
-    <Empty data-testid="activity-no-matches">
-      <EmptyHeader>
-        <EmptyTitle>Ningún evento coincide con estos filtros</EmptyTitle>
-        <EmptyDescription>
-          Prueba con otro rango de fechas, otra línea u otro tipo de acción.
-        </EmptyDescription>
-      </EmptyHeader>
-      <Button asChild variant="outline" className="mt-4">
-        <Link href={clearHref}>Quitar los filtros</Link>
-      </Button>
-    </Empty>
+    <div data-testid="activity-no-matches">
+      <FilteredEmptyState
+        description="Ningún evento coincide con estos filtros. Prueba con otro rango de fechas, otra línea u otro tipo de acción."
+        clearHref={clearHref}
+      />
+    </div>
   );
 }

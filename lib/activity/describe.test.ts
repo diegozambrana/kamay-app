@@ -156,3 +156,17 @@ describe("recordHref con las pantallas que ya existen", () => {
     expect(recordHref("payments", "p1")).toBeNull();
   });
 });
+
+describe("describeEvent · exportación (KAM-23)", () => {
+  it("una exportación se lee como tal, no como un cambio en un registro", () => {
+    expect(
+      describeEvent({
+        action: "exported",
+        tableName: "organizations",
+        actorName: "Dueña Geeko",
+        actorLabel: null,
+        recordLabel: "Geeko Store",
+      }),
+    ).toBe("Dueña Geeko exportó todos los datos de la organización");
+  });
+});

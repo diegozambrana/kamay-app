@@ -61,8 +61,8 @@ const SUBJECTS: Record<string, string> = {
 /**
  * El verbo de cada acción, en tercera persona y en pasado.
  *
- * `activity_log` restringe `action` por `check`, así que estas cinco son hoy
- * todas las que existen. La redacción genérica no es defensa contra un valor
+ * `activity_log` restringe `action` por `check`, así que estas seis son hoy
+ * todas las que existen (`exported` llegó con KAM-23). La redacción genérica no es defensa contra un valor
  * imposible sino contra el día en que esa lista crezca: una acción nueva debe
  * producir una frase pobre, no una pantalla rota ni un identificador suelto.
  */
@@ -72,6 +72,7 @@ const VERBS: Record<string, string> = {
   status_changed: "cambió el estado de",
   archived: "archivó",
   unarchived: "desarchivó",
+  exported: "exportó",
 };
 
 const UNKNOWN_ACTOR = "Alguien";
@@ -86,6 +87,14 @@ const UNKNOWN_VERB = "actualizó";
  */
 export function describeEvent(event: DescribableEvent): string {
   const actor = actorOf(event);
+
+  // Una exportación no es sobre un registro: se lleva la organización entera
+  // (KAM-23). Dicho así, y no «exportó la organización Geeko Store», que
+  // suena a haberla sacado del sistema.
+  if (event.action === "exported") {
+    return `${actor} exportó todos los datos de la organización`;
+  }
+
   const verb = VERBS[event.action] ?? UNKNOWN_VERB;
   const subject = SUBJECTS[event.tableName] ?? UNKNOWN_SUBJECT;
   const label = event.recordLabel?.trim();

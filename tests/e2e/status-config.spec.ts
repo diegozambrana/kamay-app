@@ -1,9 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test"; // dueña de Geeko Store
-const GEEKO_ASSISTANT = "ayudante@kamay.test"; // ayudante de Geeko Store
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -27,7 +26,7 @@ test.describe("configuración de estados (V22)", () => {
     // el límite por omisión es ese mismo, así que no le cabría ni una vuelta.
     test.setTimeout(90_000);
 
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // Alfarería, flujo Tareas: sin juego propio, rige el de la organización.
     await page.goto("/settings/statuses?flow=task&line=org");
@@ -144,7 +143,7 @@ test.describe("configuración de estados (V22)", () => {
   test("archivar exige decir a dónde mover y valida el juego restante", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     // El juego de pedidos de Alfarería tiene un solo estado inicial:
     // archivarlo dejaría el juego inválido y la pantalla lo dice antes de enviar.
@@ -178,7 +177,7 @@ test.describe("configuración de estados (V22)", () => {
   test("el ayudante es redirigido al entrar por dirección directa", async ({
     page,
   }) => {
-    await login(page, GEEKO_ASSISTANT);
+    await login(page, geeko().assistant);
 
     await page.goto("/settings/statuses");
     await page.waitForURL((url) => !url.pathname.startsWith("/settings"));

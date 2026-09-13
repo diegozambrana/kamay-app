@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { csvFilename, toCsv } from "./csv";
+import { csvFilename, toCsv, toTableCsv } from "./csv";
 
 const context = {
   title: "Comparativo entre líneas",
@@ -106,5 +106,30 @@ describe("csvFilename", () => {
     expect(
       csvFilename("rentabilidad", { from: "2026-03-01", to: "2026-03-31" }),
     ).toBe("informe-rentabilidad-2026-03-01_2026-03-31.csv");
+  });
+});
+
+describe("toTableCsv — la tabla sola, para la exportación completa", () => {
+  it("empieza por los encabezados, sin bloque de contexto", () => {
+    const csv = toTableCsv({ headers: ["id", "nombre"], rows: [["a1", "Taza"]] });
+    expect(csv.replace("﻿", "").split("\r\n")[0]).toBe("id,nombre");
+  });
+
+  // «Accents survive opening the file»
+  it("lleva el BOM que hace que Excel respete los acentos", () => {
+    const csv = toTableCsv({ headers: ["línea"], rows: [["Sublimación"]] });
+    expect(csv.startsWith("﻿")).toBe(true);
+    expect(csv).toContain("Sublimación");
+  });
+
+  // «Amounts survive the round trip»
+  it("un importe como texto de numeric sale con toda su precisión", () => {
+    const csv = toTableCsv({ headers: ["amount"], rows: [["1234.56"]] });
+    const cells = csv.replace("﻿", "").trim().split("\r\n");
+    expect(cells[1]).toBe("1234.56");
+  });
+
+  it("una tabla sin filas sale con sus encabezados", () => {
+    expect(toTableCsv({ headers: ["id"], rows: [] }).replace("﻿", "")).toBe("id\r\n");
   });
 });

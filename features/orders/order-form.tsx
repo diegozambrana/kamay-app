@@ -677,6 +677,8 @@ export function OrderForm({
                     {attachment.url ? (
                       // eslint-disable-next-line @next/next/no-img-element -- URL firmada y efímera: no pasa por el optimizador
                       <img
+                        loading="lazy"
+                        decoding="async"
                         src={attachment.url}
                         alt={attachment.fileName}
                         className="h-28 w-40 rounded-md border object-cover"

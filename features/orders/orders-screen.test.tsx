@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BusinessLine, Status, StatusKind } from "@/types";
@@ -20,8 +20,12 @@ vi.mock("@/actions/business-line-context", () => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/orders",
+  useSearchParams: () => new URLSearchParams(searchParams),
 }));
+
+/** La dirección que ve la pantalla; cada prueba de filtros la fija. */
+let searchParams = "";
 
 const ORG = "11111111-1111-1111-1111-111111111111";
 const SUBLI = "22222222-2222-2222-2222-222222222222";
@@ -123,9 +127,17 @@ function columnNames(): string[] {
 
 function renderScreen(props: Partial<Parameters<typeof OrdersScreen>[0]> = {}) {
   const statuses = props.statuses ?? sublimacionSet();
+  // Un pedido por omisión: sin ninguno, la pantalla muestra el vacío inicial
+  // en lugar del tablero (KAM-23, `view-states`), y estas pruebas son sobre
+  // las columnas.
+  const seedOrder = order({
+    id: "o-seed",
+    statusId: statuses[0]?.id ?? "",
+    statusKind: statuses[0]?.kind ?? "initial",
+  });
   return render(
     <OrdersScreen
-      orders={props.orders ?? []}
+      orders={props.orders ?? [seedOrder]}
       statuses={statuses}
       allStatuses={props.allStatuses ?? statuses}
       lines={lines}
@@ -135,12 +147,15 @@ function renderScreen(props: Partial<Parameters<typeof OrdersScreen>[0]> = {}) {
       search=""
       includeArchived={false}
       today={TODAY}
+      closedLimit={50}
+      hasMoreClosed={props.hasMoreClosed ?? false}
     />,
   );
 }
 
 beforeEach(() => {
   useBoardStore.setState({ pending: {}, pendingQueue: {} });
+  searchParams = "";
 });
 afterEach(cleanup);
 
@@ -285,5 +300,40 @@ describe("OrdersScreen · la cola", () => {
         (n) => n.textContent,
       ),
     ).toEqual(["1", "2"]);
+  });
+});
+
+describe("OrdersScreen · estados transversales (view-states)", () => {
+  // «Empty view offers its creation action»
+  it("sin ningún pedido y sin filtros ofrece crear el primero, en lugar del tablero", () => {
+    renderScreen({ orders: [] });
+
+    const empty = screen.getByTestId("empty-state");
+    expect(empty).toHaveTextContent("Aún no hay pedidos en Sublimación");
+    expect(within(empty).getByRole("link", { name: "Crear pedido" })).toHaveAttribute(
+      "href",
+      "/orders/new",
+    );
+    expect(screen.queryAllByTestId("board-column")).toHaveLength(0);
+    expect(screen.queryByTestId("filtered-empty-state")).not.toBeInTheDocument();
+  });
+
+  // «Filtering to zero results shows the filtered-empty state»
+  it("con una búsqueda sin resultados ofrece quitar filtros, no crear", () => {
+    searchParams = "q=zzz&view=list";
+    renderScreen({ orders: [], view: "list" });
+
+    const filtered = screen.getByTestId("filtered-empty-state");
+    expect(within(filtered).getByRole("button", { name: "Quitar filtros" })).toBeInTheDocument();
+    expect(screen.queryByTestId("empty-state")).not.toBeInTheDocument();
+  });
+
+  // «An empty organization never shows the filtered-empty state»
+  it("ver archivados no es un filtro: una organización vacía sigue viendo el vacío inicial", () => {
+    searchParams = "archived=1";
+    renderScreen({ orders: [], activeLineId: null });
+
+    expect(screen.getByTestId("empty-state")).toHaveTextContent("Aún no hay pedidos");
+    expect(screen.queryByTestId("filtered-empty-state")).not.toBeInTheDocument();
   });
 });

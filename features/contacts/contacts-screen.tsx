@@ -12,6 +12,9 @@ import type { RecordHistory as RecordHistoryData } from "@/services/activity/rec
 import { RelatedTasksPanel } from "@/features/tasks/links/related-tasks-panel";
 import type { RelatedTask } from "@/services/tasks/task-service";
 import { MainContainer } from "@/components/layout/main-container";
+import { EmptyState } from "@/components/shared/empty-state";
+import { FilteredEmptyState } from "@/components/shared/filtered-empty-state";
+import { LoadMore } from "@/components/shared/load-more";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +36,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useFilterState, useSearchReset } from "@/hooks/use-filter-state";
 import { usePendingToggle } from "@/hooks/use-pending-toggle";
 import { cn } from "@/lib/utils";
 import {
@@ -57,6 +61,12 @@ function roleSummary(contact: Contact): string {
 }
 
 /**
+ * Los parámetros que estrechan la lista: la búsqueda y el rol. `id` solo
+ * abre el detalle y `archived` ensancha (design D2).
+ */
+const CONTACT_FILTERS = ["q", "role"] as const;
+
+/**
  * V13 · Contactos: dos paneles. La lista a la izquierda, el detalle a la
  * derecha. Elegir un contacto solo cambia el panel derecho —es estado de
  * interfaz, no navegación— para que la lista no se recargue en cada clic; la
@@ -71,6 +81,8 @@ export function ContactsScreen({
   history,
   timezone,
   role,
+  limit = 50,
+  hasMore = false,
 }: {
   contacts: Contact[];
   roleFilter: ContactRoleFilter;
@@ -81,6 +93,10 @@ export function ContactsScreen({
   history: RecordHistoryData | null;
   timezone: string;
   role: Role;
+  /** Cuántos contactos trae la ventana (KAM-23). */
+  limit?: number;
+  /** Si el directorio tiene más de los que se muestran. */
+  hasMore?: boolean;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -95,6 +111,8 @@ export function ContactsScreen({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { hasActiveFilters, clearFilters } = useFilterState(CONTACT_FILTERS);
+  const { searchKey, armSearchReset } = useSearchReset(search);
 
   const isOwner = role === "owner";
   const current = contacts.find((contact) => contact.id === selected) ?? null;
@@ -149,6 +167,7 @@ export function ContactsScreen({
               aquí. Lo tecleado viaja además a la dirección para que el
               servidor filtre la lista de abajo. */}
           <ContactCombobox
+            key={searchKey}
             contacts={contacts}
             label="Buscar o crear"
             initialTerm={search}
@@ -203,14 +222,31 @@ export function ContactsScreen({
           <Separator />
 
           {contacts.length === 0 ? (
-            <Empty className="border border-dashed">
-              <EmptyHeader>
-                <EmptyTitle>Sin contactos</EmptyTitle>
-                <EmptyDescription>
-                  No hay contactos que coincidan con los filtros.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            hasActiveFilters ? (
+              <FilteredEmptyState
+                description="Ningún contacto coincide con la búsqueda o el rol elegidos."
+                onClearFilters={() => {
+                  armSearchReset();
+                  clearFilters();
+                }}
+              />
+            ) : (
+              <EmptyState
+                title="Aún no hay contactos"
+                description="Proveedores y clientes aparecen aquí al registrarlos."
+                action={
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setCreating(true);
+                      setSelected(null);
+                    }}
+                  >
+                    Crear el primer contacto
+                  </Button>
+                }
+              />
+            )
           ) : (
             <ul
               data-testid="contacts-list"
@@ -242,6 +278,10 @@ export function ContactsScreen({
                 </li>
               ))}
             </ul>
+          )}
+
+          {hasMore && (
+            <LoadMore limit={limit} shownLabel={`los primeros ${limit} contactos por orden alfabético`} />
           )}
         </div>
 
@@ -365,7 +405,15 @@ export function ContactsScreen({
       <ContactFormDialog
         open={creating}
         onOpenChange={setCreating}
-        onCreated={setSelected}
+        onCreated={(id) => {
+          setSelected(id);
+          // El directorio trae una ventana alfabética (KAM-23): un contacto
+          // nuevo puede caer fuera de ella. Con `?id=` la página lo trae
+          // aparte, igual que a un contacto abierto por enlace.
+          const next = new URLSearchParams(params.toString());
+          next.set("id", id);
+          router.replace(`/contacts?${next.toString()}`, { scroll: false });
+        }}
       />
       {current && (
         <ContactFormDialog

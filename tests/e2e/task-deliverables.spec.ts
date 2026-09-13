@@ -1,7 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -63,7 +63,8 @@ async function moveToFinal(page: Page) {
  *
  * Escenarios del delta spec `task-links-deliverables`, requisito "El asistente
  * ofrece tres salidas y ninguna se penaliza": «Crear seleccionados cierra la
- * tarea», «Cerrar sin crear nada no pide nada», «Cancelar devuelve la tarea a
+ * tarea» —en sus dos variantes, crear todos y crear algunos, como pide
+ * ARCHITECTURE.md (KAM-23)—, «Cerrar sin crear nada no pide nada», «Cancelar devuelve la tarea a
  * su estado anterior»; y "Archivar un registro referenciado avisa y no rompe
  * nada" → «Ningún vínculo queda roto».
  */
@@ -73,39 +74,71 @@ test.describe("cierre de tarea con entregables (V19)", () => {
     "el recorrido parte del tablero, que es de escritorio; en móvil manda V20",
   );
 
-  test("crear seleccionados y cerrar deja el registro y cierra la tarea", async ({
+  test("crear todos los declarados y cerrar deja cada registro y cierra la tarea", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const { url } = await createTask(page, "Set de tazas e2e");
 
     await declare(page, "Nuevo producto");
+    await declare(page, "Nuevo proveedor");
     await moveToFinal(page);
 
-    const nombre = `Taza e2e ${Date.now()}`;
-    await page.getByLabel("Nombre").fill(nombre);
+    // Los dos vienen marcados: crear todos no pide desmarcar nada.
+    const producto = `Taza e2e ${Date.now()}`;
+    const proveedor = `Proveedor e2e ${Date.now()}`;
+    await page.getByTestId("deliverable-form-product").getByLabel("Nombre").fill(producto);
+    await page.getByTestId("deliverable-form-supplier").getByLabel("Nombre").fill(proveedor);
     await page
       .getByRole("button", { name: "Crear seleccionados y cerrar" })
       .click();
+    await expect(page.getByTestId("closing-dialog")).toHaveCount(0);
 
-    // El producto entró al catálogo.
+    // Los dos entraron: el producto al catálogo y el proveedor al directorio.
     await page.goto("/catalog?kind=product");
-    await page.getByPlaceholder("Nombre del ítem").fill(nombre);
+    await page.getByPlaceholder("Nombre del ítem").fill(producto);
     await expect(
-      page.getByTestId("catalog-row").filter({ hasText: nombre }),
+      page.getByTestId("catalog-row").filter({ hasText: producto }),
     ).toBeVisible();
 
-    // Y la tarea quedó cerrada, sin la marca de haber cerrado sin nada.
+    // Y la tarea quedó cerrada con los dos cumplidos.
     await page.goto(url);
-    await expect(page.getByTestId("declared-deliverables")).toContainText(
-      "Creado",
-    );
+    const declarados = page.getByTestId("declared-deliverables").getByRole("listitem");
+    await expect(declarados.filter({ hasText: "Nuevo producto" })).toContainText("Creado");
+    await expect(declarados.filter({ hasText: "Nuevo proveedor" })).toContainText("Creado");
+  });
+
+  test("crear solo algunos cierra la tarea y deja pendiente lo desmarcado", async ({
+    page,
+  }) => {
+    await login(page, geeko().owner);
+    const { url } = await createTask(page, "Algunos e2e");
+
+    await declare(page, "Nuevo producto");
+    await declare(page, "Nuevo proveedor");
+    await moveToFinal(page);
+
+    const producto = `Taza parcial e2e ${Date.now()}`;
+    await page.getByTestId("deliverable-form-product").getByLabel("Nombre").fill(producto);
+    // El proveedor se desmarca: esta vez no se crea.
+    await page.getByLabel("Nuevo proveedor", { exact: true }).click();
+    await expect(page.getByTestId("deliverable-form-supplier").getByLabel("Nombre")).toHaveCount(0);
+
+    await page
+      .getByRole("button", { name: "Crear seleccionados y cerrar" })
+      .click();
+    await expect(page.getByTestId("closing-dialog")).toHaveCount(0);
+
+    await page.goto(url);
+    const declarados = page.getByTestId("declared-deliverables").getByRole("listitem");
+    await expect(declarados.filter({ hasText: "Nuevo producto" })).toContainText("Creado");
+    await expect(declarados.filter({ hasText: "Nuevo proveedor" })).not.toContainText("Creado");
   });
 
   test("cerrar sin crear nada no pide justificación y deja su marca", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const { title } = await createTask(page, "Cerrar a secas e2e");
 
     await declare(page, "Nuevo producto");
@@ -130,7 +163,7 @@ test.describe("cierre de tarea con entregables (V19)", () => {
   });
 
   test("cancelar no cierra la tarea ni crea nada", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const { url } = await createTask(page, "Cancelar e2e");
 
     await declare(page, "Nuevo producto");
@@ -159,7 +192,7 @@ test.describe("vínculos bidireccionales", () => {
   test("vincular un pedido, verlo desde el pedido y archivarlo sin romperlo", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const { title, url } = await createTask(page, "Vínculo e2e");
 
     // ── Vincular desde la tarea ───────────────────────────────────────────
@@ -193,9 +226,9 @@ test.describe("vínculos bidireccionales", () => {
   test("archivar un ítem vinculado avisa y el vínculo sigue resolviendo", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
-    // Un ítem propio, para archivarlo sin tocar la semilla compartida.
+    // Un ítem propio, que esta prueba archiva.
     const nombre = `Insumo vinculado e2e ${Date.now()}`;
     await page.goto("/catalog?kind=supply");
     await page.getByRole("button", { name: /Nuevo/ }).first().click();
@@ -222,6 +255,9 @@ test.describe("vínculos bidireccionales", () => {
       .getByTestId("archive-warning")
       .getByRole("button", { name: "Archivar" })
       .click();
+    // Se espera a que el servidor lo archive antes de salir: navegar con la
+    // acción en vuelo dejaba la tarea leyendo el ítem aún vigente (KAM-23).
+    await expect(page.getByTestId("item-archived-badge")).toBeVisible();
 
     // ── El vínculo sigue en la tarea, señalado como archivado ─────────────
     await page.goto(url);

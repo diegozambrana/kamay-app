@@ -7,7 +7,7 @@ import {
   retentionCutoff,
   retentionMonthsSchema,
 } from "@/lib/activity/retention";
-import { toCsv } from "@/lib/reports/csv";
+import { toCsv } from "@/lib/export/csv";
 
 /**
  * La política de retención de una organización: leerla y guardarla.

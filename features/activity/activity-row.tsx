@@ -17,6 +17,7 @@ import type { DiffRow, EventDetail } from "@/lib/activity/diff";
 import { cn } from "@/lib/utils";
 
 import { UnarchiveFromEvent } from "./unarchive-from-event";
+import { lineColorClasses } from "@/lib/business-lines/colors";
 
 /** Un evento ya resuelto y redactado: la fila no consulta ni redacta nada. */
 export type ActivityRowItem = {
@@ -98,13 +99,15 @@ export function ActivityRow({ item }: { item: ActivityRowItem }) {
         {item.lineName && (
           <Badge
             variant="outline"
-            className="shrink-0"
+            // El color de la línea es un token («orange», «violet»), no un
+            // color CSS: pintarlo tal cual daba naranja puro sobre blanco, con
+            // un contraste de 1,97 (KAM-23, auditoría). Se traduce a las mismas
+            // clases que el resto de la aplicación.
+            className={cn(
+              "shrink-0 border-transparent",
+              lineColorClasses(item.lineColor ?? "zinc").badge,
+            )}
             data-testid="activity-line"
-            style={
-              item.lineColor
-                ? { borderColor: item.lineColor, color: item.lineColor }
-                : undefined
-            }
           >
             {item.lineName}
           </Badge>

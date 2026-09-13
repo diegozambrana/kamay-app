@@ -78,10 +78,11 @@ export default async function DashboardPage() {
     horizon,
   );
 
-  const contacts = await new ContactService(supabase).list(organizationId, {
-    includeArchived: true,
-  });
-  const contactNames = new Map(contacts.map((c) => [c.id, c.name]));
+  // Solo los clientes de las entregas que se muestran, no el directorio.
+  const contactNames = await new ContactService(supabase).namesFor(
+    organizationId,
+    deliveries.flatMap((delivery) => (delivery.contactId ? [delivery.contactId] : [])),
+  );
   const lineById = new Map(lines.map((line) => [line.id, line]));
 
   // Los conteos de pendientes salen de la **misma** función que agrupa V20, y

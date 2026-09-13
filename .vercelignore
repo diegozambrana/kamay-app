@@ -1,0 +1,18 @@
+# Lo que no forma parte de la compilación y sí abulta la subida: los worktrees
+# de agentes (`.claude/worktrees` pesa gigabytes), la compilación local y los
+# artefactos de pruebas y análisis.
+.claude
+.agents
+.cursor
+.next
+node_modules
+graphify-out
+playwright-report
+test-results
+coverage
+
+# Ningún archivo de entorno viaja en la subida: las variables de cada ambiente
+# viven en Vercel. Un `.env.production.local` descargado con `vercel env pull`
+# lleva la clave de service role de producción (KAM-23).
+.env*
+!.env.example

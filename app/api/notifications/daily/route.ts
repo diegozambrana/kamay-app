@@ -13,6 +13,7 @@ import { todayInTimezone } from "@/lib/orders/overdue";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NotificationGenerator } from "@/services/notifications/generator";
 import { PreferenceService } from "@/services/notifications/preference-service";
+import { OrganizationService } from "@/services/organization-service";
 
 /**
  * El trabajo programado de KAM-17: resumen diario, vencidas y estancadas.
@@ -27,10 +28,13 @@ import { PreferenceService } from "@/services/notifications/preference-service";
  * pura `planScheduled()`, que no conoce ni la base ni el reloj. Aquí solo se
  * mueven datos.
  *
- * Es la única puerta del sistema que corre con service role, y por eso lo
- * primero que hace es comprobar su credencial.
+ * Responde a `GET`, el método con el que llama el Cron de Vercel (KAM-23): con
+ * `POST` el programador no lo habría ejecutado nunca.
+ *
+ * Corre con service role, como la retención mensual, y por eso lo primero que
+ * hace es comprobar su credencial.
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   if (
     !isAuthorizedCron(
       request.headers.get("authorization"),
@@ -46,19 +50,20 @@ export async function POST(request: Request) {
   const generator = new NotificationGenerator(admin, resolveMailer());
   const now = new Date();
 
-  const { data: organizations, error } = await admin
-    .from("organizations")
-    .select("id, timezone")
-    .is("archived_at", null)
-    .overrideTypes<{ id: string; timezone: string }[]>();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  // Todas, por páginas: de una sola vez PostgREST corta en mil (KAM-23).
+  let organizations: { id: string; timezone: string }[];
+  try {
+    organizations = await new OrganizationService(admin).listActiveForJobs();
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
   }
 
   let created = 0;
 
-  for (const organization of organizations ?? []) {
+  for (const organization of organizations) {
     created += await runForOrganization(
       { admin, preferences, generator },
       organization,
@@ -67,7 +72,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({
-    organizations: organizations?.length ?? 0,
+    organizations: organizations.length,
     created,
   });
 }

@@ -1,7 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { geeko } from "./helpers/seed-copies";
+import { expect, test, type Page } from "./helpers/test";
 
 const PASSWORD = "kamay123";
-const GEEKO_OWNER = "geeko@kamay.test";
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -47,7 +47,7 @@ function shiftedDate(days: number): string {
  */
 test.describe("mis pendientes (V20)", () => {
   test("posponer una tarea vencida la cambia de grupo", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     const title = await createTaskDue(page, shiftedDate(-3));
 
@@ -73,7 +73,7 @@ test.describe("mis pendientes (V20)", () => {
   test("marcar hecha la deja tachada en su sitio, no la hace desaparecer", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
 
     const title = await createTaskDue(page, shiftedDate(0));
 
@@ -93,7 +93,7 @@ test.describe("mis pendientes (V20)", () => {
   test("cada fila dice de qué línea es, porque no hay selector aquí", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await createTaskDue(page, shiftedDate(1));
 
     await page.goto("/my-tasks");
@@ -107,7 +107,7 @@ test.describe("mis pendientes (V20)", () => {
 
 test.describe("el enlace de un aviso abre esa tarea", () => {
   test("con sesión activa lleva directo al detalle", async ({ page }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const title = await createTaskDue(page, shiftedDate(2));
 
     await page.goto("/my-tasks");
@@ -127,7 +127,7 @@ test.describe("el enlace de un aviso abre esa tarea", () => {
   }) => {
     // Se crea la tarea y se guarda su dirección, que es la que llevaría el
     // correo.
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     const title = await createTaskDue(page, shiftedDate(2));
 
     await page.goto("/my-tasks");
@@ -146,7 +146,7 @@ test.describe("el enlace de un aviso abre esa tarea", () => {
     await page.goto(taskUrl);
     await page.waitForURL(/\/auth\/login\?next=/);
 
-    await page.getByLabel("Correo electrónico").fill(GEEKO_OWNER);
+    await page.getByLabel("Correo electrónico").fill(geeko().owner);
     await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
     await page.getByRole("button", { name: "Entrar" }).click();
 
@@ -162,7 +162,7 @@ test.describe("la bandeja de notificaciones (V21)", () => {
   test("la campana abre la bandeja y ofrece sus preferencias", async ({
     page,
   }) => {
-    await login(page, GEEKO_OWNER);
+    await login(page, geeko().owner);
     await page.goto("/dashboard");
 
     await page.getByTestId("notification-bell").click();
@@ -180,7 +180,7 @@ test.describe("la bandeja de notificaciones (V21)", () => {
 
   test("el ayudante también llega a sus preferencias", async ({ page }) => {
     // Es la única sección de V15 abierta a los dos roles (design D1).
-    await login(page, "ayudante@kamay.test");
+    await login(page, geeko().assistant);
     await page.goto("/settings/notifications");
 
     await expect(
@@ -196,7 +196,7 @@ test.describe("la bandeja de notificaciones (V21)", () => {
   test("el ayudante sigue sin alcanzar la configuración del taller", async ({
     page,
   }) => {
-    await login(page, "ayudante@kamay.test");
+    await login(page, geeko().assistant);
     await page.goto("/settings/general");
 
     // La guardia bajó del layout a las secciones, pero no se relajó.

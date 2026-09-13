@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Badge } from "@/components/ui/badge";
 
 import { DataTable, type DataTableColumn } from "./data-table";
+import { EmptyState } from "@/components/shared/empty-state";
 
 type Row = { id: string; name: string; unit: string | null; archived: boolean };
 
@@ -134,7 +135,7 @@ describe("DataTable", () => {
   it("una lista vacía muestra el estado vacío en vez de una tabla pelada", () => {
     renderTable({
       rows: [],
-      empty: { title: "Nada por aquí", description: "Prueba con otros filtros." },
+      empty: <EmptyState title="Nada por aquí" description="Prueba con otros filtros." />,
     });
 
     expect(screen.getByText("Nada por aquí")).toBeInTheDocument();

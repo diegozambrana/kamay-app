@@ -4,6 +4,7 @@ import {
   defaultLandingPath,
   isMobileUserAgent,
   isProtectedPath,
+  rootRedirectPath,
   sanitizeNextPath,
 } from "@/lib/auth/routes";
 
@@ -76,14 +77,14 @@ describe("sanitizeNextPath", () => {
   });
 });
 
-describe("defaultLandingPath", () => {
-  const IPHONE_UA =
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
-  const ANDROID_UA =
-    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
-  const DESKTOP_UA =
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const IPHONE_UA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+const ANDROID_UA =
+  "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+const DESKTOP_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+describe("defaultLandingPath", () => {
   it("sends mobile user agents to /quick", () => {
     expect(defaultLandingPath(IPHONE_UA)).toBe("/quick");
     expect(defaultLandingPath(ANDROID_UA)).toBe("/quick");
@@ -103,6 +104,41 @@ describe("defaultLandingPath", () => {
     expect(isMobileUserAgent(DESKTOP_UA)).toBe(false);
     expect(isMobileUserAgent(null)).toBe(false);
     expect(isMobileUserAgent("")).toBe(false);
+  });
+});
+
+/**
+ * KAM-25 · La raíz se resuelve por sesión.
+ *
+ * Escenarios del delta spec `user-auth` — requisito "The root route resolves
+ * by session": «Anonymous visitor at the root goes to login», «Signed-in user
+ * on desktop goes to the dashboard» y «Signed-in user on mobile goes to quick
+ * capture». El recorrido real por el proxy lo cubre `tests/e2e/auth.spec.ts`.
+ */
+describe("rootRedirectPath", () => {
+  it("sin sesión va a login sin destino, sea cual sea el dispositivo", () => {
+    // Sin `?next=`: `/` no es un destino que valga la pena recordar.
+    for (const ua of [IPHONE_UA, ANDROID_UA, DESKTOP_UA, null, undefined, ""]) {
+      expect(rootRedirectPath(false, ua)).toBe("/auth/login");
+    }
+  });
+
+  it("con sesión en un teléfono va a captura rápida", () => {
+    expect(rootRedirectPath(true, IPHONE_UA)).toBe("/quick");
+    expect(rootRedirectPath(true, ANDROID_UA)).toBe("/quick");
+  });
+
+  it("con sesión en escritorio (o sin user-agent) va al panel", () => {
+    expect(rootRedirectPath(true, DESKTOP_UA)).toBe("/dashboard");
+    expect(rootRedirectPath(true, null)).toBe("/dashboard");
+    expect(rootRedirectPath(true, undefined)).toBe("/dashboard");
+  });
+
+  it("con sesión aterriza igual que tras entrar", () => {
+    // Una sola regla de dispositivo: la raíz no declara la suya.
+    for (const ua of [IPHONE_UA, ANDROID_UA, DESKTOP_UA, null]) {
+      expect(rootRedirectPath(true, ua)).toBe(defaultLandingPath(ua));
+    }
   });
 });
 

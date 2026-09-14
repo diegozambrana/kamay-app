@@ -109,7 +109,7 @@ flowchart LR
 | Configuración | `/settings/[section]` — `general`, `lines`, `channels`, `statuses`, `categories`, `users`, `notifications`, `data` | V15, V22 |
 | Móvil | `/quick` | V16 |
 
-**`middleware.ts`** refresca la cookie de sesión en cada petición vía `lib/supabase/proxy.ts` y bloquea rutas del grupo `(app)` sin sesión. La autorización fina (rol, organización) **no** vive en el middleware: vive en RLS y se verifica además en la capa de acciones.
+**`proxy.ts`** (el `middleware.ts` de Next.js 16) refresca la cookie de sesión en cada petición vía `lib/supabase/proxy.ts`, bloquea rutas del grupo `(app)` sin sesión y resuelve la raíz `/`, que no tiene contenido propio: redirige a `/auth/login` sin sesión y al aterrizaje por dispositivo (`/dashboard` o `/quick`) con ella. La autorización fina (rol, organización) **no** vive en el middleware: vive en RLS y se verifica además en la capa de acciones.
 
 ---
 

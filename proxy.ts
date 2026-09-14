@@ -2,8 +2,9 @@ import type { NextRequest } from "next/server";
 
 import { updateSession } from "@/lib/supabase/proxy";
 
-// En Next.js 16 el middleware se llama proxy. Solo refresca la sesión y
-// bloquea `(app)` sin sesión; la autorización fina vive en RLS.
+// En Next.js 16 el middleware se llama proxy. Solo refresca la sesión,
+// bloquea `(app)` sin sesión y resuelve la raíz `/` según haya o no sesión;
+// la autorización fina vive en RLS.
 export async function proxy(request: NextRequest) {
   return updateSession(request);
 }

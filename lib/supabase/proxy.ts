@@ -1,12 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { isProtectedPath, LOGIN_PATH } from "@/lib/auth/routes";
+import { isProtectedPath, LOGIN_PATH, rootRedirectPath } from "@/lib/auth/routes";
 
 /**
  * Refresco de sesión para el proxy (`proxy.ts` en la raíz): renueva la cookie
- * en cada petición y redirige a login las rutas de `(app)` sin sesión,
- * preservando el destino original en `?next=`.
+ * en cada petición, redirige a login las rutas de `(app)` sin sesión
+ * —preservando el destino original en `?next=`— y resuelve la raíz `/`, que
+ * no tiene contenido propio: a login sin sesión, al aterrizaje por
+ * dispositivo con ella (KAM-25).
  *
  * La autorización fina (rol, organización) no vive aquí: vive en RLS
  * y se verifica además en la capa de acciones.
@@ -40,20 +42,35 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  /** Redirección que conserva las cookies que el refresco acaba de escribir. */
+  const redirectKeepingCookies = (url: URL) => {
+    const redirect = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirect.cookies.set(cookie);
+    });
+    return redirect;
+  };
+
   const { pathname, search } = request.nextUrl;
+
+  if (pathname === "/") {
+    // Sin `?next=` ni consulta: la raíz no es un destino (design D4). La
+    // selección de organización la hace el layout de `(app)` al llegar (D3).
+    const url = request.nextUrl.clone();
+    url.pathname = rootRedirectPath(
+      Boolean(user),
+      request.headers.get("user-agent"),
+    );
+    url.search = "";
+    return redirectKeepingCookies(url);
+  }
 
   if (!user && isProtectedPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = LOGIN_PATH;
     url.search = "";
     url.searchParams.set("next", `${pathname}${search}`);
-
-    const redirect = NextResponse.redirect(url);
-    // Conservar las cookies refrescadas también en la redirección.
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirect.cookies.set(cookie);
-    });
-    return redirect;
+    return redirectKeepingCookies(url);
   }
 
   return supabaseResponse;

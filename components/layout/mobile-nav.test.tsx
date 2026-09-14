@@ -10,6 +10,10 @@ vi.mock("next/navigation", () => ({
   usePathname: () => pathname.value,
 }));
 
+vi.mock("@/actions/auth", () => ({
+  signOut: vi.fn(),
+}));
+
 import { MobileNav } from "./mobile-nav";
 
 function renderNav(route: string, role: "owner" | "assistant" = "owner") {
@@ -163,6 +167,33 @@ describe("panel Más", () => {
     renderNav("/orders");
     await userEvent.click(screen.getByTestId("bottom-bar-more"));
     await userEvent.click(screen.getByRole("link", { name: "Catálogo" }));
+
+    expect(screen.queryByTestId("more-panel")).toBeNull();
+  });
+
+  // Scenario: The account block is present for both roles
+  it("ofrece Perfil y Cerrar sesión en su bloque de cuenta, para los dos roles", async () => {
+    renderNav("/orders", "assistant");
+    await userEvent.click(screen.getByTestId("bottom-bar-more"));
+
+    const block = screen.getByTestId("account-block");
+    expect(block).toHaveTextContent("Perfil");
+    expect(block).toHaveTextContent("Cerrar sesión");
+  });
+
+  // Scenario: Choosing an account action navigates and closes
+  it("elegir Perfil cierra el panel", async () => {
+    renderNav("/orders");
+    await userEvent.click(screen.getByTestId("bottom-bar-more"));
+    await userEvent.click(screen.getByRole("link", { name: /Perfil/ }));
+
+    expect(screen.queryByTestId("more-panel")).toBeNull();
+  });
+
+  it("elegir Cerrar sesión cierra el panel", async () => {
+    renderNav("/orders");
+    await userEvent.click(screen.getByTestId("bottom-bar-more"));
+    await userEvent.click(screen.getByTestId("mobile-sign-out"));
 
     expect(screen.queryByTestId("more-panel")).toBeNull();
   });

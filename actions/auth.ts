@@ -1,13 +1,14 @@
 "use server";
 
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { ORG_COOKIE } from "@/constants/auth";
 import { resolvePostAuthPath, setActiveOrganizationCookie } from "@/lib/auth/post-auth";
 import { defaultLandingPath, sanitizeNextPath } from "@/lib/auth/routes";
 import { createClient } from "@/lib/supabase/server";
 import { MembershipService } from "@/services/membership-service";
-import { headers } from "next/headers";
 
 export type AuthActionResult = { error: string } | undefined;
 
@@ -100,4 +101,19 @@ export async function selectOrganization(formData: FormData): Promise<void> {
 
   const userAgent = (await headers()).get("user-agent");
   redirect(next ?? defaultLandingPath(userAgent));
+}
+
+/**
+ * Cierra la sesión desde el menú de cuenta (KAM-24). Limpia también la cookie
+ * de organización activa: quien vuelva a entrar debe pasar de nuevo por la
+ * selección si tiene más de una, en vez de heredar la de la sesión anterior.
+ */
+export async function signOut(): Promise<void> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  const cookieStore = await cookies();
+  cookieStore.delete(ORG_COOKIE);
+
+  redirect("/auth/login");
 }

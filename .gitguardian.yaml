@@ -15,3 +15,9 @@ secret:
   ignored-matches:
     - name: Contraseña de la semilla local de desarrollo (supabase/seed.sql)
       match: kamay123
+    # Contraseñas de juguete de `actions/profile.test.ts`: la sesión, la
+    # verificación y `updateUser` son dobles; nunca llegan a ningún Auth.
+    - name: Contraseña actual ficticia de la prueba unitaria de cambio de contraseña
+      match: vieja123
+    - name: Contraseña nueva ficticia de la prueba unitaria de cambio de contraseña
+      match: nueva123

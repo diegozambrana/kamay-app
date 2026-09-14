@@ -142,6 +142,13 @@ describe("el destino que transporta el inicio de sesión", () => {
     expect(sanitizeNextPath("/assets")).toBe("/assets");
   });
 
+  // KAM-24 · "Profile requires a session": el perfil pasa por el mismo proxy
+  // que cualquier otra pantalla de `(app)`, no por una verificación propia.
+  it("el perfil (KAM-24) está protegido", () => {
+    expect(isProtectedPath("/profile")).toBe(true);
+    expect(sanitizeNextPath("/profile")).toBe("/profile");
+  });
+
   it("un destino externo se descarta", () => {
     // Sin esto, un correo con un `next` manipulado llevaría fuera tras entrar.
     expect(sanitizeNextPath("https://otro.sitio/tasks/1")).toBeNull();

@@ -2,6 +2,7 @@
 
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/features/account/user-menu";
 import { SyncIndicator } from "@/features/sync/sync-indicator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -52,6 +53,9 @@ export function Header({
           timezone={timezone}
         />
         <ThemeToggle />
+        {/* Menú de cuenta (KAM-24): avatar con iniciales, Perfil y Cerrar
+            sesión. Presente para ambos roles, al final del grupo derecho. */}
+        <UserMenu />
       </div>
     </header>
   );

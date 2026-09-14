@@ -161,4 +161,25 @@ export class MembershipService {
       }
     }
   }
+
+  /**
+   * Cambia el nombre visible de la propia membresía (KAM-24). Pasa por la
+   * función `set_my_display_name` y no por un `UPDATE` directo: esa función es
+   * el único punto que puede tocar `display_name` de la fila de quien llama,
+   * sin abrir una política que también alcanzaría a `role` y `archived_at`
+   * (design D1).
+   */
+  async setOwnDisplayName(
+    organizationId: string,
+    displayName: string,
+  ): Promise<void> {
+    const { error } = await this.supabase.rpc("set_my_display_name", {
+      p_organization_id: organizationId,
+      p_display_name: displayName,
+    });
+
+    if (error) {
+      throw new Error("No se pudo guardar el nombre. Intenta de nuevo.");
+    }
+  }
 }

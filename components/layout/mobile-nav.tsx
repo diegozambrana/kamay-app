@@ -1,6 +1,6 @@
 "use client";
 
-import { MenuIcon } from "lucide-react";
+import { LogOutIcon, MenuIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -18,6 +18,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import {
+  ACCOUNT_ACTION_LABELS,
+  PROFILE_HREF,
+} from "@/features/account/account-actions";
+import { SignOutConfirmDialog } from "@/features/account/sign-out-confirm-dialog";
+import { useSignOut } from "@/features/account/use-sign-out";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 
@@ -59,6 +66,14 @@ export function MobileNav() {
   const role = useUserStore((state) => state.membership?.role);
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const {
+    requestSignOut,
+    confirmSignOut,
+    confirming,
+    setConfirming,
+    pending,
+    pendingCount,
+  } = useSignOut();
 
   if (isCaptureRoute(pathname)) return null;
 
@@ -149,8 +164,47 @@ export function MobileNav() {
               );
             })}
           </nav>
+
+          {/* Bloque de cuenta (KAM-24): distinto de las secciones de arriba,
+              con los mismos dos ítems que el menú de escritorio. Presente
+              para ambos roles. */}
+          <Separator className="mx-4" />
+          <nav
+            aria-label="Cuenta"
+            data-testid="account-block"
+            className="grid gap-1 px-4 pb-6"
+          >
+            <Link
+              href={PROFILE_HREF}
+              onClick={() => setMoreOpen(false)}
+              className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-foreground"
+            >
+              <UserIcon className="size-5 shrink-0" aria-hidden />
+              {ACCOUNT_ACTION_LABELS.profile}
+            </Link>
+            <button
+              type="button"
+              data-testid="mobile-sign-out"
+              onClick={() => {
+                setMoreOpen(false);
+                requestSignOut();
+              }}
+              className="flex items-center gap-3 rounded-md px-3 py-3 text-left text-sm text-foreground"
+            >
+              <LogOutIcon className="size-5 shrink-0" aria-hidden />
+              {ACCOUNT_ACTION_LABELS.signOut}
+            </button>
+          </nav>
         </SheetContent>
       </Sheet>
+
+      <SignOutConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        pending={pending}
+        pendingCount={pendingCount}
+        onConfirm={confirmSignOut}
+      />
     </>
   );
 }

@@ -1,0 +1,1988 @@
+{
+  "nodes": [
+    {
+      "id": "app_app_activity_page_tsx",
+      "label": "page.tsx",
+      "file_type": "code",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "activity_page_metadata",
+      "label": "metadata",
+      "file_type": "code",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L35"
+    },
+    {
+      "id": "activity_page_record_kinds",
+      "label": "RECORD_KINDS",
+      "file_type": "code",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L38"
+    },
+    {
+      "id": "activity_page_activitypage",
+      "label": "ActivityPage()",
+      "file_type": "code",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L73"
+    },
+    {
+      "id": "activity_page_rowcontext",
+      "label": "RowContext",
+      "file_type": "code",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L181"
+    },
+    {
+      "id": "activity_page_torow",
+      "label": "toRow()",
+      "file_type": "code",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L190"
+    },
+    {
+      "id": "features_account_use_sign_out_ts",
+      "label": "use-sign-out.ts",
+      "file_type": "code",
+      "source_file": "features/account/use-sign-out.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "account_use_sign_out_usesignout",
+      "label": "useSignOut()",
+      "file_type": "code",
+      "source_file": "features/account/use-sign-out.ts",
+      "source_location": "L17"
+    },
+    {
+      "id": "features_account_user_menu_tsx",
+      "label": "user-menu.tsx",
+      "file_type": "code",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "account_user_menu_usermenu",
+      "label": "UserMenu()",
+      "file_type": "code",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L26"
+    },
+    {
+      "id": "features_account_account_actions_ts",
+      "label": "account-actions.ts",
+      "file_type": "code",
+      "source_file": "features/account/account-actions.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "account_account_actions_account_action_labels",
+      "label": "ACCOUNT_ACTION_LABELS",
+      "file_type": "code",
+      "source_file": "features/account/account-actions.ts",
+      "source_location": "L14"
+    },
+    {
+      "id": "features_account_sign_out_confirm_dialog_tsx",
+      "label": "sign-out-confirm-dialog.tsx",
+      "file_type": "code",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "account_sign_out_confirm_dialog_signoutconfirmdialog",
+      "label": "SignOutConfirmDialog()",
+      "file_type": "code",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L20"
+    },
+    {
+      "id": "components_layout_header_tsx",
+      "label": "header.tsx",
+      "file_type": "code",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "layout_header_header",
+      "label": "Header()",
+      "file_type": "code",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L21"
+    },
+    {
+      "id": "actions_profile_ts",
+      "label": "profile.ts",
+      "file_type": "code",
+      "source_file": "actions/profile.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "actions_profile_profileactionresult",
+      "label": "ProfileActionResult",
+      "file_type": "code",
+      "source_file": "actions/profile.ts",
+      "source_location": "L10"
+    },
+    {
+      "id": "actions_profile_displaynameschema",
+      "label": "displayNameSchema",
+      "file_type": "code",
+      "source_file": "actions/profile.ts",
+      "source_location": "L14"
+    },
+    {
+      "id": "actions_profile_updatedisplayname",
+      "label": "updateDisplayName()",
+      "file_type": "code",
+      "source_file": "actions/profile.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "actions_profile_changepasswordschema",
+      "label": "changePasswordSchema",
+      "file_type": "code",
+      "source_file": "actions/profile.ts",
+      "source_location": "L47"
+    },
+    {
+      "id": "actions_profile_changepassword",
+      "label": "changePassword()",
+      "file_type": "code",
+      "source_file": "actions/profile.ts",
+      "source_location": "L60"
+    },
+    {
+      "id": "actions_auth_ts",
+      "label": "auth.ts",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "actions_auth_authactionresult",
+      "label": "AuthActionResult",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "actions_auth_loginschema",
+      "label": "loginSchema",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "actions_auth_login",
+      "label": "login()",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "actions_auth_emailschema",
+      "label": "emailSchema",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L42"
+    },
+    {
+      "id": "actions_auth_requestpasswordreset",
+      "label": "requestPasswordReset()",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L44"
+    },
+    {
+      "id": "actions_auth_passwordschema",
+      "label": "passwordSchema",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L59"
+    },
+    {
+      "id": "actions_auth_updatepassword",
+      "label": "updatePassword()",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L61"
+    },
+    {
+      "id": "actions_auth_selectorganization",
+      "label": "selectOrganization()",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L81"
+    },
+    {
+      "id": "actions_auth_signout",
+      "label": "signOut()",
+      "file_type": "code",
+      "source_file": "actions/auth.ts",
+      "source_location": "L111"
+    },
+    {
+      "id": "lib_auth_routes_ts",
+      "label": "routes.ts",
+      "file_type": "code",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "auth_routes_protected_prefixes",
+      "label": "PROTECTED_PREFIXES",
+      "file_type": "code",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L5"
+    },
+    {
+      "id": "auth_routes_isprotectedpath",
+      "label": "isProtectedPath()",
+      "file_type": "code",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L37"
+    },
+    {
+      "id": "auth_routes_sanitizeinternalpath",
+      "label": "sanitizeInternalPath()",
+      "file_type": "code",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L47"
+    },
+    {
+      "id": "auth_routes_sanitizenextpath",
+      "label": "sanitizeNextPath()",
+      "file_type": "code",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L58"
+    },
+    {
+      "id": "auth_routes_ismobileuseragent",
+      "label": "isMobileUserAgent()",
+      "file_type": "code",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L77"
+    },
+    {
+      "id": "auth_routes_defaultlandingpath",
+      "label": "defaultLandingPath()",
+      "file_type": "code",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L86"
+    },
+    {
+      "id": "lib_user_initials_ts",
+      "label": "initials.ts",
+      "file_type": "code",
+      "source_file": "lib/user/initials.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "user_initials_initialsof",
+      "label": "initialsOf()",
+      "file_type": "code",
+      "source_file": "lib/user/initials.ts",
+      "source_location": "L8"
+    },
+    {
+      "id": "services_membership_service_ts",
+      "label": "membership-service.ts",
+      "file_type": "code",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "services_membership_service_membershiprow",
+      "label": "MembershipRow",
+      "file_type": "code",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L5"
+    },
+    {
+      "id": "services_membership_service_membershipservice",
+      "label": "MembershipService",
+      "file_type": "code",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "services_membership_service_membershipservice_constructor",
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L22"
+    },
+    {
+      "id": "services_membership_service_membershipservice_listactiveforuser",
+      "label": ".listActiveForUser()",
+      "file_type": "code",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L25"
+    },
+    {
+      "id": "services_membership_service_membershipservice_listlinesbymembership",
+      "label": ".listLinesByMembership()",
+      "file_type": "code",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L65"
+    },
+    {
+      "id": "services_membership_service_membershipservice_setlines",
+      "label": ".setLines()",
+      "file_type": "code",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L102"
+    },
+    {
+      "id": "services_membership_service_membershipservice_setowndisplayname",
+      "label": ".setOwnDisplayName()",
+      "file_type": "code",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L172"
+    }
+  ],
+  "edges": [
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_components_layout_main_container_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "layout_main_container_maincontainer",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_activity_activity_filters_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_activity_filters_activityfilterbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_activity_activity_header_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_activity_header_activityheader",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_activity_activity_list_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_activity_list_activitylist",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_activity_list_activityday",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_activity_activity_row_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_activity_row_activityrowitem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_activity_describe_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_describe_describeevent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_describe_recordhref",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_activity_diff_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_diff_builddetail",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_activity_filters_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_filters_activityhref",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_filters_hasactivefilters",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_filters_parsefilters",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_activity_grouping_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_grouping_daylabel",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_grouping_groupbyday",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_grouping_longdate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_grouping_timeof",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_services_activity_retention_service_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_retention_service_retentionpolicyservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_auth_session_context_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "auth_session_context_getownercontext",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_orders_overdue_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "orders_overdue_todayintimezone",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_user_initials_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "user_initials_initialsof",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_services_activity_activity_service_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_activity_service_activityservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_activity_service_recentactivityentry",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_services_activity_label_service_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_label_service_labelservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_label_service_resolvesearch",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_services_configuration_business_line_service_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "configuration_business_line_service_businesslineservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_services_invitation_service_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "services_invitation_service_invitationservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_services_organization_service_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "services_organization_service_organizationservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_page_metadata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_page_record_kinds",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_page_activitypage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_page_rowcontext",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "app_app_activity_page_tsx",
+      "target": "activity_page_torow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_use_sign_out_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/use-sign-out.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_use_sign_out_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_actions_auth_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/use-sign-out.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_use_sign_out_ts",
+      "target": "actions_auth_signout",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/use-sign-out.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_use_sign_out_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_stores_sync_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/use-sign-out.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_use_sign_out_ts",
+      "target": "stores_sync_store_usesyncstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/use-sign-out.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_use_sign_out_ts",
+      "target": "account_use_sign_out_usesignout",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/use-sign-out.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "link",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_components_ui_avatar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "ui_avatar_avatar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "ui_avatar_avatarfallback",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_components_ui_dropdown_menu_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "ui_dropdown_menu_dropdownmenu",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "ui_dropdown_menu_dropdownmenucontent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "ui_dropdown_menu_dropdownmenuitem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "ui_dropdown_menu_dropdownmenutrigger",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_account_account_actions_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "account_account_actions_account_action_labels",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "account_account_actions_profile_href",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_account_sign_out_confirm_dialog_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "account_sign_out_confirm_dialog_signoutconfirmdialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_account_use_sign_out_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "account_use_sign_out_usesignout",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_user_initials_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "user_initials_initialsof",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_stores_user_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "stores_user_store_useuserstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_user_menu_tsx",
+      "target": "account_user_menu_usermenu",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_account_actions_ts",
+      "target": "account_account_actions_account_action_labels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/account-actions.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_components_ui_alert_dialog_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "ui_alert_dialog_alertdialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "ui_alert_dialog_alertdialogaction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "ui_alert_dialog_alertdialogcancel",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "ui_alert_dialog_alertdialogcontent",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "ui_alert_dialog_alertdialogdescription",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "ui_alert_dialog_alertdialogfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "ui_alert_dialog_alertdialogheader",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "ui_alert_dialog_alertdialogtitle",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "features_account_sign_out_confirm_dialog_tsx",
+      "target": "account_sign_out_confirm_dialog_signoutconfirmdialog",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "features/account/sign-out-confirm-dialog.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_components_layout_notification_bell_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "layout_notification_bell_notificationbell",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_components_theme_toggle_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "components_theme_toggle_themetoggle",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_account_user_menu_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "account_user_menu_usermenu",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_features_sync_sync_indicator_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "sync_sync_indicator_syncindicator",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_components_ui_sidebar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "ui_sidebar_sidebartrigger",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_stores_organization_store_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "stores_organization_store_useorganizationstore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "types_index_notificationgroup",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "components_layout_header_tsx",
+      "target": "layout_header_header",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/layout/header.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "cache",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "zod",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_auth_session_context_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "auth_session_context_getsessioncontext",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_supabase_verify_password_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "supabase_verify_password_verifycurrentpassword",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_services_membership_service_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "services_membership_service_membershipservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "actions_profile_profileactionresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "actions_profile_displaynameschema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "actions_profile_updatedisplayname",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "actions_profile_changepasswordschema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_profile_ts",
+      "target": "actions_profile_changepassword",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/profile.ts",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "headers",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "navigation",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "zod",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_constants_auth_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "constants_auth_org_cookie",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_auth_post_auth_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "auth_post_auth_resolvepostauthpath",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "auth_post_auth_setactiveorganizationcookie",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_auth_routes_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "auth_routes_defaultlandingpath",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "auth_routes_sanitizenextpath",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_lib_supabase_server_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "supabase_server_createclient",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_services_membership_service_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "services_membership_service_membershipservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_authactionresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_loginschema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_login",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_emailschema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_requestpasswordreset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_passwordschema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_updatepassword",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_selectorganization",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_ts",
+      "target": "actions_auth_signout",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "actions/auth.ts",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_auth_routes_ts",
+      "target": "auth_routes_protected_prefixes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_auth_routes_ts",
+      "target": "auth_routes_isprotectedpath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_auth_routes_ts",
+      "target": "auth_routes_sanitizeinternalpath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_auth_routes_ts",
+      "target": "auth_routes_sanitizenextpath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_auth_routes_ts",
+      "target": "auth_routes_ismobileuseragent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_auth_routes_ts",
+      "target": "auth_routes_defaultlandingpath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "auth_routes_sanitizenextpath",
+      "target": "auth_routes_sanitizeinternalpath",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "auth_routes_defaultlandingpath",
+      "target": "auth_routes_ismobileuseragent",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/auth/routes.ts",
+      "source_location": "L87",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_user_initials_ts",
+      "target": "user_initials_initialsof",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/user/initials.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_ts",
+      "target": "supabase_js",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_ts",
+      "target": "users_diegoarmandozambranaarze_projects_kamay_project_kamay_app_types_index_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_ts",
+      "target": "types_index_membershipwithorganization",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_ts",
+      "target": "types_index_role",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_ts",
+      "target": "services_membership_service_membershiprow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_ts",
+      "target": "services_membership_service_membershipservice",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_membershipservice",
+      "target": "services_membership_service_membershipservice_constructor",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_membershipservice",
+      "target": "services_membership_service_membershipservice_listactiveforuser",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_membershipservice",
+      "target": "services_membership_service_membershipservice_listlinesbymembership",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_membershipservice",
+      "target": "services_membership_service_membershipservice_setlines",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "services_membership_service_membershipservice",
+      "target": "services_membership_service_membershipservice_setowndisplayname",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "services/membership-service.ts",
+      "source_location": "L172",
+      "weight": 1.0
+    },
+    {
+      "source": "activity_page_torow",
+      "target": "user_initials_initialsof",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/(app)/activity/page.tsx",
+      "source_location": "L205",
+      "weight": 1.0
+    },
+    {
+      "source": "account_user_menu_usermenu",
+      "target": "account_use_sign_out_usesignout",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "account_user_menu_usermenu",
+      "target": "user_initials_initialsof",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "features/account/user-menu.tsx",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_selectorganization",
+      "target": "auth_routes_sanitizenextpath",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "actions/auth.ts",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "actions_auth_selectorganization",
+      "target": "auth_routes_defaultlandingpath",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "actions/auth.ts",
+      "source_location": "L103",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

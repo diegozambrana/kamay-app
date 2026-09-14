@@ -22,6 +22,7 @@ import {
 import { RetentionPolicyService } from "@/services/activity/retention-service";
 import { getOwnerContext } from "@/lib/auth/session-context";
 import { todayInTimezone } from "@/lib/orders/overdue";
+import { initialsOf } from "@/lib/user/initials";
 import {
   ActivityService,
   type RecentActivityEntry,
@@ -220,13 +221,4 @@ function toRow(entry: RecentActivityEntry, ctx: RowContext): ActivityRowItem {
     tableName: entry.tableName,
     recordId: entry.recordId,
   };
-}
-
-/** «MC» de «Marcela Cruz». Sin nombre no hay iniciales que inventar. */
-function initialsOf(name: string | null): string | null {
-  const trimmed = name?.trim();
-  if (!trimmed) return null;
-
-  const parts = trimmed.split(/\s+/).slice(0, 2);
-  return parts.map((part) => part.charAt(0).toUpperCase()).join("");
 }

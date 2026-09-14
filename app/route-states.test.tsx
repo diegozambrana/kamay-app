@@ -19,7 +19,7 @@ import { afterEach, describe, expect, it } from "vitest";
 const APP_DIR = path.resolve(__dirname);
 
 const EXCLUDED: Record<string, string> = {
-  ".": "Página del andamiaje (KAM-01): no consulta datos.",
+  ".": "Solo redirige según la sesión (KAM-25): no consulta datos ni renderiza contenido.",
   offline:
     "Página estática que sirve el service worker sin red: no consulta datos.",
   "(app)/settings":

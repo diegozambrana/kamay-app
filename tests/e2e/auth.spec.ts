@@ -27,6 +27,25 @@ test.describe("acceso sin sesión", () => {
     await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
     await expect(page.getByText(/regístrate|registrarse|crear cuenta/i)).toHaveCount(0);
   });
+
+  // KAM-25 · `user-auth` «Anonymous visitor at the root goes to login» y
+  // `project-foundation` «Dev server serves the sign-in screen»: la raíz no
+  // tiene página propia, lleva a la entrada sin destino y sin errores.
+  test("la raíz lleva a la entrada, sin destino y sin errores", async ({
+    page,
+  }) => {
+    const errors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") errors.push(message.text());
+    });
+    page.on("pageerror", (error) => errors.push(error.message));
+
+    await page.goto("/");
+
+    await expect(page).toHaveURL(/\/auth\/login$/);
+    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
+    expect(errors).toEqual([]);
+  });
 });
 
 test.describe("aterrizaje por dispositivo y cascarón", () => {
@@ -53,6 +72,24 @@ test.describe("aterrizaje por dispositivo y cascarón", () => {
     await expect(page.getByTestId("bottom-bar")).toBeVisible();
     await expect(page.getByTestId("top-bar")).toBeHidden();
   });
+
+  // KAM-25 · «Signed-in user on desktop goes to the dashboard» y «Signed-in
+  // user on mobile goes to quick capture»: con sesión, la raíz —y con ella la
+  // aplicación instalada, que abre en `/`— aterriza igual que tras entrar.
+  test("con sesión, la raíz aterriza según el dispositivo", async ({
+    page,
+    isMobile,
+  }) => {
+    const landing = isMobile ? /\/quick$/ : /\/dashboard$/;
+    const owner = await createFreshOrganization();
+    await login(page, owner.email);
+    await expect(page).toHaveURL(landing);
+
+    await page.goto("/");
+
+    await expect(page).toHaveURL(landing);
+    await expect(page.getByTestId(isMobile ? "bottom-bar" : "top-bar")).toBeVisible();
+  });
 });
 
 test.describe("selección de organización", () => {
@@ -76,6 +113,26 @@ test.describe("selección de organización", () => {
     if (!isMobile) {
       await expect(page.getByTestId("top-bar")).toContainText(feria);
     }
+  });
+
+  // KAM-25 · «The root does not skip organization selection»: entrar por `/`
+  // no es un atajo al cascarón con la organización sin elegir.
+  test("con dos organizaciones sin elegir, la raíz vuelve a la selección", async ({
+    page,
+  }) => {
+    const owner = await createFreshOrganization();
+    const feria = `Feria ${owner.organizationName}`;
+    await addOrganizationFor(owner, feria);
+
+    await login(page, owner.email);
+    await expect(page).toHaveURL(/\/auth\/select-org/);
+
+    await page.goto("/");
+
+    await expect(page).toHaveURL(/\/auth\/select-org/);
+    await expect(page.getByRole("button", { name: feria, exact: true })).toBeVisible();
+    await expect(page.getByTestId("top-bar")).toHaveCount(0);
+    await expect(page.getByTestId("bottom-bar")).toHaveCount(0);
   });
 
   test("con una sola organización no hay paso de selección", async ({

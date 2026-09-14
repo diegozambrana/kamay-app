@@ -94,6 +94,21 @@ export async function createFreshOrganization(): Promise<FreshOrganization> {
 }
 
 /**
+ * Una cuenta que puede entrar pero no pertenece a ninguna organización
+ * (KAM-25): nunca la invitaron. Es lo que ve el aviso "sin organización".
+ */
+export async function createAccountWithoutOrganization(): Promise<{ email: string }> {
+  const email = `sin-org-${Date.now()}-${Math.floor(Math.random() * 100_000)}@kamay.test`;
+  const { error } = await adminClient().auth.admin.createUser({
+    email,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (error) throw new Error(`usuario: ${error.message}`);
+  return { email };
+}
+
+/**
  * Otra organización, también vacía, para la misma dueña: quien pertenece a
  * dos organizaciones elige una al entrar (`/auth/select-org`).
  */

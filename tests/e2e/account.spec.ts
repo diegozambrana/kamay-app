@@ -1,4 +1,8 @@
-import { createFreshOrganization, E2E_PASSWORD } from "./helpers/fresh-org";
+import {
+  createAccountWithoutOrganization,
+  createFreshOrganization,
+  E2E_PASSWORD,
+} from "./helpers/fresh-org";
 import { geeko } from "./helpers/seed-copies";
 import { expect, test, type Page } from "./helpers/test";
 
@@ -83,6 +87,35 @@ test.describe("menú de cuenta", () => {
     // Y la ruta protegida vuelve a pedir credenciales, no queda una sesión viva.
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/auth\/login/);
+    // Tampoco por la raíz (KAM-25 · «A session that ended no longer reaches
+    // the app through the root»): `/` ya no encuentra sesión y va a la entrada.
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/auth\/login$/);
+  });
+});
+
+/**
+ * KAM-25 · `user-auth` — requisito "An account without an organization can
+ * sign out": «The notice offers a way out», «Signing out from the notice goes
+ * to login» y «After signing out, the notice is no longer reachable».
+ */
+test.describe("cuenta sin organización", () => {
+  test("el aviso ofrece cerrar sesión y la salida es real", async ({ page }) => {
+    const account = await createAccountWithoutOrganization();
+    await login(page, account.email);
+
+    const signOutButton = page.getByTestId("no-organization-sign-out");
+    await expect(page.getByText(/no pertenece a ninguna organización/)).toBeVisible();
+    await expect(signOutButton).toBeVisible();
+    await expect(page.getByTestId("top-bar")).toHaveCount(0);
+    await expect(page.getByTestId("bottom-bar")).toHaveCount(0);
+
+    await signOutButton.click();
+    await expect(page).toHaveURL(/\/auth\/login$/);
+
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/auth\/login$/);
+    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
   });
 });
 

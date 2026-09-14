@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileContextBar } from "@/components/layout/mobile-context-bar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { NoOrganizationNotice } from "@/features/account/no-organization-notice";
 import { RegisterButton } from "@/features/quick-capture/register-button";
 import { SyncProvider } from "@/features/sync/sync-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -40,16 +41,9 @@ export default async function AppLayout({
 
   const memberships = await getRequestMemberships(user.id);
 
-  if (memberships.length === 0) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center p-4 text-center">
-        <p className="max-w-sm text-sm text-muted-foreground">
-          Tu cuenta no pertenece a ninguna organización. Pide a la persona
-          dueña que te invite.
-        </p>
-      </div>
-    );
-  }
+  // Sin organización no hay cascarón ni menú de cuenta: el aviso trae su
+  // propia salida (KAM-25).
+  if (memberships.length === 0) return <NoOrganizationNotice />;
 
   const cookieStore = await cookies();
   const cookieOrgId = cookieStore.get(ORG_COOKIE)?.value;

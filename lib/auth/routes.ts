@@ -86,3 +86,18 @@ export function isMobileUserAgent(userAgent: string | null | undefined): boolean
 export function defaultLandingPath(userAgent: string | null | undefined): string {
   return isMobileUserAgent(userAgent) ? "/quick" : "/dashboard";
 }
+
+/**
+ * Destino de la raíz `/` (KAM-25): la raíz no tiene contenido propio.
+ * Sin sesión, a login —sin `?next=`: `/` no es un destino que recordar—;
+ * con sesión, al mismo aterrizaje por dispositivo que tras entrar.
+ *
+ * La selección de organización no se decide aquí: la hace el layout de
+ * `(app)` al llegar al aterrizaje, igual que para cualquier otra ruta.
+ */
+export function rootRedirectPath(
+  hasSession: boolean,
+  userAgent: string | null | undefined,
+): string {
+  return hasSession ? defaultLandingPath(userAgent) : LOGIN_PATH;
+}

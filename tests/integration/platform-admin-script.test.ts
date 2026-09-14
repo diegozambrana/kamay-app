@@ -36,7 +36,8 @@ afterAll(async () => {
   }
 });
 
-describe("scripts/platform-admin.mjs", () => {
+// Cada prueba crea cuentas y entra con ellas: en CI pasa de los 5 s por omisión.
+describe("scripts/platform-admin.mjs", { timeout: 30_000 }, () => {
   it("interpreta el comando, el correo y la nota", () => {
     expect(parseArgs(["grant", "a@b.c", "--note", "soporte"])).toEqual({
       command: "grant",

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { MemoryMailer } from "@/lib/email/port";
 import { DEFAULT_PREFERENCES } from "@/lib/notifications/defaults";
@@ -31,13 +32,31 @@ import { adminClient, countNotifications, userIdByEmail } from "./notifications-
 const SUPER_ADMIN = { email: "superadmin@kamay.test", password: "kamay123" };
 const PASSWORD = "kamay123";
 
+/**
+ * Cada prueba recorre la red varias veces (crear cuenta, crear organización,
+ * entrar con dos sesiones): en CI eso pasa de los 5 s por omisión de Vitest.
+ * El super admin entra una sola vez y el cliente de servicio se reutiliza —
+ * cada uno de ellos consulta `supabase status` al construirse—.
+ */
+const TIMEOUT = 30_000;
+
+let service: SupabaseClient;
+let admin: SupabaseClient;
+let superAdminId: string;
+
+beforeAll(async () => {
+  service = adminClient();
+  admin = await signIn(SUPER_ADMIN);
+  superAdminId = await userIdByEmail(service, SUPER_ADMIN.email);
+}, TIMEOUT);
+
 function suffix() {
   return `${Date.now()}-${Math.floor(Math.random() * 1e5)}`;
 }
 
 async function newAccount(prefix: string): Promise<{ id: string; email: string }> {
   const email = `${prefix}-${suffix()}@kamay.test`;
-  const { data, error } = await adminClient().auth.admin.createUser({
+  const { data, error } = await service.auth.admin.createUser({
     email,
     password: PASSWORD,
     email_confirm: true,
@@ -47,7 +66,6 @@ async function newAccount(prefix: string): Promise<{ id: string; email: string }
 }
 
 async function newOrganization(name: string) {
-  const admin = await signIn(SUPER_ADMIN);
   return new OrganizationAdminService(admin).create({
     name: `${name} ${suffix()}`,
     currency: "BOB",
@@ -55,11 +73,10 @@ async function newOrganization(name: string) {
   });
 }
 
-describe("el super admin gestiona equipos", () => {
+describe("el super admin gestiona equipos", { timeout: TIMEOUT }, () => {
   it("agrega una cuenta existente como dueña y ella entra a trabajar", async () => {
     const organizationId = await newOrganization("Taller Integración");
     const account = await newAccount("int-duena");
-    const admin = await signIn(SUPER_ADMIN);
 
     const outcomes = await new MembershipAdminService(admin).assign(account.id, [
       { organizationId, role: "owner", displayName: "Dueña Integración" },
@@ -82,7 +99,6 @@ describe("el super admin gestiona equipos", () => {
       newOrganization("Taller C"),
     ]);
     const account = await newAccount("int-dos");
-    const admin = await signIn(SUPER_ADMIN);
 
     const outcomes = await new MembershipAdminService(admin).assign(account.id, [
       { organizationId: b, role: "owner", displayName: "Ana" },
@@ -104,7 +120,6 @@ describe("el super admin gestiona equipos", () => {
   it("no puede quitarle el acceso a la última dueña", async () => {
     const organizationId = await newOrganization("Taller Última");
     const account = await newAccount("int-ultima");
-    const admin = await signIn(SUPER_ADMIN);
     await new MembershipAdminService(admin).assign(account.id, [
       { organizationId, role: "owner", displayName: "Única" },
     ]);
@@ -123,7 +138,6 @@ describe("el super admin gestiona equipos", () => {
   it("renombra una membresía y el cambio queda marcado en la bitácora", async () => {
     const organizationId = await newOrganization("Taller Nombre");
     const account = await newAccount("int-nombre");
-    const admin = await signIn(SUPER_ADMIN);
     await new MembershipAdminService(admin).assign(account.id, [
       { organizationId, role: "owner", displayName: "Antes" },
     ]);
@@ -151,11 +165,10 @@ describe("el super admin gestiona equipos", () => {
   });
 });
 
-describe("el super admin no forma parte del equipo", () => {
+describe("el super admin no forma parte del equipo", { timeout: TIMEOUT }, () => {
   it("no aparece en el equipo, no es asignable y no recibe avisos de talleres ajenos", async () => {
     const organizationId = await newOrganization("Taller Equipo");
     const account = await newAccount("int-equipo");
-    const admin = await signIn(SUPER_ADMIN);
     await new MembershipAdminService(admin).assign(account.id, [
       { organizationId, role: "owner", displayName: "Dueña Equipo" },
     ]);
@@ -167,7 +180,6 @@ describe("el super admin no forma parte del equipo", () => {
     });
 
     const owner = await signIn({ email: account.email, password: PASSWORD });
-    const superAdminId = await userIdByEmail(adminClient(), SUPER_ADMIN.email);
 
     // Escenario «Not listed among the members».
     const members = await new InvitationService(owner).listMembers(organizationId);
@@ -179,7 +191,6 @@ describe("el super admin no forma parte del equipo", () => {
 
     // Escenario «No notifications from foreign organizations»: los
     // destinatarios salen de las membresías, como en el trabajo diario.
-    const service = adminClient();
     const { data: recipients } = await service
       .from("memberships")
       .select("user_id")

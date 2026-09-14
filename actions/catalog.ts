@@ -94,7 +94,7 @@ export async function setItemArchived(
 
   const context = await getSessionContext();
   if (!context) return { error: NO_SESSION };
-  if (context.membership.role !== "owner") return { error: NOT_OWNER };
+  if (context.role !== "owner") return { error: NOT_OWNER };
 
   try {
     await new ItemService(context.supabase).setArchived(
@@ -182,7 +182,7 @@ export async function setItemVariantArchived(
 
   const context = await getSessionContext();
   if (!context) return { error: NO_SESSION };
-  if (context.membership.role !== "owner") return { error: NOT_OWNER };
+  if (context.role !== "owner") return { error: NOT_OWNER };
 
   try {
     await new ItemVariantService(context.supabase).setArchived(
@@ -263,7 +263,7 @@ export async function setItemPhotoArchived(
 
   const context = await getSessionContext();
   if (!context) return { error: NO_SESSION };
-  if (context.membership.role !== "owner") return { error: NOT_OWNER };
+  if (context.role !== "owner") return { error: NOT_OWNER };
 
   try {
     await new AttachmentService(context.supabase).setArchived(

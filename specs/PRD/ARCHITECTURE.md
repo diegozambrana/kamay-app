@@ -6,7 +6,7 @@ Este documento describe la estructura y las convenciones del código de **Kamay*
 
 1. `docs/especificacion-producto.md` — especificación funcional (qué se construye y por qué). **Manda sobre todo lo demás.**
 2. `docs/esquema-base-de-datos.md` — anexo técnico del esquema.
-3. `docs/mapa-navegacion-ui.md` — vistas V1–V23 y transiciones.
+3. `docs/mapa-navegacion-ui.md` — vistas V1–V25 y transiciones.
 4. Este archivo — cómo está organizado el código.
 
 Para agregar un recurso o pantalla nueva, el flujo obligatorio es un cambio de OpenSpec (ver §11), no editar directamente.
@@ -89,6 +89,8 @@ flowchart LR
 - **Layout raíz** (`app/layout.tsx`): fuentes, CSS global, `ThemeProvider`, `Toaster`, registro del service worker.
 - **Grupo `(app)`**: interfaz autenticada. `AuthCheck` usa `createClient()` de `@/lib/supabase/server`, redirige a `/auth/login`, carga `getCurrentUser()` y su membresía, y envuelve los hijos en `UserProvider` + `OrganizationProvider`.
 - **Grupo `(fair)`**: modo feria. Layout propio **sin barra superior ni inferior** — es la única parte de la aplicación que rompe el cascarón, por decisión de producto.
+- **Grupo `(platform)`**: vistas del administrador de la plataforma, `app/(platform)/admin/organizations` (y `[id]`) y `app/(platform)/admin/users` (y `[id]`). Su layout exige administrador de la plataforma (si no, redirige al aterrizaje por dispositivo) y monta el cascarón con la organización activa, si la hay. **Por qué no cuelga de `(app)`:** el layout de `(app)` es quien manda al administrador sin organización a `/admin/organizations`; como un layout no conoce la ruta que envuelve, esas páginas se redirigirían a sí mismas. `/admin` está en las rutas protegidas del proxy.
+- **Cascarón compartido** (`components/layout/app-shell.tsx`, Server Component): providers, menú lateral, barra superior, barra de contexto móvil, **+ Registrar** y barra inferior, usado por `(app)` y `(platform)`. Carga líneas, insumos y avisos solo si hay organización; con `organization = null` monta el cascarón reducido (sin selector de línea, campana, registro ni barra de contexto). Así `(app)/layout.tsx` queda en "resolver acceso → aviso / redirección / `<AppShell>`".
 - **`app/auth/*`**: inicio de sesión, recuperación de contraseña y manejadores `auth/callback` y `auth/confirm`.
 - **`app/api/*`**: manejadores de ruta para trabajos programados (resumen diario, retención de bitácora) y exportaciones.
 
@@ -108,6 +110,7 @@ flowchart LR
 | Bitácora | `/activity` | V23 |
 | Configuración | `/settings/[section]` — `general`, `lines`, `channels`, `statuses`, `categories`, `users`, `notifications`, `data` | V15, V22 |
 | Móvil | `/quick` | V16 |
+| Plataforma | `/admin/organizations`, `/admin/organizations/[id]`, `/admin/users`, `/admin/users/[id]` | V24, V25 |
 
 **`proxy.ts`** (el `middleware.ts` de Next.js 16) refresca la cookie de sesión en cada petición vía `lib/supabase/proxy.ts`, bloquea rutas del grupo `(app)` sin sesión y resuelve la raíz `/`, que no tiene contenido propio: redirige a `/auth/login` sin sesión y al aterrizaje por dispositivo (`/dashboard` o `/quick`) con ella. La autorización fina (rol, organización) **no** vive en el middleware: vive en RLS y se verifica además en la capa de acciones.
 
@@ -124,13 +127,15 @@ flowchart LR
 
 Variables de entorno: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
-> **Regla no negociable:** el cliente de service role **solo** se usa en trabajos programados y en la generación de notificaciones. Nunca en una acción disparada por el usuario. Saltarse RLS es saltarse el aislamiento entre organizaciones.
+> **Regla no negociable:** el cliente de service role **solo** se usa en trabajos programados, en la generación de notificaciones y en herramientas del operador que corren fuera de la aplicación (`scripts/`). Nunca en una acción disparada por el usuario. Saltarse RLS es saltarse el aislamiento entre organizaciones.
+>
+> La herramienta del operador es `scripts/platform-admin.mjs` (`grant | revoke | list`): concede y retira administradores de la plataforma escribiendo en `platform_admins`. Construye su propio cliente con `NEXT_PUBLIC_SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` y no importa `lib/supabase/admin.ts`, así que la frontera que vigila `services/notifications/service-role-boundary.test.ts` no se mueve. Lo que el administrador de la plataforma hace dentro de la aplicación pasa por RLS con su propia sesión, como cualquier usuario.
 
 ### Base de datos (migraciones)
 
 El esquema canónico vive en `supabase/migrations/`, en el orden documentado en `docs/esquema-base-de-datos.md`. Principios que el código debe respetar:
 
-- **Multi-organización** vía `organization_id` en toda tabla; **RLS activo en todas, sin excepción**.
+- **Multi-organización** vía `organization_id` en toda tabla (salvo `organizations` y `platform_admins`, excepciones escritas en el esquema §20); **RLS activo en todas, sin excepción**.
 - **UUID** como llave primaria, generables en el cliente (requisito del modo sin conexión).
 - **Archivado** vía `archived_at`; **no existen políticas `DELETE`**.
 - **Auditoría** vía `activity_log` y trigger genérico `log_activity()` en todas las tablas auditables.
@@ -140,7 +145,7 @@ El esquema canónico vive en `supabase/migrations/`, en el orden documentado en 
 
 | Dominio | Tablas |
 | --- | --- |
-| Organización | `organizations`, `memberships` |
+| Organización | `organizations`, `memberships`, `platform_admins` (por encima de las organizaciones) |
 | Configuración | `business_lines`, `sales_channels`, `statuses`, `expense_categories`, `units` |
 | Directorio | `contacts` |
 | Catálogo | `items`, `item_variants`, `asset_details` |
@@ -216,6 +221,7 @@ No pertenecen a los servicios: `revalidatePath`, `cookies()`, verificaciones de 
 | `tasks` | `board`, `detail`, `editor`, `deliverables`, `mine`, hooks, stores | V17–V20 |
 | `activity` | `feed`, `filters`, `diff-view` | V23 |
 | `settings` | `general`, `lines`, `statuses`, `users`, `data` | V15, V22 |
+| `platform` | `organizations`, `users`, `organization-switcher.tsx` | V24, V25 |
 
 ### Tareas (`features/tasks/`)
 
@@ -239,7 +245,7 @@ La rebanada más grande, y la que concentra las reglas más delicadas:
 
 ## UI compartida (`components/`)
 
-- **`layout/`** — `Header`, `Sidebar`, `MobileNav`, `MainContainer`, `LineSelector` (contexto global persistente).
+- **`layout/`** — `AppShell` (`app-shell.tsx`, el cascarón que comparten `(app)` y `(platform)`), `Header`, `Sidebar`, `MobileNav`, `MainContainer`, `LineSelector` (contexto global persistente).
 - **`ui/`** — primitivas generadas por shadcn.
 - **`DataTable/`** — tabla de listados (búsqueda, paginación, acciones por fila, "ver archivados").
 - **`Board/`** — piezas compartidas entre el tablero de pedidos y el de tareas.

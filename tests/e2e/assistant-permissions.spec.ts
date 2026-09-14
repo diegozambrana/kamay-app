@@ -1,3 +1,4 @@
+import { addOrganizationFor, createFreshOrganization } from "./helpers/fresh-org";
 import { geeko, geekoForBlock, historico } from "./helpers/seed-copies";
 import { expect, test, type Page } from "./helpers/test";
 
@@ -653,6 +654,55 @@ test.describe("toda ruta reservada a la dueña, fuera del alcance del ayudante",
     for (const download of OWNER_ONLY_DOWNLOADS) {
       const response = await page.request.get(download);
       expect(response.status(), `${download} debería negarse al ayudante`).toBe(403);
+    }
+  });
+});
+
+/**
+ * KAM-26 · Las vistas de plataforma son del administrador de la plataforma
+ * (spec `platform-administration`): «An assistant cannot open the view», «An
+ * owner cannot open it», «A multi-organization owner has no selector» y
+ * «Nobody else sees them».
+ */
+test.describe("vistas de plataforma, fuera del alcance de dueña y ayudante", () => {
+  const PLATFORM_ROUTES = ["/admin/organizations", "/admin/users"];
+
+  test("el ayudante no las abre por dirección directa", async ({ page }) => {
+    await login(page, geeko().assistant);
+    for (const route of PLATFORM_ROUTES) {
+      await page.goto(route);
+      await expect(page, `${route} debería redirigir al ayudante`).toHaveURL(
+        /\/(dashboard|quick)(\?.*)?$/,
+      );
+      await expect(page.getByTestId("organization-list")).toHaveCount(0);
+      await expect(page.getByTestId("user-list")).toHaveCount(0);
+    }
+  });
+
+  test("la dueña tampoco, y no ve sus entradas ni el selector", async ({ page, isMobile }) => {
+    const owner = await createFreshOrganization();
+    await addOrganizationFor(owner, `Segunda ${Date.now()}`);
+    // Con dos organizaciones elige una, como siempre: el `login` de este
+    // archivo espera el aterrizaje directo, así que aquí se entra a mano.
+    await page.goto("/auth/login");
+    await page.getByLabel("Correo electrónico").fill(owner.email);
+    await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/auth\/select-org/);
+    await page.getByRole("button", { name: owner.organizationName }).click();
+    await expect(page).toHaveURL(/\/(dashboard|quick)$/);
+
+    await expect(page.getByTestId("organization-switcher")).toHaveCount(0);
+    if (isMobile) await page.getByRole("button", { name: "Más" }).click();
+    for (const label of ["Organizaciones", "Usuarios"]) {
+      await expect(page.getByRole("link", { name: label, exact: true })).toHaveCount(0);
+    }
+
+    for (const route of PLATFORM_ROUTES) {
+      await page.goto(route);
+      await expect(page, `${route} debería redirigir a la dueña`).toHaveURL(
+        /\/(dashboard|quick)(\?.*)?$/,
+      );
     }
   });
 });

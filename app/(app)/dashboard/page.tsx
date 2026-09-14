@@ -50,9 +50,9 @@ export default async function DashboardPage() {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
 
-  const { supabase, organizationId, membership } = context;
-  const timezone = membership.organization.timezone;
-  const isOwner = membership.role === "owner";
+  const { supabase, organizationId, organization, role } = context;
+  const timezone = organization.timezone;
+  const isOwner = role === "owner";
 
   const lines = await new BusinessLineService(supabase).listActive(
     organizationId,

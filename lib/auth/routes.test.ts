@@ -25,6 +25,13 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/settings/lines")).toBe(true);
   });
 
+  it("protege las vistas de plataforma (KAM-26)", () => {
+    expect(isProtectedPath("/admin/organizations")).toBe(true);
+    expect(isProtectedPath("/admin/users/20000000-0000-0000-0000-000000000008")).toBe(true);
+    // Por segmento, no por prefijo de cadena.
+    expect(isProtectedPath("/administracion")).toBe(false);
+  });
+
   it("covers every section of the (app) group", () => {
     // Cada sección del grupo autenticado tiene que estar aquí: si falta, el
     // proxy deja pasar la petición y la única defensa es el layout.

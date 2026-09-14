@@ -138,6 +138,12 @@ Hay que configurarlo a mano en el proyecto nuevo:
 - **API → Data API**: el esquema `public` expuesto. Los permisos de cada tabla
   vienen en `schema.sql`, pero la exposición del esquema es configuración del
   proyecto.
+- **Administradores de la plataforma (KAM-26).** La tabla `platform_admins`
+  viaja en la copia, así que quien era super admin lo sigue siendo. Comprobar
+  con `node scripts/platform-admin.mjs list` contra el proyecto nuevo que la
+  lista es la esperada, y revocar lo que sobre. Una cuenta super admin lee y
+  edita todas las organizaciones: se recomienda activarle MFA en Supabase Auth
+  y no compartirla.
 - **Las sesiones abiertas no sobreviven.** El proyecto nuevo firma con otras
   claves: cada persona vuelve a iniciar sesión con **su misma contraseña**,
   porque los hashes vienen en `auth.users`.

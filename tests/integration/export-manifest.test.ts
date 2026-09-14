@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
 
-import { EXCLUDED_COLUMNS, EXPORT_TABLES } from "@/lib/export/tables";
+import { EXCLUDED_COLUMNS, EXCLUDED_TABLES, EXPORT_TABLES } from "@/lib/export/tables";
 
 /**
  * KAM-23 · La exportación completa no se queda atrás del esquema.
@@ -65,7 +65,17 @@ describe("manifiesto de la exportación completa", () => {
   const catalog = catalogTables();
 
   it("exporta toda tabla de datos, y solo tablas que existen", () => {
-    expect(EXPORT_TABLES.map((entry) => entry.table).sort()).toEqual([...catalog.keys()].sort());
+    // Las que no son de ninguna organización se excluyen con su motivo
+    // (`EXCLUDED_TABLES`), no en silencio.
+    const organizationTables = [...catalog.keys()].filter((table) => !(table in EXCLUDED_TABLES));
+    expect(EXPORT_TABLES.map((entry) => entry.table).sort()).toEqual(organizationTables.sort());
+  });
+
+  it("toda tabla excluida existe y no está en el manifiesto", () => {
+    for (const table of Object.keys(EXCLUDED_TABLES)) {
+      expect(catalog.has(table), table).toBe(true);
+      expect(EXPORT_TABLES.some((entry) => entry.table === table), table).toBe(false);
+    }
   });
 
   it("cada archivo lleva todas las columnas de su tabla, salvo las excluidas con motivo", () => {

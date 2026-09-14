@@ -15,6 +15,7 @@ import { RegisterButton } from "./register-button";
 function renderButton(route: string, role: "owner" | "assistant" = "owner") {
   pathname.value = route;
   useUserStore.setState({
+    role,
     membership: { id: "m1", organizationId: "o1", role, displayName: null },
   });
   return render(<RegisterButton />);

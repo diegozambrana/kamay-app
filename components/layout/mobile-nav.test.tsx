@@ -19,6 +19,7 @@ import { MobileNav } from "./mobile-nav";
 function renderNav(route: string, role: "owner" | "assistant" = "owner") {
   pathname.value = route;
   useUserStore.setState({
+    role,
     membership: {
       id: "m1",
       organizationId: "o1",

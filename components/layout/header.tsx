@@ -22,10 +22,17 @@ export function Header({
   unreadCount = 0,
   notificationGroups = [],
   timezone = "UTC",
+  organizationControls = true,
 }: {
   unreadCount?: number;
   notificationGroups?: NotificationGroup[];
   timezone?: string;
+  /**
+   * `false` en el cascarón reducido del administrador de la plataforma sin
+   * organización (KAM-26): sin organización no hay avisos que contar ni cola
+   * que sincronizar, así que ni la campana ni el indicador se montan.
+   */
+  organizationControls?: boolean;
 }) {
   const organization = useOrganizationStore((state) => state.organization);
 
@@ -43,15 +50,17 @@ export function Header({
       )}
 
       <div className="ml-auto flex items-center gap-1">
-        <SyncIndicator />
+        {organizationControls && <SyncIndicator />}
         {/* Elemento siempre disponible del cascarón (mapa §4.1). Su bandeja
             —V21— y su contador los compone el layout, que es donde vive la
             sesión. */}
-        <NotificationBell
-          unreadCount={unreadCount}
-          groups={notificationGroups}
-          timezone={timezone}
-        />
+        {organizationControls && (
+          <NotificationBell
+            unreadCount={unreadCount}
+            groups={notificationGroups}
+            timezone={timezone}
+          />
+        )}
         <ThemeToggle />
         {/* Menú de cuenta (KAM-24): avatar con iniciales, Perfil y Cerrar
             sesión. Presente para ambos roles, al final del grupo derecho. */}

@@ -35,7 +35,7 @@ import type { Item } from "@/types";
  * (KAM-14, design D10).
  */
 export function RegisterButton({ supplies = [] }: { supplies?: Item[] }) {
-  const role = useUserStore((state) => state.membership?.role);
+  const role = useUserStore((state) => state.role);
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [consuming, setConsuming] = useState(false);

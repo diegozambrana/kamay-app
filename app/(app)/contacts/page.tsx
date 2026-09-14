@@ -72,8 +72,8 @@ export default async function ContactsPage({
         organizationId: context.organizationId,
         tableName: "contacts",
         recordId: params.id,
-        timezone: context.membership.organization.timezone,
-        currency: context.membership.organization.currency,
+        timezone: context.organization.timezone,
+        currency: context.organization.currency,
       })
     : null;
 
@@ -83,10 +83,10 @@ export default async function ContactsPage({
       roleFilter={roleFilter}
       search={search}
       includeArchived={includeArchived}
-      timezone={context.membership.organization.timezone}
+      timezone={context.organization.timezone}
       selectedId={params.id ?? null}
       history={history}
-      role={context.membership.role}
+      role={context.role}
       limit={limit}
       hasMore={window.hasMore}
     />

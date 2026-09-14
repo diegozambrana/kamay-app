@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 
-import { E2E_PASSWORD } from "./helpers/fresh-org";
+import { E2E_PASSWORD, SEED_PLATFORM_ADMIN } from "./helpers/fresh-org";
 import { geeko } from "./helpers/seed-copies";
 import { expect, test, type Page } from "./helpers/test";
 
@@ -129,6 +129,37 @@ for (const scheme of ["light", "dark"] as const) {
     });
   });
 }
+
+/**
+ * KAM-26 · Las vistas de plataforma también se auditan, con el super admin de
+ * la semilla y en los dos temas.
+ */
+test.describe("auditoría de accesibilidad · vistas de plataforma", () => {
+  for (const scheme of ["light", "dark"] as const) {
+    test(`Organizaciones y Usuarios · tema ${scheme === "light" ? "claro" : "oscuro"}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto("/auth/login");
+      await page.getByLabel("Correo electrónico").fill(SEED_PLATFORM_ADMIN);
+      await page.getByLabel("Contraseña", { exact: true }).fill(E2E_PASSWORD);
+      await page.getByRole("button", { name: "Entrar" }).click();
+      await page.waitForURL(/\/admin\/organizations$/);
+
+      const found: Record<string, string[]> = {};
+      for (const view of [
+        { path: "/admin/organizations", name: "Organizaciones" },
+        { path: "/admin/users", name: "Usuarios" },
+      ]) {
+        await page.goto(view.path);
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        const blocking = await violations(page);
+        if (blocking.length > 0) found[view.name] = blocking;
+      }
+      expect(found, "violaciones críticas o serias por vista").toEqual({});
+    });
+  }
+});
 
 /**
  * Spec `accessibility` → *Every action is reachable by keyboard*: «A dialog

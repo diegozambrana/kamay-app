@@ -120,12 +120,44 @@ create table memberships (
 create index on memberships (user_id) where archived_at is null;
 ```
 
+### Administradores de la plataforma
+
+Es la **única tabla por encima de las organizaciones**: el administrador de la plataforma (especificación §3.4) es una condición de la cuenta, no una membresía, así que no puede colgar de una organización. Solo la escribe el operador con el service role (`scripts/platform-admin.mjs`); retirar es archivar.
+
+```sql
+create table platform_admins (
+  user_id     uuid primary key references auth.users(id),
+  granted_at  timestamptz not null default now(),
+  note        text,                          -- por qué y a pedido de quién
+  archived_at timestamptz                    -- revocar es archivar
+);
+
+-- RLS activo: cada cuenta lee solo su propia fila.
+-- Sin INSERT, UPDATE ni DELETE para authenticated ni anon: nadie se promueve a sí mismo.
+alter table platform_admins enable row level security;
+create policy "platform_admins: leer la propia fila"
+  on platform_admins for select to authenticated
+  using (user_id = auth.uid());
+```
+
+Sin trigger de auditoría: la bitácora exige `organization_id`. Su historia son `granted_at`, `note` y `archived_at`.
+
 ### Funciones auxiliares de seguridad
 
 Son la base de **todas** las políticas del sistema. Se escriben una vez y se usan en todas partes.
 
 ```sql
-create or replace function is_member(org uuid)
+create or replace function is_platform_admin()
+returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.platform_admins
+    where user_id = auth.uid() and archived_at is null
+  );
+$$;
+
+-- Pertenencia estricta: membresía activa, sin excepciones.
+create or replace function has_active_membership(org uuid)
 returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (
@@ -134,6 +166,17 @@ language sql stable security definer set search_path = public as $$
       and m.user_id = auth.uid()
       and m.archived_at is null
   );
+$$;
+
+create or replace function is_member(org uuid)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from memberships m
+    where m.organization_id = org
+      and m.user_id = auth.uid()
+      and m.archived_at is null
+  ) or is_platform_admin();
 $$;
 
 create or replace function is_owner(org uuid)
@@ -145,9 +188,11 @@ language sql stable security definer set search_path = public as $$
       and m.user_id = auth.uid()
       and m.role = 'owner'
       and m.archived_at is null
-  );
+  ) or is_platform_admin();
 $$;
 ```
+
+> **Advertencia — desde KAM-26, `is_member` e `is_owner` significan «puede actuar en la organización», no «pertenece a ella».** Un administrador de la plataforma activo obtiene verdadero en ambas para cualquier organización, y así hereda el acceso de dueño en todas las políticas, funciones y rutas de Storage sin reescribir ninguna. Donde haga falta la pertenencia real (la marca de la bitácora, §14) se usa **`has_active_membership(org)`**, la forma estricta. Quien escriba una política o función nueva y quiera decir «pertenece» debe usar esta última.
 
 ---
 
@@ -279,6 +324,19 @@ $$;
 ```
 
 **Validación de integridad del flujo** (al menos un `initial` y un `final`): se implementa como trigger `after insert or update or delete` sobre `statuses`, que verifica el juego completo y lanza excepción si queda inválido. La interfaz (V22) ya avisa antes, pero la base de datos no debe confiar en eso.
+
+### Crear una organización
+
+Ninguna sesión puede insertar una organización por política (`with check (is_owner(id))` es falso para una fila que aún no existe, salvo para el administrador de la plataforma). La creación es una función:
+
+```sql
+-- security invoker: corre con la sesión del administrador de la plataforma y bajo RLS.
+-- Rechaza a quien no sea is_platform_admin() y un nombre vacío.
+create function create_organization(p_name text, p_currency text, p_timezone text)
+  returns uuid language plpgsql security invoker as $$ … $$;
+```
+
+En **una sola transacción** inserta la organización, su línea compartida *General* (`is_shared = true`) y el juego mínimo de estados: pedido *Registrado* (`initial`), *Entregado* (`final`) y *Cancelado* (`cancelled`); tarea *Por hacer* (`initial`) y *Hecho* (`final`). Si un paso falla no queda ninguna organización sin su línea compartida. Los triggers de auditoría corren con el administrador como autor, así que la creación queda marcada en la bitácora (§14).
 
 ---
 
@@ -720,7 +778,7 @@ create table activity_log (
   organization_id  uuid not null references organizations(id),
   business_line_id uuid,
   actor_id         uuid references auth.users(id),
-  actor_label      text,                    -- 'sistema' o nombre de plataforma externa
+  actor_label      text,                    -- 'sistema', 'Administrador de la plataforma' o plataforma externa
   table_name       text not null,
   record_id        uuid not null,
   action           text not null check (action in
@@ -795,6 +853,15 @@ create trigger audit after insert or update on orders
 -- item_variants, tasks, statuses, business_lines, memberships, asset_details
 ```
 
+**La marca del administrador de la plataforma.** Desde KAM-26, antes del `insert`, `log_activity()` fija `actor_label = 'Administrador de la plataforma'` cuando el autor es administrador de la plataforma **sin membresía activa** en la organización del registro:
+
+```sql
+v_label := case when is_platform_admin() and not has_active_membership(v_org)
+                then 'Administrador de la plataforma' end;
+```
+
+`actor_id` sigue siendo su cuenta, así que la agrupación de ruido no cambia. La interfaz muestra la etiqueta antes que el nombre cuando el evento trae ambos, para que el dueño sepa que el cambio no vino de su equipo. Si el administrador es miembro de esa organización, el evento queda a nombre de su membresía, sin marca.
+
 ### Agrupación de ruido
 
 La especificación pide consolidar ediciones sucesivas del mismo usuario sobre el mismo registro dentro de 5 minutos. Se implementa en el trigger: antes de insertar, busca un evento propio del mismo actor, tabla y registro con `occurred_at > now() - interval '5 minutes'` y acción `updated`; si existe, **fusiona los cambios** en ese evento en lugar de crear uno nuevo. Los eventos de creación, archivado y cambio de estado nunca se fusionan.
@@ -867,22 +934,24 @@ create policy "orders: editar si es miembro"
 
 ### Matriz de acceso
 
-| Tabla | Ayudante | Dueño |
-|---|---|---|
-| `organizations`, `business_lines`, `sales_channels`, `units` | Leer | Todo |
-| `statuses`, `expense_categories` | Leer | Todo |
-| `contacts`, `items`, `item_variants` | Leer, crear, editar | Todo |
-| `orders`, `order_items` | Leer, crear, editar | Todo |
-| `payments` | Crear cobros (`direction = 'in'`) | Todo |
-| `inventory_movements` | Leer, crear | Todo |
-| `expenses`, `expense_items` | **Sin acceso** | Todo |
-| `asset_details` | **Sin acceso** | Todo |
-| `tasks` | Solo de su línea o asignadas a él | Todo |
-| `task_links`, `task_deliverables`, `tags` | Según la tarea | Todo |
-| `attachments` | Según el registro padre | Todo |
-| `activity_log` | **Sin acceso** | Solo lectura |
-| `memberships` | Leer solo su propia fila | Todo |
-| `invitations` | **Sin acceso** | Todo |
+| Tabla | Ayudante | Dueño | Administrador de la plataforma |
+|---|---|---|---|
+| `organizations`, `business_lines`, `sales_channels`, `units` | Leer | Todo | Todo, como dueño |
+| `statuses`, `expense_categories` | Leer | Todo | Todo, como dueño |
+| `contacts`, `items`, `item_variants` | Leer, crear, editar | Todo | Todo, como dueño |
+| `orders`, `order_items` | Leer, crear, editar | Todo | Todo, como dueño |
+| `payments` | Crear cobros (`direction = 'in'`) | Todo | Todo, como dueño |
+| `inventory_movements` | Leer, crear | Todo | Todo, como dueño |
+| `expenses`, `expense_items` | **Sin acceso** | Todo | Todo, como dueño |
+| `asset_details` | **Sin acceso** | Todo | Todo, como dueño |
+| `tasks` | Solo de su línea o asignadas a él | Todo | Todo, como dueño |
+| `task_links`, `task_deliverables`, `tags` | Según la tarea | Todo | Todo, como dueño |
+| `attachments` | Según el registro padre | Todo | Todo, como dueño |
+| `activity_log` | **Sin acceso** | Solo lectura | Todo, como dueño |
+| `memberships` | Leer solo su propia fila | Todo | Todo, como dueño |
+| `invitations` | **Sin acceso** | Todo | Todo, como dueño |
+
+La columna del administrador de la plataforma **no tiene políticas propias**: sale de `is_member`/`is_owner` (§5), que lo reconocen en toda organización. Por eso vale en todas las organizaciones a la vez y con las mismas restricciones que el dueño (sin `DELETE`, bitácora de solo lectura, el último dueño no se archiva). Las cuentas, que viven en `auth.users` y `authenticated` no puede leer, las lista la función `platform_list_users(p_organization_id uuid default null)`: `security definer` con compuerta `is_platform_admin()`, que para cualquier otra cuenta lanza `insufficient_privilege` y no devuelve ningún correo.
 
 ### Cómo se ocultan los costos al ayudante
 
@@ -1023,7 +1092,7 @@ insert into statuses (organization_id, business_line_id, flow, name, kind, posit
 
 ## 20. Lista de verificación antes de producción
 
-- [ ] Toda tabla tiene `organization_id` y RLS activo.
+- [ ] Toda tabla tiene `organization_id` y RLS activo. Las únicas excepciones, explícitas y con su motivo escrito en la verificación automática, son `organizations` (es la organización) y `platform_admins` (vive por encima de las organizaciones, §5); ambas tienen RLS activo.
 - [ ] Ninguna tabla tiene política `DELETE`.
 - [ ] Toda vista declara `security_invoker = true`.
 - [ ] `activity_log` tiene los permisos revocados para `authenticated` y `anon`.

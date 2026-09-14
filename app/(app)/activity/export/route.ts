@@ -138,7 +138,8 @@ function csvOf(
 
         return [
           entry.occurredAt,
-          actorName ?? entry.actorLabel ?? "Alguien",
+          // La etiqueta manda sobre el nombre, como en la pantalla (KAM-26).
+          entry.actorLabel ?? actorName ?? "Alguien",
           describeEvent({
             action: entry.action,
             tableName: entry.tableName,

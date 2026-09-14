@@ -1,7 +1,7 @@
 # Kamay — Mapa de Interfaz y Navegación
 
 > Complemento de la Sección 7 del documento de especificación v6.0
-> Define **cómo se conectan las 23 vistas entre sí**, no cómo se ven por dentro
+> Define **cómo se conectan las 25 vistas entre sí**, no cómo se ven por dentro
 > Agnóstico de tecnología
 
 ---
@@ -44,9 +44,9 @@ El selector (Todas · Sublimación · Impresión 3D · Alfarería) vive en la ba
 
 | Formato | Cuándo | Vistas |
 |---|---|---|
-| **Página completa** | Listas, tableros y detalles densos. Cambia la dirección; se puede compartir el enlace. | V2, V3, V4, V7, V10, V11, V12, V13, V14, V15, V16, V17, V20, V22, V23 |
+| **Página completa** | Listas, tableros y detalles densos. Cambia la dirección; se puede compartir el enlace. | V2, V3, V4, V7, V10, V11, V12, V13, V14, V15, V16, V17, V20, V22, V23, V24, V25 |
 | **Panel lateral** (Sheet) | Contenido secundario que no debe hacer perder el contexto de fondo. | V21 (notificaciones), V18 en escritorio (opcional), filtros en móvil |
-| **Diálogo** | Acción puntual con principio y fin claros. | V19 (cierre con entregables), registrar cobro, cambiar estado, ajuste por conteo, archivar, confirmar cobro en feria |
+| **Diálogo** | Acción puntual con principio y fin claros. | V19 (cierre con entregables), registrar cobro, cambiar estado, ajuste por conteo, archivar, confirmar cobro en feria, crear organización (V24) |
 | **Pantalla completa móvil** | Formularios de captura en el celular. | V5, V8, V9, V18, V19 |
 
 ### 2.4 Profundidad máxima: tres niveles
@@ -92,6 +92,10 @@ En cualquier pantalla, el botón **+ Registrar** (flotante en escritorio, en la 
 | V21 | Notificaciones | Panel lateral | Ambos | Ambos | 2 |
 | V22 | Configuración de estados | Página | Escritorio | **Solo dueño** | 0 |
 | V23 | Bitácora de actividad | Página | Escritorio | **Solo dueño** | 4 |
+| V24 | Organizaciones (lista y detalle) | Página | Escritorio | **Solo administrador de la plataforma** | — |
+| V25 | Usuarios (lista y detalle) | Página | Escritorio | **Solo administrador de la plataforma** | — |
+
+*V24 y V25 no pertenecen a ninguna organización ni a ninguna fase del plan: son de la plataforma (especificación §3.4). Cada una es una lista con su detalle, como V3 → V4. Su lugar en la navegación, en §4.4.*
 
 ---
 
@@ -118,6 +122,7 @@ Presente en todas las pantallas salvo V1 y V6.
 | Dinero | Egresos (V7) · Reportes (V14) | Dueño |
 | Base | Catálogo (V10) · Contactos (V13) · Activos (V12) | Catálogo y Contactos ambos; Activos solo dueño |
 | Sistema (bajo "Más") | Bitácora (V23) · Configuración (V15) | Solo dueño |
+| Plataforma | Organizaciones (V24) · Usuarios (V25) | Solo administrador de la plataforma, con o sin organización elegida (§4.4) |
 
 **Elementos siempre disponibles:** selector de línea · buscador global · campana → V21 · avatar (perfil, cambiar organización, cerrar sesión) · botón flotante **+ Registrar**.
 
@@ -133,7 +138,7 @@ Presente en todas las pantallas salvo V1 y V6.
 - **Inicio → V16** (registro rápido). Es la puerta de entrada del celular.
 - **Pedidos → V3** en formato lista, no kanban: un tablero horizontal no funciona en 390px. El kanban se ofrece como alternativa opcional con desplazamiento por columnas.
 - **Tareas → V20** (Mis pendientes), no el tablero. En el celular interesa "qué hago hoy", no la vista de gestión.
-- **Más →** Egresos, Catálogo, Contactos, Activos, Reportes, Bitácora, Configuración, según el rol.
+- **Más →** Egresos, Catálogo, Contactos, Activos, Reportes, Bitácora, Configuración, según el rol; y, solo para el administrador de la plataforma, **Organizaciones (V24)** y **Usuarios (V25)**. Nunca ocupan una ranura de la barra: sigue con sus cuatro.
 - **Venta rápida (V6)** no está en la barra: se entra desde V16 y, una vez dentro, la barra desaparece. Es un modo, no una sección.
 
 ### 4.3 El modo feria
@@ -142,16 +147,42 @@ Presente en todas las pantallas salvo V1 y V6.
 
 *Razón:* cada elemento de navegación visible en un puesto de feria es un toque accidental esperando ocurrir.
 
+### 4.4 El administrador de la plataforma
+
+Solo existe para la cuenta de administrador de la plataforma (especificación §3.4). Para cualquier otro usuario nada de esto aparece, ni siquiera si pertenece a varias organizaciones: ese cambio sigue siendo la selección de organización tras entrar.
+
+| Vista | Dirección | Qué se hace ahí |
+|---|---|---|
+| V24 · Organizaciones | `/admin/organizations` | Todas las organizaciones con sus dueños y miembros activos; buscar por nombre; **Entrar** a una; crear una (diálogo) |
+| V24 · Detalle de organización | `/admin/organizations/[id]` | Editar nombre, moneda y zona horaria; equipo con correos: agregar una cuenta, invitar, cambiar rol, quitar y restaurar acceso |
+| V25 · Usuarios | `/admin/users` | Todas las cuentas con su correo, sus organizaciones y rol, y su último acceso; buscar y filtrar "Sin organización" |
+| V25 · Detalle de usuario | `/admin/users/[id]` | Asignar una o varias organizaciones en un paso; por organización, cambiar rol, nombre visible y quitar o restaurar acceso |
+
+**Selector de organización (solo escritorio).** Encabeza el menú lateral, encima del selector de línea: lista las organizaciones activas con un filtro por nombre y la actual marcada. Elegir una lo pone dentro de ella **con la vista de su dueño** y lo lleva a V2; al final ofrece **Vista de plataforma**, que lo saca de toda organización y lo lleva a V24. Con el menú plegado queda como icono con su nombre en el tooltip. En móvil no hay selector: se entra a una organización con **Entrar** desde V24.
+
+**Cascarón reducido sin organización.** Sin organización elegida, el administrador no ve el aviso "sin organización" ni la selección de organización: aterriza en V24 con un cascarón reducido —menú con Organizaciones y Usuarios, el selector y el menú de cuenta—, **sin** selector de línea, campana ni **+ Registrar**, que necesitan una organización. Abrir en ese estado cualquier vista de organización (V3, V7…) lo devuelve a V24.
+
+**Dentro de una organización**, Organizaciones y Usuarios siguen en el menú lateral (y en "Más" en móvil), junto a todas las entradas del dueño.
+
 ---
 
 ## 5. Mapa jerárquico
 
 ```
 V1 · Inicio de sesión
- └── (si el usuario tiene varias organizaciones) → Selección de organización
-      │
-      ├── ESCRITORIO → V2 · Panel principal
-      └── MÓVIL      → V16 · Registro rápido
+ ├── (si el usuario tiene varias organizaciones) → Selección de organización
+ │    │
+ │    ├── ESCRITORIO → V2 · Panel principal
+ │    └── MÓVIL      → V16 · Registro rápido
+ └── (administrador de la plataforma sin organización elegida) → V24 · Organizaciones
+
+V24 · Organizaciones
+ ├── Entrar ─────────────────────────→ V2 (escritorio) / V16 (móvil), como dueño
+ ├── Ver detalle ────────────────────→ Detalle de organización → agregar, invitar, cambiar rol (diálogos)
+ └── + Nueva organización ──────────→ diálogo → Detalle de la organización creada
+
+V25 · Usuarios
+ └── Fila ───────────────────────────→ Detalle de usuario → asignar organizaciones (diálogo)
 
 V2 · Panel principal
  ├── Tarjetas de indicadores ────────→ V14 · Reportes
@@ -257,6 +288,13 @@ Qué acción lleva de cada vista a cuál otra. Es la referencia para verificar q
 | V21 | Preferencias | V15 → Notificaciones | Página |
 | V22 | Guardar | V15 | Página |
 | V23 | Evento | El registro afectado | Página |
+| V1 | Entrar como administrador de la plataforma sin organización | V24 | Página |
+| V24 | Entrar | V2 (escritorio) / V16 (móvil), dentro de esa organización | Página |
+| V24 | Ver detalle | Detalle de organización | Página |
+| V24 | + Nueva organización | Diálogo → detalle de la organización creada | Diálogo |
+| V25 | Fila de cuenta | Detalle de usuario | Página |
+| Cualquiera (administrador de la plataforma, escritorio) | Selector de organización → una organización | V2 de esa organización | Página |
+| Cualquiera (administrador de la plataforma, escritorio) | Selector → Vista de plataforma | V24, sin organización | Página |
 | Cualquiera | + Registrar | V5, V6, V8, V9, V18 o diálogo | Varía |
 | Cualquiera | Campana | V21 | Panel |
 | Cualquiera | Buscador global | Resultado directo | Página |
@@ -386,6 +424,9 @@ Toda notificación debe llevar exactamente al lugar donde se resuelve, nunca a u
 | V15 / V22 Configuración | Completo | No aparece |
 | V23 Bitácora | Completo | No aparece; sí ve el historial dentro de cada registro |
 | V17 / V20 Tareas | Todas | Solo las de su línea o asignadas a él |
+| V24 / V25 Plataforma | No aparece | No aparece |
+
+**El administrador de la plataforma** ve cada vista de una organización exactamente como su dueño (columna "Dueño"), y es el único que ve V24 y V25. Un dueño o ayudante que abra `/admin/…` por dirección directa vuelve a su inicio.
 
 **Regla:** lo que un rol no puede ver **no aparece en el menú**. Ocultar la opción es mejor que mostrarla deshabilitada: un menú lleno de puertas cerradas es una mala experiencia y una invitación a intentarlo.
 
@@ -405,6 +446,7 @@ Toda notificación debe llevar exactamente al lugar donde se resuelve, nunca a u
 | V17 Tablero de tareas | Se reemplaza por V20; el kanban queda como vista opcional |
 | V18 Detalle de tarea | Pantalla completa, historial al final |
 | V22, V23 | Consultables pero pensadas para escritorio |
+| V24, V25 | Se entra desde "Más"; lista y detalle en una columna, con su acción principal usable a 390px sin desplazamiento horizontal. Sin selector de organización: se cambia con **Entrar** desde V24 |
 
 ---
 
@@ -473,6 +515,11 @@ graph TD
     V14 --> V4
     V15[V15 Configuración] --> V22[V22 Estados]
     V23 --> V4
+
+    V1 --> V24[V24 Organizaciones]
+    V24 --> V2
+    V24 --> V16
+    V25[V25 Usuarios]
 ```
 
 ---

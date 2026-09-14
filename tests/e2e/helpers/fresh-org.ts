@@ -160,3 +160,53 @@ async function addOrganization(userId: string, email: string, name: string): Pro
 
   return org.id;
 }
+
+/** El super admin de la semilla (KAM-26): sin ninguna membresía. */
+export const SEED_PLATFORM_ADMIN = "superadmin@kamay.test";
+
+/**
+ * Un administrador de la plataforma propio de la prueba (KAM-26), sin
+ * membresías: para lo que no puede hacerse con la cuenta de la semilla sin
+ * pisar a las demás pruebas —revocarlo, o darle membresías—. Lo nombra el
+ * service role, como el script del operador: ninguna sesión puede escribir
+ * en `platform_admins`.
+ */
+export async function createPlatformAdmin(): Promise<{ email: string; userId: string }> {
+  const admin = adminClient();
+  const email = `pa-${Date.now()}-${Math.floor(Math.random() * 100_000)}@kamay.test`;
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: E2E_PASSWORD,
+    email_confirm: true,
+  });
+  if (error) throw new Error(`usuario: ${error.message}`);
+
+  const { error: grantError } = await admin
+    .from("platform_admins")
+    .insert({ user_id: data.user.id, note: "e2e" });
+  if (grantError) throw new Error(`super admin: ${grantError.message}`);
+
+  return { email, userId: data.user.id };
+}
+
+/** Le retira la condición de super admin, como `scripts/platform-admin.mjs revoke`. */
+export async function revokePlatformAdmin(userId: string): Promise<void> {
+  const { error } = await adminClient()
+    .from("platform_admins")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("user_id", userId);
+  if (error) throw new Error(`revocar: ${error.message}`);
+}
+
+/**
+ * Una organización más para una cuenta cualquiera —dueña—, con su
+ * configuración mínima. Es `addOrganizationFor` sin necesitar una
+ * `FreshOrganization`: lo usa el super admin de la prueba que también
+ * pertenece a organizaciones.
+ */
+export async function addOwnedOrganization(
+  account: { userId: string; email: string },
+  organizationName: string,
+): Promise<string> {
+  return addOrganization(account.userId, account.email, organizationName);
+}

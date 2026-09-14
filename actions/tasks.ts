@@ -623,7 +623,7 @@ export async function linkTask(
   const context = await getSessionContext();
   if (!context) return { error: NO_SESSION };
 
-  const isOwner = context.membership.role === "owner";
+  const isOwner = context.role === "owner";
   if (parsed.data.entityType === "asset" && !isOwner) {
     return { error: "Solo la persona dueña vincula activos." };
   }
@@ -693,7 +693,7 @@ export async function searchLinkTargets(
     return await new TaskService(context.supabase).searchLinkTargets(
       context.organizationId,
       term,
-      context.membership.role === "owner",
+      context.role === "owner",
     );
   } catch {
     return [];
@@ -745,7 +745,7 @@ export async function declareDeliverable(
 
   // El activo es el único reservado, y el dominio es quien lo sabe: la acción
   // no repite la regla, la consulta.
-  if (!canDeclare(parsed.data.type, context.membership.role === "owner")) {
+  if (!canDeclare(parsed.data.type, context.role === "owner")) {
     return { error: "Solo la persona dueña declara un activo." };
   }
 
@@ -833,7 +833,7 @@ export async function closeTaskWithDeliverables(
   const context = await getSessionContext();
   if (!context) return { error: NO_SESSION };
 
-  const isOwner = context.membership.role === "owner";
+  const isOwner = context.role === "owner";
   if (
     parsed.data.deliverables.some((entry) => !canDeclare(entry.type, isOwner))
   ) {

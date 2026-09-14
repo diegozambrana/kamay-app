@@ -8,6 +8,8 @@
 --   ayudante@kamay.test → ayudante de "Geeko Store"
 --   historico@kamay.test → dueño de "Kamay Histórico", doce meses de movimientos
 --                          para medir el presupuesto de carga del panel (KAM-14)
+--   superadmin@kamay.test → administrador de la plataforma, sin ninguna membresía
+--                           (KAM-26): ve y administra todas las organizaciones
 
 -- Organizaciones
 insert into organizations (id, name) values
@@ -41,7 +43,9 @@ from (values
   ('20000000-0000-0000-0000-000000000003'::uuid, 'recovery@kamay.test'),
   ('20000000-0000-0000-0000-000000000004'::uuid, 'geeko@kamay.test'),
   ('20000000-0000-0000-0000-000000000005'::uuid, 'ayudante@kamay.test'),
-  ('20000000-0000-0000-0000-000000000006'::uuid, 'historico@kamay.test')
+  ('20000000-0000-0000-0000-000000000006'::uuid, 'historico@kamay.test'),
+  -- El 0007 lo usa `seeds/performance.sql` (rendimiento@).
+  ('20000000-0000-0000-0000-000000000008'::uuid, 'superadmin@kamay.test')
 ) as u(id, email);
 
 insert into auth.identities (
@@ -65,6 +69,13 @@ insert into memberships (organization_id, user_id, role, display_name) values
   ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000004', 'owner', 'Dueña Geeko'),
   ('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000005', 'assistant', 'Ayudante Geeko'),
   ('10000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000006', 'owner', 'Dueño Histórico');
+
+-- Administrador de la plataforma (KAM-26): ninguna membresía, a propósito. Que
+-- exista en la semilla hace que toda la suite pgTAP y de integración corra con
+-- un super admin presente, y así "el aislamiento de siempre sigue valiendo" se
+-- prueba solo.
+insert into platform_admins (user_id, note) values
+  ('20000000-0000-0000-0000-000000000008', 'Semilla de desarrollo');
 
 -- ── Geeko Store: la configuración real del negocio ─────────────────────────
 -- Vive en una función y no suelta: la suite de extremo a extremo necesita una

@@ -134,7 +134,7 @@ export default async function EditOrderPage({
         fileName: file.fileName,
         url: signed.get(file.id) ?? null,
       }))}
-      today={todayInTimezone(context.membership.organization.timezone)}
+      today={todayInTimezone(context.organization.timezone)}
     />
   );
 }

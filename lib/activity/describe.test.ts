@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { describeEvent, recordHref } from "@/lib/activity/describe";
+import { PLATFORM_ADMIN_LABEL } from "@/lib/platform/labels";
 
 describe("describeEvent", () => {
   // Scenario: A status change reads as a sentence
@@ -168,5 +169,34 @@ describe("describeEvent · exportación (KAM-23)", () => {
         recordLabel: "Geeko Store",
       }),
     ).toBe("Dueña Geeko exportó todos los datos de la organización");
+  });
+});
+
+describe("describeEvent · administrador de la plataforma (KAM-26)", () => {
+  // Escenario «The owner sees the mark» a nivel unitario.
+  it("el cambio de un super admin en una organización ajena lleva su marca", () => {
+    const sentence = describeEvent({
+      action: "status_changed",
+      tableName: "orders",
+      actorName: null,
+      actorLabel: PLATFORM_ADMIN_LABEL,
+      recordLabel: "#142",
+    });
+
+    expect(sentence).toBe("Administrador de la plataforma cambió el estado del pedido #142");
+  });
+
+  it("la marca gana aunque el nombre del autor se resuelva", () => {
+    // Si el super admin se une después al equipo, su nombre se resuelve; el
+    // evento viejo tiene que seguir diciendo que no fue alguien del equipo.
+    const sentence = describeEvent({
+      action: "updated",
+      tableName: "orders",
+      actorName: "Diego",
+      actorLabel: PLATFORM_ADMIN_LABEL,
+      recordLabel: "#142",
+    });
+
+    expect(sentence.startsWith("Administrador de la plataforma")).toBe(true);
   });
 });

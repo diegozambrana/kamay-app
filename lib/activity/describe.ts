@@ -112,18 +112,23 @@ function contract(sentence: string): string {
 }
 
 /**
- * Quién. Una persona si se pudo resolver su nombre; si no, la etiqueta que el
- * propio evento guarda —'sistema' o la plataforma externa que escribió—.
+ * Quién. La etiqueta que el propio evento guarda, si la tiene —'sistema', la
+ * plataforma externa que escribió o «Administrador de la plataforma»—; si no,
+ * la persona, cuando se pudo resolver su nombre.
  *
  * La etiqueta se guarda justamente para esto: un evento sin `actor_id` no es
- * un evento sin autor, es un evento cuyo autor no es una persona.
+ * un evento sin autor, es un evento cuyo autor no es una persona. Y cuando
+ * trae autor **y** etiqueta —el super admin que cambió algo en una
+ * organización ajena (KAM-26)— manda la etiqueta: si ese super admin se
+ * uniera más tarde al equipo, su nombre se resolvería y el evento viejo
+ * perdería la marca que le dice a la dueña que no fue alguien de su equipo.
  */
 function actorOf({ actorName, actorLabel }: DescribableEvent): string {
-  const name = actorName?.trim();
-  if (name) return name;
-
   const label = actorLabel?.trim();
   if (label) return capitalize(label);
+
+  const name = actorName?.trim();
+  if (name) return name;
 
   return UNKNOWN_ACTOR;
 }

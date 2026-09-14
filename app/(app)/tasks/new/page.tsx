@@ -77,7 +77,7 @@ export default async function NewTaskPage({
           dueDate: order.dueDate,
           customerName,
         },
-        todayInTimezone(context.membership.organization.timezone),
+        todayInTimezone(context.organization.timezone),
       );
 
       prefill = {

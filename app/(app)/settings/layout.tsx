@@ -28,12 +28,12 @@ export default async function SettingsLayout({
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
 
-  const isOwner = context.membership.role === "owner";
+  const isOwner = context.role === "owner";
 
   return (
     <MainContainer
       title="Configuración"
-      description={context.membership.organization.name}
+      description={context.organization.name}
     >
       {/* Las secciones son pestañas aquí y no entradas del menú lateral: en
           el menú serían un segundo juego de enlaces con los mismos nombres. */}

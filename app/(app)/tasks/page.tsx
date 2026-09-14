@@ -175,7 +175,7 @@ export default async function TasksPage({
       withoutDeliverables={withoutDeliverables}
       includeArchived={includeArchived}
       // "Hoy" en la zona horaria de la organización, no en la del navegador.
-      today={todayInTimezone(context.membership.organization.timezone)}
+      today={todayInTimezone(context.organization.timezone)}
       closedLimit={closedLimit}
       hasMoreClosed={hasMoreClosed}
     />

@@ -54,13 +54,13 @@ export default async function ItemDetailPage({
     // La bitácora solo la lee el dueño: para el ayudante RLS devuelve vacío.
     // La misma lectura que `/activity` filtrada por este ítem, para que los
     // eventos y su orden coincidan.
-    context.membership.role === "owner"
+    context.role === "owner"
       ? loadRecordHistory(context.supabase, {
           organizationId: context.organizationId,
           tableName: "items",
           recordId: item.id,
-          timezone: context.membership.organization.timezone,
-          currency: context.membership.organization.currency,
+          timezone: context.organization.timezone,
+          currency: context.organization.currency,
         })
       : Promise.resolve({ items: [], activityHref: "" }),
     attachments.listForEntities(context.organizationId, "item", [item.id]),
@@ -94,7 +94,7 @@ export default async function ItemDetailPage({
    * ni se consultan ni llegan a la pantalla. El proveedor del formulario sale
    * del directorio, que ambos roles sí leen.
    */
-  const isOwnedAsset = item.kind === "asset" && context.membership.role === "owner";
+  const isOwnedAsset = item.kind === "asset" && context.role === "owner";
 
   const [assetDetails, suppliers] = await Promise.all([
     isOwnedAsset
@@ -133,8 +133,8 @@ export default async function ItemDetailPage({
       units={units}
       history={history}
       relatedTasks={relatedTasks}
-      role={context.membership.role}
-      timeZone={context.membership.organization.timezone}
+      role={context.role}
+      timeZone={context.organization.timezone}
       balance={balance}
       movements={itemMovements}
       hasMoreMovements={itemMovements.length === MOVEMENT_PAGE}

@@ -1,17 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 
-import { ORG_COOKIE } from "@/constants/auth";
-import { getRequestMemberships, getRequestUser } from "@/lib/auth/request-user";
+import type { ActiveAccess } from "@/lib/auth/access";
+import {
+  getRequestAccess,
+  getRequestPlatformAdmin,
+  getRequestUser,
+} from "@/lib/auth/request-user";
 import { createClient } from "@/lib/supabase/server";
-import type { MembershipWithOrganization } from "@/types";
 
+/**
+ * Sesión, organización activa y **rol efectivo** (KAM-26, design D6).
+ *
+ * Toda comprobación de rol lee `role`, nunca `membership.role`: un
+ * administrador de la plataforma actúa como dueño aunque su membresía diga
+ * otra cosa, o aunque no tenga ninguna (`membership` es `null` entonces).
+ */
 export type SessionContext = {
   supabase: SupabaseClient;
   userId: string;
-  organizationId: string;
-  membership: MembershipWithOrganization;
-};
+} & ActiveAccess;
 
 /**
  * Sesión, organización activa y rol para una Server Action. La autorización
@@ -19,30 +26,45 @@ export type SessionContext = {
  * permite devolver un mensaje entendible en vez de un error de Postgres.
  */
 export async function getSessionContext(): Promise<SessionContext | null> {
-  const supabase = await createClient();
   const user = await getRequestUser();
   if (!user) return null;
 
-  const memberships = await getRequestMemberships(user.id);
-  if (memberships.length === 0) return null;
+  const resolution = await getRequestAccess();
+  if (resolution?.kind !== "active") return null;
 
-  const cookieOrgId = (await cookies()).get(ORG_COOKIE)?.value;
-  const membership =
-    memberships.find((m) => m.organizationId === cookieOrgId) ??
-    (memberships.length === 1 ? memberships[0] : undefined);
-  if (!membership) return null;
-
-  return {
-    supabase,
-    userId: user.id,
-    organizationId: membership.organizationId,
-    membership,
-  };
+  const supabase = await createClient();
+  return { supabase, userId: user.id, ...resolution.access };
 }
 
 /** Contexto de un dueño. Devuelve `null` si no hay sesión o el rol no alcanza. */
 export async function getOwnerContext(): Promise<SessionContext | null> {
   const context = await getSessionContext();
-  if (!context || context.membership.role !== "owner") return null;
+  if (!context || context.role !== "owner") return null;
   return context;
+}
+
+/**
+ * Contexto de un administrador de la plataforma, con o sin organización
+ * activa: las vistas *Organizaciones* y *Usuarios* no dependen de ninguna.
+ * `null` para cualquier otra cuenta.
+ */
+export type PlatformAdminContext = {
+  supabase: SupabaseClient;
+  userId: string;
+  /** La organización en la que está, si eligió una. */
+  access: ActiveAccess | null;
+};
+
+export async function getPlatformAdminContext(): Promise<PlatformAdminContext | null> {
+  const user = await getRequestUser();
+  if (!user) return null;
+  if (!(await getRequestPlatformAdmin())) return null;
+
+  const resolution = await getRequestAccess();
+  const supabase = await createClient();
+  return {
+    supabase,
+    userId: user.id,
+    access: resolution?.kind === "active" ? resolution.access : null,
+  };
 }

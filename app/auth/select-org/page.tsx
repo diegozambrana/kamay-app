@@ -9,10 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PLATFORM_HOME } from "@/lib/auth/access";
 import { resolvePostAuthPath } from "@/lib/auth/post-auth";
 import { sanitizeNextPath } from "@/lib/auth/routes";
 import { createClient } from "@/lib/supabase/server";
 import { MembershipService } from "@/services/membership-service";
+import { PlatformService } from "@/services/platform/platform-service";
 
 export const metadata = { title: "Elegir organización · Kamay" };
 
@@ -29,6 +31,10 @@ export default async function SelectOrgPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
+
+  // El administrador de la plataforma nunca elige aquí (KAM-26): cambia de
+  // organización desde el menú lateral o la vista Organizaciones.
+  if (await new PlatformService(supabase).isPlatformAdmin()) redirect(PLATFORM_HOME);
 
   const memberships = await new MembershipService(supabase).listActiveForUser(
     user.id,

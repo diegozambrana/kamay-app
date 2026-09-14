@@ -17,7 +17,7 @@ export async function GET() {
   if (!context) return new Response("Inicia sesión para exportar.", { status: 401 });
 
   const service = new ExportService(context.supabase);
-  const { organization } = context.membership;
+  const { organization } = context;
 
   /**
    * El evento de bitácora se escribe **al terminar**: una exportación que se
@@ -26,7 +26,7 @@ export async function GET() {
    * se reporta y listo.
    */
   async function* withTrace(): AsyncGenerator<ArchiveEntry> {
-    yield* service.entries(context!.organizationId, context!.membership.role);
+    yield* service.entries(context!.organizationId, context!.role);
     try {
       await service.recordExport(context!.organizationId);
     } catch (error) {

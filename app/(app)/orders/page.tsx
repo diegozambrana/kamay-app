@@ -142,7 +142,7 @@ export default async function OrdersPage({
       includeArchived={includeArchived}
       // "Hoy" en la zona horaria de la organización, no en la del navegador:
       // se resuelve en el servidor y viaja como dato (design.md D5).
-      today={todayInTimezone(context.membership.organization.timezone)}
+      today={todayInTimezone(context.organization.timezone)}
       closedLimit={closedLimit}
       hasMoreClosed={hasMoreClosed}
     />

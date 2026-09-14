@@ -14,6 +14,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { LineSelector } from "@/features/business-lines/line-selector";
+import { OrganizationSwitcher } from "@/features/platform/organization-switcher";
+import type { OrganizationOption } from "@/services/platform/platform-service";
 import { useUserStore } from "@/stores/user-store";
 
 /**
@@ -28,27 +30,57 @@ import { useUserStore } from "@/stores/user-store";
  * Las secciones de Configuración **no** se despliegan aquí: viven en las
  * pestañas de `SettingsNav`. Duplicarlas daría dos enlaces con el mismo
  * nombre accesible en la página.
+ *
+ * Al administrador de la plataforma (KAM-26) el menú le suma el selector de
+ * organización y las entradas Organizaciones y Usuarios; sin organización
+ * activa, solo eso.
  */
-export function AppSidebar() {
-  const role = useUserStore((state) => state.membership?.role);
+export function AppSidebar({
+  organizations = [],
+  moreOrganizations = false,
+  activeOrganizationId = null,
+  activeOrganizationName = null,
+}: {
+  /** Opciones del selector; solo llegan para el super admin. */
+  organizations?: OrganizationOption[];
+  /** Hay más organizaciones que las que caben en el selector. */
+  moreOrganizations?: boolean;
+  activeOrganizationId?: string | null;
+  activeOrganizationName?: string | null;
+} = {}) {
+  const role = useUserStore((state) => state.role);
+  const platformAdmin = useUserStore((state) => state.platformAdmin);
   const pathname = usePathname();
 
-  const entries = navEntriesFor(role);
+  const entries = navEntriesFor(role, platformAdmin);
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="gap-2">
-        {/* Solo la marca: la organización activa la dice la barra superior, y
-            repetirla aquí la pone dos veces en la misma pantalla. */}
+        {/* Solo la marca: la organización activa la dice la barra superior.
+            La excepción es el super admin, para quien elegirla es parte de la
+            navegación y no un dato: su selector va aquí, en el menú. */}
         <div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
           <span className="font-semibold">Kamay</span>
         </div>
 
+        {platformAdmin && (
+          <OrganizationSwitcher
+            organizations={organizations}
+            hasMore={moreOrganizations}
+            activeOrganizationId={activeOrganizationId}
+            activeOrganizationName={activeOrganizationName}
+          />
+        )}
+
         {/* El contexto de línea acompaña al usuario por todas las secciones,
-            así que encabeza el menú en vez de vivir dentro de una pantalla. */}
-        <div className="group-data-[collapsible=icon]:hidden">
-          <LineSelector />
-        </div>
+            así que encabeza el menú en vez de vivir dentro de una pantalla.
+            Sin organización activa no hay líneas que elegir. */}
+        {role && (
+          <div className="group-data-[collapsible=icon]:hidden">
+            <LineSelector />
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>

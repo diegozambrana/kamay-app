@@ -24,9 +24,11 @@ vi.mock("@/features/business-lines/line-selector", () => ({
   ),
 }));
 
-function renderSidebar(role: Role | null, route = "/dashboard") {
+function renderSidebar(role: Role | null, route = "/dashboard", platformAdmin = false) {
   pathname.value = route;
   useUserStore.setState({
+    role,
+    platformAdmin,
     membership: role
       ? {
           id: "m1",
@@ -40,7 +42,13 @@ function renderSidebar(role: Role | null, route = "/dashboard") {
   return render(
     <TooltipProvider>
       <SidebarProvider>
-        <AppSidebar />
+        <AppSidebar
+          organizations={[
+            { id: "o1", name: "Geeko Store" },
+            { id: "o2", name: "Taller Kamay" },
+          ]}
+          activeOrganizationId={role ? "o1" : null}
+        />
       </SidebarProvider>
     </TooltipProvider>,
   );
@@ -51,7 +59,7 @@ function mainNav() {
 }
 
 beforeEach(() => {
-  useUserStore.setState({ membership: null });
+  useUserStore.setState({ membership: null, role: null, platformAdmin: false });
 });
 afterEach(cleanup);
 
@@ -127,5 +135,39 @@ describe("AppSidebar", () => {
 
     expect(within(nav).queryByRole("link", { name: "Canales" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Unidades" })).toBeNull();
+  });
+});
+
+describe("AppSidebar · administrador de la plataforma (KAM-26)", () => {
+  it("con organización: selector, entradas de dueño y de plataforma", () => {
+    renderSidebar("owner", "/dashboard", true);
+
+    expect(screen.getByTestId("organization-switcher")).toHaveTextContent("Geeko Store");
+    const nav = within(mainNav());
+    expect(nav.getByRole("link", { name: "Configuración" })).toBeInTheDocument();
+    expect(nav.getByRole("link", { name: "Organizaciones" })).toBeInTheDocument();
+    expect(nav.getByRole("link", { name: "Usuarios" })).toBeInTheDocument();
+  });
+
+  it("sin organización: solo plataforma, sin selector de línea", () => {
+    // Escenario «The platform shell omits organization controls» (el menú).
+    renderSidebar(null, "/admin/users", true);
+
+    const links = within(mainNav()).getAllByRole("link").map((l) => l.textContent);
+    expect(links).toEqual(["Organizaciones", "Usuarios"]);
+    expect(screen.getByTestId("organization-switcher")).toHaveTextContent(
+      "Vista de plataforma",
+    );
+    expect(screen.queryByTestId("line-selector")).not.toBeInTheDocument();
+  });
+
+  it("una dueña que no es super admin no tiene selector ni entradas de plataforma", () => {
+    // Escenarios «A multi-organization owner has no selector» y «Nobody else
+    // sees them».
+    renderSidebar("owner");
+
+    expect(screen.queryByTestId("organization-switcher")).not.toBeInTheDocument();
+    expect(within(mainNav()).queryByRole("link", { name: "Organizaciones" })).toBeNull();
+    expect(within(mainNav()).queryByRole("link", { name: "Usuarios" })).toBeNull();
   });
 });

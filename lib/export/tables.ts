@@ -33,6 +33,17 @@ export const EXCLUDED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   invitations: ["token_hash"],
 };
 
+/**
+ * Tablas que no son de ninguna organización y por eso no salen en la
+ * exportación de una, con su motivo. `platform_admins` (KAM-26) dice qué
+ * cuentas administran la plataforma entera: no es un dato del taller, y
+ * sacarla en el respaldo de uno sería contarle a su dueña quién más tiene
+ * acceso a todo.
+ */
+export const EXCLUDED_TABLES: Readonly<Record<string, string>> = {
+  platform_admins: "Registro de administradores de la plataforma, por encima de las organizaciones.",
+};
+
 export const EXPORT_TABLES: readonly ExportTable[] = [
   {
     table: "organizations",

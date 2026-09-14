@@ -13,6 +13,10 @@ vi.mock("@/actions/notifications", () => ({
   markAllNotificationsRead: vi.fn(),
 }));
 
+vi.mock("@/actions/auth", () => ({
+  signOut: vi.fn(),
+}));
+
 const AVISO = {
   id: "n1",
   organizationId: "o1",
@@ -141,5 +145,29 @@ describe("Header", () => {
     // En móvil manda la barra inferior; esta no existe allí.
     expect(screen.getByTestId("top-bar").className).toContain("hidden");
     expect(screen.getByTestId("top-bar").className).toContain("md:flex");
+  });
+
+  // Scenario: The account menu shows initials and two items
+  it("el menú de cuenta muestra el avatar y, al abrirse, Perfil y Cerrar sesión", async () => {
+    renderHeader();
+
+    expect(screen.getByTestId("account-menu-trigger")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId("account-menu-trigger"));
+
+    const menu = screen.getByTestId("account-menu");
+    expect(menu).toHaveTextContent("Perfil");
+    expect(menu).toHaveTextContent("Cerrar sesión");
+  });
+
+  // Scenario: Both roles get the account menu
+  it("el menú de cuenta está para los dos roles", () => {
+    renderHeader("assistant");
+    expect(screen.getByTestId("account-menu-trigger")).toBeInTheDocument();
+
+    cleanup();
+
+    renderHeader("owner");
+    expect(screen.getByTestId("account-menu-trigger")).toBeInTheDocument();
   });
 });

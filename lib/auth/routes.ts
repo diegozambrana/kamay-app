@@ -26,6 +26,9 @@ export const PROTECTED_PREFIXES = [
   // pone la página con `getOwnerContext()`; aquí solo se exige sesión.
   "/assets",
   "/settings",
+  // KAM-24 · Perfil: datos de cuenta, nombre visible y cambio de contraseña.
+  // Cualquier rol con sesión, como el resto del cascarón.
+  "/profile",
 ] as const;
 
 export const LOGIN_PATH = "/auth/login";

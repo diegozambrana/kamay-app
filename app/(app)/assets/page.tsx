@@ -88,8 +88,8 @@ export default async function AssetsPage({
           organizationId: context.organizationId,
           tableName: "asset_details",
           recordId: asset.itemId,
-          timezone: context.membership.organization.timezone,
-          currency: context.membership.organization.currency,
+          timezone: context.organization.timezone,
+          currency: context.organization.currency,
         }),
       ]);
 
@@ -117,7 +117,7 @@ export default async function AssetsPage({
     <AssetsScreen
       assets={assets}
       detail={detail}
-      timezone={context.membership.organization.timezone}
+      timezone={context.organization.timezone}
       includeArchived={includeArchived}
     />
   );

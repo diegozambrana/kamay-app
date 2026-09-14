@@ -167,7 +167,10 @@ test.describe.serial("pedidos y tareas no se sincronizan", () => {
     const titulo = `Vinculada ${Date.now()}`;
     await page.getByLabel("Título").fill(titulo);
     await page.getByTestId("save-task").click();
-    await page.waitForURL(/\/tasks/);
+    // El formulario va al tablero cuando la acción terminó de guardar. Una
+    // expresión como `/\/tasks/` ya coincide con `/tasks/new`, y el `goto` de
+    // abajo cortaba el guardado en vuelo: la tarea nunca llegaba al tablero.
+    await page.waitForURL(/\/tasks(\?.*)?$/);
 
     // Se cierra la tarea moviéndola al estado final. Mismo criterio que en
     // `task-board`: `hover()` espera a que la tarjeta esté quieta, y se espera

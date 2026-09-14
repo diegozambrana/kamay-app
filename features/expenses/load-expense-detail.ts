@@ -24,7 +24,7 @@ export async function loadExpenseDetail(
   id: string,
 ): Promise<ExpenseDetailData | null> {
   const { supabase, organizationId } = context;
-  const { timezone, currency } = context.membership.organization;
+  const { timezone, currency } = context.organization;
 
   const expenses = new ExpenseService(supabase);
   const expense = await expenses.getById(organizationId, id);

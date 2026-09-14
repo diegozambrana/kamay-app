@@ -29,6 +29,10 @@ export const PROTECTED_PREFIXES = [
   // KAM-24 · Perfil: datos de cuenta, nombre visible y cambio de contraseña.
   // Cualquier rol con sesión, como el resto del cascarón.
   "/profile",
+  // KAM-26 · Vistas de plataforma (Organizaciones, Usuarios). Solo el
+  // administrador de la plataforma: la guardia real la pone el layout de
+  // `(platform)` y, en la base, `platform_list_users()`; aquí solo sesión.
+  "/admin",
 ] as const;
 
 export const LOGIN_PATH = "/auth/login";

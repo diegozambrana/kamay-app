@@ -202,8 +202,10 @@ function toRow(entry: RecentActivityEntry, ctx: RowContext): ActivityRowItem {
       actorLabel: entry.actorLabel,
       recordLabel,
     }),
-    initials: initialsOf(actorName ?? entry.actorLabel),
-    author: actorName ?? entry.actorLabel ?? "Alguien",
+    // La etiqueta manda sobre el nombre, como en la frase: el super admin
+    // que cambió algo aquí se ve como tal (KAM-26, `actorOf`).
+    initials: initialsOf(entry.actorLabel ?? actorName),
+    author: entry.actorLabel ?? actorName ?? "Alguien",
     time: timeOf(entry.occurredAt, ctx.timezone),
     occurredAt: entry.occurredAt,
     recordLabel,

@@ -83,7 +83,7 @@ export async function setContactArchived(
 
   const context = await getSessionContext();
   if (!context) return { error: NO_SESSION };
-  if (context.membership.role !== "owner") return { error: NOT_OWNER };
+  if (context.role !== "owner") return { error: NOT_OWNER };
 
   try {
     await new ContactService(context.supabase).setArchived(

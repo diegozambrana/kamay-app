@@ -144,7 +144,7 @@ export default async function CatalogPage({
       lineFilter={lineFilter}
       search={search}
       includeArchived={includeArchived}
-      role={context.membership.role}
+      role={context.role}
       activeLineId={activeLine === ALL_LINES ? null : activeLine}
       limit={limit}
       hasMore={window.hasMore}

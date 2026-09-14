@@ -89,6 +89,7 @@ Todas con contraseña `kamay123`.
 | `multi@kamay.test` | Dueño | Taller Kamay y Kamay Feria | Selección de organización |
 | `owner@kamay.test` | Dueño | Taller Kamay | Organización sin datos |
 | `historico@kamay.test` | Dueño | Kamay Histórico | Doce meses de datos, para rendimiento |
+| `superadmin@kamay.test` | Administrador de la plataforma | Ninguna (ve todas) | Vistas *Organizaciones* y *Usuarios*, selector de organización |
 
 Geeko Store trae cuatro líneas (Sublimación, Impresión 3D, Alfarería, General), pedidos #1 a #10 con distintos estados de cobro, compras y gastos, insumos bajo mínimo y un activo (*Prensa de tazas*).
 

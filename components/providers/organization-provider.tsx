@@ -1,32 +1,28 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
+import { useHydrateStore } from "@/components/providers/use-hydrate-store";
 import { setBrowserMonitoringScope } from "@/lib/monitoring/report-error";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { MembershipWithOrganization, Organization } from "@/types";
 
-/** Hidrata `OrganizationStore` con la organización activa resuelta en el servidor. */
+/**
+ * Hidrata `OrganizationStore` con la organización activa resuelta en el
+ * servidor. `null` cuando un administrador de la plataforma no eligió ninguna
+ * (KAM-26).
+ */
 export function OrganizationProvider({
   organization,
   memberships,
   children,
 }: {
-  organization: Organization;
+  organization: Organization | null;
   memberships: MembershipWithOrganization[];
   children: React.ReactNode;
 }) {
-  // Hidratación síncrona una sola vez, antes del primer render de los hijos.
-  const hydrated = useRef<true | null>(null);
-  if (hydrated.current == null) {
-    hydrated.current = true;
-    useOrganizationStore.setState({ organization, memberships });
-  }
-
-  useEffect(() => {
+  useHydrateStore(() => {
     useOrganizationStore.setState({ organization, memberships });
     // Cada reporte de error del navegador lleva la organización activa.
-    setBrowserMonitoringScope({ organizationId: organization.id });
+    setBrowserMonitoringScope(organization ? { organizationId: organization.id } : {});
   }, [organization, memberships]);
 
   return children;

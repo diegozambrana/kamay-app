@@ -15,13 +15,13 @@ export default async function ExportSettingsPage() {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
 
-  const isOwner = context.membership.role === "owner";
+  const isOwner = context.role === "owner";
 
   return (
     <section>
       <h2 className="text-lg font-medium">Exportar</h2>
       <p className="mt-1 mb-4 text-sm text-muted-foreground">
-        Todos los datos de {context.membership.organization.name} en un solo archivo, con una
+        Todos los datos de {context.organization.name} en un solo archivo, con una
         hoja de cálculo por tabla. Sirve de respaldo, para la contabilidad o para analizarlos
         fuera de Kamay.
       </p>

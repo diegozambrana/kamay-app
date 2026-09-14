@@ -228,3 +228,48 @@ describe("la entrada Activos (V12)", () => {
     expect(bottomBarEntriesFor("owner")).toHaveLength(3);
   });
 });
+
+describe("entradas de plataforma (KAM-26)", () => {
+  const PLATFORM = ["/admin/organizations", "/admin/users"];
+
+  it("el super admin las ve con organización activa, al final del menú", () => {
+    // Escenario «Desktop sidebar carries the platform entries».
+    const hrefs = navEntriesFor("owner", true).map((entry) => entry.href);
+    expect(hrefs.slice(-2)).toEqual(PLATFORM);
+    expect(hrefs).toContain("/settings");
+  });
+
+  it("sin organización activa, el super admin ve solo las de plataforma", () => {
+    expect(navEntriesFor(null, true).map((entry) => entry.href)).toEqual(PLATFORM);
+  });
+
+  it("nadie más las ve", () => {
+    // Escenario «Nobody else sees them».
+    for (const role of ["owner", "assistant"] as const) {
+      const hrefs = navEntriesFor(role).map((entry) => entry.href);
+      for (const href of PLATFORM) expect(hrefs).not.toContain(href);
+      for (const href of PLATFORM) {
+        expect(moreEntriesFor(role).map((entry) => entry.href)).not.toContain(href);
+      }
+    }
+  });
+
+  it("viven en «Más» y la barra sigue con sus tres entradas", () => {
+    // Escenario «Mobile carries them in "Más"» a nivel unitario.
+    expect(bottomBarEntriesFor("owner", true).map(barLabelOf)).toEqual([
+      "Inicio",
+      "Pedidos",
+      "Tareas",
+    ]);
+    const more = moreEntriesFor("owner", true).map((entry) => entry.label);
+    expect(more).toContain("Organizaciones");
+    expect(more).toContain("Usuarios");
+  });
+
+  it("toda entrada de plataforma se declara como tal y nunca ocupa ranura", () => {
+    for (const entry of NAV_ENTRIES.filter((e) => e.href.startsWith("/admin"))) {
+      expect(entry.platformOnly).toBe(true);
+      expect(entry.mobile).toBe("more");
+    }
+  });
+});

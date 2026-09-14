@@ -50,12 +50,17 @@ select cmp_ok(
   '>=', 25,
   'catálogo: el recorrido encuentra las tablas de la aplicación');
 
--- `organizations` es la única excepción, y no por descuido: su propio `id` es
--- el identificador de organización que las demás referencian.
+-- Las excepciones, y no por descuido:
+--   · organizations   — su propio `id` es el identificador de organización que
+--                       las demás referencian.
+--   · platform_admins — el registro de administradores de la plataforma vive
+--                       por encima de las organizaciones: un super admin no
+--                       pertenece a ninguna (KAM-26, spec
+--                       `platform-administration`).
 select is(
   (select coalesce(array_agg(t.relname order by t.relname), '{}')
      from pg_temp.app_tables t
-    where t.relname <> 'organizations'
+    where t.relname not in ('organizations', 'platform_admins')
       and not exists (
         select 1 from pg_attribute a
          where a.attrelid = t.oid
@@ -119,11 +124,15 @@ drop table public.kam23_future_table;
 --   · task_tags                 — tabla de unión sin `id`, que `log_activity()`
 --                                 necesita como `record_id`; el canon §14 no la
 --                                 incluye (migración de KAM-15).
+--   · platform_admins           — sin `organization_id` no hay bitácora a la
+--                                 que escribir; su historia son `granted_at`,
+--                                 `note` y `archived_at` (KAM-26).
 select is(
   (select coalesce(array_agg(t.relname order by t.relname), '{}')
      from pg_temp.app_tables t
     where t.relname not in ('activity_log', 'notifications',
-                            'notification_preferences', 'task_tags')
+                            'notification_preferences', 'task_tags',
+                            'platform_admins')
       and not exists (
         select 1 from pg_trigger g
          where g.tgrelid = t.oid

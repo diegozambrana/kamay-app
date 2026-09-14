@@ -68,7 +68,7 @@ export default async function NewOrderPage() {
       products={products}
       // "Hoy" en la zona de la organización: los atajos de fecha son los del
       // taller, no los del navegador (design.md D12).
-      today={todayInTimezone(context.membership.organization.timezone)}
+      today={todayInTimezone(context.organization.timezone)}
     />
   );
 }

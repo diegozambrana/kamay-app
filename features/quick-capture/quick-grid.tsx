@@ -27,7 +27,7 @@ import type { Item } from "@/types";
  * forma de un destino no es asunto de quien lo pulsa.
  */
 export function QuickGrid({ supplies = [] }: { supplies?: Item[] }) {
-  const role = useUserStore((state) => state.membership?.role);
+  const role = useUserStore((state) => state.role);
   const destinations = destinationsFor(role);
   const [consuming, setConsuming] = useState(false);
 

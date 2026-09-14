@@ -92,8 +92,8 @@ export default async function NewPurchasePage() {
       suppliers={suppliers}
       supplies={supplies}
       hints={hints}
-      today={todayInTimezone(context.membership.organization.timezone)}
-      timezone={context.membership.organization.timezone}
+      today={todayInTimezone(context.organization.timezone)}
+      timezone={context.organization.timezone}
       undeclaredAssets={undeclaredAssets}
     />
   );

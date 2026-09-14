@@ -44,7 +44,7 @@ export default async function ExpensesPage({
   if (!context) redirect("/auth/login");
 
   const params = await searchParams;
-  const timezone = context.membership.organization.timezone;
+  const timezone = context.organization.timezone;
   const today = todayInTimezone(timezone);
 
   const kind: ExpenseKind | null = EXPENSE_KINDS.includes(params.kind as ExpenseKind)

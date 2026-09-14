@@ -22,7 +22,7 @@ export default async function QuickPage() {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
 
-  const timezone = context.membership.organization.timezone;
+  const timezone = context.organization.timezone;
   // La zona de la organización, no la del servidor: un taller que registra a
   // las 23:40 no debe ver su captura caer en el día equivocado.
   const today = todayInTimezone(timezone);

@@ -35,6 +35,7 @@ function renderHeader(
   props: Partial<React.ComponentProps<typeof Header>> = {},
 ) {
   useUserStore.setState({
+    role,
     membership: { id: "m1", organizationId: "o1", role, displayName: null },
   });
   useOrganizationStore.setState({

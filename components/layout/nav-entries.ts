@@ -1,4 +1,5 @@
 import {
+  Building2Icon,
   ChartColumnIcon,
   ClipboardListIcon,
   FactoryIcon,
@@ -9,6 +10,7 @@ import {
   PackageIcon,
   ReceiptIcon,
   SettingsIcon,
+  UserCogIcon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -44,6 +46,12 @@ export type NavEntry = {
   barHref?: string;
   /** Roles que ven la entrada. Lo que un rol no puede usar, no aparece. */
   roles: Role[];
+  /**
+   * Entrada de la plataforma (KAM-26): la ven solo los administradores de la
+   * plataforma, tengan o no una organización activa, y nunca ocupa ranura en
+   * la barra inferior. Para ellas `roles` no cuenta.
+   */
+  platformOnly?: boolean;
   /**
    * Dónde vive la entrada en el celular: en una ranura de la barra inferior
    * o dentro del panel "Más" (mapa §4.2).
@@ -169,15 +177,41 @@ export const NAV_ENTRIES: NavEntry[] = [
     roles: ["owner"],
     mobile: "more",
   },
+  {
+    // Plataforma (KAM-26): por encima de toda organización. Al final del
+    // menú, después de lo del taller en el que se está; en el celular, dentro
+    // de "Más" (spec `platform-administration` → *Platform sections are
+    // reachable on every surface*).
+    href: "/admin/organizations",
+    label: "Organizaciones",
+    icon: Building2Icon,
+    roles: [],
+    platformOnly: true,
+    mobile: "more",
+  },
+  {
+    href: "/admin/users",
+    label: "Usuarios",
+    icon: UserCogIcon,
+    roles: [],
+    platformOnly: true,
+    mobile: "more",
+  },
 ];
 
 /**
  * Menú de un rol. Ocultar la opción es mejor que mostrarla deshabilitada: un
  * menú lleno de puertas cerradas es una invitación a intentarlo (§4.4).
  */
-export function navEntriesFor(role: Role | null | undefined): NavEntry[] {
-  if (!role) return [];
-  return NAV_ENTRIES.filter((entry) => entry.roles.includes(role));
+export function navEntriesFor(
+  role: Role | null | undefined,
+  platformAdmin = false,
+): NavEntry[] {
+  // Sin rol no hay organización activa: al administrador de la plataforma le
+  // quedan sus propias entradas; a nadie más le queda ninguna.
+  return NAV_ENTRIES.filter((entry) =>
+    entry.platformOnly ? platformAdmin : Boolean(role && entry.roles.includes(role)),
+  );
 }
 
 /**
@@ -198,8 +232,11 @@ export function isNavEntryActive(href: string, pathname: string): boolean {
  * y no cuatro es lo que impide que una tarea futura cuele una sección más en
  * la barra sin que nadie se dé cuenta (design D2).
  */
-export function bottomBarEntriesFor(role: Role | null | undefined): NavEntry[] {
-  return navEntriesFor(role).filter((entry) => entry.mobile === "bar");
+export function bottomBarEntriesFor(
+  role: Role | null | undefined,
+  platformAdmin = false,
+): NavEntry[] {
+  return navEntriesFor(role, platformAdmin).filter((entry) => entry.mobile === "bar");
 }
 
 /** El rótulo que le toca a la entrada en la barra inferior. */
@@ -213,6 +250,9 @@ export function barHrefOf(entry: NavEntry): string {
 }
 
 /** Las entradas que viven dentro del panel "Más" del celular. */
-export function moreEntriesFor(role: Role | null | undefined): NavEntry[] {
-  return navEntriesFor(role).filter((entry) => entry.mobile === "more");
+export function moreEntriesFor(
+  role: Role | null | undefined,
+  platformAdmin = false,
+): NavEntry[] {
+  return navEntriesFor(role, platformAdmin).filter((entry) => entry.mobile === "more");
 }

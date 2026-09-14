@@ -90,8 +90,8 @@ export default async function OrderDetailPage({
     organizationId: context.organizationId,
     tableName: "orders",
     recordId: order.id,
-    timezone: context.membership.organization.timezone,
-    currency: context.membership.organization.currency,
+    timezone: context.organization.timezone,
+    currency: context.organization.currency,
   });
 
   // El otro lado del vínculo: qué tareas apuntan a este pedido. RLS decide
@@ -129,10 +129,10 @@ export default async function OrderDetailPage({
       relatedTasks={relatedTasks}
       // Anular es del dueño (`enforce_archive_rules`): al ayudante ni se le
       // ofrece, y si lo intentara la base lo rechazaría igual.
-      canVoidPayments={context.membership.role === "owner"}
+      canVoidPayments={context.role === "owner"}
       history={history}
-      today={todayInTimezone(context.membership.organization.timezone)}
-      timezone={context.membership.organization.timezone}
+      today={todayInTimezone(context.organization.timezone)}
+      timezone={context.organization.timezone}
     />
   );
 }

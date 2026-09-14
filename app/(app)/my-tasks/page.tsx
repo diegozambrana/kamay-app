@@ -28,8 +28,8 @@ export default async function MyTasksPage() {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
 
-  const { supabase, organizationId, membership } = context;
-  const timezone = membership.organization.timezone;
+  const { supabase, organizationId, organization } = context;
+  const timezone = organization.timezone;
 
   // "Hoy" y "mañana" en la zona del taller y resueltos en el servidor: sin
   // esto, posponer a las 23:50 saltaría dos días y la agrupación cambiaría

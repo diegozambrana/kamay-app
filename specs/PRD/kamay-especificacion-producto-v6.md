@@ -94,6 +94,14 @@ Responder, sin cálculos aparte y sin mezclar proyectos, siete preguntas:
 - Otro emprendimiento propio, un socio o una plataforma externa conectada.
 - Necesita que Kamay se adapte **configurando**, no programando.
 
+### 3.4 Administrador de la plataforma
+- **No pertenece a ninguna organización**: es una condición de su cuenta, no una membresía.
+- Ve y administra todas las organizaciones y todas las cuentas: crea talleres, arma sus equipos, asigna personas a una o varias organizaciones.
+- Entra a cualquier organización **con la vista de su dueño**, y sale a la vista de plataforma cuando termina.
+- Lo concede y lo retira **solo el operador**, con un script; ninguna pantalla nombra ni retira administradores.
+- Lo que hace dentro de una organización ajena queda en la bitácora de esa organización, marcado como «Administrador de la plataforma», para que el dueño sepa que no fue alguien de su equipo.
+- **No forma parte del equipo**: no aparece en *Usuarios y roles*, no se le asignan tareas ni recibe avisos de talleres ajenos.
+
 ---
 
 ## 4. Tipo de Producto Digital

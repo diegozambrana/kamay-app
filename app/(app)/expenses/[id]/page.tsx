@@ -26,7 +26,7 @@ export default async function ExpenseDetailPage({
   return (
     <ExpenseDetail
       data={data}
-      timezone={context.membership.organization.timezone}
+      timezone={context.organization.timezone}
       variant="page"
     />
   );

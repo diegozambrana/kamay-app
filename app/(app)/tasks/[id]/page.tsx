@@ -46,7 +46,7 @@ export default async function TaskDetailPage({
 
   const statusService = new StatusService(context.supabase);
 
-  const isOwner = context.membership.role === "owner";
+  const isOwner = context.role === "owner";
 
   const [statuses, allStatuses, businessLines, assignees, history, links, deliverables] =
     await Promise.all([
@@ -65,8 +65,8 @@ export default async function TaskDetailPage({
         organizationId: context.organizationId,
         tableName: "tasks",
         recordId: task.id,
-        timezone: context.membership.organization.timezone,
-        currency: context.membership.organization.currency,
+        timezone: context.organization.timezone,
+        currency: context.organization.currency,
       }),
       // Los vínculos se resuelven contra sus destinos al leer: nada de lo que
       // se muestra está copiado en `task_links` (D2). El activo se omite para
@@ -150,7 +150,7 @@ export default async function TaskDetailPage({
       supplies={supplies.map((i) => ({ id: i.id, name: i.name }))}
       closingStatusId={closingStatusId}
       history={history}
-      timezone={context.membership.organization.timezone}
+      timezone={context.organization.timezone}
     />
   );
 }

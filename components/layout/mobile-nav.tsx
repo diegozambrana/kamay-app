@@ -63,7 +63,8 @@ export function isCaptureRoute(pathname: string): boolean {
  * sigue siendo la única fuente (design D2).
  */
 export function MobileNav() {
-  const role = useUserStore((state) => state.membership?.role);
+  const role = useUserStore((state) => state.role);
+  const platformAdmin = useUserStore((state) => state.platformAdmin);
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const {
@@ -77,8 +78,8 @@ export function MobileNav() {
 
   if (isCaptureRoute(pathname)) return null;
 
-  const entries = bottomBarEntriesFor(role);
-  const more = moreEntriesFor(role);
+  const entries = bottomBarEntriesFor(role, platformAdmin);
+  const more = moreEntriesFor(role, platformAdmin);
 
   const slotClass =
     "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 text-muted-foreground";

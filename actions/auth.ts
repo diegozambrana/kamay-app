@@ -5,10 +5,13 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ORG_COOKIE } from "@/constants/auth";
+import { PLATFORM_HOME } from "@/lib/auth/access";
 import { resolvePostAuthPath, setActiveOrganizationCookie } from "@/lib/auth/post-auth";
 import { defaultLandingPath, sanitizeNextPath } from "@/lib/auth/routes";
+import { getPlatformAdminContext } from "@/lib/auth/session-context";
 import { createClient } from "@/lib/supabase/server";
 import { MembershipService } from "@/services/membership-service";
+import { PlatformService } from "@/services/platform/platform-service";
 
 export type AuthActionResult = { error: string } | undefined;
 
@@ -94,13 +97,47 @@ export async function selectOrganization(formData: FormData): Promise<void> {
   const membership = memberships.find(
     (m) => m.organizationId === organizationId,
   );
-  // Solo una organización a la que el usuario pertenece activamente.
-  if (!membership) redirect("/auth/select-org");
+  // Solo una organización a la que el usuario pertenece activamente. El
+  // administrador de la plataforma no elige aquí (KAM-26): entra por el
+  // selector del menú lateral o por la vista Organizaciones.
+  if (!membership) {
+    if (await new PlatformService(supabase).isPlatformAdmin()) redirect(PLATFORM_HOME);
+    redirect("/auth/select-org");
+  }
 
   await setActiveOrganizationCookie(membership.organizationId);
 
   const userAgent = (await headers()).get("user-agent");
   redirect(next ?? defaultLandingPath(userAgent));
+}
+
+/**
+ * Entrar a una organización —o salir a la vista de plataforma con `null`—
+ * como administrador de la plataforma (KAM-26, design D8). La usan el
+ * selector del menú lateral y el botón "Entrar" de la vista Organizaciones.
+ *
+ * Solo acepta organizaciones que existen y no están archivadas; cualquier
+ * otra cosa vuelve a la vista de plataforma sin tocar la cookie. Quien no es
+ * super admin no tiene nada que hacer aquí y vuelve a su inicio.
+ */
+export async function enterOrganization(organizationId: string | null): Promise<void> {
+  const userAgent = (await headers()).get("user-agent");
+  const context = await getPlatformAdminContext();
+  if (!context) redirect(defaultLandingPath(userAgent));
+
+  const cookieStore = await cookies();
+  if (organizationId === null) {
+    cookieStore.delete(ORG_COOKIE);
+    redirect(PLATFORM_HOME);
+  }
+
+  const organization = await new PlatformService(context.supabase).findActiveOrganization(
+    organizationId,
+  );
+  if (!organization) redirect(PLATFORM_HOME);
+
+  await setActiveOrganizationCookie(organization.id);
+  redirect(defaultLandingPath(userAgent));
 }
 
 /**

@@ -59,7 +59,7 @@ export default async function NewCostPage() {
             : ""
         }`,
       }))}
-      today={todayInTimezone(context.membership.organization.timezone)}
+      today={todayInTimezone(context.organization.timezone)}
     />
   );
 }

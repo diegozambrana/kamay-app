@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { setActiveOrganizationCookie } from "@/lib/auth/post-auth";
+import { inviteUrlFor } from "@/lib/invitations/invite-url";
 import { getOwnerContext } from "@/lib/auth/session-context";
 import { createClient } from "@/lib/supabase/server";
 import { InvitationService } from "@/services/invitation-service";
@@ -42,10 +43,7 @@ export async function inviteMember(
 
   // El origen se toma de la petición, no del cliente: el enlace que se le
   // muestra al dueño para copiar debe apuntar siempre a esta aplicación.
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("host") ?? "";
-  const protocol = host.startsWith("localhost") ? "http" : "https";
-  const origin = `${protocol}://${host}`;
+  const host = (await headers()).get("host") ?? "";
 
   try {
     const { token } = await new InvitationService(context.supabase).create(
@@ -58,7 +56,7 @@ export async function inviteMember(
     );
 
     revalidatePath("/settings/members");
-    return { inviteUrl: `${origin}/auth/invite/${token}` };
+    return { inviteUrl: inviteUrlFor(host, token) };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     if (message.includes("duplicate key")) {

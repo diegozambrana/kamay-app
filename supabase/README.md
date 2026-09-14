@@ -172,3 +172,36 @@ detalle, que es un estado consistente. El de `pg_cron` vive en el proyecto
 alojado y llama siempre al dominio de producción, de modo que una vista previa
 tampoco genera avisos por su cuenta; en local no llama a nadie, porque el
 secreto no está en el Vault.
+
+## Administradores de la plataforma (KAM-26)
+
+El super admin es una cuenta que no pertenece a ninguna organización, ve y
+administra todas y entra a cualquiera con la vista de su dueño. Lo decide la
+tabla `platform_admins` (una fila activa por cuenta) y lo lee
+`is_platform_admin()`; `is_member()` e `is_owner()` lo reconocen, así que
+ninguna política tiene regla propia para él.
+
+**Ninguna pantalla lo concede.** Solo el operador, con el script:
+
+```bash
+# Nombrar (crea la cuenta si no existe, con la contraseña del entorno)
+PLATFORM_ADMIN_PASSWORD='…' node scripts/platform-admin.mjs grant persona@correo.com --note "motivo"
+
+# Retirar: archiva la fila; surte efecto en la siguiente petición
+node scripts/platform-admin.mjs revoke persona@correo.com
+
+# Ver quiénes lo son hoy
+node scripts/platform-admin.mjs list
+```
+
+El script lee `NEXT_PUBLIC_SUPABASE_URL` (o `SUPABASE_URL`) y
+`SUPABASE_SERVICE_ROLE_KEY` del entorno: es una herramienta del operador que
+corre fuera de la aplicación, el único uso de la clave de servicio además de
+los trabajos programados y los avisos (ARCHITECTURE.md §Supabase). La
+contraseña nunca va como argumento, para que no quede en el historial de la
+shell. En local, la semilla ya trae a `superadmin@kamay.test`.
+
+Lo que el super admin cambia dentro de una organización a la que no pertenece
+queda en la bitácora de esa organización con `actor_label = 'Administrador de
+la plataforma'`. Las altas y bajas de super admins no van a la bitácora (no
+tienen organización): su historia son `granted_at`, `note` y `archived_at`.

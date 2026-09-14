@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
+import { useHydrateStore } from "@/components/providers/use-hydrate-store";
 import { useBusinessLineStore } from "@/stores/business-line-store";
 import type { ActiveLine, BusinessLine } from "@/types";
 
@@ -15,18 +14,12 @@ export function BusinessLineProvider({
   activeLine: ActiveLine;
   children: React.ReactNode;
 }) {
-  // Hidratación síncrona una sola vez, antes del primer render de los hijos:
-  // ninguna pantalla debe renderizarse con un contexto de línea distinto del
-  // que el servidor ya resolvió.
-  const hydrated = useRef<true | null>(null);
-  if (hydrated.current == null) {
-    hydrated.current = true;
-    useBusinessLineStore.setState({ lines, activeLine });
-  }
-
-  useEffect(() => {
-    useBusinessLineStore.setState({ lines, activeLine });
-  }, [lines, activeLine]);
+  // Ninguna pantalla debe renderizarse con un contexto de línea distinto del
+  // que el servidor ya resolvió (ver `useHydrateStore`).
+  useHydrateStore(
+    () => useBusinessLineStore.setState({ lines, activeLine }),
+    [lines, activeLine],
+  );
 
   return children;
 }

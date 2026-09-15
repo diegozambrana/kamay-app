@@ -74,8 +74,8 @@ Each organization MUST have exactly one `business_lines` row with `is_shared = t
 
 #### Scenario: The shared line is not offered for archiving in the interface
 
-- **WHEN** an owner opens the Business lines section of `/settings`
-- **THEN** the shared line is listed without an archive control
+- **WHEN** an owner opens the "⋯" actions menu of the shared line in the Business lines section of `/settings`
+- **THEN** the menu offers «Editar» and does not offer «Archivar»
 
 ### Requirement: Archiving hides a line from new work without erasing its history
 

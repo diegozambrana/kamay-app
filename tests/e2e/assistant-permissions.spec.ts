@@ -1,3 +1,4 @@
+import { chooseRowAction, visibleRows } from "./helpers/data-table";
 import { addOrganizationFor, createFreshOrganization } from "./helpers/fresh-org";
 import { geeko, geekoForBlock, historico } from "./helpers/seed-copies";
 import { expect, test, type Page } from "./helpers/test";
@@ -398,20 +399,18 @@ test.describe.serial("tareas del ayudante por línea", () => {
       await expect(page.getByText(titulo)).toBeVisible();
     }
 
-    // Se restringe al ayudante a Alfarería desde Usuarios y roles.
+    // Se restringe al ayudante a Alfarería desde Usuarios y roles: «⋯» →
+    // «Editar», en un diálogo («Owner restricts an assistant to one line»).
     await page.goto("/settings/members");
-    const fila = page
-      .getByTestId("member-list")
-      .locator("li")
-      .filter({ hasText: "Ayudante Geeko" });
-    // La casilla se deshabilita mientras la acción viaja, así que se pulsa y se
-    // espera la respuesta: `check()` verificaría sobre un control deshabilitado.
-    const guardado = page.waitForResponse(
-      (r) => r.request().method() === "POST" && r.url().includes("/settings/members"),
-    );
-    await fila.getByLabel(/^Alfarería para/).click();
-    await guardado;
-    await expect(fila.getByLabel(/^Alfarería para/)).toBeChecked();
+    await chooseRowAction(page, "member-row", "Ayudante Geeko", "Editar");
+    const dialogo = page.getByRole("dialog", { name: /^Editar a / });
+    await dialogo.getByLabel(/^Alfarería para/).check();
+    await dialogo.getByRole("button", { name: "Guardar cambios" }).click();
+    // El diálogo se cierra cuando la acción terminó de guardar.
+    await expect(dialogo).toBeHidden();
+    await expect(
+      visibleRows(page, "member-row").filter({ hasText: "Ayudante Geeko" }),
+    ).toContainText("Alfarería");
   });
 
   test("el ayudante ve su línea y no la que no le toca", async ({ page }) => {
@@ -443,16 +442,15 @@ test.describe.serial("tareas del ayudante por línea", () => {
     await login(page, geekoForBlock().owner);
     await page.goto("/settings/members");
 
-    const fila = page
-      .getByTestId("member-list")
-      .locator("li")
-      .filter({ hasText: "Ayudante Geeko" });
-    const guardado = page.waitForResponse(
-      (r) => r.request().method() === "POST" && r.url().includes("/settings/members"),
-    );
-    await fila.getByLabel(/^Alfarería para/).click();
-    await guardado;
-    await expect(fila.getByLabel(/^Alfarería para/)).not.toBeChecked();
+    await chooseRowAction(page, "member-row", "Ayudante Geeko", "Editar");
+    const dialogo = page.getByRole("dialog", { name: /^Editar a / });
+    await dialogo.getByLabel(/^Alfarería para/).uncheck();
+    await dialogo.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(dialogo).toBeHidden();
+    // Sin ninguna línea marcada, alcanza todas.
+    await expect(
+      visibleRows(page, "member-row").filter({ hasText: "Ayudante Geeko" }),
+    ).toContainText("Todas");
   });
 });
 

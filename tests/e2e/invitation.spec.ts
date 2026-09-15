@@ -31,9 +31,15 @@ test.describe("alta por invitación", () => {
 
     await login(page, organization.email);
     await page.goto("/settings/members");
-    await page.getByLabel("Correo").fill(invitee);
+    // Invitar en un diálogo, que al crearla muestra el enlace una sola vez
+    // («Owner invites and copies the link from the dialog»).
     await page.getByRole("button", { name: "Invitar" }).click();
-    const link = (await page.getByTestId("invite-url").locator("code").textContent())?.trim();
+    const dialog = page.getByRole("dialog", { name: "Invitar" });
+    await dialog.getByLabel("Correo").fill(invitee);
+    await dialog.getByRole("button", { name: "Invitar" }).click();
+    const created = page.getByRole("dialog", { name: "Invitación creada" });
+    await expect(created.getByRole("button", { name: "Copiar enlace" })).toBeVisible();
+    const link = (await created.getByTestId("invite-url").locator("code").textContent())?.trim();
     expect(link).toMatch(/\/auth\/invite\/[^/]+$/);
 
     // Otra persona, en su propio navegador y sin sesión.

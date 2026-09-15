@@ -34,7 +34,7 @@ export default async function GeneralSettingsPage() {
       <h3 className="mt-8 text-base font-medium">
         Reparto de gastos compartidos
       </h3>
-      <p className="mt-1 mb-4 text-sm text-muted-foreground">
+      <p className="mt-1 mb-4 max-w-prose text-sm text-muted-foreground">
         Los egresos de la línea General no son de nadie y son de todos. Esta
         regla decide cómo se reparten entre las demás líneas en los reportes, y
         se muestra siempre junto al resultado.

@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 
+import { chooseRowAction } from "./helpers/data-table";
 import { E2E_PASSWORD, SEED_PLATFORM_ADMIN } from "./helpers/fresh-org";
 import { geeko } from "./helpers/seed-copies";
 import { expect, test, type Page } from "./helpers/test";
@@ -120,6 +121,30 @@ for (const scheme of ["light", "dark"] as const) {
         document.getAnimations().every((animation) => animation.playState !== "running"),
       );
       await audit(page, "Catálogo · diálogo de alta");
+    });
+
+    test("los diálogos de configuración", async ({ page }) => {
+      const settled = () =>
+        page.waitForFunction(() =>
+          document.getAnimations().every((animation) => animation.playState !== "running"),
+        );
+
+      await page.goto("/settings/lines");
+      await page.getByRole("button", { name: "Crear línea" }).click();
+      await expect(page.getByRole("dialog", { name: "Nueva línea" })).toBeVisible();
+      await settled();
+      await audit(page, "Configuración · diálogo de alta");
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toBeHidden();
+
+      // Solo se abre y se mide: «Cancelar» deja la línea como estaba.
+      await chooseRowAction(page, "line-row", "Sublimación", "Archivar");
+      const confirm = page.getByRole("alertdialog");
+      await expect(confirm).toBeVisible();
+      await settled();
+      await audit(page, "Configuración · confirmar archivar");
+      await confirm.getByRole("button", { name: "Cancelar" }).click();
+      await expect(confirm).toBeHidden();
     });
 
     test("el modo feria", async ({ page }) => {

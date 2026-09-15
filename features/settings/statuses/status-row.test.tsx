@@ -1,19 +1,12 @@
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Status } from "@/types";
 
 import { StatusRow } from "./status-row";
-
-vi.mock("@/actions/statuses", () => ({
-  archiveStatus: vi.fn(async () => undefined),
-  updateStatus: vi.fn(async () => undefined),
-}));
-
-import { archiveStatus, updateStatus } from "@/actions/statuses";
 
 const ORG = "11111111-1111-1111-1111-111111111111";
 
@@ -33,118 +26,53 @@ function status(overrides: Partial<Status>): Status {
   };
 }
 
-function renderRow(row: Status, siblings: Status[]) {
-  return render(
+function renderRow(row: Status) {
+  const onEdit = vi.fn();
+  const onArchive = vi.fn();
+  render(
     <DndContext>
-      <SortableContext items={[row.id, ...siblings.map((s) => s.id)]}>
+      <SortableContext items={[row.id]}>
         <ul>
-          <StatusRow status={row} siblings={siblings} />
+          <StatusRow status={row} onEdit={onEdit} onArchive={onArchive} />
         </ul>
       </SortableContext>
     </DndContext>,
   );
+  return { onEdit, onArchive };
 }
-
-beforeEach(() => {
-  vi.clearAllMocks();
-});
 
 afterEach(cleanup);
 
-describe("StatusRow · archivar con reasignación", () => {
-  it("archivar el único estado inicial se bloquea antes de llegar a la base", async () => {
-    const user = userEvent.setup();
-    const initial = status({ name: "Registrado", kind: "initial" });
-    renderRow(initial, [
-      status({ name: "En cola", kind: "waiting" }),
-      status({ name: "Entregado", kind: "final" }),
+// Spec `configurable-statuses` → «Las acciones de un estado están en su menú».
+describe("StatusRow", () => {
+  it("la fila solo tiene el asa y el «⋯»: ningún botón de acción suelto", () => {
+    renderRow(status({ name: "En cola", isQueue: true }));
+
+    const row = screen.getByTestId("status-row");
+    expect(within(row).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Reordenar En cola",
+      "Acciones de En cola",
     ]);
-
-    await user.click(screen.getByRole("button", { name: "Archivar" }));
-    await user.click(screen.getByRole("button", { name: "Archivar estado" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /al menos un estado inicial y uno final/,
-    );
-    expect(archiveStatus).not.toHaveBeenCalled();
+    expect(row).toHaveTextContent("En espera");
+    expect(row).toHaveTextContent("Columna en cola");
+    expect(within(row).queryByRole("textbox")).toBeNull();
   });
 
-  it("archivar pide a dónde mover y envía el estado de destino elegido", async () => {
-    const user = userEvent.setup();
-    const waiting = status({ name: "En espera", kind: "waiting" });
-    const destination = status({ name: "Registrado", kind: "initial" });
-    renderRow(waiting, [
-      destination,
-      status({ name: "Entregado", kind: "final" }),
+  it("el menú ofrece «Editar» y «Archivar» y avisa a la sección", async () => {
+    const row = status({ name: "Sublimando", kind: "in_progress" });
+    const { onEdit, onArchive } = renderRow(row);
+
+    await userEvent.click(screen.getByRole("button", { name: "Acciones de Sublimando" }));
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
+      "Editar",
+      "Archivar",
     ]);
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Editar" }));
+    expect(onEdit).toHaveBeenCalledWith(row);
 
-    await user.click(screen.getByRole("button", { name: "Archivar" }));
-    await user.selectOptions(
-      screen.getByLabelText("Mover los registros que lo usaban a"),
-      destination.id,
-    );
-    await user.click(screen.getByRole("button", { name: "Archivar estado" }));
-
-    expect(archiveStatus).toHaveBeenCalledWith({
-      id: waiting.id,
-      moveToId: destination.id,
-    });
-  });
-});
-
-describe("StatusRow · edición en el sitio", () => {
-  it("cambiar el tipo dejando el juego sin final se bloquea antes de enviar", async () => {
-    const user = userEvent.setup();
-    const finalStatus = status({ name: "Entregado", kind: "final" });
-    renderRow(finalStatus, [status({ name: "Registrado", kind: "initial" })]);
-
-    await user.click(screen.getByRole("button", { name: "Editar" }));
-    await user.selectOptions(screen.getByLabelText("Tipo"), "waiting");
-    await user.click(screen.getByRole("button", { name: "Guardar" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /al menos un estado inicial y uno final/,
-    );
-    expect(updateStatus).not.toHaveBeenCalled();
-  });
-
-  it("la marca de cola sobre un estado que no es de espera se rechaza", async () => {
-    const user = userEvent.setup();
-    const inProgress = status({ name: "Sublimando", kind: "in_progress" });
-    renderRow(inProgress, [
-      status({ name: "Registrado", kind: "initial" }),
-      status({ name: "Entregado", kind: "final" }),
-    ]);
-
-    await user.click(screen.getByRole("button", { name: "Editar" }));
-    await user.click(screen.getByRole("checkbox", { name: "Columna en cola" }));
-    await user.click(screen.getByRole("button", { name: "Guardar" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent(/En espera/);
-    expect(updateStatus).not.toHaveBeenCalled();
-  });
-
-  it("una edición válida envía los valores del formulario", async () => {
-    const user = userEvent.setup();
-    const waiting = status({ name: "En cola", kind: "waiting" });
-    renderRow(waiting, [
-      status({ name: "Registrado", kind: "initial" }),
-      status({ name: "Entregado", kind: "final" }),
-    ]);
-
-    await user.click(screen.getByRole("button", { name: "Editar" }));
-    const name = screen.getByLabelText("Nombre");
-    await user.clear(name);
-    await user.type(name, "En cola de impresión");
-    await user.click(screen.getByRole("checkbox", { name: "Columna en cola" }));
-    await user.click(screen.getByRole("button", { name: "Guardar" }));
-
-    expect(updateStatus).toHaveBeenCalledWith({
-      id: waiting.id,
-      name: "En cola de impresión",
-      kind: "waiting",
-      color: "zinc",
-      isQueue: true,
-    });
+    await userEvent.click(screen.getByRole("button", { name: "Acciones de Sublimando" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Archivar" }));
+    expect(onArchive).toHaveBeenCalledWith(row);
   });
 });

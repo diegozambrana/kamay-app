@@ -17,15 +17,21 @@ import { useRef } from "react";
  * adentro. (El componente que envuelve el contenido se rinde también con el
  * diálogo cerrado, así que capturar en el render guardaría el `body`.)
  *
- * Si ese elemento ya no existe —un menú que se cerró al elegir—, el foco queda
- * donde Radix lo deje.
+ * Si lo abrió un ítem de menú —«Editar» en el «⋯» de una fila—, ese ítem
+ * desaparece con el menú, así que se recuerda el botón que abrió el menú: el
+ * contenido del menú lo nombra en `aria-labelledby` (spec
+ * `settings-interaction` → «Focus returns to the row menu»). Diferir la
+ * apertura del diálogo no bastaba: el menú se va con una animación, y
+ * mientras dura el foco sigue en el ítem.
+ *
+ * Si ese elemento ya no existe, el foco queda donde Radix lo deje.
  */
 export function useReturnFocus() {
   const origin = useRef<HTMLElement | null>(null);
 
   return {
     capture: () => {
-      origin.current = document.activeElement as HTMLElement | null;
+      origin.current = openerOf(document.activeElement as HTMLElement | null);
     },
     restore: (event: Event) => {
       const target = origin.current;
@@ -35,4 +41,10 @@ export function useReturnFocus() {
       target.focus();
     },
   };
+}
+
+function openerOf(element: HTMLElement | null): HTMLElement | null {
+  const menu = element?.closest<HTMLElement>('[role="menu"][aria-labelledby]');
+  const triggerId = menu?.getAttribute("aria-labelledby");
+  return (triggerId && document.getElementById(triggerId)) || element;
 }

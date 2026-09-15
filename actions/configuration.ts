@@ -25,7 +25,11 @@ export type ActionResult = { error: string } | undefined;
 const NOT_OWNER = "Solo la persona dueña puede cambiar la configuración.";
 
 const name = z.string().trim().min(1, "El nombre no puede quedar vacío").max(80);
-const id = z.uuid();
+// `guid` y no `uuid`: los identificadores de la semilla
+// (`10000000-0000-0000-0000-000000000001`…) no llevan la versión RFC en su
+// sitio y `z.uuid()` los rechazaba, así que editar o archivar lo sembrado
+// fallaba con «Invalid UUID». Es la elección del resto de las acciones.
+const id = z.guid("No se pudo identificar el registro.");
 
 const lineSchema = z.object({
   name,

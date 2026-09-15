@@ -8,6 +8,7 @@ import {
   SEED_PLATFORM_ADMIN,
   signedInClient,
 } from "./helpers/fresh-org";
+import { visibleRows } from "./helpers/data-table";
 import { geeko } from "./helpers/seed-copies";
 import { expect, test, type Page } from "./helpers/test";
 
@@ -52,14 +53,6 @@ async function platformOrganization(label: string): Promise<{ id: string; name: 
 async function enterFromList(page: Page, name: string) {
   await page.goto(`/admin/organizations?q=${encodeURIComponent(name)}`);
   await page.getByRole("button", { name: `Entrar a ${name}` }).click();
-}
-
-/**
- * Las filas que se ven: `DataTable` rinde tabla y tarjetas, y el CSS decide
- * cuál aparece según el ancho. Contar ambas contaría cada registro dos veces.
- */
-function visibleRows(page: Page, testId: string) {
-  return page.getByTestId(testId).filter({ visible: true });
 }
 
 async function desbordaHorizontalmente(page: Page): Promise<boolean> {

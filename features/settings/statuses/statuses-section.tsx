@@ -21,35 +21,30 @@ import { useState, useTransition } from "react";
 import {
   applyOrganizationStatuses,
   createOwnStatusSet,
-  createStatus,
   reorderStatuses,
   restoreDefaultStatuses,
 } from "@/actions/statuses";
+import { useConfirmDialog } from "@/components/shared/confirm-dialog";
+import { useEntityDialog } from "@/components/shared/form-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LINE_COLOR_LABELS } from "@/lib/business-lines/colors";
 import { STATUS_KIND_LABELS } from "@/lib/statuses/kinds";
-import { setIsComplete, statusFormSchema } from "@/lib/statuses/schema";
-import {
-  LINE_COLORS,
-  STATUS_KINDS,
-  type BusinessLine,
-  type LineColor,
-  type Status,
-  type StatusFlow,
-  type StatusKind,
-} from "@/types";
+import type { BusinessLine, Status, StatusFlow } from "@/types";
 
+import { SectionHeader } from "../section-header";
+import { ArchiveStatusDialog } from "./archive-status-dialog";
+import { StatusDialog } from "./status-dialog";
 import { StatusRow } from "./status-row";
-
-/** Confirmaciones de las acciones de todo el juego, desplegadas en el sitio. */
-type Confirming = "none" | "restore" | "use-org";
 
 /**
  * V22 · Configuración de estados. El alcance (flujo + organización o línea)
  * vive en la dirección: cambiarlo navega y el servidor entrega el juego
  * exacto de ese alcance, incluido lo archivado.
+ *
+ * Agregar y editar van en un diálogo; archivar, restaurar los valores por
+ * defecto, crear un juego y volver al de la organización piden confirmación
+ * en otro (spec `configurable-statuses`). La lista sigue ordenable por
+ * arrastre, y cada fila lleva sus acciones en su «⋯».
  */
 export function StatusesSection({
   lines,
@@ -63,10 +58,14 @@ export function StatusesSection({
   statuses: Status[];
 }) {
   const router = useRouter();
+  // Solo el reordenamiento informa aquí: lo demás se equivoca dentro de su
+  // diálogo.
   const [error, setError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<Confirming>("none");
-  const [adding, setAdding] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const edit = useEntityDialog<Status>();
+  const [archiving, setArchiving] = useState<Status | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const { ask, dialog } = useConfirmDialog();
 
   const active = statuses.filter((status) => status.archivedAt === null);
   const archived = statuses.filter((status) => status.archivedAt !== null);
@@ -98,15 +97,6 @@ export function StatusesSection({
     );
   }
 
-  function run(action: () => Promise<{ error: string } | undefined>) {
-    setError(null);
-    startTransition(async () => {
-      const result = await action();
-      if (result?.error) setError(result.error);
-      else setConfirming("none");
-    });
-  }
-
   function onDragEnd(event: DragEndEvent) {
     const { active: dragged, over } = event;
     if (!over || dragged.id === over.id) return;
@@ -115,59 +105,69 @@ export function StatusesSection({
     const to = orderedIds.indexOf(String(over.id));
     const next = arrayMove(orderedIds, from, to);
     setOptimisticIds(next);
-    run(() => reorderStatuses({ orderedIds: next }));
-  }
-
-  function submitAdd(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const values = {
-      name: String(data.get("name") ?? ""),
-      color: String(data.get("color") ?? "zinc") as LineColor,
-      kind: String(data.get("kind") ?? "in_progress") as StatusKind,
-      isQueue: data.get("isQueue") === "on",
-    };
-
-    const parsed = statusFormSchema.safeParse(values);
-    if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
-      return;
-    }
-    if (!setIsComplete([...orderedActive.map((s) => s.kind), parsed.data.kind])) {
-      setError("Todo juego necesita al menos un estado inicial y uno final.");
-      return;
-    }
-
     setError(null);
     startTransition(async () => {
-      const result = await createStatus({
-        businessLineId,
-        flow,
-        ...parsed.data,
-      });
-      if (result?.error) {
-        setError(result.error);
-        return;
-      }
-      setAdding(false);
-      form.reset();
+      const result = await reorderStatuses({ orderedIds: next });
+      if (result?.error) setError(result.error);
     });
   }
 
   const scopeLine = lines.find((line) => line.id === businessLineId);
   const hasOwnSet = active.length > 0;
 
+  const archive = (status: Status) => {
+    setArchiving(status);
+    setArchiveOpen(true);
+  };
+
+  const restoreDefaults = () =>
+    ask({
+      title: "¿Restaurar los estados por defecto?",
+      description:
+        "Los estados vuelven a los de fábrica —nombre, tipo, color y orden— y los que no son de fábrica se archivan. Si alguno de esos está en uso, no se restaura nada.",
+      confirmLabel: "Restaurar",
+      destructive: true,
+      action: () => restoreDefaultStatuses({ businessLineId, flow }),
+    });
+
+  const createDefaultSet = () =>
+    ask({
+      title: "¿Crear el juego por defecto?",
+      description:
+        "La organización recibe los estados de fábrica para este flujo. Después puedes cambiarlos.",
+      confirmLabel: "Crear el juego",
+      action: () => restoreDefaultStatuses({ businessLineId: null, flow }),
+    });
+
+  const createOwnSet = (line: BusinessLine) =>
+    ask({
+      title: `¿Crear un juego propio para ${line.name}?`,
+      description:
+        "Se copia el juego de la organización para esta línea, y desde ahí puedes cambiarlo sin afectar a las demás.",
+      confirmLabel: "Crear juego propio",
+      action: () => createOwnStatusSet({ businessLineId: line.id, flow }),
+    });
+
+  const switchToOrganizationSet = (line: BusinessLine) =>
+    ask({
+      title: `¿Usar el juego de la organización en ${line.name}?`,
+      description:
+        "El juego propio de esta línea se archiva y vuelve a regir el de la organización. Los pedidos y tareas anteriores conservan su historia.",
+      confirmLabel: "Usar el juego de la organización",
+      destructive: true,
+      action: () => applyOrganizationStatuses({ businessLineId: line.id, flow }),
+    });
+
   return (
     <section>
-      <h2 className="text-lg font-medium">Estados</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Cada línea puede tener su propio flujo de trabajo; el tipo declarado es
-        lo que las alertas y los reportes entienden.
-      </p>
+      <SectionHeader
+        title="Estados"
+        description="Cada línea puede tener su propio flujo de trabajo; el tipo declarado es lo que las alertas y los reportes entienden."
+        action={hasOwnSet && <Button onClick={edit.openNew}>Agregar estado</Button>}
+      />
 
       {/* Selector de flujo y de alcance */}
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div role="tablist" aria-label="Flujo" className="flex rounded-lg border p-0.5">
           {(["order", "task"] as const).map((candidate) => (
             <button
@@ -228,15 +228,7 @@ export function StatusesSection({
           <p className="text-sm text-muted-foreground">
             {scopeLine.name} usa el juego de estados de la organización.
           </p>
-          <Button
-            className="mt-3"
-            disabled={pending}
-            onClick={() =>
-              run(() =>
-                createOwnStatusSet({ businessLineId: scopeLine.id, flow }),
-              )
-            }
-          >
+          <Button className="mt-3" onClick={() => createOwnSet(scopeLine)}>
             Crear juego propio para esta línea
           </Button>
         </div>
@@ -248,13 +240,7 @@ export function StatusesSection({
           <p className="text-sm text-muted-foreground">
             La organización todavía no tiene juego de estados para este flujo.
           </p>
-          <Button
-            className="mt-3"
-            disabled={pending}
-            onClick={() =>
-              run(() => restoreDefaultStatuses({ businessLineId: null, flow }))
-            }
-          >
+          <Button className="mt-3" onClick={createDefaultSet}>
             Crear el juego por defecto
           </Button>
         </div>
@@ -283,153 +269,24 @@ export function StatusesSection({
                   <StatusRow
                     key={status.id}
                     status={status}
-                    siblings={orderedActive.filter(
-                      (sibling) => sibling.id !== status.id,
-                    )}
+                    onEdit={edit.openEdit}
+                    onArchive={archive}
                   />
                 ))}
               </ul>
             </SortableContext>
           </DndContext>
 
-          {/* Agregar */}
-          {adding ? (
-            <form
-              onSubmit={submitAdd}
-              className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border px-3 py-3"
-            >
-              <div className="space-y-1.5">
-                <Label htmlFor="new-status-name">Nombre</Label>
-                <Input id="new-status-name" name="name" required />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="new-status-kind">Tipo</Label>
-                <select
-                  id="new-status-kind"
-                  name="kind"
-                  defaultValue="in_progress"
-                  className="h-8 rounded-lg border bg-background px-2 text-sm"
-                >
-                  {STATUS_KINDS.map((kind) => (
-                    <option key={kind} value={kind}>
-                      {STATUS_KIND_LABELS[kind]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="new-status-color">Color</Label>
-                <select
-                  id="new-status-color"
-                  name="color"
-                  defaultValue="zinc"
-                  className="h-8 rounded-lg border bg-background px-2 text-sm"
-                >
-                  {LINE_COLORS.map((color) => (
-                    <option key={color} value={color}>
-                      {LINE_COLOR_LABELS[color]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <label className="flex h-8 items-center gap-2 text-sm">
-                <input type="checkbox" name="isQueue" />
-                Columna en cola
-              </label>
-
-              <Button type="submit" size="sm" disabled={pending}>
-                Agregar estado
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={restoreDefaults}>
+              Restaurar valores por defecto
+            </Button>
+            {scopeLine && (
+              <Button size="sm" variant="outline" onClick={() => switchToOrganizationSet(scopeLine)}>
+                Usar el juego de la organización
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setAdding(false)}
-              >
-                Cancelar
-              </Button>
-            </form>
-          ) : (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => setAdding(true)}>
-                Agregar estado
-              </Button>
-
-              {confirming === "restore" ? (
-                <span className="flex items-center gap-2 text-sm">
-                  ¿Restaurar el juego por defecto?
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={pending}
-                    onClick={() =>
-                      run(() =>
-                        restoreDefaultStatuses({ businessLineId, flow }),
-                      )
-                    }
-                  >
-                    Restaurar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setConfirming("none")}
-                  >
-                    Cancelar
-                  </Button>
-                </span>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setConfirming("restore")}
-                >
-                  Restaurar valores por defecto
-                </Button>
-              )}
-
-              {scopeLine &&
-                (confirming === "use-org" ? (
-                  <span className="flex items-center gap-2 text-sm">
-                    El juego propio se archiva y vuelve a regir el de la
-                    organización.
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      disabled={pending}
-                      onClick={() =>
-                        run(() =>
-                          applyOrganizationStatuses({
-                            businessLineId: scopeLine.id,
-                            flow,
-                          }),
-                        )
-                      }
-                    >
-                      Confirmar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setConfirming("none")}
-                    >
-                      Cancelar
-                    </Button>
-                  </span>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setConfirming("use-org")}
-                  >
-                    Usar el juego de la organización
-                  </Button>
-                ))}
-            </div>
-          )}
+            )}
+          </div>
         </>
       )}
 
@@ -452,6 +309,21 @@ export function StatusesSection({
           </ul>
         </div>
       )}
+
+      <StatusDialog
+        dialog={edit}
+        active={orderedActive}
+        businessLineId={businessLineId}
+        flow={flow}
+      />
+      <ArchiveStatusDialog
+        key={archiving?.id}
+        status={archiving}
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        active={orderedActive}
+      />
+      {dialog}
     </section>
   );
 }

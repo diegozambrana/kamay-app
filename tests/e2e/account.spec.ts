@@ -3,6 +3,7 @@ import {
   createFreshOrganization,
   E2E_PASSWORD,
 } from "./helpers/fresh-org";
+import { visibleRows } from "./helpers/data-table";
 import { geeko } from "./helpers/seed-copies";
 import { expect, test, type Page } from "./helpers/test";
 
@@ -135,7 +136,10 @@ test.describe("perfil: nombre visible", () => {
     await expect(page.getByTestId("profile-saved")).toBeVisible();
 
     await page.goto("/settings/members");
-    await expect(page.getByText(nuevoNombre)).toBeVisible();
+    // Tabla y tarjetas conviven en el DOM: se busca en la fila que se ve.
+    await expect(
+      visibleRows(page, "member-row").filter({ hasText: nuevoNombre }),
+    ).toBeVisible();
   });
 
   test("un nombre vacío no se guarda", async ({ page, isMobile }) => {

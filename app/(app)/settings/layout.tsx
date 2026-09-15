@@ -35,11 +35,16 @@ export default async function SettingsLayout({
       title="Configuración"
       description={context.organization.name}
     >
-      {/* Las secciones son pestañas aquí y no entradas del menú lateral: en
-          el menú serían un segundo juego de enlaces con los mismos nombres. */}
-      <div className="mx-auto w-full max-w-4xl">
+      {/* Las secciones tienen su propio menú y no entradas del menú lateral
+          de la aplicación: allí serían un segundo juego de enlaces con los
+          mismos nombres. Desde `lg`, columna a la izquierda y contenido a la
+          derecha; por debajo, una fila sobre el contenido (design D10).
+
+          `max-w-screen-xl` sin `mx-auto`: el bloque empieza donde empieza el
+          título «Configuración», que `MainContainer` pinta a todo el ancho. */}
+      <div className="grid w-full max-w-screen-xl gap-6 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-10">
         <SettingsNav isOwner={isOwner} />
-        <div className="mt-6">{children}</div>
+        <div className="min-w-0">{children}</div>
       </div>
     </MainContainer>
   );

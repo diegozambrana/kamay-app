@@ -79,6 +79,50 @@ describe("SettingsNav", () => {
     }
   });
 
+  /** El menú como se lee: cada grupo con su título, seguido de sus secciones. */
+  const menuItems = () =>
+    Array.from(
+      screen
+        .getByRole("navigation", { name: "Secciones de configuración" })
+        .querySelectorAll("li"),
+      (item) => item.textContent,
+    );
+
+  // Spec `settings-interaction` → «Owner sees the menu beside the content on a
+  // wide screen», nivel unitario: los grupos, su orden y la sección actual.
+  it("la persona dueña ve cuatro grupos con sus secciones, y la actual marcada", () => {
+    render(<SettingsNav isOwner />);
+
+    expect(menuItems()).toEqual([
+      "Organización",
+      "General",
+      "Líneas de negocio",
+      "Canales",
+      "Categorías",
+      "Unidades",
+      "Estados",
+      "Equipo",
+      "Usuarios y roles",
+      "Preferencias",
+      "Notificaciones",
+      "Datos",
+      "Retención",
+      "Exportar",
+    ]);
+    expect(screen.getByRole("link", { name: "Notificaciones" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "General" })).not.toHaveAttribute("aria-current");
+  });
+
+  // Spec `settings-interaction` → «The assistant sees only their groups».
+  it("el ayudante solo ve Preferencias y Datos, sin títulos de grupos vacíos", () => {
+    render(<SettingsNav isOwner={false} />);
+
+    expect(menuItems()).toEqual(["Preferencias", "Notificaciones", "Datos", "Exportar"]);
+  });
+
   it("solo Notificaciones y Exportar están declaradas como abiertas a ambos roles", () => {
     const abiertas = SETTINGS_SECTIONS.filter((s) => !s.ownerOnly);
 

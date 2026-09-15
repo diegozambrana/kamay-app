@@ -46,7 +46,7 @@ El selector (Todas · Sublimación · Impresión 3D · Alfarería) vive en la ba
 |---|---|---|
 | **Página completa** | Listas, tableros y detalles densos. Cambia la dirección; se puede compartir el enlace. | V2, V3, V4, V7, V10, V11, V12, V13, V14, V15, V16, V17, V20, V22, V23, V24, V25 |
 | **Panel lateral** (Sheet) | Contenido secundario que no debe hacer perder el contexto de fondo. | V21 (notificaciones), V18 en escritorio (opcional), filtros en móvil |
-| **Diálogo** | Acción puntual con principio y fin claros. | V19 (cierre con entregables), registrar cobro, cambiar estado, ajuste por conteo, archivar, confirmar cobro en feria, crear organización (V24) |
+| **Diálogo** | Acción puntual con principio y fin claros. | V19 (cierre con entregables), registrar cobro, cambiar estado, ajuste por conteo, archivar, confirmar cobro en feria, crear organización (V24), crear y editar entradas de configuración e invitar (V15, V22), confirmar archivar, restaurar, quitar acceso, revocar y las acciones del juego de estados (V15, V22) |
 | **Pantalla completa móvil** | Formularios de captura en el celular. | V5, V8, V9, V18, V19 |
 
 ### 2.4 Profundidad máxima: tres niveles

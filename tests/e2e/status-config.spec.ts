@@ -37,7 +37,8 @@ test.describe("configuración de estados (V22)", () => {
     await page.goto(`/settings/statuses?flow=task&line=${alfareriaId}`);
 
     // Una corrida anterior pudo dejar el juego propio creado: se vuelve al de
-    // la organización para partir siempre del mismo punto.
+    // la organización para partir siempre del mismo punto, confirmándolo en
+    // su diálogo («Volver al juego de la organización»).
     if (
       await page
         .getByRole("button", { name: "Usar el juego de la organización" })
@@ -46,29 +47,41 @@ test.describe("configuración de estados (V22)", () => {
       await page
         .getByRole("button", { name: "Usar el juego de la organización" })
         .click();
-      await page.getByRole("button", { name: "Confirmar" }).click();
+      await page
+        .getByRole("alertdialog")
+        .getByRole("button", { name: "Usar el juego de la organización" })
+        .click();
     }
 
     await expect(
       page.getByText("usa el juego de estados de la organización"),
     ).toBeVisible();
 
-    // Crear el juego propio: nace copiado del juego de la organización.
+    // Crear el juego propio, confirmándolo: nace copiado del juego de la
+    // organización.
     await page
       .getByRole("button", { name: "Crear juego propio para esta línea" })
+      .click();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Crear juego propio" })
       .click();
     const list = page.getByTestId("status-list");
     await expect(list.getByText("Por hacer")).toBeVisible();
 
-    // Editar en el sitio: renombrar un estado del juego propio.
+    // Editar en un diálogo, desde el «⋯» de la fila: renombrar un estado del
+    // juego propio («Editar un estado en un diálogo»).
     const renamed = uniqueName("Amasando");
     const row = page
       .getByTestId("status-row")
       .filter({ hasText: "Haciendo" })
       .first();
-    await row.getByRole("button", { name: "Editar" }).click();
-    await row.getByLabel("Nombre").fill(renamed);
-    await row.getByRole("button", { name: "Guardar" }).click();
+    await row.getByRole("button", { name: /^Acciones de / }).click();
+    await page.getByRole("menuitem", { name: "Editar" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Nombre").fill(renamed);
+    await dialog.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(dialog).toBeHidden();
     await expect(list.getByText(renamed)).toBeVisible();
 
     // Reordenar por arrastre: el primero baja un lugar y el orden persiste.
@@ -140,7 +153,7 @@ test.describe("configuración de estados (V22)", () => {
     await expect(page.getByText("Columna en cola").first()).toBeVisible();
   });
 
-  test("archivar exige decir a dónde mover y valida el juego restante", async ({
+  test("archivar el único estado inicial se bloquea en su confirmación", async ({
     page,
   }) => {
     await login(page, geeko().owner);
@@ -159,15 +172,20 @@ test.describe("configuración de estados (V22)", () => {
       .getByTestId("status-row")
       .filter({ hasText: "Reservado" })
       .first();
-    await initialRow.getByRole("button", { name: "Archivar" }).click();
-    await expect(
-      initialRow.getByLabel("Mover los registros que lo usaban a"),
-    ).toBeVisible();
-    await initialRow.getByRole("button", { name: "Archivar estado" }).click();
+    await initialRow.getByRole("button", { name: /^Acciones de / }).click();
+    await page.getByRole("menuitem", { name: "Archivar" }).click();
 
-    await expect(initialRow.getByRole("alert")).toHaveText(
+    // La confirmación lo dice y no deja archivar.
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog.getByRole("alert")).toHaveText(
       /al menos un estado inicial y uno final/,
     );
+    await expect(
+      dialog.getByRole("button", { name: "Archivar estado" }),
+    ).toBeDisabled();
+    await dialog.getByRole("button", { name: "Cancelar" }).click();
+    await expect(dialog).toBeHidden();
+
     // Y el estado sigue en su lista, intacto.
     await expect(
       page.getByTestId("status-list").getByText("Reservado"),

@@ -108,14 +108,13 @@ test.describe("V12 · activos y recuperación de inversión", () => {
     const nombre = `Prensa de prueba ${Date.now()}`;
     const MONTO = `1${String(Date.now()).slice(-4)}.50`;
 
+    // El tipo lo fija la pestaña: el diálogo no lo pregunta.
     await page.goto("/catalog?kind=asset");
-    await page.getByRole("button", { name: "Nuevo ítem" }).click();
+    await page.getByRole("button", { name: "Nuevo activo" }).click();
     await page.getByLabel("Nombre").fill(nombre);
-    await page.getByRole("combobox", { name: "Tipo" }).click();
-    await page.getByRole("option", { name: "Activo" }).click();
     await page.getByRole("combobox", { name: "Línea" }).click();
     await page.getByRole("option", { name: "Sublimación", exact: true }).click();
-    await page.getByRole("button", { name: "Crear ítem" }).click();
+    await page.getByRole("button", { name: "Crear activo" }).click();
 
     await openItem(page, nombre);
     await page.getByLabel("Costo de adquisición").fill("1000");
@@ -171,11 +170,9 @@ test.describe("V12 · activos y recuperación de inversión", () => {
     // Un ítem de tipo activo nuevo, sin datos declarados todavía.
     const nombre = `Guillotina ${Date.now()}`;
     await page.goto("/catalog?kind=asset");
-    await page.getByRole("button", { name: "Nuevo ítem" }).click();
+    await page.getByRole("button", { name: "Nuevo activo" }).click();
     await page.getByLabel("Nombre").fill(nombre);
-    await page.getByRole("combobox", { name: "Tipo" }).click();
-    await page.getByRole("option", { name: "Activo" }).click();
-    await page.getByRole("button", { name: "Crear ítem" }).click();
+    await page.getByRole("button", { name: "Crear activo" }).click();
 
     await openItem(page, nombre);
 

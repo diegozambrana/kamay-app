@@ -43,6 +43,8 @@ const UNARCHIVERS: Record<
   sales_channels: (id) => unarchiveConfigurationItem({ entity: "channel", id }),
   expense_categories: (id) =>
     unarchiveConfigurationItem({ entity: "category", id }),
+  item_categories: (id) =>
+    unarchiveConfigurationItem({ entity: "itemCategory", id }),
   units: (id) => unarchiveConfigurationItem({ entity: "unit", id }),
 };
 

@@ -27,6 +27,18 @@ describe("describeEvent", () => {
     expect(sentence).not.toContain("_");
   });
 
+  // Cambio `item-categories`: la tabla nueva se nombra en la frase.
+  it("nombra una categoría de ítem sin enseñar la tabla", () => {
+    const sentence = describeEvent({
+      action: "created",
+      tableName: "item_categories",
+      actorName: "Diego",
+      recordLabel: "Sustratos",
+    });
+
+    expect(sentence).toBe("Diego registró la categoría de ítem Sustratos");
+  });
+
   // Scenario: A system actor is named
   it("atribuye la acción a la etiqueta cuando no hay persona", () => {
     const sentence = describeEvent({

@@ -49,7 +49,7 @@ function supply(id: string, name: string): Item {
     name,
     description: null,
     unitId: null,
-    category: null,
+    categoryId: null,
     salePrice: null,
     minStock: 12,
     archivedAt: null,

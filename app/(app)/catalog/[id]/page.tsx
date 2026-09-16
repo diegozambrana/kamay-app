@@ -9,6 +9,7 @@ import { loadRecordHistory } from "@/services/activity/record-history";
 import { ItemService } from "@/services/catalog/item-service";
 import { ItemVariantService } from "@/services/catalog/item-variant-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
+import { ItemCategoryService } from "@/services/configuration/item-category-service";
 import { UnitService } from "@/services/configuration/unit-service";
 import { ItemLastCostService } from "@/services/expenses/item-last-cost-service";
 import { MovementService } from "@/services/inventory/movement-service";
@@ -44,7 +45,7 @@ export default async function ItemDetailPage({
 
   const attachments = new AttachmentService(context.supabase);
 
-  const [variants, lines, units, history, photoRows] = await Promise.all([
+  const [variants, lines, units, history, photoRows, categories] = await Promise.all([
     new ItemVariantService(context.supabase).listForItem(
       context.organizationId,
       item.id,
@@ -64,6 +65,13 @@ export default async function ItemDetailPage({
         })
       : Promise.resolve({ items: [], activityHref: "" }),
     attachments.listForEntities(context.organizationId, "item", [item.id]),
+    // Las del tipo del ítem, archivadas incluidas: el detalle nombra la suya
+    // aunque esté archivada, y el diálogo de edición ofrece las vigentes.
+    new ItemCategoryService(context.supabase).listByKind(
+      context.organizationId,
+      item.kind,
+      { includeArchived: true },
+    ),
   ]);
 
   /**
@@ -131,6 +139,7 @@ export default async function ItemDetailPage({
       photos={photos}
       lines={lines}
       units={units}
+      categories={categories}
       history={history}
       relatedTasks={relatedTasks}
       role={context.role}

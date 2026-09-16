@@ -5,13 +5,15 @@ import { FormDialog, type EntityDialog } from "@/components/shared/form-dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-import { ENTITY_COPY } from "./config-list";
+import { ENTITY_COPY, type EntityCopy } from "./config-list";
 
 export type NamedItem = { id: string; name: string; archivedAt: string | null };
 
 /**
- * Alta y edición de un canal o una categoría: solo el nombre. Las acciones
- * llegan por parámetro para que el diálogo no conozca ninguna entidad.
+ * Alta y edición de un canal o una categoría —de gasto o de ítem—: solo el
+ * nombre. Las acciones llegan por parámetro para que el diálogo no conozca
+ * ninguna entidad; `copy` sustituye los títulos cuando dependen de algo más
+ * (el tipo de una categoría de ítem).
  */
 export function NamedItemDialog({
   dialog,
@@ -19,14 +21,16 @@ export function NamedItemDialog({
   placeholder,
   onCreate,
   onUpdate,
+  copy: copyOverride,
 }: {
   dialog: EntityDialog<NamedItem>;
-  entity: "channel" | "category";
+  entity: "channel" | "category" | "itemCategory";
   placeholder: string;
   onCreate: (input: { name: string }) => Promise<ActionResult>;
   onUpdate: (input: { name: string; id: string }) => Promise<ActionResult>;
+  copy?: Partial<EntityCopy>;
 }) {
-  const copy = ENTITY_COPY[entity];
+  const copy = { ...ENTITY_COPY[entity], ...copyOverride };
   const item = dialog.target;
 
   return (

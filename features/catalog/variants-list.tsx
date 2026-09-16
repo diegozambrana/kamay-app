@@ -21,21 +21,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { ItemVariant, Role } from "@/types";
+import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
+import type { ItemKind, ItemVariant, Role } from "@/types";
 
 import { VariantFormDialog } from "./variant-form-dialog";
 
 /**
  * Variantes de un ítem ('11oz', 'Negro', 'XL'). El ayudante crea y edita;
  * archivar sigue siendo del dueño, igual que en el resto del catálogo.
+ *
+ * El precio de una variante sigue la regla de su ítem: solo existe en
+ * productos (`ITEM_KIND_FIELDS`).
  */
 export function VariantsList({
   itemId,
+  itemKind,
   variants,
   role,
   readOnly,
 }: {
   itemId: string;
+  itemKind: ItemKind;
   variants: ItemVariant[];
   role: Role;
   /** El ítem está archivado: no se edita nada suyo hasta desarchivarlo. */
@@ -47,6 +53,7 @@ export function VariantsList({
   const [pending, startTransition] = useTransition();
 
   const isOwner = role === "owner";
+  const hasPrice = ITEM_KIND_FIELDS[itemKind].salePrice;
 
   function archive(id: string, archived: boolean) {
     setError(null);
@@ -87,7 +94,9 @@ export function VariantsList({
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre</TableHead>
-                <TableHead className="text-right">Precio</TableHead>
+                {hasPrice && (
+                  <TableHead className="text-right">Precio</TableHead>
+                )}
                 {!readOnly && (
                   <TableHead className="sr-only">Acciones</TableHead>
                 )}
@@ -97,11 +106,13 @@ export function VariantsList({
               {variants.map((variant) => (
                 <TableRow key={variant.id} data-testid="variant-row">
                   <TableCell className="font-medium">{variant.name}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {variant.salePrice === null
-                      ? "—"
-                      : variant.salePrice.toFixed(2)}
-                  </TableCell>
+                  {hasPrice && (
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {variant.salePrice === null
+                        ? "—"
+                        : variant.salePrice.toFixed(2)}
+                    </TableCell>
+                  )}
                   {!readOnly && (
                     <TableCell className="text-right">
                       <Button
@@ -134,6 +145,7 @@ export function VariantsList({
         open={adding}
         onOpenChange={setAdding}
         itemId={itemId}
+        itemKind={itemKind}
       />
       {/* La clave reinicia el formulario al cambiar de variante editada. */}
       {editing && (
@@ -142,6 +154,7 @@ export function VariantsList({
           open
           onOpenChange={(open) => !open && setEditing(null)}
           itemId={itemId}
+          itemKind={itemKind}
           variant={editing}
         />
       )}

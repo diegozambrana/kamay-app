@@ -32,11 +32,18 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useFilterState, useSearchReset } from "@/hooks/use-filter-state";
 import { usePendingToggle } from "@/hooks/use-pending-toggle";
-import { ITEM_KIND_LABELS, SHARED_LINE_LABEL } from "@/lib/catalog/labels";
+import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
+import {
+  ITEM_KIND_COPY,
+  ITEM_KIND_LABELS,
+  NO_CATEGORY_LABEL,
+  SHARED_LINE_LABEL,
+} from "@/lib/catalog/labels";
 import {
   ITEM_KINDS,
   type BusinessLine,
   type Item,
+  type ItemCategory,
   type ItemKind,
   type Role,
   type Unit,
@@ -47,6 +54,8 @@ import { ItemThumbnail } from "./item-thumbnail";
 
 const ALL_LINES_OPTION = "all";
 const SHARED_OPTION = "shared";
+const ALL_CATEGORIES_OPTION = "all";
+const NO_CATEGORY_OPTION = "none";
 
 /** Un ítem del listado con su miniatura ya firmada por el servidor. */
 export type CatalogRow = Item & {
@@ -60,11 +69,11 @@ export type CatalogRow = Item & {
 };
 
 /**
- * Los parámetros que estrechan el catálogo: la búsqueda y la línea propia de
- * esta pantalla. `kind` es la pestaña —siempre hay una— y `archived`
- * ensancha; ninguno es un filtro (design D2).
+ * Los parámetros que estrechan el catálogo: la búsqueda, la línea y la
+ * categoría propias de esta pantalla. `kind` es la pestaña —siempre hay una—
+ * y `archived` ensancha; ninguno es un filtro (design D2).
  */
-const CATALOG_FILTERS = ["q", "line"] as const;
+const CATALOG_FILTERS = ["q", "line", "category"] as const;
 
 /**
  * V10 · Catálogo. El alcance vive en la dirección (`?kind=&line=&q=&archived=`)
@@ -83,6 +92,8 @@ export function CatalogScreen({
   units,
   kind,
   lineFilter,
+  categoryFilter = ALL_CATEGORIES_OPTION,
+  categories = [],
   search,
   includeArchived,
   role,
@@ -95,6 +106,10 @@ export function CatalogScreen({
   units: Unit[];
   kind: ItemKind;
   lineFilter: string;
+  /** `"all"`, `"none"` o el id de una categoría de la pestaña. */
+  categoryFilter?: string;
+  /** Las categorías del tipo de la pestaña, archivadas incluidas. */
+  categories?: ItemCategory[];
   search: string;
   includeArchived: boolean;
   role: Role;
@@ -115,6 +130,16 @@ export function CatalogScreen({
   const { searchKey, armSearchReset } = useSearchReset(search);
 
   const isOwner = role === "owner";
+  // La pestaña decide qué columnas hay y qué se crea (`ITEM_KIND_FIELDS`).
+  const fields = ITEM_KIND_FIELDS[kind];
+  const copy = ITEM_KIND_COPY[kind];
+  // Se ofrecen las vigentes; con todas se resuelve la categoría actual de una
+  // fila que se edita, aunque esté archivada.
+  const activeCategories = categories.filter((category) => category.archivedAt === null);
+  const categoryOf = (item: CatalogRow | null) =>
+    item?.categoryId
+      ? (categories.find((category) => category.id === item.categoryId) ?? null)
+      : null;
   const lineName = (id: string | null) =>
     id === null
       ? SHARED_LINE_LABEL
@@ -131,7 +156,7 @@ export function CatalogScreen({
     router.push(`/catalog?${next.toString()}`);
   }
 
-  const columns: DataTableColumn<CatalogRow>[] = [
+  const allColumns: DataTableColumn<CatalogRow>[] = [
     {
       id: "photo",
       label: "Foto",
@@ -181,6 +206,11 @@ export function CatalogScreen({
       ),
     },
   ];
+  // Solo los productos se venden: en insumos y activos la columna de precio
+  // no existe, ni vacía.
+  const columns = allColumns.filter(
+    (column) => column.id !== "salePrice" || fields.salePrice,
+  );
 
   // Ver y Editar son de ambos roles; archivar y desarchivar, solo del dueño
   // (la base lo rechazaría de todos modos). Se ocultan, no se deshabilitan.
@@ -245,7 +275,9 @@ export function CatalogScreen({
         variant="outline"
         value={kind}
         // Radix emite "" al deseleccionar: el catálogo siempre muestra un tipo.
-        onValueChange={(value) => value && navigate({ kind: value })}
+        // Cada tipo tiene sus propias categorías: la elegida no sobrevive al
+        // cambio de pestaña.
+        onValueChange={(value) => value && navigate({ kind: value, category: null })}
         aria-label="Tipo de ítem"
         className="w-fit"
       >
@@ -296,6 +328,33 @@ export function CatalogScreen({
           </Select>
         </Field>
 
+        <Field className="w-52">
+          <FieldLabel htmlFor="catalog-category">Categoría</FieldLabel>
+          <Select
+            value={categoryFilter}
+            onValueChange={(value) =>
+              navigate({ category: value === ALL_CATEGORIES_OPTION ? null : value })
+            }
+          >
+            <SelectTrigger id="catalog-category" data-testid="catalog-category">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value={ALL_CATEGORIES_OPTION}>
+                  Todas las categorías
+                </SelectItem>
+                <SelectItem value={NO_CATEGORY_OPTION}>{NO_CATEGORY_LABEL}</SelectItem>
+                {activeCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+
         <Field orientation="horizontal" className="w-fit pb-2">
           <Checkbox
             id="catalog-archived"
@@ -311,7 +370,7 @@ export function CatalogScreen({
 
         <Button className="ml-auto" onClick={() => setAdding(true)}>
           <PlusIcon data-icon="inline-start" />
-          Nuevo ítem
+          {copy.newLabel}
         </Button>
       </div>
 
@@ -334,8 +393,10 @@ export function CatalogScreen({
         }}
         lines={lines}
         units={units}
-        defaultKind={kind}
+        kind={kind}
         defaultLineId={activeLineId}
+        categories={activeCategories}
+        canManageCategories={isOwner}
       />
 
       {editing && (
@@ -346,7 +407,10 @@ export function CatalogScreen({
           item={editing}
           lines={lines}
           units={units}
-          defaultKind={editing.kind}
+          kind={editing.kind}
+          categories={activeCategories}
+          currentCategory={categoryOf(editing)}
+          canManageCategories={isOwner}
         />
       )}
 
@@ -376,7 +440,7 @@ export function CatalogScreen({
               title={`Aún no hay ${ITEM_KIND_LABELS[kind].toLowerCase()} en el catálogo`}
               action={
                 <Button type="button" onClick={() => setAdding(true)}>
-                  Crear el primer ítem
+                  {copy.firstLabel}
                 </Button>
               }
             />

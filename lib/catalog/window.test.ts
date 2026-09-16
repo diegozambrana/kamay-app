@@ -14,7 +14,7 @@ const ITEM: Item = {
   name: "Zapatos de sublimación",
   description: null,
   unitId: null,
-  category: null,
+  categoryId: null,
   salePrice: 45,
   minStock: null,
   archivedAt: null,
@@ -23,6 +23,7 @@ const ITEM: Item = {
 const SCOPE: CatalogScope = {
   kind: "product",
   lineFilter: "all",
+  categoryFilter: "all",
   search: "",
   includeArchived: false,
 };
@@ -50,6 +51,22 @@ describe("joinsCatalogWindow", () => {
   it("respeta la búsqueda, con la misma normalización que la base", () => {
     expect(joinsCatalogWindow(ITEM, { ...SCOPE, search: "SUBLIMACION" })).toBe(true);
     expect(joinsCatalogWindow(ITEM, { ...SCOPE, search: "taza" })).toBe(false);
+  });
+
+  it("respeta el filtro de categoría y el de «sin categoría»", () => {
+    const VAJILLA = "92000000-0000-0000-0000-000000000013";
+    const conCategoria = { ...ITEM, categoryId: VAJILLA };
+
+    expect(joinsCatalogWindow(conCategoria, { ...SCOPE, categoryFilter: VAJILLA })).toBe(true);
+    expect(
+      joinsCatalogWindow(conCategoria, {
+        ...SCOPE,
+        categoryFilter: "92000000-0000-0000-0000-000000000011",
+      }),
+    ).toBe(false);
+    expect(joinsCatalogWindow(conCategoria, { ...SCOPE, categoryFilter: "none" })).toBe(false);
+    expect(joinsCatalogWindow(ITEM, { ...SCOPE, categoryFilter: "none" })).toBe(true);
+    expect(joinsCatalogWindow(ITEM, { ...SCOPE, categoryFilter: VAJILLA })).toBe(false);
   });
 
   it("un archivado solo entra si se piden los archivados", () => {

@@ -610,6 +610,8 @@ const OWNER_ONLY_ROUTES = [
   "/settings/lines",
   "/settings/channels",
   "/settings/categories",
+  // Cambio `item-categories` → «The Item categories section guards itself».
+  "/settings/item-categories",
   "/settings/units",
   "/settings/statuses",
   "/settings/members",

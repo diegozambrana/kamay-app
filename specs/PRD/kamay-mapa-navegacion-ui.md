@@ -274,6 +274,7 @@ Qué acción lleva de cada vista a cuál otra. Es la referencia para verificar q
 | V14 | Fila de cualquier informe | V4, V11 o V7 | Página |
 | V14 | Crear tarea de reposición | V18 prellenada | Página / panel |
 | V15 | Sección Estados | V22 | Página |
+| V15 | Sección Categorías de gasto / Categorías de ítem | Su sección de V15 (la de ítem, con pestañas Insumos / Productos / Activos) | Página |
 | V16 | Cualquiera de los 6 botones | V6, V5, V8, V9, V18 o diálogo | Varía |
 | V17 | Tarjeta | V18 | Página / panel |
 | V17 | Soltar en estado final con entregables | V19 | Diálogo |

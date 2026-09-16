@@ -120,7 +120,8 @@ test.describe("configuración de la organización", () => {
       "General",
       "Líneas de negocio",
       "Canales",
-      "Categorías",
+      "Categorías de gasto",
+      "Categorías de ítem",
       "Unidades",
       "Usuarios y roles",
     ]) {

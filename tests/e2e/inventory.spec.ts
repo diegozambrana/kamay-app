@@ -32,12 +32,17 @@ async function createSupply(
   const name = uniqueName("Insumo");
 
   await page.goto("/catalog?kind=supply");
-  await page.getByRole("button", { name: "Nuevo ítem" }).click();
+  await page.getByRole("button", { name: "Nuevo insumo" }).click();
 
   const form = page.getByTestId("item-form");
+  // La pestaña fija el tipo y el insumo no se vende: el diálogo no pregunta
+  // ni el tipo ni el precio de venta.
+  await expect(form.getByRole("heading", { name: "Nuevo insumo" })).toBeVisible();
+  await expect(form.getByRole("combobox", { name: "Tipo" })).toHaveCount(0);
+  await expect(form.getByLabel("Precio de venta referencial")).toHaveCount(0);
   await form.getByLabel("Nombre").fill(name);
   if (options.minStock) await form.getByLabel("Mínimo").fill(options.minStock);
-  await form.getByRole("button", { name: "Crear ítem" }).click();
+  await form.getByRole("button", { name: "Crear insumo" }).click();
 
   const row = page.getByTestId("catalog-row").filter({ hasText: name });
   await expect(row).toHaveCount(1);

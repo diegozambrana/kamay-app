@@ -20,7 +20,7 @@ function product(overrides: Partial<PickableItem> & { name: string }): PickableI
     kind: "product",
     description: null,
     unitId: null,
-    category: null,
+    categoryId: null,
     salePrice: 45,
     minStock: null,
     archivedAt: null,

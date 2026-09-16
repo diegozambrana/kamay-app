@@ -5,11 +5,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SETTINGS_SECTIONS, SettingsNav } from "./settings-nav";
 
+const ruta = vi.hoisted(() => ({ actual: "/settings/notifications" }));
+
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/settings/notifications",
+  usePathname: () => ruta.actual,
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  ruta.actual = "/settings/notifications";
+});
 
 /**
  * KAM-17 · La excepción de rol de V15.
@@ -70,7 +75,8 @@ describe("SettingsNav", () => {
       "General",
       "Líneas de negocio",
       "Canales",
-      "Categorías",
+      "Categorías de gasto",
+      "Categorías de ítem",
       "Unidades",
       "Estados",
       "Usuarios y roles",
@@ -98,7 +104,8 @@ describe("SettingsNav", () => {
       "General",
       "Líneas de negocio",
       "Canales",
-      "Categorías",
+      "Categorías de gasto",
+      "Categorías de ítem",
       "Unidades",
       "Estados",
       "Equipo",
@@ -114,6 +121,35 @@ describe("SettingsNav", () => {
       "page",
     );
     expect(screen.getByRole("link", { name: "General" })).not.toHaveAttribute("aria-current");
+  });
+
+  // Spec `org-configuration` → «The two kinds of categories are named apart».
+  it("las dos listas de categorías tienen nombres distintos y ninguna es solo «Categorías»", () => {
+    render(<SettingsNav isOwner />);
+
+    expect(screen.getByRole("link", { name: "Categorías de gasto" })).toHaveAttribute(
+      "href",
+      "/settings/categories",
+    );
+    expect(screen.getByRole("link", { name: "Categorías de ítem" })).toHaveAttribute(
+      "href",
+      "/settings/item-categories",
+    );
+    expect(screen.queryByRole("link", { name: "Categorías" })).toBeNull();
+  });
+
+  // Spec `settings-interaction` → «Item categories is marked when open».
+  it("en /settings/item-categories, su entrada es la página actual", () => {
+    ruta.actual = "/settings/item-categories";
+    render(<SettingsNav isOwner />);
+
+    expect(screen.getByRole("link", { name: "Categorías de ítem" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Categorías de gasto" })).not.toHaveAttribute(
+      "aria-current",
+    );
   });
 
   // Spec `settings-interaction` → «The assistant sees only their groups».

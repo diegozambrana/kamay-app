@@ -23,13 +23,19 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { ITEM_KIND_SINGULAR, SHARED_LINE_LABEL } from "@/lib/catalog/labels";
+import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
+import {
+  ITEM_KIND_SINGULAR,
+  NO_CATEGORY_LABEL,
+  SHARED_LINE_LABEL,
+} from "@/lib/catalog/labels";
 import type {
   AssetDetails,
   BusinessLine,
   InventoryMovement,
   Item,
   ItemBalance,
+  ItemCategory,
   ItemVariant,
   Role,
   Unit,
@@ -70,6 +76,7 @@ export function ItemDetail({
   photos,
   lines,
   units,
+  categories = [],
   history,
   relatedTasks,
   role,
@@ -88,6 +95,8 @@ export function ItemDetail({
   photos: ItemPhoto[];
   lines: BusinessLine[];
   units: Unit[];
+  /** Las categorías del tipo del ítem, archivadas incluidas. */
+  categories?: ItemCategory[];
   /** Vacío para el ayudante: la bitácora solo la lee el dueño. */
   history: RecordHistoryData;
   /** Las tareas que apuntan a este ítem (KAM-21). */
@@ -117,6 +126,11 @@ export function ItemDetail({
 
   const isOwner = role === "owner";
   const isArchived = item.archivedAt !== null;
+  const fields = ITEM_KIND_FIELDS[item.kind];
+  const category = item.categoryId
+    ? (categories.find((candidate) => candidate.id === item.categoryId) ?? null)
+    : null;
+  const activeCategories = categories.filter((candidate) => candidate.archivedAt === null);
   const line = lines.find((candidate) => candidate.id === item.businessLineId);
   const unit = units.find((candidate) => candidate.id === item.unitId);
 
@@ -208,22 +222,35 @@ export function ItemDetail({
                 </div>
                 <div className="flex flex-col gap-1">
                   <dt className="text-muted-foreground">Categoría</dt>
-                  <dd>{item.category ?? "—"}</dd>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <dt className="text-muted-foreground">
-                    Precio de venta referencial
-                  </dt>
-                  <dd className="tabular-nums">
-                    {item.salePrice === null ? "—" : item.salePrice.toFixed(2)}
+                  <dd data-testid="item-category" className="flex items-center gap-2">
+                    {category ? category.name : NO_CATEGORY_LABEL}
+                    {category?.archivedAt && (
+                      <Badge variant="secondary">Archivada</Badge>
+                    )}
                   </dd>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <dt className="text-muted-foreground">Mínimo</dt>
-                  <dd className="tabular-nums">
-                    {item.minStock === null ? "—" : item.minStock}
-                  </dd>
-                </div>
+                {/* Solo lo que el tipo usa (`ITEM_KIND_FIELDS`): el precio
+                    es de productos y el mínimo, de insumos. */}
+                {fields.salePrice && (
+                  <div className="flex flex-col gap-1">
+                    <dt className="text-muted-foreground">
+                      Precio de venta referencial
+                    </dt>
+                    <dd className="tabular-nums">
+                      {item.salePrice === null
+                        ? "—"
+                        : item.salePrice.toFixed(2)}
+                    </dd>
+                  </div>
+                )}
+                {fields.minStock && (
+                  <div className="flex flex-col gap-1">
+                    <dt className="text-muted-foreground">Mínimo</dt>
+                    <dd className="tabular-nums">
+                      {item.minStock === null ? "—" : item.minStock}
+                    </dd>
+                  </div>
+                )}
                 <div className="flex flex-col gap-1 sm:col-span-2">
                   <dt className="text-muted-foreground">Descripción</dt>
                   <dd>{item.description ?? "—"}</dd>
@@ -254,7 +281,10 @@ export function ItemDetail({
             item={item}
             lines={lines}
             units={units}
-            defaultKind={item.kind}
+            kind={item.kind}
+            categories={activeCategories}
+            currentCategory={category}
+            canManageCategories={isOwner}
           />
         </>
       )}
@@ -268,6 +298,7 @@ export function ItemDetail({
 
       <VariantsList
         itemId={item.id}
+        itemKind={item.kind}
         variants={variants}
         role={role}
         readOnly={isArchived}

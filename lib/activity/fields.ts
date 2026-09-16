@@ -148,6 +148,12 @@ export const FIELDS: Record<string, Record<string, FieldSpec>> = {
     archived_at: ARCHIVED,
   },
 
+  item_categories: {
+    kind: { label: "Tipo de ítem", kind: "enum" },
+    name: { label: "Nombre de la categoría", kind: "text" },
+    archived_at: ARCHIVED,
+  },
+
   units: {
     code: { label: "Símbolo", kind: "text" },
     name: { label: "Nombre de la unidad", kind: "text" },
@@ -184,6 +190,13 @@ export const FIELDS: Record<string, Record<string, FieldSpec>> = {
     name: { label: "Nombre", kind: "text" },
     description: { label: "Descripción", kind: "long-text" },
     unit_id: { label: "Unidad", kind: "reference", references: "units" },
+    category_id: {
+      label: "Categoría",
+      kind: "reference",
+      references: "item_categories",
+    },
+    // La columna de texto ya no existe (cambio `item-categories`), pero los
+    // eventos anteriores a la migración la siguen trayendo en su detalle.
     category: { label: "Categoría", kind: "text" },
     sale_price: { label: "Precio de venta", kind: "money" },
     min_stock: { label: "Mínimo de stock", kind: "number" },

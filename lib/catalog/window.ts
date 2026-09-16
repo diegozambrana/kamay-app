@@ -6,6 +6,8 @@ export type CatalogScope = {
   kind: ItemKind;
   /** `"all"`, `"shared"` o el id de una línea, como en `ItemService.list()`. */
   lineFilter: string;
+  /** `"all"`, `"none"` (sin categoría) o el id de una categoría del tipo. */
+  categoryFilter: string;
   search: string;
   includeArchived: boolean;
 };
@@ -30,6 +32,15 @@ export function joinsCatalogWindow(item: Item, scope: CatalogScope): boolean {
     scope.lineFilter !== "all" &&
     scope.lineFilter !== "shared" &&
     item.businessLineId !== scope.lineFilter
+  ) {
+    return false;
+  }
+
+  if (scope.categoryFilter === "none" && item.categoryId !== null) return false;
+  if (
+    scope.categoryFilter !== "all" &&
+    scope.categoryFilter !== "none" &&
+    item.categoryId !== scope.categoryFilter
   ) {
     return false;
   }

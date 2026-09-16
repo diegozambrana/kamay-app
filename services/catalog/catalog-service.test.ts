@@ -18,7 +18,7 @@ const itemRow = {
   name: "Taza para sublimación",
   description: null,
   unit_id: null,
-  category: "Sustratos",
+  category_id: null,
   // PostgREST entrega `numeric` como texto: no se pierde precisión.
   sale_price: "45.50",
   min_stock: "12",
@@ -107,8 +107,79 @@ describe("ItemService", () => {
     expect(query.has("eq", "organization_id", ORG)).toBe(true);
   });
 
-  
+  // «Filtrar por categoría» y «Filtrar los ítems sin categoría», a nivel de
+  // servicio.
+  it("una categoría filtra por su id; «none», los que no tienen", async () => {
+    const CATEGORY = "44444444-4444-4444-4444-444444444444";
+    const client = new FakeClient([
+      { data: [itemRow], error: null },
+      { data: [itemRow], error: null },
+      { data: [itemRow], error: null },
+    ]);
+    const service = new ItemService(client.asSupabase());
 
+    await service.list(ORG, { categoryId: CATEGORY });
+    await service.list(ORG, { categoryId: "none" });
+    await service.list(ORG, { categoryId: null });
+
+    expect(client.queries[0].has("eq", "category_id", CATEGORY)).toBe(true);
+    expect(client.queries[1].has("is", "category_id", null)).toBe(true);
+    expect(client.queries[2].argsOf("eq")?.[0]).toBe("organization_id");
+    expect(client.queries[2].calls.some((call) => call.args[0] === "category_id")).toBe(
+      false,
+    );
+  });
+
+  it("crear y editar escriben la categoría", async () => {
+    const CATEGORY = "44444444-4444-4444-4444-444444444444";
+    const values = {
+      name: "Taza para sublimación",
+      kind: "supply" as const,
+      businessLineId: LINE,
+      unitId: null,
+      categoryId: CATEGORY,
+      description: null,
+      salePrice: null,
+      minStock: 12,
+    };
+    const client = new FakeClient([
+      { data: itemRow, error: null },
+      { data: itemRow, error: null },
+    ]);
+    const service = new ItemService(client.asSupabase());
+
+    await service.create(ORG, ITEM, values);
+    await service.update(ORG, ITEM, values);
+
+    expect(
+      (client.queries[0].argsOf("insert")?.[0] as Record<string, unknown>).category_id,
+    ).toBe(CATEGORY);
+    expect(
+      (client.queries[1].argsOf("update")?.[0] as Record<string, unknown>).category_id,
+    ).toBe(CATEGORY);
+  });
+
+  // «Editar no cambia el tipo», a nivel de servicio.
+  it("editar no escribe el tipo: se fija al crear", async () => {
+    const client = new FakeClient([{ data: itemRow, error: null }]);
+    await new ItemService(client.asSupabase()).update(ORG, ITEM, {
+      name: "Taza para sublimación",
+      businessLineId: LINE,
+      unitId: null,
+      categoryId: null,
+      description: null,
+      salePrice: null,
+      minStock: 12,
+    });
+
+    const updated = client.queries[0].argsOf("update")?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(updated).not.toHaveProperty("kind");
+    expect(updated.min_stock).toBe(12);
+    expect(client.queries[0].has("eq", "organization_id", ORG)).toBe(true);
+  });
 });
 
 describe("ItemVariantService", () => {

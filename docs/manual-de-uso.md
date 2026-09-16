@@ -509,7 +509,7 @@ Ruta: `/catalog`. Lo que compras (**Insumos**), lo que vendes (**Productos**) y 
 ![Catálogo](capturas/catalogo-lista.png)
 
 - Pestañas **Insumos / Productos / Activos**.
-- **Buscar** por nombre (sin importar tildes), filtro de **Línea** (incluye *Compartido*) y **Ver archivados**.
+- **Buscar** por nombre (sin importar tildes), filtro de **Línea** (incluye *Compartido*), filtro de **Categoría** (las de la pestaña, o *Sin categoría*) y **Ver archivados**. Al cambiar de pestaña, la categoría elegida se descarta: cada tipo tiene las suyas.
 - Los insumos por debajo del mínimo llevan la marca **Bajo mínimo**.
 - Menú **Acciones** por fila: **Ver**, **Editar**, **Archivar** (solo dueño) o **Desarchivar**.
 - Se muestran 50 por página con **Mostrar más**.
@@ -518,19 +518,24 @@ Ruta: `/catalog`. Lo que compras (**Insumos**), lo que vendes (**Productos**) y 
 
 ![Nuevo ítem](capturas/catalogo-nuevo-item.png)
 
-1. **Nuevo ítem**.
-2. **Nombre**, **Tipo** (Insumo / Producto / Activo), **Línea** (o *Compartido*, para todas), **Unidad**, **Categoría**.
-3. **Precio de venta referencial** (no es el costo de compra) y **Mínimo** (para las alertas de inventario).
+1. Elige la pestaña del tipo que vas a crear y pulsa su botón: **Nuevo insumo**, **Nuevo producto** o **Nuevo activo**. El tipo lo fija la pestaña y no se elige en el formulario. Tampoco cambia al editar.
+2. **Nombre**, **Línea** (o *Compartido*, para todas), **Unidad** y **Categoría**, que se elige de la lista del tipo o se deja en *Sin categoría*. Las categorías las define la dueña en **Configuración › Categorías de ítem** (18.3). Si el ítem tenía una categoría que después se archivó, se sigue viendo, marcada como archivada, y se conserva al guardar.
+3. Solo lo que usa ese tipo:
+   - Un **insumo** pide el **Mínimo** (para las alertas de inventario) y no tiene precio de venta, porque no se vende.
+   - Un **producto** pide el **Precio de venta referencial** (no es el costo de compra) y no tiene mínimo.
+   - Un **activo** no pide ninguno de los dos.
 4. **Descripción** y **Fotografía** opcionales.
-5. **Crear ítem**.
+5. **Crear insumo**, **Crear producto** o **Crear activo**.
+
+La columna **Precio de venta** del listado solo aparece en la pestaña de productos.
 
 ### 12.3 Detalle de un ítem
 
 ![Detalle de producto](capturas/catalogo-detalle.png)
 
-- **Datos generales** con **Editar** y **Archivar**.
+- **Datos generales** con **Editar** y **Archivar**. La **Categoría** muestra su nombre, *Sin categoría* o la marca **Archivada**.
 - **Fotografía**.
-- **Variantes** (tamaño, color…): **Agregar variante** con nombre y precio propio opcional.
+- **Variantes** (tamaño, color…): **Agregar variante** con nombre y, solo en productos, precio propio opcional.
 - **Tareas relacionadas** e **Historial**.
 
 Para un **insumo** aparecen además las secciones de inventario:
@@ -667,7 +672,7 @@ En **Configuración › Notificaciones** (disponible para los dos roles): activa
 
 ## 18. Configuración
 
-Ruta: `/settings`. Pestañas: **General**, **Líneas de negocio**, **Canales**, **Categorías**, **Unidades**, **Estados**, **Usuarios y roles**, **Retención**, **Notificaciones** y **Exportar**. El ayudante solo ve **Notificaciones** y **Exportar**.
+Ruta: `/settings`. Pestañas: **General**, **Líneas de negocio**, **Canales**, **Categorías de gasto**, **Categorías de ítem**, **Unidades**, **Estados**, **Usuarios y roles**, **Retención**, **Notificaciones** y **Exportar**. El ayudante solo ve **Notificaciones** y **Exportar**.
 
 ![Configuración del ayudante](capturas/ayudante-config.png)
 
@@ -693,6 +698,15 @@ Escribe el **Nombre**, elige un **Color** y pulsa **Crear línea**. Cada fila ti
 ![Unidades](capturas/config-unidades.png)
 
 Mismo patrón: escribe, **Crear**, y luego **Editar** / **Archivar** / **Restaurar**. Las unidades llevan **Código** (por ejemplo `kg`) y **Nombre**.
+
+Hay dos listas de categorías, cada una en su pestaña:
+
+- **Categorías de gasto**: agrupan los egresos.
+- **Categorías de ítem**: agrupan el catálogo. Tienen tres pestañas, **Insumos**, **Productos** y **Activos**, y cada tipo tiene su propia lista.
+  - **Nueva categoría** la crea en la pestaña que tengas abierta, y su tipo ya no cambia.
+  - El nombre no se repite dentro del mismo tipo, sin importar mayúsculas: *sustratos* choca con *Sustratos*. En otro tipo sí puede repetirse: *Embalaje* puede ser de insumo y de producto.
+  - **Archivar** una categoría deja de ofrecerla en los formularios y en el filtro del catálogo. Los ítems que ya la usan la conservan y la siguen mostrando. **Restaurar** la devuelve.
+  - Solo la dueña las gestiona. El ayudante las elige al registrar un ítem.
 
 ### 18.4 Estados
 

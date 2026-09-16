@@ -69,11 +69,12 @@ describe("unarchiveFromEvent", () => {
     expect(estado.llamadas[1].input).toEqual({ id: ORDER, archived: false });
   });
 
-  it("las cuatro tablas de configuración van con su nombre de entidad", async () => {
+  it("las cinco tablas de configuración van con su nombre de entidad", async () => {
     const esperado: Record<string, string> = {
       business_lines: "line",
       sales_channels: "channel",
       expense_categories: "category",
+      item_categories: "itemCategory",
       units: "unit",
     };
 

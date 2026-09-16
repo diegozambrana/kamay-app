@@ -425,7 +425,7 @@ Esta decisión simplifica el sistema más de lo que parece:
 
 **Contactos** — registro mínimo, roles, historial.
 
-**Catálogo** — ítems con tipo, unidad, categoría, línea y variantes; precio referencial y último costo conocido.
+**Catálogo** — ítems con tipo, unidad, categoría (elegida de la lista que la organización define para cada tipo), línea y variantes; precio referencial y último costo conocido.
 
 **Egresos** — compras y gastos con línea obligatoria, comprobante y estado de pago.
 
@@ -502,7 +502,7 @@ Directorio buscable con rol, datos, totales acumulados, líneas relacionadas, ta
 Selector de periodo y de línea; cinco informes con gráfico y tabla ordenable; regla de reparto de gastos compartidos visible; exportar. **Solo dueño.**
 
 ### V15 · Configuración de la organización
-Nombre, logo, moneda; líneas de negocio; canales; **juegos de estados** (V22); categorías de gasto; unidades; preferencias de notificación; política de retención de la bitácora; módulos activables; usuarios y roles; regla de reparto.
+Nombre, logo, moneda; líneas de negocio; canales; **juegos de estados** (V22); categorías de gasto; categorías de ítem (una lista por tipo: insumo, producto, activo); unidades; preferencias de notificación; política de retención de la bitácora; módulos activables; usuarios y roles; regla de reparto.
 
 ### V16 · Registro rápido (móvil)
 Botones grandes: Venta rápida · Pedido · Compra · Gasto · Consumo · Tarea. Formularios mínimos. Funciona sin conexión.

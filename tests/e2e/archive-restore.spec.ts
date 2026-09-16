@@ -32,11 +32,11 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     // ── Crear un ítem y darle una variante ────────────────────────────────
     const name = uniqueName("Taza de prueba");
     await page.goto("/catalog?kind=product");
-    await page.getByRole("button", { name: "Nuevo ítem" }).click();
+    await page.getByRole("button", { name: "Nuevo producto" }).click();
     const form = page.getByTestId("item-form");
     await form.getByLabel("Nombre").fill(name);
     await form.getByLabel("Precio de venta referencial").fill("45");
-    await form.getByRole("button", { name: "Crear ítem" }).click();
+    await form.getByRole("button", { name: "Crear producto" }).click();
 
     const row = page.getByTestId("catalog-row").filter({ hasText: name });
     await expect(row).toHaveCount(1);
@@ -170,10 +170,10 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     // Crear un ítem: el ayudante sí puede.
     const itemName = uniqueName("Insumo del ayudante");
     await page.goto("/catalog?kind=supply");
-    await page.getByRole("button", { name: "Nuevo ítem" }).click();
+    await page.getByRole("button", { name: "Nuevo insumo" }).click();
     const itemForm = page.getByTestId("item-form");
     await itemForm.getByLabel("Nombre").fill(itemName);
-    await itemForm.getByRole("button", { name: "Crear ítem" }).click();
+    await itemForm.getByRole("button", { name: "Crear insumo" }).click();
 
     const itemRow = page.getByTestId("catalog-row").filter({ hasText: itemName });
     await expect(itemRow).toHaveCount(1);
@@ -219,7 +219,7 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
 
     const name = uniqueName("Ítem con foto");
     await page.goto("/catalog?kind=product");
-    await page.getByRole("button", { name: "Nuevo ítem" }).click();
+    await page.getByRole("button", { name: "Nuevo producto" }).click();
 
     const form = page.getByTestId("item-form");
     await form.getByLabel("Nombre").fill(name);
@@ -238,7 +238,7 @@ test.describe("catálogo y directorio (V10, V11, V13)", () => {
     await expect(page.getByTestId("file-dropzone-list")).toContainText("taza.png");
     await expect(page.getByTestId("file-preview-image")).toBeVisible();
 
-    await form.getByRole("button", { name: "Crear ítem" }).click();
+    await form.getByRole("button", { name: "Crear producto" }).click();
 
     const row = page.getByTestId("catalog-row").filter({ hasText: name });
     await expect(row).toHaveCount(1);

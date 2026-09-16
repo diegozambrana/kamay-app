@@ -26,6 +26,7 @@ export const UNARCHIVABLE_TABLES = [
   "business_lines",
   "sales_channels",
   "expense_categories",
+  "item_categories",
   "units",
 ] as const;
 

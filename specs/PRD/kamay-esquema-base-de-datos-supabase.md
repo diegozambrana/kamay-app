@@ -233,6 +233,23 @@ create table expense_categories (
   unique (organization_id, name)
 );
 
+-- Categorías de ítem: una lista por tipo. «Embalaje» puede ser categoría de
+-- insumo y de producto a la vez. El nombre no se repite dentro del tipo sin
+-- distinguir mayúsculas. `(id, organization_id, kind)` es el destino de la
+-- clave compuesta de `items`: un ítem solo apunta a una categoría de su
+-- organización y de su tipo (cambio `item-categories`).
+create table item_categories (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id),
+  kind            text not null check (kind in ('supply','product','asset')),
+  name            text not null check (name = btrim(name) and name <> ''),
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  archived_at     timestamptz,
+  unique (id, organization_id, kind)
+);
+create unique index on item_categories (organization_id, kind, lower(name));
+
 -- Unidades de medida
 create table units (
   id              uuid primary key default gen_random_uuid(),
@@ -375,7 +392,7 @@ create table items (
   name             text not null,
   description      text,
   unit_id          uuid references units(id),
-  category         text,
+  category_id      uuid,               -- categoría de su tipo; ver la clave compuesta abajo
   sale_price       numeric(14,2),      -- precio de venta referencial (no es costo)
   min_stock        numeric(14,3),      -- solo aplica a insumos
   created_by       uuid references auth.users(id),
@@ -384,8 +401,15 @@ create table items (
   archived_at      timestamptz
 );
 
+-- La categoría es de la misma organización y del mismo tipo que el ítem, o
+-- ninguna: con `MATCH SIMPLE`, un `category_id` nulo no se comprueba.
+alter table items add constraint items_category_fk
+  foreign key (category_id, organization_id, kind)
+  references item_categories (id, organization_id, kind);
+
 create index on items (organization_id, kind) where archived_at is null;
 create index on items (organization_id, business_line_id) where archived_at is null;
+create index on items (organization_id, category_id) where archived_at is null;
 
 create table item_variants (
   id          uuid primary key default gen_random_uuid(),
@@ -937,7 +961,7 @@ create policy "orders: editar si es miembro"
 | Tabla | Ayudante | Dueño | Administrador de la plataforma |
 |---|---|---|---|
 | `organizations`, `business_lines`, `sales_channels`, `units` | Leer | Todo | Todo, como dueño |
-| `statuses`, `expense_categories` | Leer | Todo | Todo, como dueño |
+| `statuses`, `expense_categories`, `item_categories` | Leer | Todo | Todo, como dueño |
 | `contacts`, `items`, `item_variants` | Leer, crear, editar | Todo | Todo, como dueño |
 | `orders`, `order_items` | Leer, crear, editar | Todo | Todo, como dueño |
 | `payments` | Crear cobros (`direction = 'in'`) | Todo | Todo, como dueño |

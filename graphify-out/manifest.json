@@ -4644,8 +4644,8 @@
     "hash": "6c66f18ef4b16033652fa8a8e4d84f31"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/activity-retention/spec.md": {
-    "mtime": 1789072907.5335877,
-    "hash": "b7981d2f0c06227799b95b2a958d2705"
+    "mtime": 1789678804.8548925,
+    "hash": "adcde45d8b872f7b76bef33d0823d59a"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/project-foundation/spec.md": {
     "mtime": 1789405304.5875478,
@@ -4708,8 +4708,8 @@
     "hash": "f475b19cd17db88f526b97b79751d190"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/orders/spec.md": {
-    "mtime": 1789050214.5752976,
-    "hash": "1ec1898c2783d20d777359f96b15a857"
+    "mtime": 1789677034.7288625,
+    "hash": "5dd214551df73400e6ec3361ee6ba9a8"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/offline-capture/spec.md": {
     "mtime": 1788493968.832983,
@@ -4794,6 +4794,50 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-05-configurable-statuses/specs/configurable-statuses/spec.md": {
     "mtime": 1787231067.019053,
     "hash": "7a1b8771c7aaaae4f90f47001c633095"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/tasks.md": {
+    "mtime": 1789312170.849547,
+    "hash": "152f7f492ba39a3913d74c7b4b77ca28"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/design.md": {
+    "mtime": 1789299694.340931,
+    "hash": "9a2a76c467c95621286b8e97e26ac873"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/proposal.md": {
+    "mtime": 1789095185.6510167,
+    "hash": "f46dec437229516d3b4894f7acb16090"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/specs/data-export/spec.md": {
+    "mtime": 1789095234.6409283,
+    "hash": "0bc48ec03c188368270695700d0de8f6"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/specs/production-operations/spec.md": {
+    "mtime": 1789095269.5729291,
+    "hash": "df1114a1612228b37e49d22f103c61c6"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/specs/activity-retention/spec.md": {
+    "mtime": 1789107081.7034228,
+    "hash": "61b2cc22f454c3591f31b27dd083a915"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/specs/project-foundation/spec.md": {
+    "mtime": 1789095199.4860516,
+    "hash": "a460c40b0dfe923ec8a9defe58acb78e"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/specs/view-states/spec.md": {
+    "mtime": 1789072907.5328963,
+    "hash": "f9d1c1114ed4ec85fe4ee1bdbf62f7e2"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/specs/tenant-isolation/spec.md": {
+    "mtime": 1789072907.5327268,
+    "hash": "aad141f06a33c991bb1e0d69b444670e"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/specs/performance-budget/spec.md": {
+    "mtime": 1789072907.5315177,
+    "hash": "6863dc49c456418b01844b27ac66d70f"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-kam-23-hardening-production/specs/accessibility/spec.md": {
+    "mtime": 1789072907.5309975,
+    "hash": "0390f66aa42d05f8fe73a17ad34fd960"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-03-kam-09-expenses-purchases-costs/tasks.md": {
     "mtime": 1788474786.4655476,
@@ -5367,65 +5411,21 @@
     "mtime": 1788838584.3278303,
     "hash": "43c33a94926e4920c4de351f7e86946f"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/order-form-picker-dialogs/tasks.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-order-form-picker-dialogs/tasks.md": {
     "mtime": 1789624972.9641542,
     "hash": "219ed61b1f4b764d2411fd3fd82345fc"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/order-form-picker-dialogs/design.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-order-form-picker-dialogs/design.md": {
     "mtime": 1789622373.885806,
     "hash": "9e90fa1f238f1fc4633fa6a4b8ee9d96"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/order-form-picker-dialogs/proposal.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-order-form-picker-dialogs/proposal.md": {
     "mtime": 1789613913.9521978,
     "hash": "5b16cb10404aaf912cf26f4facfe96b8"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/order-form-picker-dialogs/specs/orders/spec.md": {
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-order-form-picker-dialogs/specs/orders/spec.md": {
     "mtime": 1789613880.7524335,
     "hash": "99d3cb855e9fd63c5f2ce7e7cace68f9"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/tasks.md": {
-    "mtime": 1789312170.849547,
-    "hash": "152f7f492ba39a3913d74c7b4b77ca28"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/design.md": {
-    "mtime": 1789299694.340931,
-    "hash": "9a2a76c467c95621286b8e97e26ac873"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/proposal.md": {
-    "mtime": 1789095185.6510167,
-    "hash": "f46dec437229516d3b4894f7acb16090"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/specs/data-export/spec.md": {
-    "mtime": 1789095234.6409283,
-    "hash": "0bc48ec03c188368270695700d0de8f6"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/specs/production-operations/spec.md": {
-    "mtime": 1789095269.5729291,
-    "hash": "df1114a1612228b37e49d22f103c61c6"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/specs/activity-retention/spec.md": {
-    "mtime": 1789107081.7034228,
-    "hash": "61b2cc22f454c3591f31b27dd083a915"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/specs/project-foundation/spec.md": {
-    "mtime": 1789095199.4860516,
-    "hash": "a460c40b0dfe923ec8a9defe58acb78e"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/specs/view-states/spec.md": {
-    "mtime": 1789072907.5328963,
-    "hash": "f9d1c1114ed4ec85fe4ee1bdbf62f7e2"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/specs/tenant-isolation/spec.md": {
-    "mtime": 1789072907.5327268,
-    "hash": "aad141f06a33c991bb1e0d69b444670e"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/specs/performance-budget/spec.md": {
-    "mtime": 1789072907.5315177,
-    "hash": "6863dc49c456418b01844b27ac66d70f"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/kam-23-hardening-production/specs/accessibility/spec.md": {
-    "mtime": 1789072907.5309975,
-    "hash": "0390f66aa42d05f8fe73a17ad34fd960"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/docs/manual-de-uso.pdf": {
     "mtime": 1789347940.1419787,

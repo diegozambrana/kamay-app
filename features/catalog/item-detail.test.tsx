@@ -9,6 +9,7 @@ import type {
   InventoryMovement,
   Item,
   ItemBalance,
+  ItemCategory,
   ItemVariant,
   Role,
   Unit,
@@ -67,7 +68,7 @@ function item(overrides: Partial<Item> = {}): Item {
     name: "Taza para sublimación",
     description: null,
     unitId: UNIT.id,
-    category: null,
+    categoryId: null,
     salePrice: null,
     minStock: null,
     archivedAt: null,
@@ -406,5 +407,127 @@ describe("ItemDetail · datos de activo (KAM-19)", () => {
     expect(screen.queryByTestId("asset-details-section")).not.toBeInTheDocument();
     expect(screen.queryByText(/Costo de adquisición/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Declarar activo/i)).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * Escenarios del delta spec `catalog-directory`, requisito "Pantalla de
+ * detalle de ítem (V11)": los datos generales y las variantes muestran solo
+ * lo que el tipo usa.
+ */
+describe("ItemDetail · campos según el tipo", () => {
+  const general = () => screen.getByTestId("item-general");
+
+  it("un insumo muestra el mínimo y no el precio de venta", () => {
+    renderDetail({ kind: "supply", minStock: 12, salePrice: 30 });
+
+    expect(general()).toHaveTextContent("Mínimo");
+    expect(general()).toHaveTextContent("12");
+    expect(general()).not.toHaveTextContent("Precio de venta referencial");
+  });
+
+  it("un producto muestra el precio de venta y no el mínimo", () => {
+    renderDetail({ kind: "product", salePrice: 45, minStock: 10 });
+
+    expect(general()).toHaveTextContent("Precio de venta referencial");
+    expect(general()).toHaveTextContent("45.00");
+    expect(general()).not.toHaveTextContent("Mínimo");
+  });
+
+  it("un activo no muestra precio de venta ni mínimo", () => {
+    renderDetail({ kind: "asset" });
+
+    expect(general()).not.toHaveTextContent("Precio de venta referencial");
+    expect(general()).not.toHaveTextContent("Mínimo");
+  });
+
+  it("las variantes de un insumo no llevan precio, ni en la lista ni al crearlas", async () => {
+    const user = userEvent.setup();
+    renderDetail({ kind: "supply" }, "owner", [
+      { ...variant("A4"), salePrice: 12 },
+    ]);
+
+    const list = screen.getByTestId("variant-list");
+    expect(
+      within(list).queryByRole("columnheader", { name: "Precio" }),
+    ).toBeNull();
+    expect(within(list).getByTestId("variant-row")).not.toHaveTextContent(
+      "12.00",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Agregar variante" }));
+    const form = await screen.findByTestId("variant-form");
+    expect(within(form).queryByLabelText("Precio")).toBeNull();
+  });
+
+  it("las variantes de un producto muestran su precio y el formulario lo ofrece", async () => {
+    const user = userEvent.setup();
+    renderDetail({ kind: "product", salePrice: 45 }, "owner", [
+      { ...variant("15oz"), salePrice: 55 },
+    ]);
+
+    const list = screen.getByTestId("variant-list");
+    expect(
+      within(list).getByRole("columnheader", { name: "Precio" }),
+    ).toBeInTheDocument();
+    expect(within(list).getByTestId("variant-row")).toHaveTextContent("55.00");
+
+    await user.click(screen.getByRole("button", { name: "Agregar variante" }));
+    const form = await screen.findByTestId("variant-form");
+    expect(within(form).getByLabelText("Precio")).toBeInTheDocument();
+  });
+});
+
+/**
+ * Cambio `item-categories`, requisito "Un ítem se clasifica con una categoría
+ * de su tipo": lo que muestra el detalle.
+ */
+describe("ItemDetail · categoría", () => {
+  const EMBALAJE: ItemCategory = {
+    id: "92000000-0000-4000-8000-000000000003",
+    organizationId: ORG,
+    kind: "supply",
+    name: "Embalaje",
+    archivedAt: null,
+  };
+
+  function renderWithCategories(overrides: Partial<Item>, categories: ItemCategory[]) {
+    return render(
+      <ItemDetail
+        relatedTasks={[]}
+        item={item(overrides)}
+        variants={[]}
+        photos={[]}
+        lines={[LINE]}
+        units={[UNIT]}
+        categories={categories}
+        history={{ items: [], activityHref: "/activity" }}
+        role="owner"
+        timeZone="America/La_Paz"
+      />,
+    );
+  }
+
+  it("un ítem sin categoría lo dice con su nombre", () => {
+    renderWithCategories({ categoryId: null }, [EMBALAJE]);
+
+    expect(screen.getByTestId("item-category")).toHaveTextContent("Sin categoría");
+  });
+
+  it("muestra el nombre de su categoría", () => {
+    renderWithCategories({ categoryId: EMBALAJE.id }, [EMBALAJE]);
+
+    expect(screen.getByTestId("item-category")).toHaveTextContent("Embalaje");
+    expect(screen.getByTestId("item-category")).not.toHaveTextContent("Archivada");
+  });
+
+  it("una categoría archivada se nombra con su marca de archivada", () => {
+    renderWithCategories({ categoryId: EMBALAJE.id }, [
+      { ...EMBALAJE, archivedAt: "2026-09-01T00:00:00Z" },
+    ]);
+
+    const value = screen.getByTestId("item-category");
+    expect(value).toHaveTextContent("Embalaje");
+    expect(within(value).getByText("Archivada")).toBeInTheDocument();
   });
 });

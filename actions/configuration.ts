@@ -13,12 +13,13 @@ import { getOwnerContext } from "@/lib/auth/session-context";
 import { allocationSettingsSchema } from "@/lib/reports/allocation-schema";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
+import { ItemCategoryService } from "@/services/configuration/item-category-service";
 import { SalesChannelService } from "@/services/configuration/sales-channel-service";
 import { UnitService } from "@/services/configuration/unit-service";
 import { OrganizationService } from "@/services/organization-service";
 import { RetentionPolicyService } from "@/services/activity/retention-service";
 import { AllocationRuleService } from "@/services/configuration/allocation-rule-service";
-import { LINE_COLORS } from "@/types";
+import { ITEM_KINDS, LINE_COLORS } from "@/types";
 
 export type ActionResult = { error: string } | undefined;
 
@@ -38,6 +39,9 @@ const lineSchema = z.object({
 });
 
 const namedSchema = z.object({ name });
+
+/** El tipo solo viaja al crear: una categoría de ítem no cambia de tipo. */
+const itemCategorySchema = z.object({ name, kind: z.enum(ITEM_KINDS) });
 
 const unitSchema = z.object({
   code: z.string().trim().min(1, "El código no puede quedar vacío").max(10),
@@ -112,7 +116,7 @@ export async function updateBusinessLine(
 
 // ── Archivado y desarchivado (las cuatro entidades) ────────────────────────
 
-const entities = ["line", "channel", "category", "unit"] as const;
+const entities = ["line", "channel", "category", "unit", "itemCategory"] as const;
 type Entity = (typeof entities)[number];
 
 const archiveSchema = z.object({ entity: z.enum(entities), id });
@@ -127,6 +131,8 @@ function serviceFor(entity: Entity, supabase: SupabaseClient) {
       return new ExpenseCategoryService(supabase);
     case "unit":
       return new UnitService(supabase);
+    case "itemCategory":
+      return new ItemCategoryService(supabase);
   }
 }
 
@@ -257,6 +263,54 @@ export async function updateExpenseCategory(
       context.organizationId,
       parsed.data.id,
       parsed.data,
+    );
+  } catch (error) {
+    return { error: toMessage(error, "No se pudo guardar la categoría.") };
+  }
+
+  revalidateConfiguration();
+}
+
+// ── Categorías de ítem ─────────────────────────────────────────────────────
+// La revalidación del layout (`revalidateConfiguration`) alcanza también al
+// catálogo, cuyo formulario y filtro leen estas categorías.
+
+export async function createItemCategory(
+  input: z.infer<typeof itemCategorySchema>,
+): Promise<ActionResult> {
+  const parsed = itemCategorySchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  try {
+    await new ItemCategoryService(context.supabase).create(
+      context.organizationId,
+      parsed.data,
+    );
+  } catch (error) {
+    return { error: toMessage(error, "No se pudo crear la categoría.") };
+  }
+
+  revalidateConfiguration();
+}
+
+/** Solo el nombre: si la petición trae un tipo, se ignora. */
+export async function updateItemCategory(
+  input: z.infer<typeof namedSchema> & { id: string },
+): Promise<ActionResult> {
+  const parsed = namedSchema.extend({ id }).safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  try {
+    await new ItemCategoryService(context.supabase).rename(
+      context.organizationId,
+      parsed.data.id,
+      { name: parsed.data.name },
     );
   } catch (error) {
     return { error: toMessage(error, "No se pudo guardar la categoría.") };

@@ -8,7 +8,7 @@ import { NamedSection } from "@/features/settings/named-section";
 import { getOwnerContext } from "@/lib/auth/session-context";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
 
-export const metadata = { title: "Categorías · Configuración · Kamay" };
+export const metadata = { title: "Categorías de gasto · Configuración · Kamay" };
 
 export default async function CategoriesSettingsPage() {
   const context = await getOwnerContext();

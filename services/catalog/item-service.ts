@@ -17,19 +17,21 @@ type ItemRow = {
   name: string;
   description: string | null;
   unit_id: string | null;
-  category: string | null;
+  category_id: string | null;
   sale_price: number | string | null;
   min_stock: number | string | null;
   archived_at: string | null;
 };
 
 const COLUMNS =
-  "id, organization_id, business_line_id, kind, name, description, unit_id, category, sale_price, min_stock, archived_at";
+  "id, organization_id, business_line_id, kind, name, description, unit_id, category_id, sale_price, min_stock, archived_at";
 
 export type ItemFilters = {
   kind?: ItemKind;
   /** `null` no filtra por línea; para ver solo los compartidos, `"shared"`. */
   businessLineId?: string | "shared" | null;
+  /** `null` no filtra por categoría; para ver los que no tienen, `"none"`. */
+  categoryId?: string | "none" | null;
   search?: string;
   includeArchived?: boolean;
   /** Cuántas filas como máximo: la pantalla del catálogo pide una ventana. */
@@ -61,7 +63,7 @@ export class ItemService {
       name: row.name,
       description: row.description,
       unitId: row.unit_id,
-      category: row.category,
+      categoryId: row.category_id,
       salePrice: toNumber(row.sale_price),
       minStock: toNumber(row.min_stock),
       archivedAt: row.archived_at,
@@ -80,6 +82,12 @@ export class ItemService {
       query = query.is("business_line_id", null);
     } else if (filters.businessLineId) {
       query = query.eq("business_line_id", filters.businessLineId);
+    }
+
+    if (filters.categoryId === "none") {
+      query = query.is("category_id", null);
+    } else if (filters.categoryId) {
+      query = query.eq("category_id", filters.categoryId);
     }
 
     // Lo archivado no aparece salvo que se pida: es la regla de todo listado.
@@ -210,7 +218,7 @@ export class ItemService {
         name: input.name,
         description: input.description,
         unit_id: input.unitId,
-        category: input.category,
+        category_id: input.categoryId,
         sale_price: input.salePrice,
         min_stock: input.minStock,
       })
@@ -225,20 +233,24 @@ export class ItemService {
     return this.toEntity(data as ItemRow);
   }
 
+  /**
+   * El tipo no se edita: se fija al crear el ítem y esta escritura no lo
+   * lleva. Cambiarlo dejaría a un insumo con movimientos de inventario, o a un
+   * activo con sus datos de adquisición, colgando de un tipo que no los usa.
+   */
   async update(
     organizationId: string,
     id: string,
-    input: ItemFormValues,
+    input: Omit<ItemFormValues, "kind">,
   ): Promise<Item> {
     const { data, error } = await this.supabase
       .from("items")
       .update({
         business_line_id: input.businessLineId,
-        kind: input.kind,
         name: input.name,
         description: input.description,
         unit_id: input.unitId,
-        category: input.category,
+        category_id: input.categoryId,
         sale_price: input.salePrice,
         min_stock: input.minStock,
         updated_at: new Date().toISOString(),

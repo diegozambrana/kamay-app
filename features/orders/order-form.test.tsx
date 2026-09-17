@@ -93,7 +93,7 @@ function product(id: string, name: string, businessLineId: string | null): Picka
     name,
     description: null,
     unitId: null,
-    category: null,
+    categoryId: null,
     salePrice: 45,
     minStock: null,
     archivedAt: null,

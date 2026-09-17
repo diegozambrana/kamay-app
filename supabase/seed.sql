@@ -220,28 +220,39 @@ begin
     (e2e.gid(p_org, '80000000-0000-0000-0000-000000000003'), p_org, 'Taller Ñawi',           '+591 70000003', 'hola@nawi.test',      true,  true,  'Nos compra filamento y nos vende arcilla.'),
     (e2e.gid(p_org, '80000000-0000-0000-0000-000000000004'), p_org, 'Colegio San Andrés',    '+591 70000004', null,                  false, true,  'Pedidos grandes en septiembre.');
 
+  -- Categorías de ítem, una lista por tipo (cambio `item-categories`).
+  -- «Embalaje» existe como insumo y como producto: la unicidad es por tipo.
+  insert into item_categories (id, organization_id, kind, name) values
+    (e2e.gid(p_org, '92000000-0000-0000-0000-000000000001'), p_org, 'supply', 'Sustratos'),
+    (e2e.gid(p_org, '92000000-0000-0000-0000-000000000002'), p_org, 'supply', 'Materia prima'),
+    (e2e.gid(p_org, '92000000-0000-0000-0000-000000000003'), p_org, 'supply', 'Embalaje'),
+    (e2e.gid(p_org, '92000000-0000-0000-0000-000000000011'), p_org, 'product', 'Regalos'),
+    (e2e.gid(p_org, '92000000-0000-0000-0000-000000000012'), p_org, 'product', 'Decoración'),
+    (e2e.gid(p_org, '92000000-0000-0000-0000-000000000013'), p_org, 'product', 'Vajilla'),
+    (e2e.gid(p_org, '92000000-0000-0000-0000-000000000014'), p_org, 'product', 'Embalaje');
+
   -- Insumos: los dos primeros de Sublimación, el tercero de Alfarería.
-  insert into items (id, organization_id, business_line_id, kind, name, description, unit_id, category, sale_price, min_stock) values
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000001'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000001'), 'supply', 'Taza para sublimación',  'Taza blanca con recubrimiento.',     e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Sustratos', null,  12),
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000002'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000001'), 'supply', 'Papel de transferencia', 'Resma A4 para sublimación.',         e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Sustratos', null, 100),
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000003'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'supply', 'Arcilla roja',           'Arcilla local, saco de 25 kg.',      e2e.gid(p_org, '60000000-0000-0000-0000-000000000002'), 'Materia prima', null, 25),
+  insert into items (id, organization_id, business_line_id, kind, name, description, unit_id, category_id, sale_price, min_stock) values
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000001'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000001'), 'supply', 'Taza para sublimación',  'Taza blanca con recubrimiento.',     e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000001'), null,  12),
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000002'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000001'), 'supply', 'Papel de transferencia', 'Resma A4 para sublimación.',         e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000001'), null, 100),
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000003'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'supply', 'Arcilla roja',           'Arcilla local, saco de 25 kg.',      e2e.gid(p_org, '60000000-0000-0000-0000-000000000002'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000002'), null, 25),
     -- Compartido: la caja sirve a las tres líneas, así que no tiene línea.
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000004'), p_org, null,                                   'supply', 'Caja de cartón',         'Embalaje para entregas.',            e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Embalaje',  null,  40);
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000004'), p_org, null,                                   'supply', 'Caja de cartón',         'Embalaje para entregas.',            e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000003'),  null,  40);
 
   -- Productos: el primero es el que tiene variantes.
-  insert into items (id, organization_id, business_line_id, kind, name, description, unit_id, category, sale_price) values
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000011'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000001'), 'product', 'Taza personalizada', 'Taza sublimada con diseño del cliente.', e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Regalos',    45),
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000012'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'product', 'Maceta de barro',    'Torneada a mano.',                       e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Decoración', 60),
+  insert into items (id, organization_id, business_line_id, kind, name, description, unit_id, category_id, sale_price) values
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000011'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000001'), 'product', 'Taza personalizada', 'Taza sublimada con diseño del cliente.', e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000011'),    45),
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000012'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'product', 'Maceta de barro',    'Torneada a mano.',                       e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000012'), 60),
     -- Alfarería vende casi todo como venta directa (KAM-12), así que su
     -- catálogo vendible es lo que llena la cuadrícula del modo feria.
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000013'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'product', 'Taza de barro',      'Torneada a mano, esmalte mate.',         e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Vajilla',    35),
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000014'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'product', 'Plato hondo',        'Juego de mesa, pieza suelta.',           e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Vajilla',    28),
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000013'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'product', 'Taza de barro',      'Torneada a mano, esmalte mate.',         e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000013'),    35),
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000014'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'product', 'Plato hondo',        'Juego de mesa, pieza suelta.',           e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000013'),    28),
     -- Compartido: se vende en cualquier línea, así que la cuadrícula lo ofrece
     -- esté en la feria que esté.
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000015'), p_org, null,                                   'product', 'Bolsa de regalo',    'Papel kraft con asa.',                   e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Embalaje',    5),
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000015'), p_org, null,                                   'product', 'Bolsa de regalo',    'Papel kraft con asa.',                   e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000014'),    5),
     -- Sin precio de venta a propósito: no se puede vender en dos toques, así
     -- que la cuadrícula del modo feria NO debe ofrecerlo.
-    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000016'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'product', 'Jarrón grande',      'Pieza única; se cotiza cada una.',       e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), 'Decoración', null);
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000016'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000003'), 'product', 'Jarrón grande',      'Pieza única; se cotiza cada una.',       e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000012'), null);
 
   -- Activos: los datos de costo y recuperación llegan con KAM-19.
   insert into items (id, organization_id, business_line_id, kind, name, description, unit_id) values

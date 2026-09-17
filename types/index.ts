@@ -205,11 +205,24 @@ export type Item = {
   name: string;
   description: string | null;
   unitId: string | null;
-  category: string | null;
+  /** Una categoría de su mismo tipo (`item_categories`), o ninguna. */
+  categoryId: string | null;
   /** Precio de venta referencial. Nunca un costo: el costo vive en el egreso. */
   salePrice: number | null;
   /** Solo aplica a insumos; el saldo con el que se compara llega en KAM-18. */
   minStock: number | null;
+  archivedAt: string | null;
+};
+
+/**
+ * Categoría de ítem: la organización define una lista por tipo. El tipo se
+ * fija al crearla; «Embalaje» puede ser de insumo y de producto a la vez.
+ */
+export type ItemCategory = {
+  id: string;
+  organizationId: string;
+  kind: ItemKind;
+  name: string;
   archivedAt: string | null;
 };
 

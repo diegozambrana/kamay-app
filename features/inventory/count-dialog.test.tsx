@@ -48,7 +48,7 @@ const item: Item = {
   name: "Taza para sublimación",
   description: null,
   unitId: null,
-  category: null,
+  categoryId: null,
   salePrice: null,
   minStock: 12,
   archivedAt: null,

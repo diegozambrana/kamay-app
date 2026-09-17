@@ -113,7 +113,7 @@ for (const scheme of ["light", "dark"] as const) {
 
     test("un diálogo abierto", async ({ page }) => {
       await page.goto("/catalog?kind=supply");
-      await page.getByRole("button", { name: "Nuevo ítem" }).click();
+      await page.getByRole("button", { name: "Nuevo insumo" }).click();
       await expect(page.getByRole("dialog")).toBeVisible();
       // Se mide el diálogo ya abierto, no a mitad de su animación de entrada:
       // con la opacidad aún subiendo, el contraste sale más bajo que el real.
@@ -198,7 +198,7 @@ test.describe("solo con teclado", () => {
     await login(page, geeko().owner);
     await page.goto("/catalog?kind=supply");
 
-    const opener = page.getByRole("button", { name: "Nuevo ítem" });
+    const opener = page.getByRole("button", { name: "Nuevo insumo" });
     await opener.focus();
     await page.keyboard.press("Enter");
 

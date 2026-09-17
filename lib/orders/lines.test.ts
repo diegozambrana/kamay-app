@@ -19,7 +19,7 @@ function item(overrides: Partial<PickableItem> & { name: string }): PickableItem
     kind: "product",
     description: null,
     unitId: null,
-    category: null,
+    categoryId: null,
     salePrice: null,
     minStock: null,
     archivedAt: null,

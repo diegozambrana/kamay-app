@@ -10,9 +10,9 @@ import { useConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
 
-export type ConfigEntity = "line" | "channel" | "category" | "unit";
+export type ConfigEntity = "line" | "channel" | "category" | "unit" | "itemCategory";
 
-type EntityCopy = {
+export type EntityCopy = {
   /** El vacío de la sección, dicho por su nombre, y qué hacer con él. */
   empty: string;
   emptyHint: string;
@@ -63,6 +63,18 @@ export const ENTITY_COPY: Record<ConfigEntity, EntityCopy> = {
     archiveEffect:
       "Deja de ofrecerse al registrar egresos. Los egresos que ya la usan la siguen mostrando.",
   },
+  // Los textos que dependen del tipo (vacío, títulos del diálogo) los pasa la
+  // sección con `copy`: estos son los que no dependen de él.
+  itemCategory: {
+    empty: "Aún no hay categorías de ítem",
+    emptyHint: "Usa «Nueva categoría» para agregar la primera.",
+    createButton: "Nueva categoría",
+    createSubmit: "Crear categoría",
+    newTitle: "Nueva categoría",
+    editTitle: "Editar categoría",
+    archiveEffect:
+      "Deja de ofrecerse en los formularios y en el filtro del catálogo. Los ítems que ya la usan la conservan y la siguen mostrando.",
+  },
   unit: {
     empty: "Aún no hay unidades de medida",
     emptyHint: "Usa «Nueva unidad» para agregar la primera.",
@@ -95,6 +107,7 @@ export function ConfigTables<T extends ConfigRow>({
   labelOf,
   isProtected,
   onEdit,
+  copy: copyOverride,
 }: {
   entity: ConfigEntity;
   items: T[];
@@ -106,9 +119,11 @@ export function ConfigTables<T extends ConfigRow>({
   /** Las filas protegidas no ofrecen archivar (la línea compartida). */
   isProtected?: (item: T) => boolean;
   onEdit: (item: T) => void;
+  /** Textos que dependen de algo más que la entidad (el tipo de ítem). */
+  copy?: Partial<EntityCopy>;
 }) {
   const { ask, dialog } = useConfirmDialog();
-  const copy = ENTITY_COPY[entity];
+  const copy = { ...ENTITY_COPY[entity], ...copyOverride };
 
   const active = items.filter((item) => !item.archivedAt);
   const archived = items.filter((item) => item.archivedAt);

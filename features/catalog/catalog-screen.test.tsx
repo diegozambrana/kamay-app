@@ -2,16 +2,17 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { BusinessLine, Role, Unit } from "@/types";
+import type { BusinessLine, ItemCategory, ItemKind, Role, Unit } from "@/types";
 
 import { CatalogScreen, type CatalogRow } from "./catalog-screen";
 
 const push = vi.fn();
+const direccion = vi.hoisted(() => ({ query: "" }));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/catalog",
-  useRouter: () => ({ push }),
-  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ push, replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(direccion.query),
 }));
 
 vi.mock("@/actions/catalog", () => ({
@@ -21,7 +22,7 @@ vi.mock("@/actions/catalog", () => ({
   uploadItemPhoto: vi.fn(async () => undefined),
 }));
 
-import { setItemArchived } from "@/actions/catalog";
+import { createItem, setItemArchived } from "@/actions/catalog";
 
 const ORG = "11111111-1111-1111-1111-111111111111";
 const LINE: BusinessLine = {
@@ -51,7 +52,7 @@ function item(overrides: Partial<CatalogRow> = {}): CatalogRow {
     name: "Taza para sublimación",
     description: null,
     unitId: UNIT.id,
-    category: null,
+    categoryId: null,
     salePrice: 45,
     minStock: null,
     archivedAt: null,
@@ -64,13 +65,14 @@ function renderScreen(
   items: CatalogRow[],
   role: Role = "owner",
   includeArchived = false,
+  kind: ItemKind = "supply",
 ) {
   return render(
     <CatalogScreen
       items={items}
       lines={[LINE]}
       units={[UNIT]}
-      kind="supply"
+      kind={kind}
       lineFilter="all"
       search=""
       includeArchived={includeArchived}
@@ -80,7 +82,10 @@ function renderScreen(
   );
 }
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  direccion.query = "";
+});
 afterEach(cleanup);
 
 describe("CatalogScreen", () => {
@@ -182,27 +187,15 @@ describe("CatalogScreen", () => {
     expect(screen.getByTestId("item-thumbnail")).toBeInTheDocument();
   });
 
-  it("«Nuevo ítem» abre un diálogo, no un formulario incrustado", async () => {
+  it("«Nuevo insumo» abre un diálogo, no un formulario incrustado", async () => {
     const user = userEvent.setup();
     renderScreen([item()]);
 
     expect(screen.queryByTestId("item-form")).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Nuevo ítem" }));
+    await user.click(screen.getByRole("button", { name: "Nuevo insumo" }));
 
-    const dialog = await screen.findByRole("dialog");
-    expect(dialog).toHaveTextContent("Nuevo ítem");
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByTestId("item-form")).toBeInTheDocument();
-  });
-
-  it("el tipo elegido en las pestañas llega al diálogo", async () => {
-    const user = userEvent.setup();
-    renderScreen([item()]);
-
-    await user.click(screen.getByRole("button", { name: "Nuevo ítem" }));
-
-    // El desplegable de shadcn no es un <select>: muestra el valor en su
-    // disparador, y es lo que el formulario enviará.
-    expect(screen.getByLabelText("Tipo")).toHaveTextContent("Insumo");
   });
 
   it("un archivado se distingue y solo ofrece verlo o devolverlo", async () => {
@@ -240,5 +233,233 @@ describe("CatalogScreen · un activo sin datos declarados", () => {
     // aparte: su ausencia no descalifica al ítem en el catálogo.
     expect(row).not.toHaveAttribute("data-incomplete");
     expect(within(row).queryByText(/incompleto/i)).toBeNull();
+  });
+});
+
+/**
+ * Escenarios del delta spec `catalog-directory`, requisito "Pantalla de
+ * catálogo (V10)", y "El alta toma el tipo de la pestaña" del requisito "El
+ * tipo de un ítem se fija al crearlo", a nivel de pantalla.
+ */
+describe("CatalogScreen · lo que muestra cada pestaña", () => {
+  const priceHeader = () =>
+    screen.queryByRole("columnheader", { name: "Precio de venta" });
+
+  it("en productos, la fila muestra su precio de venta", () => {
+    renderScreen(
+      [item({ kind: "product", name: "Taza personalizada", salePrice: 45 })],
+      "owner",
+      false,
+      "product",
+    );
+
+    expect(priceHeader()).toBeInTheDocument();
+    expect(screen.getByTestId("catalog-row")).toHaveTextContent("45.00");
+  });
+
+  it.each(["supply", "asset"] as const)(
+    "en la pestaña %s no hay columna de precio de venta",
+    (kind) => {
+      // Aunque la fila arrastre un precio de antes, la columna no existe.
+      renderScreen([item({ kind, salePrice: 30 })], "owner", false, kind);
+
+      expect(priceHeader()).toBeNull();
+      expect(screen.getByTestId("catalog-row")).not.toHaveTextContent("30.00");
+    },
+  );
+
+  it.each([
+    ["supply", "Nuevo insumo"],
+    ["product", "Nuevo producto"],
+    ["asset", "Nuevo activo"],
+  ] as const)("en la pestaña %s el botón de alta dice «%s»", (kind, label) => {
+    renderScreen([item({ kind })], "owner", false, kind);
+
+    expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Nuevo ítem" })).toBeNull();
+  });
+
+  it("«Nuevo insumo» abre el alta de insumo, sin tipo ni precio de venta", async () => {
+    const user = userEvent.setup();
+    renderScreen([item()]);
+
+    await user.click(screen.getByRole("button", { name: "Nuevo insumo" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByRole("heading", { name: "Nuevo insumo" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByRole("combobox", { name: "Tipo" })).toBeNull();
+    expect(
+      within(dialog).queryByLabelText("Precio de venta referencial"),
+    ).toBeNull();
+  });
+
+  it("el alta desde la pestaña de insumos se crea como insumo", async () => {
+    const user = userEvent.setup();
+    renderScreen([item()]);
+
+    await user.click(screen.getByRole("button", { name: "Nuevo insumo" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Nombre"), "Tinta cian");
+    await user.click(within(dialog).getByRole("button", { name: "Crear insumo" }));
+
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Tinta cian", kind: "supply" }),
+    );
+  });
+
+  it("el vacío inicial de activos ofrece crear el primer activo", async () => {
+    const user = userEvent.setup();
+    renderScreen([], "owner", false, "asset");
+
+    await user.click(
+      screen.getByRole("button", { name: "Crear el primer activo" }),
+    );
+
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByRole("heading", { name: "Nuevo activo" }),
+    ).toBeInTheDocument();
+  });
+
+  it("«Editar» en un producto abre «Editar producto» con sus datos", async () => {
+    const user = userEvent.setup();
+    renderScreen(
+      [item({ kind: "product", name: "Taza personalizada", salePrice: 45 })],
+      "owner",
+      false,
+      "product",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Editar" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByRole("heading", { name: "Editar producto" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Nombre")).toHaveValue(
+      "Taza personalizada",
+    );
+    expect(
+      within(dialog).getByLabelText("Precio de venta referencial"),
+    ).toHaveValue("45");
+  });
+});
+
+/**
+ * Cambio `item-categories`, requisito "Pantalla de catálogo (V10)": el filtro
+ * por categoría.
+ */
+describe("CatalogScreen · filtro por categoría", () => {
+  function categoria(id: string, name: string, kind: ItemKind, archivedAt: string | null = null): ItemCategory {
+    return { id, organizationId: ORG, kind, name, archivedAt };
+  }
+
+  const SUSTRATOS = categoria("92000000-0000-4000-8000-000000000001", "Sustratos", "supply");
+  const EMBALAJE = categoria("92000000-0000-4000-8000-000000000003", "Embalaje", "supply");
+  const ARCHIVADA = categoria(
+    "92000000-0000-4000-8000-000000000009",
+    "Tintas",
+    "supply",
+    "2026-09-01T00:00:00Z",
+  );
+  const VAJILLA = categoria("92000000-0000-4000-8000-000000000013", "Vajilla", "product");
+
+  function renderFiltered(
+    props: { kind?: ItemKind; categories?: ItemCategory[]; categoryFilter?: string; items?: CatalogRow[] } = {},
+  ) {
+    return render(
+      <CatalogScreen
+        items={props.items ?? [item()]}
+        lines={[LINE]}
+        units={[UNIT]}
+        kind={props.kind ?? "supply"}
+        lineFilter="all"
+        categoryFilter={props.categoryFilter ?? "all"}
+        categories={props.categories ?? [EMBALAJE, SUSTRATOS, ARCHIVADA]}
+        search=""
+        includeArchived={false}
+        role="owner"
+        activeLineId={null}
+      />,
+    );
+  }
+
+  async function opciones() {
+    await userEvent.click(screen.getByTestId("catalog-category"));
+    const listbox = await screen.findByRole("listbox");
+    return within(listbox)
+      .getAllByRole("option")
+      .map((option) => option.textContent);
+  }
+
+  it("elegir una categoría la lleva a la dirección", async () => {
+    renderFiltered();
+
+    await opciones();
+    await userEvent.click(screen.getByRole("option", { name: "Sustratos" }));
+
+    expect(push).toHaveBeenCalledWith(expect.stringContaining(`category=${SUSTRATOS.id}`));
+  });
+
+  it("«Sin categoría» pide los ítems que no tienen", async () => {
+    renderFiltered();
+
+    await opciones();
+    await userEvent.click(screen.getByRole("option", { name: "Sin categoría" }));
+
+    expect(push).toHaveBeenCalledWith(expect.stringContaining("category=none"));
+  });
+
+  it("ofrece «Todas», «Sin categoría» y las vigentes que recibe, sin archivadas", async () => {
+    renderFiltered({ kind: "product", categories: [VAJILLA] });
+
+    expect(await opciones()).toEqual(["Todas las categorías", "Sin categoría", "Vajilla"]);
+  });
+
+  it("no ofrece una categoría archivada", async () => {
+    renderFiltered();
+
+    expect(await opciones()).toEqual([
+      "Todas las categorías",
+      "Sin categoría",
+      "Embalaje",
+      "Sustratos",
+    ]);
+  });
+
+  it("cambiar de pestaña descarta la categoría elegida", async () => {
+    direccion.query = `kind=supply&category=${SUSTRATOS.id}`;
+    renderFiltered({ categoryFilter: SUSTRATOS.id });
+
+    await userEvent.click(screen.getByRole("radio", { name: "Productos" }));
+
+    const destino = push.mock.calls.at(-1)?.[0] as string;
+    expect(destino).toContain("kind=product");
+    expect(destino).not.toContain("category=");
+  });
+
+  it("«Quitar filtros» también limpia la categoría", async () => {
+    direccion.query = `kind=supply&category=${SUSTRATOS.id}&q=zzz&line=${LINE.id}`;
+    renderFiltered({ categoryFilter: SUSTRATOS.id, items: [] });
+
+    await userEvent.click(screen.getByRole("button", { name: "Quitar filtros" }));
+
+    const destino = push.mock.calls.at(-1)?.[0] as string;
+    expect(destino).toBe("/catalog?kind=supply");
+  });
+
+  it("editar un ítem con su categoría archivada la muestra como valor actual", async () => {
+    renderFiltered({ items: [item({ name: "Tinta cian", categoryId: ARCHIVADA.id })] });
+
+    await userEvent.click(screen.getByRole("button", { name: "Acciones" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Editar" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("combobox", { name: "Categoría" })).toHaveTextContent(
+      "Tintas (archivada)",
+    );
   });
 });

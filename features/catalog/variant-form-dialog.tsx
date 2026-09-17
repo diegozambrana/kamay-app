@@ -22,20 +22,25 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { itemVariantFormSchema } from "@/lib/catalog/schema";
-import type { ItemVariant } from "@/types";
+import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
+import type { ItemKind, ItemVariant } from "@/types";
 
 /** Alta y edición de una variante ('11oz', 'Negro', 'XL'), en diálogo. */
 export function VariantFormDialog({
   open,
   onOpenChange,
   itemId,
+  itemKind,
   variant,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemId: string;
+  /** El precio solo se pide si el ítem es un producto (`ITEM_KIND_FIELDS`). */
+  itemKind: ItemKind;
   variant?: ItemVariant;
 }) {
+  const hasPrice = ITEM_KIND_FIELDS[itemKind].salePrice;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -101,18 +106,20 @@ export function VariantFormDialog({
                 required
               />
             </Field>
-            <Field>
-              <FieldLabel htmlFor="variant-price">Precio</FieldLabel>
-              <Input
-                id="variant-price"
-                name="salePrice"
-                inputMode="decimal"
-                defaultValue={variant?.salePrice ?? ""}
-              />
-              <FieldDescription>
-                Solo si difiere del precio del ítem.
-              </FieldDescription>
-            </Field>
+            {hasPrice && (
+              <Field>
+                <FieldLabel htmlFor="variant-price">Precio</FieldLabel>
+                <Input
+                  id="variant-price"
+                  name="salePrice"
+                  inputMode="decimal"
+                  defaultValue={variant?.salePrice ?? ""}
+                />
+                <FieldDescription>
+                  Solo si difiere del precio del ítem.
+                </FieldDescription>
+              </Field>
+            )}
           </FieldGroup>
 
           <DialogFooter className="mt-6">

@@ -7,6 +7,7 @@ import {
   HistoryIcon,
   LayersIcon,
   RulerIcon,
+  ShapesIcon,
   StoreIcon,
   TagsIcon,
   UsersIcon,
@@ -45,7 +46,10 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { href: "/settings/general", label: "General", group: "Organización", icon: Building2Icon, ownerOnly: true },
   { href: "/settings/lines", label: "Líneas de negocio", group: "Organización", icon: LayersIcon, ownerOnly: true },
   { href: "/settings/channels", label: "Canales", group: "Organización", icon: StoreIcon, ownerOnly: true },
-  { href: "/settings/categories", label: "Categorías", group: "Organización", icon: TagsIcon, ownerOnly: true },
+  // Dos listas de categorías con nombres distintos, para que ninguna se confunda
+  // con la otra (cambio `item-categories`).
+  { href: "/settings/categories", label: "Categorías de gasto", group: "Organización", icon: TagsIcon, ownerOnly: true },
+  { href: "/settings/item-categories", label: "Categorías de ítem", group: "Organización", icon: ShapesIcon, ownerOnly: true },
   { href: "/settings/units", label: "Unidades", group: "Organización", icon: RulerIcon, ownerOnly: true },
   { href: "/settings/statuses", label: "Estados", group: "Organización", icon: WorkflowIcon, ownerOnly: true },
   { href: "/settings/members", label: "Usuarios y roles", group: "Equipo", icon: UsersIcon, ownerOnly: true },

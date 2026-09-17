@@ -240,10 +240,10 @@ test.describe("perfil: contraseña", () => {
 async function abrirDetalleDeInsumoPropio(page: Page): Promise<void> {
   const nombre = `Insumo pendiente ${Date.now()}`;
   await page.goto("/catalog?kind=supply");
-  await page.getByRole("button", { name: "Nuevo ítem" }).click();
+  await page.getByRole("button", { name: "Nuevo insumo" }).click();
   const form = page.getByTestId("item-form");
   await form.getByLabel("Nombre").fill(nombre);
-  await form.getByRole("button", { name: "Crear ítem" }).click();
+  await form.getByRole("button", { name: "Crear insumo" }).click();
 
   const fila = page.getByTestId("catalog-row").filter({ hasText: nombre });
   await expect(fila).toHaveCount(1);

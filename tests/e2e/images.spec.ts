@@ -50,7 +50,7 @@ test.describe("imágenes optimizadas", () => {
     const original = noisePng(1000, 800);
     const name = `Taza con foto ${Date.now()}`;
     await page.goto("/catalog?kind=product");
-    await page.getByRole("button", { name: "Nuevo ítem" }).click();
+    await page.getByRole("button", { name: "Nuevo producto" }).click();
     const form = page.getByTestId("item-form");
     await form.getByLabel("Nombre").fill(name);
     await form.getByLabel("Arrastra la foto del ítem").setInputFiles({
@@ -58,7 +58,7 @@ test.describe("imágenes optimizadas", () => {
       mimeType: "image/png",
       buffer: original,
     });
-    await form.getByRole("button", { name: "Crear ítem" }).click();
+    await form.getByRole("button", { name: "Crear producto" }).click();
 
     // ── En la lista: la miniatura, firmada, y liviana ─────────────────────
     const thumbnail = page

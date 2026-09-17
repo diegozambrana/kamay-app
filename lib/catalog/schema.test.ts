@@ -49,6 +49,40 @@ describe("itemFormSchema", () => {
       itemFormSchema.safeParse({ ...validItem, salePrice: "-3" }).success,
     ).toBe(false);
   });
+
+  // «El servidor descarta un precio de venta en un insumo»
+  it("un insumo sale sin precio de venta aunque llegue con uno", () => {
+    const parsed = itemFormSchema.safeParse({
+      ...validItem,
+      salePrice: "45",
+      minStock: "12",
+    });
+    expect(parsed.data?.salePrice).toBeNull();
+    expect(parsed.data?.minStock).toBe(12);
+  });
+
+  // «El servidor descarta un mínimo en un producto»
+  it("un producto sale sin mínimo aunque llegue con uno", () => {
+    const parsed = itemFormSchema.safeParse({
+      ...validItem,
+      kind: "product",
+      salePrice: "45",
+      minStock: "10",
+    });
+    expect(parsed.data?.minStock).toBeNull();
+    expect(parsed.data?.salePrice).toBe(45);
+  });
+
+  it("un activo sale sin precio de venta ni mínimo", () => {
+    const parsed = itemFormSchema.safeParse({
+      ...validItem,
+      kind: "asset",
+      salePrice: "45",
+      minStock: "10",
+    });
+    expect(parsed.data?.salePrice).toBeNull();
+    expect(parsed.data?.minStock).toBeNull();
+  });
 });
 
 describe("contactFormSchema", () => {

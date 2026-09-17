@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { ITEM_KINDS } from "@/types";
 
+import { applyKindFields } from "./fields";
+
 /**
  * Validación compartida entre los formularios de V10, V11 y V13 y las Server
  * Actions. Vive fuera de `actions/` porque un módulo `"use server"` solo puede
@@ -38,17 +40,40 @@ const optionalAmount = z
 
 export const itemKindSchema = z.enum(ITEM_KINDS);
 
-export const itemFormSchema = z.object({
+/**
+ * Los campos del ítem validados, **sin** normalizar por tipo. Solo lo usa la
+ * edición, donde quien decide el tipo es el ítem guardado y no la carga:
+ * normalizar antes con el tipo de la carga perdería, por ejemplo, el mínimo de
+ * un insumo si la petición dijera «producto».
+ */
+export const itemFieldsSchema = z.object({
   name,
   kind: itemKindSchema,
   /** `null` = compartido entre líneas; no es un campo sin llenar. */
   businessLineId: z.guid().nullable(),
   unitId: z.guid().nullable(),
-  category: optionalText,
+  /**
+   * Una categoría del tipo del ítem (`item_categories`), o ninguna. Que sea
+   * de su tipo y esté vigente lo comprueba la acción; la organización y el
+   * tipo, además, la clave compuesta de la base.
+   */
+  categoryId: z
+    .guid()
+    .nullish()
+    .transform((value) => value ?? null),
   description: optionalText,
   salePrice: optionalAmount,
   minStock: optionalAmount,
 });
+
+/**
+ * Un campo que no corresponde al tipo sale vacío aunque llegue con valor
+ * (`ITEM_KIND_FIELDS`). Se normaliza después de validar: un importe mal
+ * escrito se rechaza igual, se vaya a guardar o no.
+ */
+export const itemFormSchema = itemFieldsSchema.transform((values) =>
+  applyKindFields(values.kind, values),
+);
 
 export type ItemFormValues = z.infer<typeof itemFormSchema>;
 

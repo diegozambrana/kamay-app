@@ -79,9 +79,9 @@ test.describe("listas acotadas", () => {
     await expect(page.getByTestId("catalog-row")).toHaveCount(50);
 
     const nombre = `Zz recién creado ${Date.now()}`;
-    await page.getByRole("button", { name: "Nuevo ítem" }).click();
+    await page.getByRole("button", { name: "Nuevo insumo" }).click();
     await page.getByTestId("item-form").getByLabel("Nombre").fill(nombre);
-    await page.getByTestId("item-form").getByRole("button", { name: "Crear ítem" }).click();
+    await page.getByTestId("item-form").getByRole("button", { name: "Crear insumo" }).click();
 
     // Se ve al final de la lista, y el resto sigue ofreciéndose.
     await expect(page.getByTestId("catalog-row").last()).toContainText(nombre);

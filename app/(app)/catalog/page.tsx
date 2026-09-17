@@ -7,6 +7,7 @@ import { getSessionContext } from "@/lib/auth/session-context";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { itemKindSchema } from "@/lib/catalog/schema";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
+import { ItemCategoryService } from "@/services/configuration/item-category-service";
 import { UnitService } from "@/services/configuration/unit-service";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ItemService } from "@/services/catalog/item-service";
@@ -28,6 +29,8 @@ export default async function CatalogPage({
   searchParams: Promise<{
     kind?: string;
     line?: string;
+    /** `none` (sin categoría) o el id de una categoría del tipo. */
+    category?: string;
     q?: string;
     archived?: string;
     limit?: string;
@@ -57,6 +60,22 @@ export default async function CatalogPage({
       ? requested
       : (lines.find((line) => line.id === requested)?.id ?? "all");
 
+  // Las categorías del tipo, archivadas incluidas: las vigentes alimentan el
+  // filtro y el formulario; con todas se resuelve la categoría actual de una
+  // fila que se edita, aunque esté archivada.
+  const allCategories = await new ItemCategoryService(
+    context.supabase,
+  ).listByKind(context.organizationId, kind, { includeArchived: true });
+
+  // Como la línea: un valor que no es una categoría de esta pestaña no
+  // filtra. Pasa, por ejemplo, con un enlace viejo de otra pestaña.
+  const requestedCategory = params.category ?? "all";
+  const categoryFilter =
+    requestedCategory === "none"
+      ? "none"
+      : (allCategories.find((category) => category.id === requestedCategory)?.id ??
+        "all");
+
   // Una ventana del catálogo, no el catálogo entero (KAM-23,
   // `performance-budget`): una fila de más dice si hay más.
   const limit = resolveLimit(params.limit);
@@ -66,6 +85,7 @@ export default async function CatalogPage({
       kind,
       businessLineId:
         lineFilter === "all" ? null : (lineFilter as string | "shared"),
+      categoryId: categoryFilter === "all" ? null : categoryFilter,
       search,
       includeArchived,
       limit: limit + 1,
@@ -82,7 +102,13 @@ export default async function CatalogPage({
       : null;
   const items =
     created &&
-    joinsCatalogWindow(created, { kind, lineFilter, search, includeArchived })
+    joinsCatalogWindow(created, {
+      kind,
+      lineFilter,
+      categoryFilter,
+      search,
+      includeArchived,
+    })
       ? [...window.rows, created]
       : window.rows;
 
@@ -142,6 +168,8 @@ export default async function CatalogPage({
       units={units}
       kind={kind}
       lineFilter={lineFilter}
+      categoryFilter={categoryFilter}
+      categories={allCategories}
       search={search}
       includeArchived={includeArchived}
       role={context.role}

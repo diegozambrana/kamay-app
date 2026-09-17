@@ -12,7 +12,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(31);
+select plan(34);
 
 -- ── Scenario: Reset leaves Geeko Store ready ──────────────────────────────
 
@@ -278,6 +278,35 @@ select is(
       and o.archived_at is null),
   0::numeric,
   'semilla: la impresora está en una línea sin cobros — su barra muestra 0 %');
+
+-- ── Scenario: Categorías de la semilla por tipo (item-categories) ─────────
+-- Por nombre y no por identificador: en una base que ya existía, las
+-- categorías de Geeko las creó la conversión de la migración, no la semilla.
+
+select is(
+  (select count(distinct kind)::int from item_categories
+    where organization_id = '10000000-0000-0000-0000-000000000003'
+      and kind in ('supply', 'product')
+      and archived_at is null),
+  2, 'semilla: Geeko tiene categorías de insumo y de producto');
+
+select is(
+  (select count(*)::int from item_categories
+    where organization_id = '10000000-0000-0000-0000-000000000003'
+      and name = 'Embalaje'),
+  2, 'semilla: «Embalaje» existe como insumo y como producto');
+
+select is(
+  (select count(*)::int from items i
+     join item_categories c on c.id = i.category_id
+    where i.id in (
+            '90000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000002',
+            '90000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000004',
+            '90000000-0000-0000-0000-000000000011', '90000000-0000-0000-0000-000000000012',
+            '90000000-0000-0000-0000-000000000013', '90000000-0000-0000-0000-000000000014',
+            '90000000-0000-0000-0000-000000000015', '90000000-0000-0000-0000-000000000016')
+      and c.kind = i.kind),
+  10, 'semilla: cada insumo y producto sembrado apunta a una categoría de su tipo');
 
 select * from finish();
 

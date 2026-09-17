@@ -134,6 +134,20 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
     columns: ["id", "organization_id", "name", "archived_at"],
   },
   {
+    table: "item_categories",
+    file: "categorias-item",
+    ownerOnly: false,
+    columns: [
+      "id",
+      "organization_id",
+      "kind",
+      "name",
+      "created_at",
+      "updated_at",
+      "archived_at",
+    ],
+  },
+  {
     table: "units",
     file: "unidades",
     ownerOnly: false,
@@ -191,7 +205,6 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
       "name",
       "description",
       "unit_id",
-      "category",
       "sale_price",
       "min_stock",
       "search_name",
@@ -199,6 +212,8 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
       "created_at",
       "updated_at",
       "archived_at",
+      // Añadida por `item-categories`: va donde la pone la base, al final.
+      "category_id",
     ],
   },
   {

@@ -306,9 +306,10 @@ Aplicar a **cada vista con datos** (pedidos, tareas, egresos, catálogo, contact
 
 | ID | P | Pasos | Resultado esperado |
 | --- | --- | --- | --- |
-| CAT-01 | P1 | `/catalog`, pestañas Insumos / Productos / Activos | Tabla con foto, nombre, unidad, precio de venta y línea; insumos bajo mínimo con badge. |
+| CAT-01 | P1 | `/catalog`, pestañas Insumos / Productos / Activos | Tabla con foto, nombre, unidad y línea; la columna **Precio de venta** solo aparece en Productos; insumos bajo mínimo con badge. |
+| CAT-01b | P1 | Pestaña Insumos → **Nuevo insumo** | Diálogo titulado *Nuevo insumo*, sin **Tipo** ni **Precio de venta referencial**, con **Mínimo**; al crear, el ítem queda en Insumos. En Productos el botón es **Nuevo producto** (con precio y sin mínimo); en Activos, **Nuevo activo** (sin precio ni mínimo). |
 | CAT-02 | P1 | Buscar `sublimacion` (sin tilde) | Encuentra *Taza para sublimación*. |
-| CAT-03 | P0 | **Nuevo ítem**: nombre `Llavero`, tipo Producto, línea Sublimación, precio 15, foto | Aparece en Productos con miniatura. Detalle muestra los datos. |
+| CAT-03 | P0 | Pestaña Productos → **Nuevo producto**: nombre `Llavero`, línea Sublimación, precio 15, foto | Aparece en Productos con miniatura. Detalle muestra los datos. |
 | CAT-04 | P1 | Nombre repetido | *Ya existe un registro con ese nombre.* |
 | CAT-05 | P1 | Detalle → **Agregar variante** `Grande` precio 20; luego otra `Grande` | La primera aparece en Variantes; la segunda → *Ese ítem ya tiene una variante con ese nombre.* |
 | CAT-06 | P1 | Nuevo pedido → agregar *Llavero* | Pide elegir variante; el precio de la variante se propone. |
@@ -316,6 +317,10 @@ Aplicar a **cada vista con datos** (pedidos, tareas, egresos, catálogo, contact
 | CAT-08 | P1 | Ayudante | No ve **Archivar** ni **Desarchivar**; sí **Ver** y **Editar**. |
 | CAT-09 | P1 | Archivar un ítem que una tarea vincula | El diálogo avisa *Una tarea apunta a este registro…*; tras archivar, la tarea lo muestra como **Archivado**, sin romperse. |
 | CAT-10 | P2 | **Quitar fotografía** | Confirmación; la foto deja de verse. |
+| CAT-12 | P1 | **Nuevo insumo** → abrir **Categoría** | Ofrece *Sin categoría* y solo las categorías de insumo (*Embalaje*, *Materia prima*, *Sustratos*), sin las de producto. Guardar con una la muestra en el detalle. |
+| CAT-13 | P1 | Filtro **Categoría** = *Sustratos* en Insumos; luego pasar a Productos | La lista muestra solo los insumos de *Sustratos* y la dirección lleva `category=`; al cambiar de pestaña, el filtro vuelve a *Todas las categorías*. *Sin categoría* muestra los ítems que no tienen. |
+| CAT-14 | P1 | Archivar la categoría de un insumo en Configuración y abrir el insumo | El detalle la muestra con la marca **Archivada**; al editar el insumo aparece como *(archivada)* y se conserva al guardar; **Nuevo insumo** ya no la ofrece. |
+| CAT-15 | P2 | Ayudante, **Nuevo activo** en una organización sin categorías de activo | El campo dice que la dueña las define en Configuración, sin enlace; a la dueña le aparece el enlace a **Categorías de ítem**. |
 | CAT-11 | P2 | Más de 50 ítems | *Se muestran los primeros 50 por orden alfabético* con **Mostrar más**. |
 
 ### INV · Inventario
@@ -408,7 +413,9 @@ Aplicar a **cada vista con datos** (pedidos, tareas, egresos, catálogo, contact
 | CFG-04 | P1 | Líneas: crear `Serigrafía` color Verde | Aparece de inmediato en el selector global con su punto verde, sin recargar. |
 | CFG-05 | P1 | Líneas: **Archivar** Serigrafía | Desaparece del selector; sigue en **Archivados** con **Restaurar**; la línea *General* no ofrece Archivar. |
 | CFG-06 | P1 | Líneas: crear otra `Sublimación` | *Ya existe un registro con ese nombre.* |
-| CFG-07 | P1 | Canales / Categorías / Unidades: crear, editar, archivar, restaurar | Mismo patrón; unidad con código vacío → *El código no puede quedar vacío*. |
+| CFG-07 | P1 | Canales / Categorías de gasto / Unidades: crear, editar, archivar, restaurar | Mismo patrón; unidad con código vacío → *El código no puede quedar vacío*. |
+| CFG-07b | P1 | **Categorías de ítem**: en Insumos crear `Tintas`; en Activos crear `Embalaje`; en Insumos crear `sustratos` | `Tintas` aparece solo en Insumos; `Embalaje` se acepta en Activos aunque exista en Insumos y Productos; `sustratos` → *Ya existe un registro con ese nombre.* (choca con *Sustratos*). El menú muestra **Categorías de gasto** y **Categorías de ítem** como entradas separadas. |
+| CFG-07c | P0 | Ayudante abre `/settings/item-categories` | Redirige al panel; no ve la entrada en ningún menú. |
 | CFG-08 | P0 | Estados › Pedidos › Sublimación: **Agregar estado** `Control de calidad` tipo *En curso*; arrastrarlo entre *Sublimando* y *Listo para entrega* | Aparece como columna nueva en el tablero de Sublimación en esa posición; el tablero de Alfarería **no** cambia; los pedidos existentes conservan su estado. |
 | CFG-09 | P1 | Editar `En cola`: quitar *Columna en cola* y cambiar tipo a *En curso* | Guarda; las tarjetas dejan de mostrar posición. Marcar *Columna en cola* en un estado *En curso* → *Solo un estado En espera puede ser columna en cola.* |
 | CFG-10 | P1 | Archivar el único estado *Final* | *Todo juego necesita al menos un estado inicial y uno final.* |

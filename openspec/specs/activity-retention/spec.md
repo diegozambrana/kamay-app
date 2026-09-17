@@ -109,9 +109,9 @@ Un evento cuyo detalle fue vaciado SHALL seguir apareciendo en la bitácora y en
 - **WHEN** se pide el detalle de un evento purgado
 - **THEN** el sistema declara que ya no está disponible por la política de retención
 
-### Requirement: La retención solo la ejecuta el sistema, y nunca por sí sola en esta entrega
+### Requirement: La retención solo la ejecuta el sistema, y en producción se ejecuta sola
 
-La rutina de retención SHALL ejecutarse con privilegio de sistema y SHALL NOT ser invocable por un usuario autenticado, ni dueño ni ayudante. En esta entrega la rutina SHALL NOT dispararse por sí sola: su activación programada queda documentada para la puesta en producción, y su ausencia SHALL NOT dejar la bitácora en un estado inconsistente.
+La rutina de retención SHALL ejecutarse con privilegio de sistema y SHALL NOT ser invocable por un usuario autenticado, ni dueño ni ayudante. En producción la rutina SHALL dispararse sola, una vez al mes y organización por organización, conforme a los trabajos programados de `production-operations`. En un ambiente donde no está programada, su ausencia SHALL NOT dejar la bitácora en un estado inconsistente.
 
 #### Scenario: Un usuario no puede purgar
 
@@ -120,10 +120,11 @@ La rutina de retención SHALL ejecutarse con privilegio de sistema y SHALL NOT s
 
 #### Scenario: Nada se purga sin ejecutarla
 
-- **WHEN** pasa el plazo de retención sin que nadie ejecute la rutina
+- **WHEN** pasa el plazo de retención en un ambiente donde la rutina no está programada
 - **THEN** los eventos vencidos conservan su detalle y el sistema funciona con normalidad
 
 #### Scenario: El procedimiento de activación está documentado
 
 - **WHEN** se consulta la documentación del proyecto sobre la retención
-- **THEN** describe cómo se agenda la rutina en producción y por qué no se agenda en esta entrega
+- **THEN** describe con qué programador y con qué periodicidad corre la rutina en producción, por qué ese programador, y cómo vigilar su resultado
+

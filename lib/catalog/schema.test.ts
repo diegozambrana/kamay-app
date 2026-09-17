@@ -178,3 +178,41 @@ describe("quickContactSchema · teléfono (KAM-08)", () => {
     ).toBe(false);
   });
 });
+
+describe("quickContactSchema · correo y dirección (order-form-picker-dialogs)", () => {
+  const quick = {
+    id: "00000000-0000-4000-8000-000000000002",
+    name: "Florería Luna",
+    isSupplier: false,
+    isCustomer: true,
+  };
+
+  it("sin correo ni dirección sigue siendo válido, como lo envía el buscador en línea", () => {
+    const parsed = quickContactSchema.safeParse({ ...quick, phone: "777" });
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.email).toBeNull();
+    expect(parsed.data?.address).toBeNull();
+  });
+
+  it("guarda correo y dirección cuando llegan", () => {
+    const parsed = quickContactSchema.safeParse({
+      ...quick,
+      email: "luna@example.com",
+      address: "Av. Siempre Viva 123",
+    });
+    expect(parsed.data?.email).toBe("luna@example.com");
+    expect(parsed.data?.address).toBe("Av. Siempre Viva 123");
+  });
+
+  it("vacíos son ausencia de dato", () => {
+    const parsed = quickContactSchema.safeParse({ ...quick, email: "", address: " " });
+    expect(parsed.data?.email).toBeNull();
+    expect(parsed.data?.address).toBeNull();
+  });
+
+  it("rechaza un correo sin formato válido", () => {
+    const parsed = quickContactSchema.safeParse({ ...quick, email: "no-es-correo" });
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues[0].message).toBe("El correo no tiene un formato válido");
+  });
+});

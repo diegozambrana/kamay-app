@@ -147,6 +147,40 @@ for (const scheme of ["light", "dark"] as const) {
       await expect(confirm).toBeHidden();
     });
 
+    test("los diálogos del alta de pedido", async ({ page }) => {
+      const settled = () =>
+        page.waitForFunction(() =>
+          document.getAnimations().every((animation) => animation.playState !== "running"),
+        );
+
+      await page.goto("/orders/new");
+
+      // Con una fila marcada: el estado de elección también se audita.
+      await page.getByRole("button", { name: "Agregar del catálogo" }).click();
+      const catalogo = page.getByRole("dialog", { name: "Agregar del catálogo" });
+      await catalogo.getByRole("option").first().click();
+      await expect(catalogo.getByRole("button", { name: "Agregar (1)" })).toBeEnabled();
+      await settled();
+      await audit(page, "Pedido · diálogo de catálogo");
+      await catalogo.getByRole("button", { name: "Cancelar" }).click();
+      await expect(catalogo).toBeHidden();
+
+      await page.locator("#order-customer-trigger").click();
+      const clientes = page.getByRole("dialog", { name: "Seleccionar cliente" });
+      await clientes.getByRole("option").first().click();
+      await settled();
+      await audit(page, "Pedido · diálogo de cliente");
+
+      // Solo se abre el registro y se mide: «Cancelar» no crea a nadie.
+      await clientes.getByRole("button", { name: "Registrar nuevo cliente" }).click();
+      const registro = page.getByRole("dialog", { name: "Registrar cliente" });
+      await expect(registro.getByLabel("Nombre")).toBeVisible();
+      await settled();
+      await audit(page, "Pedido · registro de cliente");
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toBeHidden();
+    });
+
     test("el modo feria", async ({ page }) => {
       await page.goto("/fair");
       await expect(page.getByTestId("fair-exit")).toBeVisible();

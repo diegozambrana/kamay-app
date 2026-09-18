@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -19,7 +19,7 @@ vi.mock("@/actions/orders", () => ({
 }));
 
 vi.mock("@/actions/contacts", () => ({
-  createContactInline: vi.fn(async () => ({ contact: CLIENTA })),
+  createContactInline: vi.fn(async () => ({ contact: NUEVA })),
 }));
 
 import {
@@ -55,6 +55,13 @@ const CLIENTA: Contact = {
   isCustomer: true,
   notes: null,
   archivedAt: null,
+};
+
+/** La que se registra desde el diálogo: no está en `contacts`. */
+const NUEVA: Contact = {
+  ...CLIENTA,
+  id: "88888888-8888-4888-8888-888888888888",
+  name: "Florería Luna",
 };
 
 const LINES: BusinessLine[] = [
@@ -178,6 +185,31 @@ beforeEach(async () => {
 
 afterEach(cleanup);
 
+type User = ReturnType<typeof userEvent.setup>;
+
+/** Abre el diálogo de cliente, filtra y elige. */
+async function elegirCliente(user: User, nombre: string, filtro = nombre) {
+  await user.click(screen.getByRole("button", { name: /Seleccionar cliente|Cambiar cliente/ }));
+  const dialog = await screen.findByRole("dialog", { name: "Seleccionar cliente" });
+  await user.type(within(dialog).getByRole("combobox", { name: "Buscar un cliente" }), filtro);
+  await user.click(within(dialog).getByRole("option", { name: new RegExp(nombre) }));
+  await user.click(within(dialog).getByRole("button", { name: "Seleccionar cliente" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+}
+
+/** Abre el diálogo de catálogo, marca cada producto y agrega. */
+async function agregarDelCatalogo(user: User, nombres: string[]) {
+  await user.click(screen.getByRole("button", { name: "Agregar del catálogo" }));
+  const dialog = await screen.findByRole("dialog", { name: "Agregar del catálogo" });
+  for (const nombre of nombres) {
+    await user.click(within(dialog).getByRole("option", { name: new RegExp(nombre) }));
+  }
+  await user.click(
+    within(dialog).getByRole("button", { name: `Agregar (${nombres.length})` }),
+  );
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+}
+
 describe("OrderForm · mínimos obligatorios", () => {
   it("guarda el alta mínima sin fecha, canal ni modo de entrega", async () => {
     renderForm();
@@ -264,6 +296,138 @@ describe("OrderForm · mínimos obligatorios", () => {
   });
 });
 
+describe("OrderForm · cliente en un diálogo", () => {
+  it("Sin cliente se ofrece seleccionarlo", () => {
+    renderForm("create", { contactId: "" });
+
+    const field = screen.getByRole("group", { name: "Cliente" });
+    expect(
+      within(field).getByRole("button", { name: "Seleccionar cliente" }),
+    ).toHaveAttribute("id", "order-customer-trigger");
+    expect(within(field).queryByRole("button", { name: "Quitar cliente" })).toBeNull();
+  });
+
+  it("Elegir un cliente de la lista muestra su nombre con cambiar y quitar", async () => {
+    const { user } = renderForm("create", { contactId: "" });
+
+    await elegirCliente(user, "María Céspedes", "maria");
+
+    const field = screen.getByRole("group", { name: "Cliente" });
+    expect(field).toHaveTextContent("María Céspedes");
+    // El botón que abrió el diálogo ya no existe: el foco vuelve al que lo
+    // reemplaza.
+    await waitFor(() =>
+      expect(within(field).getByRole("button", { name: "Cambiar cliente" })).toHaveFocus(),
+    );
+    expect(within(field).getByRole("button", { name: "Quitar cliente" })).toBeInTheDocument();
+
+    submitForm();
+    await waitFor(() =>
+      expect(createOrder).toHaveBeenCalledWith(
+        expect.objectContaining({ contactId: CONTACT }),
+      ),
+    );
+  });
+
+  it("Cancelar no cambia el cliente", async () => {
+    const { user } = renderForm();
+
+    await user.click(screen.getByRole("button", { name: "Cambiar cliente" }));
+    const dialog = await screen.findByRole("dialog", { name: "Seleccionar cliente" });
+    expect(
+      within(dialog).getByRole("option", { name: /María Céspedes/ }),
+    ).toHaveAttribute("aria-checked", "true");
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("group", { name: "Cliente" })).toHaveTextContent(
+      "María Céspedes",
+    );
+  });
+
+  it("Quitar el cliente vuelve al botón y guardar señala el campo", async () => {
+    const { user } = renderForm();
+
+    await user.click(screen.getByRole("button", { name: "Quitar cliente" }));
+
+    const select = screen.getByRole("button", { name: "Seleccionar cliente" });
+    await waitFor(() => expect(select).toHaveFocus());
+
+    submitForm();
+    expect(await screen.findByTestId("contact-error")).toBeInTheDocument();
+    expect(createOrder).not.toHaveBeenCalled();
+  });
+
+  it("El formulario conserva lo escrito al registrar el cliente", async () => {
+    const { user } = renderForm("create", { contactId: "", notes: "" });
+
+    await agregarDelCatalogo(user, ["Taza para sublimación"]);
+    await user.type(screen.getByLabelText("Nota"), "Entregar en caja");
+
+    await user.click(screen.getByRole("button", { name: "Seleccionar cliente" }));
+    const dialog = await screen.findByRole("dialog", { name: "Seleccionar cliente" });
+    await user.type(
+      within(dialog).getByRole("combobox", { name: "Buscar un cliente" }),
+      "Florería Luna",
+    );
+    await user.click(within(dialog).getByRole("button", { name: "Registrar «Florería Luna»" }));
+    const form = await screen.findByRole("dialog", { name: "Registrar cliente" });
+    await user.click(within(form).getByRole("button", { name: "Crear y seleccionar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    // Registrar no guardó el pedido: el diálogo vive dentro del formulario.
+    expect(createOrder).not.toHaveBeenCalled();
+    expect(screen.getByRole("group", { name: "Cliente" })).toHaveTextContent(
+      "Florería Luna",
+    );
+    expect(screen.getAllByTestId("order-line-row")).toHaveLength(2);
+    expect(screen.getByLabelText("Nota")).toHaveValue("Entregar en caja");
+
+    // La recién creada ya aparece en la lista al cambiar.
+    await user.click(screen.getByRole("button", { name: "Cambiar cliente" }));
+    const again = await screen.findByRole("dialog", { name: "Seleccionar cliente" });
+    expect(
+      within(again).getByRole("option", { name: /Florería Luna/ }),
+    ).toHaveAttribute("aria-checked", "true");
+    await user.keyboard("{Escape}");
+
+    submitForm();
+    await waitFor(() =>
+      expect(createOrder).toHaveBeenCalledWith(
+        expect.objectContaining({ contactId: NUEVA.id, notes: "Entregar en caja" }),
+      ),
+    );
+  });
+});
+
+describe("OrderForm · líneas desde el diálogo de catálogo", () => {
+  it("agrega varias líneas con su precio referencial y las guarda", async () => {
+    const { user } = renderForm("create", { items: [] });
+
+    await agregarDelCatalogo(user, ["Taza para sublimación"]);
+
+    expect(screen.getAllByTestId("order-line-row")).toHaveLength(1);
+    expect(screen.getByLabelText("Precio")).toHaveValue(45);
+    expect(screen.getByTestId("order-form-total")).toHaveTextContent("45.00");
+  });
+
+  it("cambiar la línea de negocio quita las líneas agregadas que no le pertenecen", async () => {
+    const { user } = renderForm("create", { items: [], businessLineId: "" });
+
+    // Sin línea elegida se ofrece todo el catálogo vigente.
+    await agregarDelCatalogo(user, ["Taza para sublimación", "Macetero de greda"]);
+    expect(screen.getAllByTestId("order-line-row")).toHaveLength(2);
+
+    await user.click(screen.getByTestId("line-select"));
+    await user.click(await screen.findByRole("option", { name: "Alfarería" }));
+
+    expect(screen.getAllByTestId("order-line-row")).toHaveLength(1);
+    expect(screen.getByTestId("order-form-notice")).toHaveTextContent(
+      "Se quitó una línea",
+    );
+  });
+});
+
 describe("OrderForm · línea de negocio", () => {
   it("al crear, la línea activa viene preseleccionada", () => {
     renderForm();
@@ -323,9 +487,14 @@ describe("OrderForm · guardar", () => {
 
     // …y lo que sí, queda en blanco.
     expect(screen.getByText("Sin líneas todavía")).toBeInTheDocument();
-    expect(screen.queryByTestId("contact-selected")).toBeNull();
+    expect(screen.getByRole("button", { name: "Seleccionar cliente" })).toBeInTheDocument();
     expect(screen.getByLabelText("Nota")).toHaveValue("");
     expect(screen.getByTestId("order-form-total")).toHaveTextContent("0.00");
+
+    // El siguiente pedido empieza por el cliente.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Seleccionar cliente" })).toHaveFocus(),
+    );
   });
 
   it("«Guardar y crear otro» estrena identificador para el pedido siguiente", async () => {
@@ -336,10 +505,8 @@ describe("OrderForm · guardar", () => {
 
     // Se rehace el pedido entero —el formulario quedó en blanco— y se guarda
     // otra vez: el id no puede repetirse, que el anterior ya está guardado.
-    await user.type(screen.getByLabelText("Cliente"), "María");
-    await user.click(screen.getByRole("button", { name: "María Céspedes" }));
-    await user.type(screen.getByLabelText("Agregar del catálogo"), "taza");
-    await user.click(screen.getByRole("button", { name: /Taza para sublimación/ }));
+    await elegirCliente(user, "María");
+    await agregarDelCatalogo(user, ["Taza para sublimación"]);
     await user.click(screen.getByTestId("save-and-new"));
 
     await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));

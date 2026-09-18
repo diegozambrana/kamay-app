@@ -1,4 +1,5 @@
 import { geeko } from "./helpers/seed-copies";
+import { agregarDelCatalogo, elegirCliente } from "./helpers/order-form";
 import { expect, test, type Page } from "./helpers/test";
 
 /**
@@ -339,13 +340,8 @@ test.describe("Registrado hoy cuenta lo que no se ha enviado", () => {
     await page.goto("/orders/new");
     await page.getByTestId("line-select").click();
     await page.getByRole("option", { name: "Sublimación", exact: true }).click();
-    await page.getByLabel("Cliente").fill("María");
-    await page.getByRole("button", { name: "María Céspedes", exact: true }).click();
-
-    const opciones = page.getByTestId("catalog-options");
-    await page.getByLabel("Agregar del catálogo").fill("Taza");
-    await opciones.getByRole("button", { name: /Taza personalizada/ }).click();
-    await opciones.getByRole("button", { name: /15oz/ }).click();
+    await elegirCliente(page, "María Céspedes", { filtro: "María" });
+    await agregarDelCatalogo(page, [{ producto: "Taza personalizada", variante: "15oz" }]);
     await page.getByLabel("Cantidad").fill("2");
 
     await page.route("**/orders/new", async (route) => {

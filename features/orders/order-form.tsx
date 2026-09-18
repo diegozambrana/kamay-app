@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
 import {
@@ -11,6 +11,7 @@ import {
   uploadOrderAttachment,
 } from "@/actions/orders";
 import { FileDropzone } from "@/components/file-dropzone/file-dropzone";
+import { EntityPickerField } from "@/components/shared/entity-picker-field";
 import { MainContainer } from "@/components/layout/main-container";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ContactCombobox } from "@/features/contacts/contact-combobox";
+import { CustomerPickerDialog } from "@/features/contacts/customer-picker-dialog";
 import { ORDER_CREATE, ORDER_UPDATE } from "@/features/sync/operations";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { lineColorClasses } from "@/lib/business-lines/colors";
@@ -57,6 +58,7 @@ import { DiscardGuard } from "./discard-guard";
 import { DueDateField } from "./due-date-field";
 import {
   OrderLinesEditor,
+  type AddedLine,
   type EditorLine,
   type LineErrors,
   type LineNames,
@@ -91,6 +93,9 @@ export type OrderAttachmentView = {
 type Saved =
   | { status: "sent"; orderId: string; code: number }
   | { status: "queued"; orderId: string };
+
+/** El disparador del campo de cliente: recibe el foco al empezar otro pedido. */
+const CUSTOMER_TRIGGER_ID = "order-customer-trigger";
 
 const DELIVERY_LABELS: Record<DeliveryMode, string> = {
   pickup: "Recojo",
@@ -133,7 +138,7 @@ function lineIssuesOf(items: unknown): (LineErrors | undefined)[] {
  * V5 · Nuevo pedido, y la edición del mismo pedido.
  *
  * Un solo componente con dos modos (design.md D6): el editor de líneas, el
- * buscador de cliente y la guardia de descarte son idénticos, y lo único que
+ * diálogo de cliente y la guardia de descarte son idénticos, y lo único que
  * cambia es que la línea de negocio se elige al crear y solo se muestra al
  * editar — cambiarla movería el pedido a otro juego de estados.
  *
@@ -192,6 +197,15 @@ export function OrderForm({
   const [selected, setSelected] = useState<Contact | null>(
     contacts.find((contact) => contact.id === defaultValues.contactId) ?? null,
   );
+  /** Clientes registrados desde el diálogo: aún no llegan en `contacts`. */
+  const [createdContacts, setCreatedContacts] = useState<Contact[]>([]);
+  const [customerOpen, setCustomerOpen] = useState(false);
+  /**
+   * Pedir el foco en el campo de cliente. Se resuelve en un efecto: el
+   * disparador cambia de forma al elegir o quitar, y el elemento con ese `id`
+   * solo existe después del render.
+   */
+  const [customerFocus, setCustomerFocus] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -215,6 +229,34 @@ export function OrderForm({
   const deliveryMode = useWatch({ control, name: "deliveryMode" });
 
   const activeLine = lines.find((line) => line.id === businessLineId) ?? null;
+
+  const customerOptions =
+    createdContacts.length === 0 ? contacts : [...contacts, ...createdContacts];
+
+  useEffect(() => {
+    if (customerFocus > 0) {
+      document.getElementById(CUSTOMER_TRIGGER_ID)?.focus();
+    }
+  }, [customerFocus]);
+
+  function chooseCustomer(contact: Contact) {
+    if (!contacts.some((candidate) => candidate.id === contact.id)) {
+      setCreatedContacts((previous) =>
+        previous.some((candidate) => candidate.id === contact.id)
+          ? previous
+          : [...previous, contact],
+      );
+    }
+    setSelected(contact);
+    setValue("contactId", contact.id, { shouldDirty: true, shouldValidate: true });
+  }
+
+  function clearCustomer() {
+    setSelected(null);
+    setValue("contactId", "", { shouldDirty: true, shouldValidate: true });
+    // El botón que tenía el foco desaparece: se lo pasa a «Seleccionar cliente».
+    setCustomerFocus((count) => count + 1);
+  }
 
   // `fields` da las claves estables de React; `currentItems`, lo que hay
   // escrito ahora mismo en cada campo. Aquí se normalizan los opcionales del
@@ -267,9 +309,13 @@ export function OrderForm({
     }
   }
 
-  function addLine(line: EditorLine, displayNames: LineNames) {
-    append(line);
-    setNames((previous) => ({ ...previous, [line.id]: displayNames }));
+  /** Un solo `append` para todo el lote: un render y una validación. */
+  function addLines(added: AddedLine[]) {
+    append(added.map(({ line }) => line));
+    setNames((previous) => ({
+      ...previous,
+      ...Object.fromEntries(added.map(({ line, names }) => [line.id, names])),
+    }));
     setNotice(null);
   }
 
@@ -419,7 +465,7 @@ export function OrderForm({
             : "Pedido guardado · pendiente de sincronizar. Se enviará solo cuando vuelva la señal.",
         );
         if (mode === "create") {
-          document.getElementById("contact-combobox-input")?.focus();
+          setCustomerFocus((count) => count + 1);
         }
         return;
       }
@@ -443,7 +489,7 @@ export function OrderForm({
         setNames({});
         setSelected(null);
         setNotice(`Pedido #${saved.code} guardado. Puedes registrar otro.`);
-        document.getElementById("contact-combobox-input")?.focus();
+        setCustomerFocus((count) => count + 1);
         return;
       }
 
@@ -507,7 +553,7 @@ export function OrderForm({
                 disabled={isSubmitting}
                 error={errors.items?.message ?? errors.items?.root?.message}
                 lineErrors={lineIssuesOf(errors.items)}
-                onAdd={addLine}
+                onAdd={addLines}
                 onUpdate={updateLine}
                 onRemove={remove}
               />
@@ -571,25 +617,38 @@ export function OrderForm({
                 </Field>
               )}
 
-              <Field data-invalid={errors.contactId ? true : undefined}>
-                <ContactCombobox
-                  contacts={contacts}
-                  role="customer"
-                  label="Cliente"
-                  value={selected}
-                  onSelect={(contact) => {
-                    setSelected(contact);
-                    setValue("contactId", contact.id, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-                  }}
+              {/* El botón se nombra por su texto («Seleccionar cliente»), no
+                  por el rótulo: por eso el rótulo no lleva `htmlFor`. */}
+              <Field
+                aria-labelledby="order-customer-label"
+                data-invalid={errors.contactId ? true : undefined}
+              >
+                <FieldLabel id="order-customer-label">Cliente</FieldLabel>
+                <EntityPickerField
+                  id={CUSTOMER_TRIGGER_ID}
+                  data-testid="customer-field"
+                  value={selected?.name ?? null}
+                  selectLabel="Seleccionar cliente"
+                  changeLabel="Cambiar cliente"
+                  clearLabel="Quitar cliente"
+                  disabled={isSubmitting}
+                  invalid={Boolean(errors.contactId)}
+                  onOpen={() => setCustomerOpen(true)}
+                  onClear={clearCustomer}
                 />
                 {errors.contactId && (
                   <FieldError data-testid="contact-error">
                     {errors.contactId.message}
                   </FieldError>
                 )}
+                <CustomerPickerDialog
+                  open={customerOpen}
+                  onOpenChange={setCustomerOpen}
+                  contacts={customerOptions}
+                  value={selected}
+                  onSelect={chooseCustomer}
+                  returnFocusId={CUSTOMER_TRIGGER_ID}
+                />
               </Field>
 
               <DueDateField

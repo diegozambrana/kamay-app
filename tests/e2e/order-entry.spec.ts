@@ -1,4 +1,11 @@
 import { geeko } from "./helpers/seed-copies";
+import {
+  agregarDelCatalogo,
+  campoCliente,
+  disparadorCliente,
+  elegirCliente,
+  registrarCliente,
+} from "./helpers/order-form";
 import { expect, test, type Locator, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
@@ -45,21 +52,6 @@ async function elegirLinea(page: Page, nombre: string) {
   await expect(page.getByTestId("line-select")).toContainText(nombre);
 }
 
-async function elegirCliente(page: Page, nombre: string) {
-  await page.getByLabel("Cliente").fill(nombre);
-  await page.getByRole("button", { name: nombre, exact: true }).click();
-  await expect(page.getByTestId("contact-selected")).toContainText(nombre);
-}
-
-/** Agrega una línea desde el catálogo, eligiendo variante si la pide. */
-async function agregarDelCatalogo(page: Page, producto: string, variante?: string) {
-  const opciones = page.getByTestId("catalog-options");
-  await page.getByLabel("Agregar del catálogo").fill(producto);
-  await opciones.getByRole("button", { name: new RegExp(producto) }).click();
-  if (variante) {
-    await opciones.getByRole("button", { name: new RegExp(variante) }).click();
-  }
-}
 
 test.describe("alta de pedidos (V5)", () => {
   /**
@@ -92,13 +84,21 @@ test.describe("alta de pedidos (V5)", () => {
     // La línea activa llega preseleccionada: no cuesta ninguna interacción.
     await expect(page.getByTestId("line-select")).toContainText("Sublimación");
 
-    await medida.escribir(page.getByLabel("Cliente"), "María");
-    await medida.clic(page.getByRole("button", { name: "María Céspedes", exact: true }));
+    // Cliente y producto se eligen en diálogos. El camino corto es tocar la
+    // fila en la lista completa, sin escribir en el filtro: abrir, elegir y
+    // confirmar. Filtrar suma un gesto por diálogo (16 en total), y con él
+    // el recorrido ya no cabe en el criterio.
+    await medida.clic(disparadorCliente(page));
+    const clientes = page.getByRole("dialog", { name: "Seleccionar cliente" });
+    await medida.clic(clientes.getByRole("option", { name: /María Céspedes/ }));
+    await medida.clic(clientes.getByRole("button", { name: "Seleccionar cliente" }));
+    await expect(campoCliente(page)).toContainText("María Céspedes");
 
-    const opciones = page.getByTestId("catalog-options");
-    await medida.escribir(page.getByLabel("Agregar del catálogo"), "Taza");
-    await medida.clic(opciones.getByRole("button", { name: /Taza personalizada/ }));
-    await medida.clic(opciones.getByRole("button", { name: /15oz/ }));
+    await medida.clic(page.getByRole("button", { name: "Agregar del catálogo" }));
+    const catalogo = page.getByRole("dialog", { name: "Agregar del catálogo" });
+    await medida.clic(catalogo.getByRole("option", { name: /Taza personalizada.*15oz/ }));
+    await medida.clic(catalogo.getByRole("button", { name: "Agregar (1)" }));
+    await expect(catalogo).toBeHidden();
     await medida.escribir(page.getByLabel("Cantidad"), "20");
 
     await medida.clic(page.getByRole("button", { name: "Mañana", exact: true }));
@@ -137,17 +137,33 @@ test.describe("alta de pedidos (V5)", () => {
 
     await elegirLinea(page, "Sublimación");
     await elegirCliente(page, "María Céspedes");
-    await agregarDelCatalogo(page, "Taza personalizada", "11oz");
-    await agregarDelCatalogo(page, "Taza personalizada", "15oz");
+    // Las dos variantes en un solo paso: el diálogo admite selección múltiple.
+    await agregarDelCatalogo(page, [
+      { producto: "Taza personalizada", variante: "11oz" },
+      { producto: "Taza personalizada", variante: "15oz" },
+    ]);
 
-    // 45 + 55: cada línea guarda el precio de su propia variante.
+    // 45 + 55: cada línea nace con el precio referencial de su variante.
+    const filas = page.getByTestId("order-line-row");
+    await expect(filas.nth(0).getByLabel("Precio")).toHaveValue("45");
+    await expect(filas.nth(1).getByLabel("Precio")).toHaveValue("55");
     await expect(page.getByTestId("order-form-total")).toHaveText("100.00");
+
+    // El precio prellenado se edita, y el editado es el que se guarda.
+    await filas.nth(0).getByLabel("Precio").fill("40");
+    await expect(page.getByTestId("order-form-total")).toHaveText("95.00");
 
     await page.getByTestId("save-order").click();
     await page.waitForURL(ORDER_DETAIL);
 
     await expect(page.getByTestId("order-line")).toHaveCount(2);
-    await expect(page.getByTestId("order-total")).toHaveText("100.00");
+    await expect(page.getByTestId("order-total")).toHaveText("95.00");
+
+    // El catálogo no cambió: un pedido nuevo vuelve a nacer con 45.
+    await page.goto("/orders/new");
+    await elegirLinea(page, "Sublimación");
+    await agregarDelCatalogo(page, [{ producto: "Taza personalizada", variante: "11oz" }]);
+    await expect(page.getByLabel("Precio")).toHaveValue("45");
   });
 
   /**
@@ -162,7 +178,7 @@ test.describe("alta de pedidos (V5)", () => {
 
     await elegirLinea(page, "Alfarería");
     await elegirCliente(page, "Colegio San Andrés");
-    await agregarDelCatalogo(page, "Maceta de barro");
+    await agregarDelCatalogo(page, ["Maceta de barro"]);
 
     await page.getByTestId("save-order").click();
     await page.waitForURL(ORDER_DETAIL);
@@ -186,7 +202,7 @@ test.describe("alta de pedidos (V5)", () => {
     await page.goto("/orders/new");
 
     await elegirLinea(page, "Alfarería");
-    await agregarDelCatalogo(page, "Maceta de barro");
+    await agregarDelCatalogo(page, ["Maceta de barro"]);
 
     await page.getByTestId("save-order").click();
     await expect(page.getByTestId("contact-error")).toContainText(
@@ -196,7 +212,7 @@ test.describe("alta de pedidos (V5)", () => {
 
     // Con cliente pero sin líneas, el mensaje señala las líneas.
     await elegirCliente(page, "Colegio San Andrés");
-    await page.getByRole("button", { name: /^Quitar/ }).click();
+    await page.getByRole("button", { name: "Quitar Maceta de barro" }).click();
     await page.getByTestId("save-order").click();
 
     await expect(page.getByTestId("lines-error")).toContainText(
@@ -211,17 +227,18 @@ test.describe("alta de pedidos (V5)", () => {
     await page.goto("/orders/new");
 
     await elegirLinea(page, "Alfarería");
-    await agregarDelCatalogo(page, "Maceta de barro");
+    await agregarDelCatalogo(page, ["Maceta de barro"]);
     await page.getByLabel("Nota").fill("Entrega en la feria del sábado.");
 
     // Un nombre único por ejecución: las dos plataformas corren en paralelo.
     const nombre = `Clienta ${Date.now()}${Math.floor(Math.random() * 1000)}`;
-    await page.getByLabel("Cliente").fill(nombre);
-    await page.getByRole("button", { name: `Crear «${nombre}»` }).click();
-    await page.getByLabel("Teléfono").fill("77712345");
-    await page.getByRole("button", { name: "Crear", exact: true }).click();
-
-    await expect(page.getByTestId("contact-selected")).toContainText(nombre);
+    // Registrar lo buscado: el nombre llega prellenado desde el filtro.
+    await registrarCliente(page, {
+      nombre,
+      telefono: "77712345",
+      correo: "clienta@example.com",
+      direccion: "Calle Sucre 45",
+    });
     // Lo que ya estaba escrito sigue ahí.
     await expect(page.getByLabel("Nota")).toHaveValue(
       "Entrega en la feria del sábado.",
@@ -237,6 +254,8 @@ test.describe("alta de pedidos (V5)", () => {
     await page.getByRole("button", { name: nombre }).click();
     const detalle = page.getByTestId("contact-detail");
     await expect(detalle).toContainText("77712345");
+    await expect(detalle).toContainText("clienta@example.com");
+    await expect(detalle).toContainText("Calle Sucre 45");
     await expect(detalle).toContainText("Cliente");
   });
 
@@ -249,7 +268,7 @@ test.describe("alta de pedidos (V5)", () => {
 
     await elegirLinea(page, "Alfarería");
     await elegirCliente(page, "Colegio San Andrés");
-    await agregarDelCatalogo(page, "Maceta de barro");
+    await agregarDelCatalogo(page, ["Maceta de barro"]);
 
     await page.getByTestId("channel-select").click();
     await page.getByRole("option", { name: "Feria", exact: true }).click();
@@ -267,7 +286,8 @@ test.describe("alta de pedidos (V5)", () => {
 
     // …y lo demás queda en blanco.
     await expect(page.getByText("Sin líneas todavía")).toBeVisible();
-    await expect(page.getByTestId("contact-selected")).toHaveCount(0);
+    await expect(disparadorCliente(page)).toHaveText("Seleccionar cliente");
+    await expect(disparadorCliente(page)).toBeFocused();
     await expect(page.getByLabel("Nota")).toHaveValue("");
     await expect(page.getByTestId("order-form-total")).toHaveText("0.00");
 
@@ -336,5 +356,13 @@ test.describe("alta de pedidos (V5)", () => {
     await expect(page.getByTestId("bottom-bar")).toHaveCount(0);
     await expect(page.getByTestId("save-order")).toBeInViewport();
     await expect(page.getByTestId("discard-button")).toBeInViewport();
+
+    // El diálogo de catálogo cabe en la pantalla: con la lista completa
+    // abierta, el pie sigue a la vista sin desplazar la página.
+    await page.getByRole("button", { name: "Agregar del catálogo" }).click();
+    const catalogo = page.getByRole("dialog", { name: "Agregar del catálogo" });
+    await expect(catalogo.getByRole("option").first()).toBeVisible();
+    await expect(catalogo.getByRole("button", { name: "Agregar" })).toBeInViewport();
+    await expect(catalogo.getByRole("button", { name: "Cancelar" })).toBeInViewport();
   });
 });

@@ -1,4 +1,5 @@
 import { geeko } from "./helpers/seed-copies";
+import { agregarDelCatalogo, elegirCliente } from "./helpers/order-form";
 import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
@@ -32,11 +33,8 @@ async function crearPedido(
   await page.getByTestId("line-select").click();
   await page.getByRole("option", { name: linea, exact: true }).click();
 
-  await page.getByLabel("Cliente").fill(cliente);
-  await page.getByRole("button", { name: cliente, exact: true }).click();
-
-  await page.getByLabel("Agregar del catálogo").fill(producto);
-  await page.getByRole("button", { name: new RegExp(producto) }).click();
+  await elegirCliente(page, cliente);
+  await agregarDelCatalogo(page, [producto]);
 
   await page.getByTestId("save-order").click();
   await page.waitForURL(ORDER_DETAIL);
@@ -103,7 +101,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
     await page.getByTestId("edit-order").click();
     await page.waitForURL(/\/edit$/);
 
-    await page.getByRole("button", { name: /^Quitar/ }).click();
+    await page.getByRole("button", { name: "Quitar Maceta de barro" }).click();
     await page.getByTestId("save-order").click();
 
     await expect(page.getByTestId("lines-error")).toContainText(

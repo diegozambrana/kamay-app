@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -14,12 +14,11 @@ import {
 import {
   lineTotal,
   orderTotal,
-  prefilledPrice,
   type PickableItem,
+  type PickerOption,
 } from "@/lib/orders/lines";
-import type { ItemVariant } from "@/types";
 
-import { CatalogPicker } from "./catalog-picker";
+import { CatalogPickerDialog } from "./catalog-picker-dialog";
 
 /** Una línea tal como la edita el formulario. Los números llegan como texto. */
 export type EditorLine = {
@@ -34,6 +33,9 @@ export type EditorLine = {
 /** Nombres del catálogo, solo para mostrar: no viajan al servidor. */
 export type LineNames = { item: string | null; variant: string | null };
 
+/** Una línea nueva con los nombres que la acompañan en pantalla. */
+export type AddedLine = { line: EditorLine; names: LineNames };
+
 export type LineErrors = {
   quantity?: string;
   unitPrice?: string;
@@ -41,7 +43,8 @@ export type LineErrors = {
 };
 
 /**
- * Las líneas del pedido: buscador, filas editables y total en pantalla.
+ * Las líneas del pedido: filas editables, las acciones para agregar (diálogo
+ * de catálogo y línea libre) y el total en pantalla.
  *
  * El total se calcula aquí solo para que se vea mientras se escribe. **No
  * viaja ni se guarda** (convención nº 4): el total real lo devuelve la vista
@@ -71,51 +74,48 @@ export function OrderLinesEditor({
   /** Error de la sección entera, como "Agrega al menos una línea". */
   error?: string;
   lineErrors?: (LineErrors | undefined)[];
-  onAdd: (line: EditorLine, displayNames: LineNames) => void;
+  /** Una o varias líneas nuevas, en el orden en que deben aparecer. */
+  onAdd: (lines: AddedLine[]) => void;
   onUpdate: (index: number, patch: Partial<EditorLine>) => void;
   onRemove: (index: number) => void;
 }) {
-  function addFromCatalog(item: PickableItem, variant: ItemVariant | null) {
+  function addFromCatalog(options: PickerOption[]) {
     onAdd(
-      {
-        // Generado en el cliente (convención nº 9).
-        id: crypto.randomUUID(),
-        itemId: item.id,
-        variantId: variant?.id ?? null,
-        description: "",
-        quantity: 1,
-        unitPrice: prefilledPrice(item, variant),
-      },
-      { item: item.name, variant: variant?.name ?? null },
+      options.map((option) => ({
+        line: {
+          // Generado en el cliente (convención nº 9).
+          id: crypto.randomUUID(),
+          itemId: option.item.id,
+          variantId: option.variant?.id ?? null,
+          description: "",
+          quantity: 1,
+          unitPrice: option.price,
+        },
+        names: { item: option.item.name, variant: option.variant?.name ?? null },
+      })),
     );
   }
 
   function addFreeLine() {
-    onAdd(
+    onAdd([
       {
-        id: crypto.randomUUID(),
-        itemId: null,
-        variantId: null,
-        description: "",
-        quantity: 1,
-        unitPrice: 0,
+        line: {
+          id: crypto.randomUUID(),
+          itemId: null,
+          variantId: null,
+          description: "",
+          quantity: 1,
+          unitPrice: 0,
+        },
+        names: { item: null, variant: null },
       },
-      { item: null, variant: null },
-    );
+    ]);
   }
 
   const total = orderTotal(lines);
 
   return (
     <div className="flex flex-col gap-4" data-testid="order-lines">
-      <CatalogPicker
-        items={items}
-        businessLineId={businessLineId}
-        disabled={disabled}
-        onPick={addFromCatalog}
-        onFreeLine={addFreeLine}
-      />
-
       {error && (
         <FieldError data-testid="lines-error">{error}</FieldError>
       )}
@@ -125,7 +125,7 @@ export function OrderLinesEditor({
           <EmptyHeader>
             <EmptyTitle>Sin líneas todavía</EmptyTitle>
             <EmptyDescription>
-              Busca un producto del catálogo o agrega una línea libre.
+              Agrega productos del catálogo o una línea libre.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -252,6 +252,28 @@ export function OrderLinesEditor({
           })}
         </ul>
       )}
+
+      {/* Las acciones van al final: se agrega donde termina la lista. La
+          línea libre es la salida para lo que no está en el catálogo; su
+          precio se escribe a mano y la descripción es obligatoria. */}
+      <div data-testid="order-lines-actions" className="flex flex-wrap gap-2">
+        <CatalogPickerDialog
+          items={items}
+          businessLineId={businessLineId}
+          disabled={disabled}
+          onAdd={addFromCatalog}
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={disabled}
+          onClick={addFreeLine}
+        >
+          <PlusIcon data-icon="inline-start" />
+          Línea libre
+        </Button>
+      </div>
 
       <p className="text-right font-medium">
         Total{" "}

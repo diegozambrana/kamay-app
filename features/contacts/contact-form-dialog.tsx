@@ -23,10 +23,11 @@ import {
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { contactFormSchema, hasARole } from "@/lib/catalog/schema";
 import type { Contact } from "@/types";
+
+import { ContactFields } from "./contact-fields";
 
 /**
  * Alta y edición de contacto en un diálogo. Los roles son casillas
@@ -119,41 +120,7 @@ export function ContactFormDialog({
           )}
 
           <FieldGroup className="mt-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="contact-name">Nombre</FieldLabel>
-                <Input
-                  id="contact-name"
-                  name="name"
-                  defaultValue={contact?.name}
-                  required
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="contact-phone">Teléfono</FieldLabel>
-                <Input
-                  id="contact-phone"
-                  name="phone"
-                  defaultValue={contact?.phone ?? ""}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="contact-email">Correo</FieldLabel>
-                <Input
-                  id="contact-email"
-                  name="email"
-                  defaultValue={contact?.email ?? ""}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="contact-address">Dirección</FieldLabel>
-                <Input
-                  id="contact-address"
-                  name="address"
-                  defaultValue={contact?.address ?? ""}
-                />
-              </Field>
-            </div>
+            <ContactFields defaultValues={contact} />
 
             <Field>
               <FieldLabel htmlFor="contact-notes">Notas</FieldLabel>

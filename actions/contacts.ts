@@ -131,8 +131,8 @@ export async function createContactInline(
         // El teléfono se pide en el mismo paso desde KAM-08: al registrar un
         // pedido es el dato que hace falta a continuación.
         phone: parsed.data.phone,
-        email: null,
-        address: null,
+        email: parsed.data.email,
+        address: parsed.data.address,
         notes: null,
         isSupplier: parsed.data.isSupplier,
         isCustomer: parsed.data.isCustomer,

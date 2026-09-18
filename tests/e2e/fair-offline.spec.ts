@@ -102,6 +102,43 @@ async function esperarCascaronGuardado(page: Page) {
 }
 
 /**
+ * Espera a que el catálogo capturado esté **escrito en Dexie**.
+ *
+ * Capturar la feria escribe dos cosas, y esperar solo el cascarón deja fuera
+ * la mitad: sin el snapshot, la navegación sin red sirve la página guardada
+ * pero la cuadrícula llega vacía, que es como se veía la intermitencia de
+ * `abre sin red desde el catálogo capturado` en CI —cascarón sí, productos
+ * no—.
+ */
+async function esperarCatalogoCapturado(page: Page) {
+  await page.waitForFunction(
+    async () => {
+      const req = indexedDB.open("kamay-outbox");
+      const db: IDBDatabase = await new Promise((resolve, reject) => {
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+
+      if (!db.objectStoreNames.contains("fairSnapshots")) {
+        db.close();
+        return false;
+      }
+
+      const rows: { products?: unknown[] }[] = await new Promise((resolve) => {
+        const all = db.transaction("fairSnapshots").objectStore("fairSnapshots").getAll();
+        all.onsuccess = () => resolve(all.result);
+        all.onerror = () => resolve([]);
+      });
+      db.close();
+
+      return rows.some((row) => (row.products?.length ?? 0) > 0);
+    },
+    undefined,
+    { timeout: 30_000 },
+  );
+}
+
+/**
  * Espera a que el service worker **controle esta página**, no solo a que esté
  * activo.
  *
@@ -453,6 +490,7 @@ test.describe("el modo feria se abre sin red", () => {
     await abrirFeria(page);
     await esperarServiceWorkerAlMando(page);
     await esperarCascaronGuardado(page);
+    await esperarCatalogoCapturado(page);
     const productos = await page.getByTestId("fair-product").count();
     expect(productos).toBeGreaterThan(0);
 

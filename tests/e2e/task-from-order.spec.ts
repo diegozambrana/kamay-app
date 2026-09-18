@@ -1,4 +1,5 @@
 import { geekoForBlock } from "./helpers/seed-copies";
+import { agregarDelCatalogo, elegirCliente } from "./helpers/order-form";
 import { expect, test, type Page } from "./helpers/test";
 
 const PASSWORD = "kamay123";
@@ -35,18 +36,11 @@ async function createOwnOrder(page: Page, nota: string): Promise<string> {
 
   // Se elige un cliente ya sembrado en vez de crear uno: leerlo no muta nada,
   // y lo que esta suite necesita propio es el pedido, no el directorio.
-  await page.getByLabel("Cliente").fill("María");
-  await page.getByRole("button", { name: "María Céspedes", exact: true }).click();
-  await expect(page.getByTestId("contact-selected")).toContainText("María Céspedes");
+  await elegirCliente(page, "María Céspedes", { filtro: "María" });
 
-  // «Bolsa de regalo» no tiene variantes: agregarla es un solo clic y la línea
-  // del pedido queda completa sin pasar por el selector de variante.
-  await page.getByLabel("Agregar del catálogo").fill("Bolsa");
-  await page
-    .getByTestId("catalog-options")
-    .getByRole("button", { name: /Bolsa de regalo/ })
-    .first()
-    .click();
+  // «Bolsa de regalo» no tiene variantes: es una sola fila del diálogo y la
+  // línea del pedido queda completa sin elegir ninguna.
+  await agregarDelCatalogo(page, ["Bolsa de regalo"]);
   await expect(page.getByTestId("order-line-row")).toHaveCount(1);
 
   // Una fecha comprometida bien adelante: es de donde sale la fecha que

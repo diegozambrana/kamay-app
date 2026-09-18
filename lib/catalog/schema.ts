@@ -84,6 +84,19 @@ export const itemVariantFormSchema = z.object({
 
 export type ItemVariantFormValues = z.infer<typeof itemVariantFormSchema>;
 
+/** Correo opcional: vacío es ausencia de dato; con algo escrito, tiene que serlo. */
+const contactEmail = z
+  .string()
+  .trim()
+  .max(200)
+  .nullish()
+  .transform((value) =>
+    value === undefined || value === null || value === "" ? null : value,
+  )
+  .refine((value) => value === null || z.email().safeParse(value).success, {
+    message: "El correo no tiene un formato válido",
+  });
+
 /**
  * Un contacto sin rol no es nadie: no aparecería en ningún buscador. La regla
  * vive por triplicado a propósito — restricción `has_a_role` en la base, este
@@ -93,17 +106,7 @@ export const contactFormSchema = z
   .object({
     name,
     phone: optionalText,
-    email: z
-      .string()
-      .trim()
-      .max(200)
-      .nullish()
-      .transform((value) =>
-        value === undefined || value === null || value === "" ? null : value,
-      )
-      .refine((value) => value === null || z.email().safeParse(value).success, {
-        message: "El correo no tiene un formato válido",
-      }),
+    email: contactEmail,
     address: optionalText,
     notes: optionalText,
     isSupplier: z.boolean(),
@@ -123,12 +126,18 @@ export type ContactFormValues = z.infer<typeof contactFormSchema>;
  * registrar un pedido, el número del cliente es justo el dato que hace falta
  * a continuación, y volver al directorio a completarlo rompe el ritmo del
  * alta. El resto de los datos siguen completándose después.
+ *
+ * Correo y dirección son opcionales: el diálogo de cliente del pedido los
+ * pide (`order-form-picker-dialogs`, design D6), y el buscador en línea de
+ * compras y directorio sigue enviando solo nombre y teléfono.
  */
 export const quickContactSchema = z
   .object({
     id: z.guid(),
     name,
     phone: optionalText,
+    email: contactEmail,
+    address: optionalText,
     isSupplier: z.boolean(),
     isCustomer: z.boolean(),
   })

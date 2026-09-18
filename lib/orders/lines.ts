@@ -76,3 +76,60 @@ export function prefilledPrice(
 ): number {
   return variant?.salePrice ?? item.salePrice ?? 0;
 }
+
+/**
+ * Una fila elegible del diálogo «Agregar del catálogo»: un producto sin
+ * variantes, o una variante vigente de un producto que las tiene.
+ */
+export type PickerOption = {
+  /** `itemId:variantId`, o `itemId:` sin variante. Única dentro de la lista. */
+  key: string;
+  item: PickableItem;
+  variant: ItemVariant | null;
+  /** El texto contra el que filtra el diálogo: producto y variante. */
+  searchText: string;
+  /** El precio con el que nacerá la línea (`prefilledPrice`). */
+  price: number;
+  /** El precio referencial que se muestra, o `null` si el catálogo no fijó ninguno. */
+  referencePrice: number | null;
+};
+
+/**
+ * Las filas del diálogo de catálogo para un pedido de esta línea
+ * (design D3 de `order-form-picker-dialogs`).
+ *
+ * Aplica el mismo alcance que `pickerCandidates` y expande cada producto con
+ * variantes vigentes en una fila por variante: la selección múltiple no
+ * admite un paso intermedio para decir cuál, y un producto con variantes no
+ * se vende «en general».
+ */
+export function pickerOptions(
+  items: readonly PickableItem[],
+  businessLineId: string | null,
+): PickerOption[] {
+  return pickerCandidates(items, businessLineId, "").flatMap((item): PickerOption[] => {
+    const variants = item.variants.filter((variant) => variant.archivedAt === null);
+
+    if (variants.length === 0) {
+      return [
+        {
+          key: `${item.id}:`,
+          item,
+          variant: null,
+          searchText: item.name,
+          price: prefilledPrice(item),
+          referencePrice: item.salePrice,
+        },
+      ];
+    }
+
+    return variants.map((variant) => ({
+      key: `${item.id}:${variant.id}`,
+      item,
+      variant,
+      searchText: `${item.name} ${variant.name}`,
+      price: prefilledPrice(item, variant),
+      referencePrice: variant.salePrice ?? item.salePrice,
+    }));
+  });
+}

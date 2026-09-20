@@ -183,6 +183,7 @@ Herramienta de trabajo, no producto de marketing. Sobria, densa en información,
 | **Recordatorio** | Aviso programado asociado a una fecha límite. | No es la fecha límite en sí. |
 | **Evento de bitácora** | Hecho ocurrido en el sistema: quién, qué, cuándo, sobre qué registro y con qué cambio. **Inalterable.** | No es una notificación. |
 | **Lote de producción** *(fase posterior)* | Tanda fabricada para stock. | No es un pedido sin cliente. |
+| **Herramienta** | Utilidad opcional que una organización activa desde un catálogo común a todas. Vive fuera del núcleo, solo guarda sus **parámetros**, y todo lo que produce aterriza en un concepto que ya existe (por ejemplo, una línea de pedido). | **No es un módulo activable**: no apaga ni modifica partes del núcleo, no tiene tablas propias y no accede a los datos por su cuenta. |
 
 #### Reglas transversales
 - **Todo egreso, pedido, venta, activo y tarea lleva una línea obligatoria.** Lo transversal va a **General/Compartido**.
@@ -191,6 +192,7 @@ Herramienta de trabajo, no producto de marketing. Sobria, densa en información,
 - Cada venta lleva canal; por defecto toma el último usado.
 - **Todo cambio genera un evento de bitácora**, automáticamente.
 - **Nada se elimina: todo se archiva.** *(Decisión tomada — ver 6.6.)*
+- **Herramienta ≠ módulo activable.** Los «módulos activables» de V15 y los «módulos por línea» de la Fase 6 *apagan* partes del núcleo. Una **herramienta** *añade* algo que el núcleo no trae, es código revisado de este repositorio y solo aparece en dos lugares: su página propia y una acción en el detalle del pedido (KAM-27).
 
 ---
 
@@ -469,7 +471,7 @@ Selector de línea persistente (Todas · Sublimación · 3D · Alfarería) · ta
 Columnas según el juego de estados de la línea activa. Tarjetas con cliente, resumen, fecha comprometida, **modo de entrega** (ícono de recojo o delivery), señal de pago, color de línea, indicador de tareas relacionadas abiertas y alerta de retraso **que ignora estados de tipo `EN ESPERA`**. En columnas marcadas como cola, orden por antigüedad con **número de posición visible**. Arrastrar entre columnas, filtrar, alternar a lista o calendario, **ver archivados**.
 
 ### V4 · Detalle de pedido
-Cliente, línea, canal, modo de entrega, líneas del pedido, fechas, notas, fotos, cobros y saldo. Bloque de rentabilidad **(solo dueño)**. Bloque **Tareas relacionadas** con acción *+ Crear tarea para este pedido*. Bloque **Historial**.
+Cliente, línea, canal, modo de entrega, líneas del pedido, fechas, notas, fotos, cobros y saldo. Bloque de rentabilidad **(solo dueño)**. Bloque **Tareas relacionadas** con acción *+ Crear tarea para este pedido*. Bloque **Historial**. Acciones de las **herramientas** activas que declaren este enganche (por ejemplo, la calculadora de impresión 3D, que añade una línea al pedido).
 
 ### V5 · Nuevo pedido
 Línea preseleccionada, buscador de cliente con creación al vuelo, líneas desde catálogo, fecha comprometida, canal, **modo de entrega**, nota, foto. *Guardar* · *Guardar y crear otro*.
@@ -502,7 +504,7 @@ Directorio buscable con rol, datos, totales acumulados, líneas relacionadas, ta
 Selector de periodo y de línea; cinco informes con gráfico y tabla ordenable; regla de reparto de gastos compartidos visible; exportar. **Solo dueño.**
 
 ### V15 · Configuración de la organización
-Nombre, logo, moneda; líneas de negocio; canales; **juegos de estados** (V22); categorías de gasto; categorías de ítem (una lista por tipo: insumo, producto, activo); unidades; preferencias de notificación; política de retención de la bitácora; módulos activables; usuarios y roles; regla de reparto.
+Nombre, logo, moneda; líneas de negocio; canales; **juegos de estados** (V22); categorías de gasto; categorías de ítem (una lista por tipo: insumo, producto, activo); unidades; preferencias de notificación; política de retención de la bitácora; módulos activables; **herramientas** (catálogo, activación y parámetros — solo dueño); usuarios y roles; regla de reparto.
 
 ### V16 · Registro rápido (móvil)
 Botones grandes: Venta rápida · Pedido · Compra · Gasto · Consumo · Tarea. Formularios mínimos. Funciona sin conexión.

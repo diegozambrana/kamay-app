@@ -45,6 +45,8 @@ import type {
   StatusKind,
 } from "@/types";
 
+import { OrderToolActions, type OrderToolAction } from "@/features/tools/order-tool-actions";
+
 import { CancelOrderButton } from "./cancel-order-button";
 
 const DELIVERY_LABELS = { pickup: "Recojo", delivery: "Delivery" } as const;
@@ -73,6 +75,8 @@ export function OrderDetail({
   today,
   timezone,
   from,
+  toolActions = [],
+  currency = "",
 }: {
   order: OrderWithTotal;
   lines: OrderItemWithNames[];
@@ -94,6 +98,13 @@ export function OrderDetail({
   timezone: string;
   /** La vista de pedidos de la que se llegó (`?from=`), para la miga. */
   from?: string | null;
+  /**
+   * Acciones de las herramientas activas (KAM-27), ya filtradas en el servidor
+   * por registro, activación, enganche y rol. Vacía = el detalle de siempre.
+   */
+  toolActions?: readonly OrderToolAction[];
+  /** La moneda de la organización, para las herramientas que muestran importes. */
+  currency?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -182,6 +193,10 @@ export function OrderDetail({
 
           {!order.archivedAt && (
             <>
+              {/* Una herramienta que añade una línea edita el pedido: archivado,
+                  tampoco se ofrece. */}
+              <OrderToolActions orderId={order.id} currency={currency} actions={toolActions} />
+
               <Button asChild variant="outline" data-testid="edit-order">
                 <Link href={withFrom(`/orders/${order.id}/edit`, from)}>Editar</Link>
               </Button>

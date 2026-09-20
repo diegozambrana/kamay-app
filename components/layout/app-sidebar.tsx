@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isNavEntryActive, navEntriesFor } from "@/components/layout/nav-entries";
+import {
+  TOOLS_GROUP_LABEL,
+  isNavEntryActive,
+  navEntriesFor,
+  type NavEntry,
+} from "@/components/layout/nav-entries";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -17,6 +23,7 @@ import { LineSelector } from "@/features/business-lines/line-selector";
 import { OrganizationSwitcher } from "@/features/platform/organization-switcher";
 import type { OrganizationOption } from "@/services/platform/platform-service";
 import { useUserStore } from "@/stores/user-store";
+import type { ToolNavItem } from "@/tools/types";
 
 /**
  * Menú lateral de escritorio. Sustituye a la fila de enlaces de la barra
@@ -34,12 +41,17 @@ import { useUserStore } from "@/stores/user-store";
  * Al administrador de la plataforma (KAM-26) el menú le suma el selector de
  * organización y las entradas Organizaciones y Usuarios; sin organización
  * activa, solo eso.
+ *
+ * Las herramientas activas (KAM-27) forman su propia sección, con título, y
+ * **solo cuando hay alguna**: una organización que no activó ninguna ve el
+ * menú exactamente como antes.
  */
 export function AppSidebar({
   organizations = [],
   moreOrganizations = false,
   activeOrganizationId = null,
   activeOrganizationName = null,
+  tools = [],
 }: {
   /** Opciones del selector; solo llegan para el super admin. */
   organizations?: OrganizationOption[];
@@ -47,12 +59,34 @@ export function AppSidebar({
   moreOrganizations?: boolean;
   activeOrganizationId?: string | null;
   activeOrganizationName?: string | null;
+  /** Herramientas activas que esta persona puede usar, ya filtradas por rol. */
+  tools?: ToolNavItem[];
 } = {}) {
   const role = useUserStore((state) => state.role);
   const platformAdmin = useUserStore((state) => state.platformAdmin);
   const pathname = usePathname();
 
-  const entries = navEntriesFor(role, platformAdmin);
+  const entries = navEntriesFor(role, platformAdmin, tools);
+  const mainEntries = entries.filter((entry) => entry.group !== "tools");
+  const toolEntries = entries.filter((entry) => entry.group === "tools");
+
+  const renderEntry = (entry: NavEntry) => {
+    const Icon = entry.icon;
+    return (
+      <SidebarMenuItem key={entry.href}>
+        <SidebarMenuButton
+          asChild
+          isActive={isNavEntryActive(entry.href, pathname)}
+          tooltip={entry.label}
+        >
+          <Link href={entry.href}>
+            <Icon aria-hidden />
+            <span>{entry.label}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -88,27 +122,18 @@ export function AppSidebar({
           {/* El landmark con nombre es parte del contrato de accesibilidad de
               la navegación principal, no decoración. */}
           <nav aria-label="Navegación principal">
-            <SidebarMenu>
-              {entries.map((entry) => {
-                const Icon = entry.icon;
-                return (
-                  <SidebarMenuItem key={entry.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isNavEntryActive(entry.href, pathname)}
-                      tooltip={entry.label}
-                    >
-                      <Link href={entry.href}>
-                        <Icon aria-hidden />
-                        <span>{entry.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            <SidebarMenu>{mainEntries.map(renderEntry)}</SidebarMenu>
           </nav>
         </SidebarGroup>
+
+        {toolEntries.length > 0 && (
+          <SidebarGroup data-testid="sidebar-tools">
+            <SidebarGroupLabel>{TOOLS_GROUP_LABEL}</SidebarGroupLabel>
+            <nav aria-label={TOOLS_GROUP_LABEL}>
+              <SidebarMenu>{toolEntries.map(renderEntry)}</SidebarMenu>
+            </nav>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );

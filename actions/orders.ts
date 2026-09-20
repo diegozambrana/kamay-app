@@ -15,6 +15,7 @@ import {
   sortByArrival,
 } from "@/lib/orders/queue";
 import {
+  addOrderLineSchema,
   moveOrderSchema,
   orderAttachmentSchema,
   orderFormSchema,
@@ -23,6 +24,7 @@ import {
 } from "@/lib/orders/schema";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { StatusService } from "@/services/configuration/status-service";
+import { OrderItemService } from "@/services/orders/order-item-service";
 import { OrderService } from "@/services/orders/order-service";
 import { ATTACHMENTS_BUCKET } from "@/types";
 
@@ -254,6 +256,49 @@ export async function updateOrder(input: unknown): Promise<ActionResult> {
   }
 
   revalidateOrders(parsed.data.id);
+}
+
+/**
+ * Añade **una** línea a un pedido que ya existe (KAM-27, spec `orders` →
+ * *Añadir una línea sin tocar las demás*).
+ *
+ * Existe porque `updateOrder` reemplaza la lista completa de líneas: usarla
+ * para añadir una archivaría la que otra persona acabe de añadir. Es una acción
+ * del núcleo, con la sesión, el rol y la RLS de quien la llama; la usan las
+ * herramientas que producen una línea, y cualquier otra pantalla que lo
+ * necesite.
+ *
+ * Un pedido archivado no se edita. `update_order` lo rechaza en la base; aquí
+ * no hay función de base, así que se comprueba antes de insertar y se responde
+ * con el mismo mensaje.
+ */
+export async function addOrderLine(input: unknown): Promise<ActionResult> {
+  const parsed = addOrderLineSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const context = await getSessionContext();
+  if (!context) return { error: NO_SESSION };
+
+  const { orderId, line } = parsed.data;
+
+  try {
+    const order = await new OrderService(context.supabase).getById(
+      context.organizationId,
+      orderId,
+    );
+    if (!order) return { error: "Ese pedido ya no está a tu alcance." };
+    if (order.archivedAt !== null) {
+      return { error: "Este pedido está archivado: desarchívalo antes de editarlo." };
+    }
+
+    await new OrderItemService(context.supabase).add(context.organizationId, orderId, line);
+  } catch (error) {
+    return { error: orderErrorMessage(error, "No se pudo añadir la línea.") };
+  }
+
+  revalidateOrders(orderId);
 }
 
 // ── Imágenes de referencia ────────────────────────────────────────────────

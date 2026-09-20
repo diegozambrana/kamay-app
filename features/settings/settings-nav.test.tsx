@@ -79,6 +79,8 @@ describe("SettingsNav", () => {
       "Categorías de ítem",
       "Unidades",
       "Estados",
+      // KAM-27 · «The assistant is not offered Tools».
+      "Herramientas",
       "Usuarios y roles",
     ]) {
       expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument();
@@ -108,6 +110,8 @@ describe("SettingsNav", () => {
       "Categorías de ítem",
       "Unidades",
       "Estados",
+      // KAM-27 · spec `settings-interaction` → «Tools closes the Organización group».
+      "Herramientas",
       "Equipo",
       "Usuarios y roles",
       "Preferencias",
@@ -150,6 +154,19 @@ describe("SettingsNav", () => {
     expect(screen.getByRole("link", { name: "Categorías de gasto" })).not.toHaveAttribute(
       "aria-current",
     );
+  });
+
+  // KAM-27 · spec `settings-interaction` → «Tools closes the Organización group».
+  it("en /settings/tools, Herramientas cierra Organización y es la página actual", () => {
+    ruta.actual = "/settings/tools";
+    render(<SettingsNav isOwner />);
+
+    const tools = screen.getByRole("link", { name: "Herramientas" });
+    expect(tools).toHaveAttribute("href", "/settings/tools");
+    expect(tools).toHaveAttribute("aria-current", "page");
+
+    const items = menuItems();
+    expect(items[items.indexOf("Equipo") - 1]).toBe("Herramientas");
   });
 
   // Spec `settings-interaction` → «The assistant sees only their groups».

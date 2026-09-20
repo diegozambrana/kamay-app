@@ -3,11 +3,12 @@
 import { LogOutIcon, MenuIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import {
   barHrefOf,
   barLabelOf,
+  TOOLS_GROUP_LABEL,
   bottomBarEntriesFor,
   isNavEntryActive,
   moreEntriesFor,
@@ -26,6 +27,7 @@ import {
 import { SignOutConfirmDialog } from "@/features/account/sign-out-confirm-dialog";
 import { useSignOut } from "@/features/account/use-sign-out";
 import { cn } from "@/lib/utils";
+import type { ToolNavItem } from "@/tools/types";
 import { useUserStore } from "@/stores/user-store";
 
 /**
@@ -62,7 +64,7 @@ export function isCaptureRoute(pathname: string): boolean {
  * el resto de secciones; las tres superficies salen de `nav-entries.ts`, que
  * sigue siendo la única fuente (design D2).
  */
-export function MobileNav() {
+export function MobileNav({ tools = [] }: { tools?: ToolNavItem[] } = {}) {
   const role = useUserStore((state) => state.role);
   const platformAdmin = useUserStore((state) => state.platformAdmin);
   const pathname = usePathname();
@@ -78,8 +80,10 @@ export function MobileNav() {
 
   if (isCaptureRoute(pathname)) return null;
 
-  const entries = bottomBarEntriesFor(role, platformAdmin);
-  const more = moreEntriesFor(role, platformAdmin);
+  // Las herramientas activas (KAM-27) viven en "Más": la barra tiene tres
+  // ranuras fijas, y `bottomBarEntriesFor` no las deja pasar.
+  const entries = bottomBarEntriesFor(role, platformAdmin, tools);
+  const more = moreEntriesFor(role, platformAdmin, tools);
 
   const slotClass =
     "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 text-muted-foreground";
@@ -141,27 +145,39 @@ export function MobileNav() {
           </SheetHeader>
 
           <nav aria-label="Más secciones" className="grid gap-1 px-4 pb-6">
-            {more.map((entry) => {
+            {more.map((entry, index) => {
               const Icon = entry.icon;
               const active = isNavEntryActive(entry.href, pathname);
+              // La primera herramienta lleva delante el título de su sección,
+              // igual que en el menú lateral (KAM-27).
+              const startsTools =
+                entry.group === "tools" && more[index - 1]?.group !== "tools";
 
               return (
-                <Link
-                  key={entry.href}
-                  href={entry.href}
-                  aria-current={active ? "page" : undefined}
-                  // Cerrar al elegir se hace aquí y no en un efecto sobre la
-                  // ruta: un `setState` dentro de un efecto encadena renders
-                  // (regla `react-hooks/set-state-in-effect`).
-                  onClick={() => setMoreOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-3 text-sm",
-                    active ? "bg-accent text-accent-foreground" : "text-foreground",
+                <Fragment key={entry.href}>
+                  {startsTools && (
+                    <p className="px-3 pt-3 pb-1 text-xs font-medium text-muted-foreground">
+                      {TOOLS_GROUP_LABEL}
+                    </p>
                   )}
-                >
-                  <Icon className="size-5 shrink-0" aria-hidden />
-                  {entry.label}
-                </Link>
+                  <Link
+                    href={entry.href}
+                    aria-current={active ? "page" : undefined}
+                    // Cerrar al elegir se hace aquí y no en un efecto sobre la
+                    // ruta: un `setState` dentro de un efecto encadena renders
+                    // (regla `react-hooks/set-state-in-effect`).
+                    onClick={() => setMoreOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-3 text-sm",
+                      active
+                        ? "bg-accent text-accent-foreground"
+                        : "text-foreground",
+                    )}
+                  >
+                    <Icon className="size-5 shrink-0" aria-hidden />
+                    {entry.label}
+                  </Link>
+                </Fragment>
               );
             })}
           </nav>

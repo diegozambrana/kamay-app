@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useUserStore } from "@/stores/user-store";
+import type { ToolNavItem } from "@/tools/types";
 import type { Role } from "@/types";
 
 import { AppSidebar } from "./app-sidebar";
@@ -24,7 +25,12 @@ vi.mock("@/features/business-lines/line-selector", () => ({
   ),
 }));
 
-function renderSidebar(role: Role | null, route = "/dashboard", platformAdmin = false) {
+function renderSidebar(
+  role: Role | null,
+  route = "/dashboard",
+  platformAdmin = false,
+  tools: ToolNavItem[] = [],
+) {
   pathname.value = route;
   useUserStore.setState({
     role,
@@ -48,6 +54,7 @@ function renderSidebar(role: Role | null, route = "/dashboard", platformAdmin = 
             { id: "o2", name: "Taller Kamay" },
           ]}
           activeOrganizationId={role ? "o1" : null}
+          tools={tools}
         />
       </SidebarProvider>
     </TooltipProvider>,
@@ -169,5 +176,53 @@ describe("AppSidebar · administrador de la plataforma (KAM-26)", () => {
     expect(screen.queryByTestId("organization-switcher")).not.toBeInTheDocument();
     expect(within(mainNav()).queryByRole("link", { name: "Organizaciones" })).toBeNull();
     expect(within(mainNav()).queryByRole("link", { name: "Usuarios" })).toBeNull();
+  });
+});
+
+/**
+ * KAM-27 · spec `tenant-tools` → *La navegación muestra una sección
+ * Herramientas solo cuando hay algo que mostrar*.
+ */
+describe("AppSidebar · herramientas (KAM-27)", () => {
+  const calculator = {
+    slug: "print-cost-3d",
+    name: "Calculadora de impresión 3D",
+    href: "/extensions/print-cost-3d",
+  };
+
+  it("sin herramientas activas no hay sección, ni siquiera el título", () => {
+    renderSidebar("owner");
+
+    expect(screen.queryByTestId("sidebar-tools")).not.toBeInTheDocument();
+    expect(screen.queryByText("Herramientas")).not.toBeInTheDocument();
+  });
+
+  it("con la calculadora activa, la sección aparece con su entrada", () => {
+    renderSidebar("owner", "/dashboard", false, [calculator]);
+
+    const section = within(screen.getByTestId("sidebar-tools"));
+    expect(section.getByText("Herramientas")).toBeInTheDocument();
+    expect(section.getByRole("link", { name: calculator.name })).toHaveAttribute(
+      "href",
+      calculator.href,
+    );
+    // Y no se cuela en la navegación principal.
+    expect(within(mainNav()).queryByRole("link", { name: calculator.name })).toBeNull();
+  });
+
+  it("marca la herramienta cuando se está en su página", () => {
+    renderSidebar("owner", calculator.href, false, [calculator]);
+
+    expect(screen.getByRole("link", { name: calculator.name })).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+  });
+
+  // El filtro por rol ocurre en el servidor (`activeToolsFor`): a un ayudante
+  // sin herramientas para su rol le llega la lista vacía.
+  it("el ayudante sin herramientas para su rol no ve la sección", () => {
+    renderSidebar("assistant");
+    expect(screen.queryByTestId("sidebar-tools")).not.toBeInTheDocument();
   });
 });

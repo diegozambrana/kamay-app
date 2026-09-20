@@ -199,6 +199,51 @@ describe("OrderService.setArchived", () => {
 });
 
 describe("OrderItemService", () => {
+  // KAM-27 · spec `orders` → «Añadir una línea sin tocar las demás».
+  it("añadir una línea es un insert de esa sola línea, con la organización explícita", async () => {
+    const client = new FakeClient([{ data: null, error: null }]);
+    await new OrderItemService(client.asSupabase()).add(ORG, ORDER, {
+      id: "66666666-6666-6666-6666-666666666666",
+      itemId: null,
+      variantId: null,
+      description: "Llavero calavera",
+      quantity: 6,
+      unitPrice: 27,
+    });
+
+    expect(client.tables).toEqual(["order_items"]);
+    expect(client.rpcCalls).toEqual([]);
+    expect(client.queries[0].argsOf("insert")?.[0]).toEqual({
+      id: "66666666-6666-6666-6666-666666666666",
+      organization_id: ORG,
+      order_id: ORDER,
+      item_id: null,
+      variant_id: null,
+      description: "Llavero calavera",
+      quantity: 6,
+      unit_price: 27,
+    });
+    // Ni `update` ni `upsert`: no hay forma de que toque otra línea.
+    expect(client.queries[0].argsOf("update")).toBeUndefined();
+    expect(client.queries[0].argsOf("upsert")).toBeUndefined();
+  });
+
+  it("el rechazo de la base sube con su mensaje, para que la acción lo traduzca", async () => {
+    const client = new FakeClient([
+      { data: null, error: { message: "order_items_quantity_check" } },
+    ]);
+    await expect(
+      new OrderItemService(client.asSupabase()).add(ORG, ORDER, {
+        id: "66666666-6666-6666-6666-666666666666",
+        itemId: null,
+        variantId: null,
+        description: "x",
+        quantity: 1,
+        unitPrice: 1,
+      }),
+    ).rejects.toThrow("order_items_quantity_check");
+  });
+
   it("calcula el total de línea desde cantidad y precio registrados", async () => {
     const client = new FakeClient([
       {

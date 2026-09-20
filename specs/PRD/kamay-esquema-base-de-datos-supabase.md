@@ -259,6 +259,26 @@ create table units (
   archived_at     timestamptz,
   unique (organization_id, code)
 );
+
+-- Herramientas activas por organización (KAM-27). Una fila por organización y
+-- herramienta: `slug` apunta al registro en código (`tools/registry.ts`), no a
+-- otra tabla. `config` guarda solo parámetros, nunca resultados (convención
+-- nº 4). Desactivar es archivar: la fila y sus parámetros se conservan.
+create table organization_tools (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id),
+  slug            text not null check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  config          jsonb not null default '{}'::jsonb,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  archived_at     timestamptz,
+  unique (organization_id, slug)
+);
+
+-- Los parámetros pueden llevar tarifas y márgenes: la tabla es solo del dueño.
+-- El menú del ayudante necesita saber qué está activo, y nada más:
+-- active_tool_slugs(p_organization_id) — security definer, exige is_member —
+-- devuelve únicamente los slugs no archivados.
 ```
 
 ### Invitaciones — cómo entra alguien al equipo
@@ -974,6 +994,7 @@ create policy "orders: editar si es miembro"
 | `activity_log` | **Sin acceso** | Solo lectura | Todo, como dueño |
 | `memberships` | Leer solo su propia fila | Todo | Todo, como dueño |
 | `invitations` | **Sin acceso** | Todo | Todo, como dueño |
+| `organization_tools` | **Sin acceso** (solo los slugs activos, vía `active_tool_slugs`) | Todo, sin borrar | Todo, como dueño |
 
 La columna del administrador de la plataforma **no tiene políticas propias**: sale de `is_member`/`is_owner` (§5), que lo reconocen en toda organización. Por eso vale en todas las organizaciones a la vez y con las mismas restricciones que el dueño (sin `DELETE`, bitácora de solo lectura, el último dueño no se archiva). Las cuentas, que viven en `auth.users` y `authenticated` no puede leer, las lista la función `platform_list_users(p_organization_id uuid default null)`: `security definer` con compuerta `is_platform_admin()`, que para cualquier otra cuenta lanza `insufficient_privilege` y no devuelve ningún correo.
 

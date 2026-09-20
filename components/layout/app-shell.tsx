@@ -15,6 +15,7 @@ import { SyncProvider } from "@/features/sync/sync-provider";
 import type { ActiveAccess } from "@/lib/auth/access";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { createClient } from "@/lib/supabase/server";
+import { getRequestActiveToolSlugs } from "@/lib/tools/request-tools";
 import { ItemService } from "@/services/catalog/item-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import {
@@ -22,6 +23,7 @@ import {
   groupByType,
 } from "@/services/notifications/notification-service";
 import { PlatformService } from "@/services/platform/platform-service";
+import { activeToolsFor, toolNavItems } from "@/tools/resolve";
 import type { CurrentUser, MembershipWithOrganization } from "@/types";
 
 /**
@@ -93,6 +95,17 @@ export async function AppShell({
     ? await new PlatformService(supabase).listActiveOrganizations()
     : { organizations: [], hasMore: false };
 
+  // Las herramientas activas que esta persona puede abrir (KAM-27): una
+  // lectura por petición, cruzada con el registro en código y filtrada por rol
+  // **aquí**, en el servidor. Al cliente cruza solo nombre y dirección.
+  const tools = access
+    ? toolNavItems(
+        activeToolsFor(await getRequestActiveToolSlugs(access.organizationId), access.role, {
+          hook: "page",
+        }),
+      )
+    : [];
+
   // Ausente = desplegado, que es el valor por defecto de shadcn.
   const sidebarOpen = cookieStore.get("sidebar_state")?.value !== "false";
 
@@ -125,6 +138,7 @@ export async function AppShell({
           moreOrganizations={switcher.hasMore}
           activeOrganizationId={organizationId}
           activeOrganizationName={access?.organization.name ?? null}
+          tools={tools}
         />
         {/* `min-w-0`: sin él, un contenido interno más ancho que la ventana
             (el tablero, por ejemplo) empuja este contenedor —que es un ítem
@@ -153,7 +167,7 @@ export async function AppShell({
           {/* Registrar está a un toque desde cualquier pantalla (mapa §2.6).
               Flota sobre la barra, no dentro de ella. */}
           {access && <RegisterButton supplies={supplies} />}
-          <MobileNav />
+          <MobileNav tools={tools} />
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

@@ -29,7 +29,7 @@ export default defineConfig({
           environment: "jsdom",
           setupFiles: ["./tests/setup/unit.ts"],
           include: [
-            "{app,actions,services,features,components,lib,hooks,stores,types,constants,configs,scripts}/**/*.test.{ts,tsx}",
+            "{app,actions,services,features,components,lib,hooks,stores,types,constants,configs,scripts,tools}/**/*.test.{ts,tsx}",
           ],
         },
       },

@@ -187,8 +187,17 @@ describe("exportación completa", () => {
     }
   });
 
-  it("el ayudante no recibe egresos, activos, bitácora ni invitaciones", () => {
-    for (const file of ["egresos", "lineas-de-compra", "activos", "bitacora", "invitaciones"]) {
+  it("el ayudante no recibe egresos, activos, bitácora, invitaciones ni herramientas", () => {
+    // `herramientas` (KAM-27): los parámetros de una herramienta llevan tarifas
+    // y márgenes, así que la tabla es solo de la dueña y su archivo también.
+    for (const file of [
+      "egresos",
+      "lineas-de-compra",
+      "activos",
+      "bitacora",
+      "invitaciones",
+      "herramientas",
+    ]) {
       expect(geekoAssistant[`${file}.csv`], file).toBeUndefined();
     }
     // Y sí lo que su rol lee.

@@ -12,9 +12,11 @@ import {
   SettingsIcon,
   UserCogIcon,
   UsersIcon,
+  WrenchIcon,
   type LucideIcon,
 } from "lucide-react";
 
+import type { ToolNavItem } from "@/tools/types";
 import type { Role } from "@/types";
 
 export type NavEntry = {
@@ -61,7 +63,16 @@ export type NavEntry = {
    * ofrecer cosas distintas ni desincronizarse (design D2).
    */
   mobile: "bar" | "more";
+  /**
+   * Sección del menú a la que pertenece, cuando no es la principal. Hoy solo
+   * existe `tools` (KAM-27): las herramientas que la organización activó. El
+   * menú lateral le pone título a la sección; sin entradas, no hay título.
+   */
+  group?: "tools";
 };
+
+/** El título de la sección de herramientas, en el menú lateral y en "Más". */
+export const TOOLS_GROUP_LABEL = "Herramientas";
 
 /**
  * Entradas del menú principal (mapa de navegación §4.1). Cada tarea añade las
@@ -206,12 +217,30 @@ export const NAV_ENTRIES: NavEntry[] = [
 export function navEntriesFor(
   role: Role | null | undefined,
   platformAdmin = false,
+  tools: readonly ToolNavItem[] = [],
 ): NavEntry[] {
   // Sin rol no hay organización activa: al administrador de la plataforma le
   // quedan sus propias entradas; a nadie más le queda ninguna.
-  return NAV_ENTRIES.filter((entry) =>
+  const entries = NAV_ENTRIES.filter((entry) =>
     entry.platformOnly ? platformAdmin : Boolean(role && entry.roles.includes(role)),
   );
+  if (!role || tools.length === 0) return entries;
+
+  // Las herramientas activas (KAM-27) llegan **ya filtradas por rol** desde el
+  // servidor —`activeToolsFor`—, así que aquí valen para quien las recibe. Van
+  // después de lo del taller y antes de lo de la plataforma, y en el celular
+  // siempre dentro de "Más": la barra inferior tiene tres ranuras y son fijas.
+  const toolEntries: NavEntry[] = tools.map((tool) => ({
+    href: tool.href,
+    label: tool.name,
+    icon: WrenchIcon,
+    roles: [role],
+    mobile: "more",
+    group: "tools",
+  }));
+  const firstPlatform = entries.findIndex((entry) => entry.platformOnly);
+  const at = firstPlatform === -1 ? entries.length : firstPlatform;
+  return [...entries.slice(0, at), ...toolEntries, ...entries.slice(at)];
 }
 
 /**
@@ -235,8 +264,9 @@ export function isNavEntryActive(href: string, pathname: string): boolean {
 export function bottomBarEntriesFor(
   role: Role | null | undefined,
   platformAdmin = false,
+  tools: readonly ToolNavItem[] = [],
 ): NavEntry[] {
-  return navEntriesFor(role, platformAdmin).filter((entry) => entry.mobile === "bar");
+  return navEntriesFor(role, platformAdmin, tools).filter((entry) => entry.mobile === "bar");
 }
 
 /** El rótulo que le toca a la entrada en la barra inferior. */
@@ -253,6 +283,7 @@ export function barHrefOf(entry: NavEntry): string {
 export function moreEntriesFor(
   role: Role | null | undefined,
   platformAdmin = false,
+  tools: readonly ToolNavItem[] = [],
 ): NavEntry[] {
-  return navEntriesFor(role, platformAdmin).filter((entry) => entry.mobile === "more");
+  return navEntriesFor(role, platformAdmin, tools).filter((entry) => entry.mobile === "more");
 }

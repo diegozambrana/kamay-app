@@ -14,6 +14,7 @@ vi.mock("@/actions/orders", () => ({
   archiveOrder: vi.fn(async () => undefined),
   unarchiveOrder: vi.fn(async () => undefined),
   cancelOrder: vi.fn(async () => undefined),
+  addOrderLine: vi.fn(async () => undefined),
 }));
 
 vi.mock("@/actions/payments", () => ({
@@ -190,5 +191,72 @@ describe("OrderDetail · migas de pan", () => {
       "href",
       `/orders/${order.id}/edit?from=view%3Dcalendar%26q%3Dtazas`,
     );
+  });
+});
+
+/**
+ * KAM-27 · spec `orders` → *El detalle del pedido ofrece las acciones de las
+ * herramientas activas*.
+ *
+ * Qué herramientas llegan lo decide el servidor —registro, activación,
+ * enganche y rol (`activeToolsFor`, probado en `tools/resolve.test.ts`)—; aquí
+ * se comprueba lo que el detalle hace con esa lista.
+ */
+describe("OrderDetail · acciones de herramientas (KAM-27)", () => {
+  function renderWithTools(
+    toolActions: { slug: string; config: unknown }[],
+    overrides: Partial<typeof order> = {},
+  ) {
+    return render(
+      <OrderDetail
+        relatedTasks={[]}
+        order={{ ...order, ...overrides } as OrderWithTotal}
+        lines={[]}
+        statuses={[registrado, entregado]}
+        statusName="Registrado"
+        statusKind="initial"
+        contact={null}
+        businessLine={null}
+        channelName={null}
+        images={[]}
+        payments={[]}
+        canVoidPayments={false}
+        history={{ items: [], activityHref: "/activity" }}
+        today="2026-09-07"
+        timezone="America/La_Paz"
+        toolActions={toolActions}
+        currency="BOB"
+      />,
+    );
+  }
+
+  it("sin herramientas activas el detalle no muestra ninguna acción de herramientas", () => {
+    renderDetail();
+    expect(screen.queryByTestId("order-tool-print-cost-3d")).not.toBeInTheDocument();
+    expect(screen.queryByText(/impresión 3D/i)).not.toBeInTheDocument();
+  });
+
+  it("con la calculadora activa ofrece su acción", () => {
+    renderWithTools([{ slug: "print-cost-3d", config: {} }]);
+    expect(screen.getByRole("button", { name: "Calcular impresión 3D" })).toBeInTheDocument();
+  });
+
+  // El rol filtra en el servidor: al ayudante, con una herramienta de dueña
+  // activa, le llega la lista vacía — que es el primer caso de arriba.
+  it("una lista vacía —lo que recibe un rol sin herramientas— no pinta nada", () => {
+    renderWithTools([]);
+    expect(screen.queryByTestId("order-tool-print-cost-3d")).not.toBeInTheDocument();
+  });
+
+  it("un pedido archivado no ofrece la acción, aunque la herramienta esté activa", () => {
+    renderWithTools([{ slug: "print-cost-3d", config: {} }], {
+      archivedAt: "2026-09-20T10:00:00Z",
+    });
+    expect(screen.queryByTestId("order-tool-print-cost-3d")).not.toBeInTheDocument();
+  });
+
+  it("un slug sin componente montado no rompe el detalle", () => {
+    renderWithTools([{ slug: "retirada", config: {} }]);
+    expect(screen.getByTestId("edit-order")).toBeInTheDocument();
   });
 });

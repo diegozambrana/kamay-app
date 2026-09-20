@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { OrderDetail } from "@/features/orders/order-detail";
 import { getSessionContext } from "@/lib/auth/session-context";
 import { todayInTimezone } from "@/lib/orders/overdue";
+import { getRequestActiveToolSlugs } from "@/lib/tools/request-tools";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ContactService } from "@/services/catalog/contact-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
@@ -13,6 +14,8 @@ import { OrderService } from "@/services/orders/order-service";
 import { PaymentService } from "@/services/payments/payment-service";
 import { loadRecordHistory } from "@/services/activity/record-history";
 import { TaskService } from "@/services/tasks/task-service";
+import { OrganizationToolService } from "@/services/tools/organization-tool-service";
+import { activeToolsFor } from "@/tools/resolve";
 
 export const metadata = { title: "Pedido · Kamay" };
 
@@ -105,6 +108,23 @@ export default async function OrderDetailPage({
     order.id,
   );
 
+  // Las herramientas que pueden actuar sobre este pedido (KAM-27): en el
+  // registro, activas para esta organización, con el enganche del detalle y al
+  // alcance del rol. Sin ninguna, el detalle no cambia. Los slugs ya los pidió
+  // el cascarón en esta misma petición: aquí no cuestan otra consulta.
+  const orderTools = activeToolsFor(
+    await getRequestActiveToolSlugs(context.organizationId),
+    context.role,
+    { hook: "order-detail" },
+  );
+  const toolService = new OrganizationToolService(context.supabase);
+  const toolActions = await Promise.all(
+    orderTools.map(async (tool) => ({
+      slug: tool.slug,
+      config: await toolService.getActiveConfig(context.organizationId, tool.slug),
+    })),
+  );
+
   return (
     <OrderDetail
       order={order}
@@ -137,6 +157,8 @@ export default async function OrderDetailPage({
       today={todayInTimezone(context.organization.timezone)}
       timezone={context.organization.timezone}
       from={from ?? null}
+      toolActions={toolActions}
+      currency={context.organization.currency}
     />
   );
 }

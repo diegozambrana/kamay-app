@@ -1,9 +1,12 @@
 import { geeko } from "./helpers/seed-copies";
 import {
+  abrirPedido,
   agregarDelCatalogo,
   campoCliente,
   disparadorCliente,
   elegirCliente,
+  esperarPedidoGuardado,
+  guardarYAbrirPedido,
   registrarCliente,
 } from "./helpers/order-form";
 import { expect, test, type Locator, type Page } from "./helpers/test";
@@ -11,8 +14,8 @@ import { expect, test, type Locator, type Page } from "./helpers/test";
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
 
-/** El detalle de un pedido, para distinguirlo de `/orders/new`. */
-const ORDER_DETAIL = /\/orders\/[0-9a-f]{8}-[0-9a-f-]+$/;
+/** El alta; desde la pantalla de pedidos lleva `?from=` con la vista de origen. */
+const NEW_ORDER = /\/orders\/new(\?.*)?$/;
 
 async function login(page: Page, email: string) {
   await page.goto("/auth/login");
@@ -79,7 +82,7 @@ test.describe("alta de pedidos (V5)", () => {
     const medida = medidor();
 
     await medida.clic(page.getByTestId("new-order"));
-    await page.waitForURL(/\/orders\/new$/);
+    await page.waitForURL(NEW_ORDER);
 
     // La línea activa llega preseleccionada: no cuesta ninguna interacción.
     await expect(page.getByTestId("line-select")).toContainText("Sublimación");
@@ -112,7 +115,9 @@ test.describe("alta de pedidos (V5)", () => {
     await expect(page.getByTestId("order-form-total")).toHaveText("1100.00");
 
     await medida.clic(page.getByTestId("save-order"));
-    await page.waitForURL(ORDER_DETAIL);
+    // «Guardar» vuelve a la lista con el número; abrir el pedido para
+    // comprobarlo ya no es parte del alta y no se cuenta.
+    const code = await esperarPedidoGuardado(page);
 
     // La medición queda en el reporte, que es lo que pide el criterio 7.
     test.info().annotations.push({
@@ -120,6 +125,8 @@ test.describe("alta de pedidos (V5)", () => {
       description: String(medida.total),
     });
     expect(medida.total).toBeLessThan(15);
+
+    await abrirPedido(page, code);
 
     // El pedido quedó completo y con su número.
     await expect(page.getByRole("heading", { level: 1 })).toContainText("#");
@@ -153,8 +160,7 @@ test.describe("alta de pedidos (V5)", () => {
     await filas.nth(0).getByLabel("Precio").fill("40");
     await expect(page.getByTestId("order-form-total")).toHaveText("95.00");
 
-    await page.getByTestId("save-order").click();
-    await page.waitForURL(ORDER_DETAIL);
+    await guardarYAbrirPedido(page);
 
     await expect(page.getByTestId("order-line")).toHaveCount(2);
     await expect(page.getByTestId("order-total")).toHaveText("95.00");
@@ -180,8 +186,7 @@ test.describe("alta de pedidos (V5)", () => {
     await elegirCliente(page, "Colegio San Andrés");
     await agregarDelCatalogo(page, ["Maceta de barro"]);
 
-    await page.getByTestId("save-order").click();
-    await page.waitForURL(ORDER_DETAIL);
+    await guardarYAbrirPedido(page);
 
     // Los tres datos ausentes se muestran como tales, sin error.
     await expect(page.getByTestId("detail-channel")).toHaveText("—");
@@ -208,7 +213,7 @@ test.describe("alta de pedidos (V5)", () => {
     await expect(page.getByTestId("contact-error")).toContainText(
       "Elige o crea un cliente",
     );
-    await expect(page).toHaveURL(/\/orders\/new$/);
+    await expect(page).toHaveURL(NEW_ORDER);
 
     // Con cliente pero sin líneas, el mensaje señala las líneas.
     await elegirCliente(page, "Colegio San Andrés");
@@ -218,7 +223,7 @@ test.describe("alta de pedidos (V5)", () => {
     await expect(page.getByTestId("lines-error")).toContainText(
       "Agrega al menos una línea",
     );
-    await expect(page).toHaveURL(/\/orders\/new$/);
+    await expect(page).toHaveURL(NEW_ORDER);
   });
 
   /** Criterio 3: crear el cliente con nombre y teléfono sin salir del alta. */
@@ -245,8 +250,7 @@ test.describe("alta de pedidos (V5)", () => {
     );
     await expect(page.getByTestId("order-form-total")).toHaveText("60.00");
 
-    await page.getByTestId("save-order").click();
-    await page.waitForURL(ORDER_DETAIL);
+    await guardarYAbrirPedido(page);
     await expect(page.getByText(nombre)).toBeVisible();
 
     // El contacto quedó en el directorio, con su rol de cliente.
@@ -278,7 +282,7 @@ test.describe("alta de pedidos (V5)", () => {
 
     // No navega: anuncia el número del pedido guardado y sigue aquí.
     await expect(page.getByTestId("order-form-notice")).toContainText("guardado");
-    await expect(page).toHaveURL(/\/orders\/new$/);
+    await expect(page).toHaveURL(NEW_ORDER);
 
     // Lo que no cambia entre dos pedidos sigue puesto…
     await expect(page.getByTestId("line-select")).toContainText("Alfarería");
@@ -304,7 +308,7 @@ test.describe("alta de pedidos (V5)", () => {
     await page.goto("/orders?view=list&q=Colegio");
 
     await page.getByTestId("new-order").click();
-    await page.waitForURL(/\/orders\/new$/);
+    await page.waitForURL(NEW_ORDER);
 
     await page.getByLabel("Nota").fill("Algo que no quiero perder.");
     await page.getByTestId("discard-button").click();
@@ -314,7 +318,7 @@ test.describe("alta de pedidos (V5)", () => {
     await expect(page.getByLabel("Nota")).toHaveValue(
       "Algo que no quiero perder.",
     );
-    await expect(page).toHaveURL(/\/orders\/new$/);
+    await expect(page).toHaveURL(NEW_ORDER);
 
     // Aceptarla vuelve a la lista, con su filtro intacto.
     await page.getByTestId("discard-button").click();
@@ -328,7 +332,7 @@ test.describe("alta de pedidos (V5)", () => {
     await page.goto("/orders?view=list");
 
     await page.getByTestId("new-order").click();
-    await page.waitForURL(/\/orders\/new$/);
+    await page.waitForURL(NEW_ORDER);
 
     await page.getByTestId("discard-button").click();
 
@@ -364,5 +368,29 @@ test.describe("alta de pedidos (V5)", () => {
     await expect(catalogo.getByRole("option").first()).toBeVisible();
     await expect(catalogo.getByRole("button", { name: "Agregar" })).toBeInViewport();
     await expect(catalogo.getByRole("button", { name: "Cancelar" })).toBeInViewport();
+  });
+
+  /**
+   * Delta `orders` — «Guardar vuelve a la lista y Guardar y crear otro sigue
+   * en el formulario»: «Guardar vuelve a la lista», «Guardar conserva la
+   * vista de origen».
+   */
+  test("guardar vuelve a la lista de origen con el número a la vista", async ({ page }) => {
+    await login(page, geeko().owner);
+    await page.goto("/orders?view=list&q=Colegio");
+
+    await page.getByTestId("new-order").click();
+    await page.waitForURL(/\/orders\/new\?from=/);
+
+    await elegirLinea(page, "Alfarería");
+    await elegirCliente(page, "Colegio San Andrés");
+    await agregarDelCatalogo(page, ["Maceta de barro"]);
+
+    await page.getByTestId("save-order").click();
+    const code = await esperarPedidoGuardado(page);
+
+    // La misma vista y el mismo filtro; el aviso no queda en la dirección.
+    await expect(page).toHaveURL(/\/orders\?view=list&q=Colegio$/);
+    await expect(page.getByRole("link", { name: `#${code}`, exact: true })).toBeVisible();
   });
 });

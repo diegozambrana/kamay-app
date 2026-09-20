@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { MainContainer } from "@/components/layout/main-container";
-import { Button } from "@/components/ui/button";
 import { UserDetail } from "@/features/platform/users/user-detail";
 import { getPlatformAdminContext } from "@/lib/auth/session-context";
 import { displayNameOf } from "@/lib/platform/users";
@@ -29,13 +27,12 @@ export default async function UserDetailPage({ params }: PageProps<"/admin/users
 
   return (
     <MainContainer
+      breadcrumbs={[
+        { label: "Usuarios", href: "/admin/users" },
+        { label: displayNameOf(user) ?? user.email },
+      ]}
       title={displayNameOf(user) ?? user.email}
       description="Organizaciones y roles de la cuenta"
-      action={
-        <Button asChild variant="outline" size="sm">
-          <Link href="/admin/users">Volver</Link>
-        </Button>
-      }
     >
       <UserDetail user={user} organizations={organizations} moreOrganizations={hasMore} />
     </MainContainer>

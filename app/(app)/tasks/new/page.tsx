@@ -93,6 +93,7 @@ export default async function NewTaskPage({
 
   return (
     <MainContainer
+      breadcrumbs={[{ label: "Tareas", href: "/tasks" }, { label: "Nueva tarea" }]}
       title="Nueva tarea"
       description="Con el título y la línea ya se guarda."
     >

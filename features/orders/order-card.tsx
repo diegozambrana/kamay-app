@@ -6,9 +6,12 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { PaymentStatusBadge } from "@/features/payments/payment-status-badge";
 import { lineColorClasses } from "@/lib/business-lines/colors";
+import { withFrom } from "@/lib/orders/list-href";
 import { isOverdue } from "@/lib/orders/overdue";
 import { cn } from "@/lib/utils";
 import type { DeliveryMode, LineColor, StatusKind } from "@/types";
+
+import { useOrdersFrom } from "./orders-from";
 
 /** Lo que una tarjeta necesita mostrar, ya resuelto por el servidor. */
 export type OrderCardData = {
@@ -52,12 +55,18 @@ export function OrderCard({
   order,
   today,
   position,
+  statusName,
 }: {
   order: OrderCardData;
   /** "Hoy" en la zona horaria de la organización. */
   today: string;
   /** Posición en la cola, solo en columnas con `is_queue`. */
   position?: number;
+  /**
+   * El nombre del estado real. Solo con «Todas» activa, donde la columna es
+   * el tipo y no dice en qué estado está el pedido.
+   */
+  statusName?: string;
 }) {
   const overdue = isOverdue({
     dueDate: order.dueDate,
@@ -66,10 +75,11 @@ export function OrderCard({
   });
 
   const colors = lineColorClasses(order.lineColor);
+  const from = useOrdersFrom();
 
   return (
     <Link
-      href={`/orders/${order.id}`}
+      href={withFrom(`/orders/${order.id}`, from)}
       data-testid="order-card"
       data-order-code={order.code}
       data-overdue={overdue ? "1" : "0"}
@@ -83,6 +93,11 @@ export function OrderCard({
           {/* Barra de color de la línea: identifica el origen de un vistazo. */}
           <span className={cn("size-2 shrink-0 rounded-full", colors.dot)} />
           <span className="font-medium tabular-nums">#{order.code}</span>
+          {statusName && (
+            <Badge variant="outline" data-testid="card-status" className="max-w-36 truncate font-normal">
+              {statusName}
+            </Badge>
+          )}
           {position !== undefined && (
             <Badge
               variant="secondary"

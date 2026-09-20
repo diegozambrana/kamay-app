@@ -20,7 +20,8 @@ async function login(page: Page, email: string) {
 async function openSeedOrder(page: Page, code: string) {
   await page.goto("/orders?view=list");
   await page.getByRole("link", { name: code, exact: true }).click();
-  await page.waitForURL(/\/orders\/[0-9a-f-]+$/);
+  // Desde la lista, el detalle trae `?from=` con la vista de origen.
+  await page.waitForURL(/\/orders\/[0-9a-f-]+(\?.*)?$/);
 }
 
 /** El pedido #5 de la semilla (12 × 45 = 540): el que estas pruebas cobran. */

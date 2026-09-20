@@ -141,7 +141,7 @@ function defaults(overrides: Partial<OrderFormState> = {}): OrderFormState {
 function renderForm(
   mode: "create" | "edit" = "create",
   values: Partial<OrderFormState> = {},
-  extra: { code?: number } = {},
+  extra: { code?: number; from?: string } = {},
 ) {
   const result = render(
     <OrderForm
@@ -154,6 +154,7 @@ function renderForm(
       products={PRODUCTS}
       today="2026-09-03"
       code={extra.code}
+      from={extra.from}
     />,
   );
   return { ...result, user: userEvent.setup() };
@@ -457,12 +458,23 @@ describe("OrderForm · línea de negocio", () => {
 });
 
 describe("OrderForm · guardar", () => {
-  it("«Guardar» lleva al detalle del pedido creado", async () => {
+  it("«Guardar» vuelve a la lista con el número del pedido creado", async () => {
     renderForm();
 
     submitForm();
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith(`/orders/${NEW_ORDER}`));
+    // «Guardar sin vista de origen»: la pantalla de pedidos por omisión.
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/orders?created=42"));
+  });
+
+  it("«Guardar» conserva la vista de origen", async () => {
+    renderForm("create", {}, { from: "view=list&q=tazas" });
+
+    submitForm();
+
+    await waitFor(() =>
+      expect(push).toHaveBeenCalledWith("/orders?view=list&q=tazas&created=42"),
+    );
   });
 
   it("«Guardar y crear otro» conserva línea y canal, y limpia lo demás", async () => {
@@ -524,6 +536,49 @@ describe("OrderForm · guardar", () => {
     await waitFor(() => expect(updateOrder).toHaveBeenCalledTimes(1));
     expect(createOrder).not.toHaveBeenCalled();
     expect(push).toHaveBeenCalledWith(`/orders/${NEW_ORDER}`);
+  });
+
+  it("al editar, el detalle conserva la vista de origen", async () => {
+    renderForm("edit", {}, { code: 12, from: "view=calendar" });
+
+    submitForm();
+
+    await waitFor(() =>
+      expect(push).toHaveBeenCalledWith(`/orders/${NEW_ORDER}?from=view%3Dcalendar`),
+    );
+  });
+
+  /**
+   * «Guardar con un envío lento lleva igual al detalle»: el envío tarda más
+   * que el plazo corto del alta (2,5 s). La edición espera, anuncia que está
+   * guardando y termina en el detalle, sin aviso de pendiente.
+   */
+  it("con un envío lento espera y lleva igual al detalle", async () => {
+    vi.mocked(updateOrder).mockImplementationOnce(
+      () => new Promise((resolve) => setTimeout(() => resolve(undefined), 3_000)),
+    );
+    renderForm("edit", {}, { code: 12 });
+
+    submitForm();
+
+    expect(await screen.findByTestId("save-order")).toHaveTextContent("Guardando…");
+    await waitFor(() => expect(push).toHaveBeenCalledWith(`/orders/${NEW_ORDER}`), {
+      timeout: 5_000,
+    });
+    expect(screen.queryByText(/pendiente de sincronizar/i)).not.toBeInTheDocument();
+  }, 10_000);
+
+  it("al editar, un fallo muestra el error y no navega", async () => {
+    vi.mocked(updateOrder).mockResolvedValueOnce({
+      error: "No se pudo guardar la línea.",
+    } as never);
+    renderForm("edit", {}, { code: 12 });
+
+    submitForm();
+
+    expect(await screen.findByText("No se pudo guardar la línea.")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByTestId("order-form")).toBeInTheDocument();
   });
 
   it("muestra el error del servidor y no navega", async () => {
@@ -737,5 +792,80 @@ describe("OrderForm · sin conexión", () => {
     const [entry] = await listEntries(outboxDatabase());
     expect(entry.operation).toBe("order.update");
     expect(updateOrder).not.toHaveBeenCalled();
+    // «Editar sin conexión»: el formulario sigue abierto.
+    expect(push).not.toHaveBeenCalled();
+  });
+});
+
+/** Spec `navigation-breadcrumbs` y «Confirmación antes de descartar». */
+describe("OrderForm · migas de pan", () => {
+  it("el alta muestra Pedidos › Nuevo pedido con la vista de origen", () => {
+    renderForm("create", {}, { from: "view=list" });
+
+    const nav = screen.getByRole("navigation", { name: "Ruta" });
+    expect(within(nav).getByRole("link", { name: "Pedidos" })).toHaveAttribute(
+      "href",
+      "/orders?view=list",
+    );
+    expect(within(nav).getByText("Nuevo pedido")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("la edición vuelve al detalle o a la lista", () => {
+    renderForm("edit", {}, { code: 12, from: "q=tazas" });
+
+    const nav = screen.getByRole("navigation", { name: "Ruta" });
+    expect(within(nav).getByRole("link", { name: "Pedidos" })).toHaveAttribute(
+      "href",
+      "/orders?q=tazas",
+    );
+    expect(within(nav).getByRole("link", { name: "Pedido #12" })).toHaveAttribute(
+      "href",
+      `/orders/${NEW_ORDER}?from=q%3Dtazas`,
+    );
+    expect(within(nav).getByText("Editar")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("seguir una miga con datos escritos pide confirmación", async () => {
+    const { user } = renderForm("edit", {}, { code: 12 });
+
+    await user.type(screen.getByLabelText("Nota"), "Otra nota");
+    await user.click(
+      within(screen.getByRole("navigation", { name: "Ruta" })).getByRole("link", {
+        name: "Pedidos",
+      }),
+    );
+
+    expect(await screen.findByText("¿Descartar los cambios?")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+
+    await user.click(screen.getByTestId("confirm-discard"));
+    expect(push).toHaveBeenCalledWith("/orders");
+  });
+
+  it("rechazar la confirmación deja la nota intacta", async () => {
+    const { user } = renderForm("edit", {}, { code: 12 });
+
+    await user.type(screen.getByLabelText("Nota"), "Otra nota");
+    await user.click(
+      within(screen.getByRole("navigation", { name: "Ruta" })).getByRole("link", {
+        name: "Pedido #12",
+      }),
+    );
+    await user.click(await screen.findByRole("button", { name: "Seguir editando" }));
+
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Nota")).toHaveValue("Otra nota");
+  });
+
+  it("sin cambios, la miga no pregunta", async () => {
+    const { user } = renderForm("edit", {}, { code: 12 });
+
+    await user.click(
+      within(screen.getByRole("navigation", { name: "Ruta" })).getByRole("link", {
+        name: "Pedidos",
+      }),
+    );
+
+    expect(screen.queryByText("¿Descartar los cambios?")).toBeNull();
   });
 });

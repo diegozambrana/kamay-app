@@ -64,8 +64,9 @@ export default async function OrdersPage({
   const activeLineId = activeLine === ALL_LINES ? null : activeLine;
 
   // Con "Todas" activa no hay un juego único de columnas: Sublimación tiene
-  // seis estados y Alfarería tres, sin correspondencia. El tablero pide
-  // elegir una línea; lista y calendario sí cruzan todas (design.md D1).
+  // seis estados y Alfarería tres, sin correspondencia. El tablero agrupa
+  // entonces por tipo de estado; lista y calendario cruzan todas (design.md
+  // D1; design D5 de `navigation-breadcrumbs-and-all-lines-board`).
   const statuses: Status[] = activeLineId
     ? await new StatusService(context.supabase).resolve(
         context.organizationId,
@@ -73,6 +74,28 @@ export default async function OrdersPage({
         "order",
       )
     : [];
+
+  // Con "Todas" el tablero agrupa por tipo de estado, y mover un pedido a una
+  // columna lo lleva al primer estado de ese tipo en el juego de SU línea:
+  // hace falta el juego de cada una. Son pocas líneas; se resuelven en
+  // paralelo.
+  const statusesByLine: Record<string, Status[]> = activeLineId
+    ? {}
+    : Object.fromEntries(
+        await Promise.all(
+          lines.map(
+            async (line) =>
+              [
+                line.id,
+                await new StatusService(context.supabase).resolve(
+                  context.organizationId,
+                  line.id,
+                  "order",
+                ),
+              ] as const,
+          ),
+        ),
+      );
 
   // El `kind` del estado de cada pedido. Se leen todos los del flujo y no
   // solo el juego resuelto: con "Todas" activa conviven pedidos de líneas
@@ -134,6 +157,7 @@ export default async function OrdersPage({
       }))}
       statuses={statuses}
       allStatuses={allStatuses}
+      statusesByLine={statusesByLine}
       lines={lines}
       activeLineId={activeLineId}
       receivables={receivables}

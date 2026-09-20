@@ -3,7 +3,10 @@ import { FormSkeleton } from "@/components/shared/skeletons";
 
 export default function OrdersNewLoading() {
   return (
-    <RouteLoading title="Nuevo pedido">
+    <RouteLoading
+      breadcrumbs={[{ label: "Pedidos", href: "/orders" }, { label: "Nuevo pedido" }]}
+      title="Nuevo pedido"
+    >
       <FormSkeleton />
     </RouteLoading>
   );

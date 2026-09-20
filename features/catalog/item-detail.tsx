@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
@@ -163,12 +162,7 @@ export function ItemDetail({
           )}
         </span>
       }
-      description={
-        <Link href="/catalog" className="inline-flex items-center gap-1 hover:text-foreground">
-          <ArrowLeftIcon className="size-4" aria-hidden />
-          Catálogo
-        </Link>
-      }
+      breadcrumbs={[{ label: "Catálogo", href: "/catalog" }, { label: item.name }]}
     >
       <div className="flex flex-col gap-6">
       {error && (

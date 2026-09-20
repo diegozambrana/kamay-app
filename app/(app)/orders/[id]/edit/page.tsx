@@ -11,6 +11,7 @@ import {
 import { OrderForm } from "@/features/orders/order-form";
 import type { LineNames } from "@/features/orders/order-lines-editor";
 import { getSessionContext } from "@/lib/auth/session-context";
+import { ordersListHref, withFrom } from "@/lib/orders/list-href";
 import { todayInTimezone } from "@/lib/orders/overdue";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ContactService } from "@/services/catalog/contact-service";
@@ -32,13 +33,16 @@ export const metadata = { title: "Editar pedido · Kamay" };
  */
 export default async function EditOrderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
 
   const { id } = await params;
+  const { from } = await searchParams;
 
   const order = await new OrderService(context.supabase).getById(
     context.organizationId,
@@ -49,6 +53,11 @@ export default async function EditOrderPage({
   if (order.archivedAt) {
     return (
       <MainContainer
+        breadcrumbs={[
+          { label: "Pedidos", href: ordersListHref(from) },
+          { label: `Pedido #${order.code}`, href: withFrom(`/orders/${order.id}`, from) },
+          { label: "Editar" },
+        ]}
         title={`Pedido #${order.code}`}
         description="Este pedido está archivado."
       >
@@ -58,7 +67,7 @@ export default async function EditOrderPage({
             <EmptyDescription>
               Desarchívalo desde el tablero, con «Ver archivados» activo, y
               vuelve a intentarlo.{" "}
-              <Link href={`/orders/${order.id}`} className="underline">
+              <Link href={withFrom(`/orders/${order.id}`, from)} className="underline">
                 Ver el pedido
               </Link>
             </EmptyDescription>
@@ -135,6 +144,7 @@ export default async function EditOrderPage({
         url: signed.get(file.id) ?? null,
       }))}
       today={todayInTimezone(context.organization.timezone)}
+      from={from ?? null}
     />
   );
 }

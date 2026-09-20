@@ -5,15 +5,18 @@ import { useTransition } from "react";
 import { moveOrderToStatus, reorderQueue } from "@/actions/orders";
 import { KanbanBoard, type KanbanColumn } from "@/components/board/kanban-board";
 import { Badge } from "@/components/ui/badge";
+import { KIND_COLUMNS, targetStatusFor } from "@/lib/orders/kind-board";
 import { queuePositions, sortByArrival } from "@/lib/orders/queue";
 import { displayedPlacement, useBoardStore } from "@/stores/board-store";
-import type { Status } from "@/types";
+import type { Status, StatusKind } from "@/types";
 
 import { OrderCard, type OrderCardData } from "./order-card";
 
 export type BoardOrder = OrderCardData & {
   statusId: string;
   queuedAt: string | null;
+  /** Con «Todas» activa decide a qué juego de estados va el pedido al moverlo. */
+  businessLineId: string;
 };
 
 /**
@@ -31,11 +34,23 @@ export function BoardView({
   statuses,
   today,
   onError,
+  groupBy = "status",
+  allStatuses = [],
+  statusesByLine = {},
 }: {
   orders: BoardOrder[];
   statuses: Status[];
   today: string;
   onError: (message: string) => void;
+  /**
+   * `status`: una columna por estado del juego de la línea activa.
+   * `kind`: con «Todas», una columna por tipo de estado (design D5).
+   */
+  groupBy?: "status" | "kind";
+  /** Todos los estados del flujo: nombre y tipo del estado de cada tarjeta. */
+  allStatuses?: Status[];
+  /** El juego resuelto de cada línea activa: el destino de cada movimiento. */
+  statusesByLine?: Record<string, Status[]>;
 }) {
   const [, startTransition] = useTransition();
   const pending = useBoardStore((state) => state.pending);
@@ -141,6 +156,18 @@ export function BoardView({
     });
   }
 
+  if (groupBy === "kind") {
+    return (
+      <KindBoard
+        orders={orders}
+        today={today}
+        allStatuses={allStatuses}
+        statusesByLine={statusesByLine}
+        moveCard={moveCard}
+      />
+    );
+  }
+
   return (
     <KanbanBoard
       id="orders-board"
@@ -153,6 +180,102 @@ export function BoardView({
         <OrderCard order={order} today={today} position={positions.get(order.id)} />
       )}
       renderOverlay={(order) => <OrderCard order={order} today={today} />}
+    />
+  );
+}
+
+/**
+ * El tablero con «Todas» activa: una columna por tipo de estado, con pedidos
+ * de todas las líneas (design D5). Sin colas: su orden es por línea y aquí
+ * conviven varias, así que no se numeran ni se reordenan.
+ *
+ * Soltar en una columna lleva el pedido al primer estado de ese tipo en el
+ * juego de su línea; si su línea no tiene ninguno, la columna no lo acepta.
+ * El movimiento en sí —optimista, con reversión y bitácora— es el mismo de
+ * siempre.
+ */
+function KindBoard({
+  orders,
+  today,
+  allStatuses,
+  statusesByLine,
+  moveCard,
+}: {
+  orders: BoardOrder[];
+  today: string;
+  allStatuses: Status[];
+  statusesByLine: Record<string, Status[]>;
+  moveCard: (orderId: string, statusId: string) => void;
+}) {
+  const pending = useBoardStore((state) => state.pending);
+  const pendingQueue = useBoardStore((state) => state.pendingQueue);
+  const statusById = new Map(allStatuses.map((status) => [status.id, status]));
+
+  /** El estado que se muestra: el del servidor o el movimiento en vuelo. */
+  function shownStatus(order: BoardOrder): Status | undefined {
+    return statusById.get(displayedPlacement(order, pending, pendingQueue).statusId);
+  }
+
+  function kindOf(order: BoardOrder): StatusKind {
+    return shownStatus(order)?.kind ?? order.statusKind;
+  }
+
+  function target(order: BoardOrder, kind: string): Status | null {
+    return targetStatusFor(statusesByLine[order.businessLineId] ?? [], kind as StatusKind);
+  }
+
+  const columns: KanbanColumn<BoardOrder>[] = KIND_COLUMNS.map(({ kind, label }) => {
+    const items = orders
+      .filter((order) => kindOf(order) === kind)
+      .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
+
+    return {
+      id: kind,
+      label,
+      items,
+      attributes: {
+        "data-testid": "board-column",
+        "data-status-name": label,
+        "data-kind": kind,
+        "data-is-queue": "0",
+      },
+      header: (
+        <>
+          <h2 className="text-sm font-medium">{label}</h2>
+          <Badge variant="secondary" className="tabular-nums">
+            {items.length}
+          </Badge>
+        </>
+      ),
+      empty: (
+        <p className="px-1 py-6 text-center text-xs text-muted-foreground">
+          Sin pedidos
+        </p>
+      ),
+    };
+  });
+
+  function moveToKind(orderId: string, kind: string) {
+    const order = orders.find((candidate) => candidate.id === orderId);
+    if (!order || kindOf(order) === kind) return;
+    const destination = target(order, kind);
+    if (destination) moveCard(orderId, destination.id);
+  }
+
+  return (
+    <KanbanBoard
+      id="orders-board-by-kind"
+      testId="orders-board"
+      columns={columns}
+      onMove={moveToKind}
+      canMoveTo={(order, kind) => target(order, kind) !== null}
+      itemLabel={(order) => `Pedido #${order.code}`}
+      renderCard={(order) => (
+        <OrderCard order={order} today={today} statusName={shownStatus(order)?.name} />
+      )}
+      renderOverlay={(order) => (
+        <OrderCard order={order} today={today} statusName={shownStatus(order)?.name} />
+      )}
     />
   );
 }

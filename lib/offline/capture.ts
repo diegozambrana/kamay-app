@@ -15,6 +15,14 @@ import type { EnqueueInput } from "./queue";
  */
 export const FLUSH_DEADLINE_MS = 2_500;
 
+/**
+ * El plazo de la edición de un pedido. Tras editar se navega al detalle, que
+ * el servidor rinde con lo que ya tiene: si se navegara con el cambio aún en
+ * la cola, el detalle mostraría los datos de antes. Con red se espera más; si
+ * aun así no llega, la edición queda pendiente como cualquier captura.
+ */
+export const EDIT_FLUSH_DEADLINE_MS = 15_000;
+
 export type CaptureResult =
   | { status: "sent"; result: unknown }
   | { status: "queued" }

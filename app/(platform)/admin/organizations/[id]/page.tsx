@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { MainContainer } from "@/components/layout/main-container";
-import { Button } from "@/components/ui/button";
 import { OrganizationDetail } from "@/features/platform/organizations/organization-detail";
 import { getPlatformAdminContext } from "@/lib/auth/session-context";
 import { OrganizationAdminService } from "@/services/platform/organization-admin-service";
@@ -31,13 +29,12 @@ export default async function OrganizationDetailPage({
 
   return (
     <MainContainer
+      breadcrumbs={[
+        { label: "Organizaciones", href: "/admin/organizations" },
+        { label: organization.name },
+      ]}
       title={organization.name}
       description="Datos y equipo de la organización"
-      action={
-        <Button asChild variant="outline" size="sm">
-          <Link href="/admin/organizations">Volver</Link>
-        </Button>
-      }
     >
       <OrganizationDetail organization={organization} members={members} />
     </MainContainer>

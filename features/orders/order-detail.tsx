@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon, TriangleAlertIcon } from "lucide-react";
+import { TriangleAlertIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
@@ -30,6 +30,7 @@ import { PaymentBlock } from "@/features/payments/payment-block";
 import { RelatedTasks } from "@/features/tasks/links/related-tasks";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { formatDateTime } from "@/lib/format/datetime";
+import { ordersListHref, withFrom } from "@/lib/orders/list-href";
 import { isOverdue } from "@/lib/orders/overdue";
 import type { OrderItemWithNames } from "@/services/orders/order-item-service";
 import type { OrderWithTotal } from "@/services/orders/order-service";
@@ -71,6 +72,7 @@ export function OrderDetail({
   history,
   today,
   timezone,
+  from,
 }: {
   order: OrderWithTotal;
   lines: OrderItemWithNames[];
@@ -90,6 +92,8 @@ export function OrderDetail({
   history: RecordHistoryData;
   today: string;
   timezone: string;
+  /** La vista de pedidos de la que se llegó (`?from=`), para la miga. */
+  from?: string | null;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -136,14 +140,10 @@ export function OrderDetail({
           )}
         </span>
       }
-      description={
-        <Link
-          href="/orders"
-          className="inline-flex items-center gap-1 hover:text-foreground"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden /> Pedidos
-        </Link>
-      }
+      breadcrumbs={[
+        { label: "Pedidos", href: ordersListHref(from) },
+        { label: `Pedido #${order.code}` },
+      ]}
       action={
         <div className="flex flex-wrap items-center gap-2">
           <div className="w-56">
@@ -183,7 +183,7 @@ export function OrderDetail({
           {!order.archivedAt && (
             <>
               <Button asChild variant="outline" data-testid="edit-order">
-                <Link href={`/orders/${order.id}/edit`}>Editar</Link>
+                <Link href={withFrom(`/orders/${order.id}/edit`, from)}>Editar</Link>
               </Button>
 
               <CancelOrderButton

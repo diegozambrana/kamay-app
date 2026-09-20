@@ -1,5 +1,5 @@
 import { geekoForBlock } from "./helpers/seed-copies";
-import { agregarDelCatalogo, elegirCliente } from "./helpers/order-form";
+import { agregarDelCatalogo, elegirCliente, guardarYAbrirPedido } from "./helpers/order-form";
 import { expect, test, type Page } from "./helpers/test";
 
 const PASSWORD = "kamay123";
@@ -49,10 +49,11 @@ async function createOwnOrder(page: Page, nota: string): Promise<string> {
   await page.getByLabel("Fecha comprometida").fill("2027-06-15");
   await page.getByLabel("Nota").fill(nota);
 
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await page.waitForURL(/\/orders\/[0-9a-f]{8}-[0-9a-f-]+$/);
+  // «Guardar» vuelve a la lista; el pedido se abre desde allí.
+  await guardarYAbrirPedido(page);
 
-  return page.url();
+  // Sin `?from=`: quien llama la usa como dirección y como fuente del id.
+  return new URL(page.url()).pathname;
 }
 
 /**

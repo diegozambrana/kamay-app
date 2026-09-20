@@ -1,3 +1,26 @@
+import Link from "next/link";
+import { Fragment } from "react";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+/**
+ * Un tramo de las migas. El último es la pantalla actual y no enlaza; los
+ * anteriores llevan `href`. `onClick` deja que un formulario con cambios sin
+ * guardar intercepte la salida (guardia de descarte).
+ */
+export type Crumb = {
+  label: string;
+  href?: string;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+};
+
 type MainContainerProps = {
   /**
    * `ReactNode` y no `string`: el detalle de pedido compone el número con sus
@@ -7,6 +30,11 @@ type MainContainerProps = {
   description?: React.ReactNode;
   /** Zona de acciones, alineada a la derecha del título. */
   action?: React.ReactNode;
+  /**
+   * Migas de pan de las pantallas de alta, edición y detalle (spec
+   * `navigation-breadcrumbs`). Las listas no las declaran.
+   */
+  breadcrumbs?: Crumb[];
   children: React.ReactNode;
 };
 
@@ -40,6 +68,7 @@ export function MainContainer({
   title,
   description,
   action,
+  breadcrumbs,
   children,
 }: MainContainerProps) {
   return (
@@ -47,6 +76,7 @@ export function MainContainer({
       {/* El encabezado se rinde también mientras carga (`RouteLoading`) y
           cuando falla (`RouteError`): si desapareciera, la pantalla daría un
           salto al llegar los datos. */}
+      {breadcrumbs && breadcrumbs.length > 0 && <Crumbs items={breadcrumbs} />}
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{title}</h1>
@@ -59,5 +89,42 @@ export function MainContainer({
 
       {children}
     </main>
+  );
+}
+
+/**
+ * Una sola línea: el último tramo se recorta con puntos suspensivos y los
+ * enlaces conservan su ancho y un área táctil de 44 px, para que en 390 px
+ * siempre se pueda volver sin desplazar la página.
+ */
+function Crumbs({ items }: { items: Crumb[] }) {
+  return (
+    <Breadcrumb className="-mt-2 mb-1 min-w-0">
+      <BreadcrumbList className="flex-nowrap">
+        {items.map((item, index) => {
+          const last = index === items.length - 1;
+          return (
+            <Fragment key={`${index}-${item.label}`}>
+              {index > 0 && <BreadcrumbSeparator />}
+              <BreadcrumbItem className={last ? "min-w-0" : "shrink-0"}>
+                {last || !item.href ? (
+                  <BreadcrumbPage className="block truncate">{item.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link
+                      href={item.href}
+                      onClick={item.onClick}
+                      className="inline-flex min-h-11 items-center"
+                    >
+                      {item.label}
+                    </Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </Fragment>
+          );
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }

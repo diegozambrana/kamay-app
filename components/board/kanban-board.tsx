@@ -78,6 +78,7 @@ export function KanbanBoard<T extends { id: string }>({
   renderOverlay,
   onMove,
   onReorder,
+  canMoveTo,
   itemLabel,
   testId,
 }: {
@@ -92,6 +93,12 @@ export function KanbanBoard<T extends { id: string }>({
   renderOverlay: (item: T) => React.ReactNode;
   onMove: (itemId: string, toColumnId: string) => void;
   onReorder?: (itemId: string, columnId: string, overItemId: string) => void;
+  /**
+   * Si una tarjeta puede ir a una columna. Lo que no se permite no aparece en
+   * «Mover a…» y, al soltar, se trata como soltar fuera: la tarjeta vuelve.
+   * Por omisión todo se permite (el tablero de tareas no lo usa).
+   */
+  canMoveTo?: (item: T, toColumnId: string) => boolean;
   /** Cómo se nombra una tarjeta en el menú «Mover a…»: «Pedido #12». */
   itemLabel: (item: T) => string;
   testId: string;
@@ -148,6 +155,8 @@ export function KanbanBoard<T extends { id: string }>({
     if (!to) return;
 
     if (to !== from) {
+      const item = findItem(itemId);
+      if (canMoveTo && item && !canMoveTo(item, to)) return;
       onMove(itemId, to);
       return;
     }
@@ -180,6 +189,7 @@ export function KanbanBoard<T extends { id: string }>({
             renderCard={renderCard}
             itemLabel={itemLabel}
             onMove={onMove}
+            canMoveTo={canMoveTo}
           />
         ))}
       </div>
@@ -201,12 +211,14 @@ function BoardColumn<T extends { id: string }>({
   renderCard,
   itemLabel,
   onMove,
+  canMoveTo,
 }: {
   column: KanbanColumn<T>;
   columns: KanbanColumn<T>[];
   renderCard: (item: T, columnId: string) => React.ReactNode;
   itemLabel: (item: T) => string;
   onMove: (itemId: string, toColumnId: string) => void;
+  canMoveTo?: (item: T, toColumnId: string) => boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -237,7 +249,11 @@ function BoardColumn<T extends { id: string }>({
               moveMenu={
                 <CardMoveMenu
                   itemLabel={itemLabel(item)}
-                  targets={columns.filter((candidate) => candidate.id !== column.id)}
+                  targets={columns.filter(
+                    (candidate) =>
+                      candidate.id !== column.id &&
+                      (!canMoveTo || canMoveTo(item, candidate.id)),
+                  )}
                   onMove={(toColumnId) => onMove(item.id, toColumnId)}
                 />
               }

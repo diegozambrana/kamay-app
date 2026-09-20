@@ -11,11 +11,13 @@ import {
 } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { lineColorClasses } from "@/lib/business-lines/colors";
+import { withFrom } from "@/lib/orders/list-href";
 import { isOverdue } from "@/lib/orders/overdue";
 import { cn } from "@/lib/utils";
 import type { Status } from "@/types";
 
 import type { BoardOrder } from "./board-view";
+import { useOrdersFrom } from "./orders-from";
 import { EmptyState } from "@/components/shared/empty-state";
 
 const DELIVERY_LABELS = { pickup: "Recojo", delivery: "Delivery" } as const;
@@ -40,13 +42,14 @@ export function ListView({
   today: string;
 }) {
   const router = useRouter();
+  const from = useOrdersFrom();
 
   if (statuses.length === 0) {
     return <EmptyState title="No hay pedidos que mostrar" />;
   }
 
   function onAction(actionId: string, order: BoardOrder) {
-    if (actionId === "view") router.push(`/orders/${order.id}`);
+    if (actionId === "view") router.push(withFrom(`/orders/${order.id}`, from));
   }
 
   const actions: DataTableAction<BoardOrder>[] = [
@@ -62,7 +65,7 @@ export function ListView({
         // Enlace directo además del menú de acciones: se puede abrir el
         // pedido con un solo clic, sin pasar por el "…".
         <Link
-          href={`/orders/${order.id}`}
+          href={withFrom(`/orders/${order.id}`, from)}
           className="tabular-nums hover:underline"
         >
           #{order.code}

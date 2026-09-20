@@ -118,6 +118,7 @@ export function CostForm({
 
   return (
     <MainContainer
+      breadcrumbs={[{ label: "Egresos", href: "/expenses" }, { label: "Nuevo gasto" }]}
       title="Nuevo gasto"
       description="Monto y categoría. Todo lo demás puede esperar."
     >

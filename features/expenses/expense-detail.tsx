@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon, PaperclipIcon } from "lucide-react";
+import { PaperclipIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
@@ -113,20 +113,16 @@ export function ExpenseDetail({
 
   return (
     <MainContainer
+      breadcrumbs={[
+        { label: "Egresos", href: "/expenses" },
+        { label: KIND_LABELS[expense.kind] },
+      ]}
       title={
         <span className="flex flex-wrap items-center gap-3">
           <span>{KIND_LABELS[expense.kind]}</span>
           {businessLine && <LineBadge line={businessLine} />}
           {expense.archivedAt && <Badge variant="outline">Archivado</Badge>}
         </span>
-      }
-      description={
-        <Link
-          href="/expenses"
-          className="inline-flex items-center gap-1 hover:text-foreground"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden /> Egresos
-        </Link>
       }
     >
       {body}

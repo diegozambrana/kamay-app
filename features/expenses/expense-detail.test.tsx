@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ExpenseWithTotal } from "@/services/expenses/expense-service";
@@ -149,5 +149,26 @@ describe("ExpenseDetail · vínculo con un activo (KAM-19)", () => {
     );
 
     expect(screen.getByRole("button", { name: "Desvincular" })).toBeInTheDocument();
+  });
+});
+
+/** Spec `navigation-breadcrumbs`. */
+describe("ExpenseDetail · migas de pan", () => {
+  it("en página: Egresos › tipo, sin «← Egresos» aparte", () => {
+    render(<ExpenseDetail data={data()} timezone="America/La_Paz" variant="page" />);
+
+    const nav = screen.getByRole("navigation", { name: "Ruta" });
+    expect(within(nav).getByRole("link", { name: "Egresos" })).toHaveAttribute(
+      "href",
+      "/expenses",
+    );
+    expect(within(nav).getByText("Gasto")).toHaveAttribute("aria-current", "page");
+    expect(screen.getAllByRole("link", { name: /Egresos/ })).toHaveLength(1);
+  });
+
+  it("como panel lateral no lleva migas", () => {
+    render(<ExpenseDetail data={data()} timezone="America/La_Paz" variant="panel" />);
+
+    expect(screen.queryByRole("navigation", { name: "Ruta" })).not.toBeInTheDocument();
   });
 });

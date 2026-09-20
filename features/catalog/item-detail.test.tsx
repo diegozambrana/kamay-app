@@ -531,3 +531,21 @@ describe("ItemDetail · categoría", () => {
     expect(within(value).getByText("Archivada")).toBeInTheDocument();
   });
 });
+
+/** Spec `navigation-breadcrumbs` — «Un solo camino de vuelta». */
+describe("ItemDetail · migas de pan", () => {
+  it("Catálogo › nombre, sin el enlace «← Catálogo» aparte", () => {
+    renderDetail();
+
+    const nav = screen.getByRole("navigation", { name: "Ruta" });
+    expect(within(nav).getByRole("link", { name: "Catálogo" })).toHaveAttribute(
+      "href",
+      "/catalog",
+    );
+    expect(within(nav).getByText("Taza para sublimación")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getAllByRole("link", { name: "Catálogo" })).toHaveLength(1);
+  });
+});

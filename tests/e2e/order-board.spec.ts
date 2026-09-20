@@ -1,4 +1,9 @@
 import { geeko, geekoForBlock } from "./helpers/seed-copies";
+import {
+  agregarDelCatalogo,
+  elegirCliente,
+  esperarPedidoGuardado,
+} from "./helpers/order-form";
 import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
@@ -126,23 +131,38 @@ test.describe.serial("tablero de pedidos (V3)", () => {
     await expect(noCola.getByTestId("queue-position")).toHaveCount(0);
   });
 
-  test("con la línea Todas el tablero pide elegir, pero lista y calendario cruzan", async ({
+  /**
+   * Delta `orders` — «Tablero con todas las líneas agrupado por tipo de
+   * estado»: «“Todas” muestra los pedidos de todas las líneas», «Las columnas
+   * son los tipos, no los estados», «Sin reordenamiento de cola con “Todas”».
+   */
+  test("con la línea Todas el tablero agrupa por tipo y muestra todos los pedidos", async ({
     page,
   }) => {
     await login(page, geekoForBlock().owner);
     await selectLine(page, "Todas");
-    await page.goto("/orders");
+    await page.goto("/orders?view=board");
 
-    await expect(page.getByTestId("board-needs-line")).toBeVisible();
-    await expect(page.getByTestId("board-column")).toHaveCount(0);
+    await expect(page.getByTestId("board-needs-line")).toHaveCount(0);
+    await expect(page.getByTestId("board-column")).toHaveCount(5);
+    const titulos = await page
+      .getByTestId("board-column")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-status-name")));
+    expect(titulos).toEqual(["Por empezar", "En curso", "En espera", "Terminados", "Cancelados"]);
 
-    // La lista sí muestra los pedidos de todas las líneas.
+    // Cada tarjeta dice su estado real: la columna solo dice el tipo. La cola
+    // de Sublimación está, pero sin numerar.
+    const enEspera = page.locator('[data-testid="board-column"][data-kind="waiting"]');
+    await expect(enEspera.getByTestId("card-status").filter({ hasText: "En cola" }).first()).toBeVisible();
+    await expect(page.getByTestId("queue-position")).toHaveCount(0);
+
+    // Los mismos pedidos que la lista de «Todas», que ya cruzaba las líneas.
+    const enTablero = await page.getByTestId("order-card").count();
     await page.getByRole("radio", { name: "Lista" }).click();
     await page.waitForURL(/view=list/);
-
-    const filas = page.getByTestId("order-row");
-    await expect(filas.filter({ hasText: "Macetas" })).toHaveCount(0); // resumen no va en la lista
-    expect(await filas.count()).toBeGreaterThan(3);
+    const porCobrar = page.getByTestId("receivables-summary");
+    await expect(porCobrar).toContainText("Por cobrar");
+    await expect(page.getByRole("link", { name: /^#\d+$/ })).toHaveCount(enTablero);
   });
 
   test("los filtros sobreviven al cambio de vista y Ver archivados funciona", async ({
@@ -258,10 +278,60 @@ test.describe("señal de pago e indicador Por cobrar (KAM-10)", () => {
   });
 });
 
-test.describe("tablero de pedidos en móvil", () => {
-  test.skip(({ isMobile }) => !isMobile, "cubre el camino sin selector de línea");
+/**
+ * «Mover al primer estado de ese tipo en la línea del pedido» y «La línea del
+ * pedido no tiene ese tipo». Cada prueba sobre su propia copia: mueve un
+ * pedido que ella misma crea.
+ */
+test.describe("tablero con «Todas»: mover por tipo", () => {
+  test("mover a un tipo lleva al primer estado de ese tipo en la línea del pedido", async ({
+    page,
+  }) => {
+    await login(page, geeko().owner);
 
-  test("el aviso del tablero permite elegir línea sin la barra superior", async ({
+    // Un pedido de Alfarería, cuyo juego es Reservado → Listo para entrega →
+    // Entregado (+ Cancelado): no tiene ningún estado «en curso».
+    await page.goto("/orders/new");
+    await page.getByTestId("line-select").click();
+    await page.getByRole("option", { name: "Alfarería", exact: true }).click();
+    await elegirCliente(page, "Colegio San Andrés");
+    await agregarDelCatalogo(page, ["Maceta de barro"]);
+    await page.getByTestId("save-order").click();
+    const code = await esperarPedidoGuardado(page);
+
+    // Sin cookie de línea la sesión arranca en «Todas».
+    await page.goto("/orders?view=board");
+    const tarjeta = page.locator(`[data-testid="order-card"][data-order-code="${code}"]`);
+    const porEmpezar = page.locator('[data-testid="board-column"][data-kind="initial"]');
+    await expect(porEmpezar.locator(`[data-order-code="${code}"]`)).toBeVisible();
+    await expect(tarjeta.getByTestId("card-status")).toHaveText("Reservado");
+
+    await page.getByRole("button", { name: `Mover Pedido #${code} a otra columna` }).click();
+    const destinos = page.getByRole("menuitem");
+    await expect(destinos).toHaveText(["En espera", "Terminados", "Cancelados"]);
+    // Se espera la confirmación del servidor: recargar con el movimiento aún
+    // en vuelo lo cancelaría.
+    await Promise.all([
+      page.waitForResponse(
+        (response) => response.request().method() === "POST" && response.status() < 400,
+      ),
+      page.getByRole("menuitem", { name: "Terminados" }).click(),
+    ]);
+
+    const terminados = page.locator('[data-testid="board-column"][data-kind="final"]');
+    await expect(terminados.locator(`[data-order-code="${code}"]`)).toBeVisible();
+
+    // Persistido: tras recargar sigue ahí, en el estado final de su línea.
+    await page.reload();
+    await expect(terminados.locator(`[data-order-code="${code}"]`)).toBeVisible();
+    await expect(tarjeta.getByTestId("card-status")).toHaveText("Entregado");
+  });
+});
+
+test.describe("tablero de pedidos en móvil", () => {
+  test.skip(({ isMobile }) => !isMobile, "cubre el tablero en el celular");
+
+  test("con «Todas» el tablero muestra las columnas por tipo, dentro de sus límites", async ({
     page,
   }) => {
     await login(page, geeko().owner);
@@ -269,14 +339,14 @@ test.describe("tablero de pedidos en móvil", () => {
     // el celular es la lista, y el kanban es la alternativa.
     await page.goto("/orders?view=board");
 
-    // Sin barra superior no hay selector global: el aviso de "Todas" es la
-    // única vía, y por eso trae los botones de las líneas (design.md D1).
-    const aviso = page.getByTestId("board-needs-line");
-    await expect(aviso).toBeVisible();
-
-    await aviso.getByRole("button", { name: "Sublimación" }).click();
-
     await expect(page.getByTestId("board-needs-line")).toHaveCount(0);
-    await expect(page.getByTestId("board-column").first()).toBeVisible();
+    await expect(page.getByTestId("board-column")).toHaveCount(5);
+    await expect(page.getByTestId("order-card").first()).toBeVisible();
+
+    // Las columnas se recorren dentro del tablero; la página no se desplaza.
+    const desborde = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(desborde).toBeLessThanOrEqual(0);
   });
 });

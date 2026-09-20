@@ -19,8 +19,9 @@ import { Button } from "@/components/ui/button";
  * Salir de un formulario con datos escritos pide confirmación (mapa de
  * navegación §8; design.md D8).
  *
- * Cubre las dos salidas que el formulario controla —el botón «Cancelar» y el
- * enlace de volver— y, con `beforeunload`, la recarga y el cierre de pestaña.
+ * Cubre las salidas que el formulario controla —el botón «Cancelar» y las
+ * migas de pan del encabezado (`useDiscardConfirm`)— y, con `beforeunload`,
+ * la recarga y el cierre de pestaña.
  * Los enlaces del menú lateral no se interceptan: el App Router no expone un
  * bloqueo de navegación, y envolver el shell entero por un formulario sería
  * desproporcionado. En móvil la barra inferior se oculta en las rutas de
@@ -41,7 +42,36 @@ export function DiscardGuard({
   children?: React.ReactNode;
 }) {
   const router = useRouter();
-  const [asking, setAsking] = useState(false);
+  const { leave, dialog } = useDiscardConfirm(dirty);
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        data-testid="discard-button"
+        onClick={() => leave(() => router.back())}
+      >
+        {children ?? label}
+      </Button>
+
+      {dialog}
+    </>
+  );
+}
+
+/**
+ * La confirmación de descarte, separada del botón para que otras salidas —las
+ * migas de pan— la compartan (design D4 de `navigation-breadcrumbs-…`).
+ *
+ * `leave(go)` ejecuta `go` directamente si no hay cambios y, si los hay,
+ * pregunta primero. `confirmHref(href)` es el atajo para un enlace: se pasa
+ * como `onClick` y, con cambios, evita la navegación del enlace hasta que la
+ * persona acepte. Quien use el hook debe rendir `dialog`.
+ */
+export function useDiscardConfirm(dirty: boolean) {
+  const router = useRouter();
+  const [pending, setPending] = useState<(() => void) | null>(null);
 
   // Recargar o cerrar la pestaña con cambios sin guardar. El navegador
   // muestra su propio aviso; no se puede personalizar el texto.
@@ -56,39 +86,49 @@ export function DiscardGuard({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  function leave() {
-    setAsking(false);
-    router.back();
+  function leave(go: () => void) {
+    if (dirty) setPending(() => go);
+    else go();
   }
 
-  return (
-    <>
-      <Button
-        type="button"
-        variant="outline"
-        data-testid="discard-button"
-        onClick={() => (dirty ? setAsking(true) : leave())}
-      >
-        {children ?? label}
-      </Button>
+  function confirmHref(href: string) {
+    return (event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!dirty) return;
+      event.preventDefault();
+      setPending(() => () => router.push(href));
+    };
+  }
 
-      <AlertDialog open={asking} onOpenChange={setAsking}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Descartar los cambios?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Lo que escribiste en este formulario se perderá. Esta acción no
-              se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Seguir editando</AlertDialogCancel>
-            <AlertDialogAction data-testid="confirm-discard" onClick={leave}>
-              Descartar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+  function accept() {
+    const go = pending;
+    setPending(null);
+    go?.();
+  }
+
+  const dialog = (
+    <AlertDialog
+      open={pending !== null}
+      onOpenChange={(open) => {
+        if (!open) setPending(null);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Descartar los cambios?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Lo que escribiste en este formulario se perderá. Esta acción no
+            se puede deshacer.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Seguir editando</AlertDialogCancel>
+          <AlertDialogAction data-testid="confirm-discard" onClick={accept}>
+            Descartar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
+
+  return { leave, confirmHref, dialog };
 }

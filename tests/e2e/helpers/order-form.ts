@@ -115,3 +115,43 @@ export async function agregarDelCatalogo(page: Page, productos: ProductoAElegir[
     .click();
   await expect(dialog).toBeHidden();
 }
+
+/**
+ * El detalle de un pedido. La consulta es opcional: al llegar desde la
+ * pantalla de pedidos, la dirección lleva `?from=` con la vista de origen
+ * (spec `navigation-breadcrumbs`).
+ */
+export const ORDER_DETAIL = /\/orders\/[0-9a-f]{8}-[0-9a-f-]{27}(\?.*)?$/;
+
+/**
+ * «Guardar» en el alta vuelve a la pantalla de pedidos con el número a la
+ * vista (`navigation-breadcrumbs-and-all-lines-board`). Espera esa vuelta y
+ * devuelve el número; el clic en «Guardar» lo da quien llama.
+ */
+export async function esperarPedidoGuardado(page: Page): Promise<string> {
+  const aviso = page.getByTestId("order-created-notice");
+  await expect(aviso).toBeVisible({ timeout: 15_000 });
+  await expect(page).toHaveURL(/\/orders(\?.*)?$/);
+  const code = (await aviso.textContent())?.match(/#(\d+)/)?.[1];
+  if (!code) throw new Error("El aviso de pedido guardado no trae número");
+  return code;
+}
+
+/** Abre el detalle de un pedido desde la lista, por su número. */
+export async function abrirPedido(page: Page, code: string): Promise<void> {
+  await page.goto("/orders?view=list");
+  // `exact`: «#5» no debe casar con «#50».
+  await page.getByRole("link", { name: `#${code}`, exact: true }).click();
+  await page.waitForURL(ORDER_DETAIL);
+}
+
+/**
+ * Guarda el alta y abre el detalle del pedido recién creado, para las suites
+ * que siguen trabajando sobre él.
+ */
+export async function guardarYAbrirPedido(page: Page): Promise<string> {
+  await page.getByTestId("save-order").click();
+  const code = await esperarPedidoGuardado(page);
+  await abrirPedido(page, code);
+  return code;
+}

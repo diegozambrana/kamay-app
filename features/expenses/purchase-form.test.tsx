@@ -319,3 +319,15 @@ describe("PurchaseForm · comprar una máquina (KAM-19)", () => {
     expect(screen.queryByTestId("declare-asset-dialog")).not.toBeInTheDocument();
   });
 });
+
+/** Spec `navigation-breadcrumbs` — «Alta vuelve a la lista». */
+describe("PurchaseForm · migas de pan", () => {
+  it("Egresos › Nueva compra, y Egresos lleva a la bandeja", () => {
+    renderForm();
+
+    expect(screen.getByRole("link", { name: "Egresos" })).toHaveAttribute("href", "/expenses");
+    expect(
+      screen.getByText("Nueva compra", { selector: "[aria-current=page]" }),
+    ).toBeInTheDocument();
+  });
+});

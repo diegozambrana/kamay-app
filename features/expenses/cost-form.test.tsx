@@ -166,3 +166,13 @@ describe("CostForm (V9)", () => {
     expect(push).not.toHaveBeenCalled();
   });
 });
+
+/** Spec `navigation-breadcrumbs` — «Alta vuelve a la lista». */
+describe("CostForm · migas de pan", () => {
+  it("Egresos › Nuevo gasto", () => {
+    renderForm(SUBLI);
+
+    expect(screen.getByRole("link", { name: "Egresos" })).toHaveAttribute("href", "/expenses");
+    expect(screen.getByText("Nuevo gasto", { selector: "[aria-current=page]" })).toBeInTheDocument();
+  });
+});

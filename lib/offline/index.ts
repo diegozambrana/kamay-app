@@ -1,7 +1,12 @@
 export { OUTBOX_DB_NAME, OUTBOX_SCHEMA_VERSION, createOutboxDatabase, outboxDatabase, type OutboxDatabase } from "./db";
 export { MAX_ATTEMPTS, backoffDelay, hasExhaustedAttempts } from "./backoff";
 export { classify, classifyRejection, classifyResolution } from "./classify";
-export { FLUSH_DEADLINE_MS, capture, type CaptureResult } from "./capture";
+export {
+  EDIT_FLUSH_DEADLINE_MS,
+  FLUSH_DEADLINE_MS,
+  capture,
+  type CaptureResult,
+} from "./capture";
 export { drainOutbox, resetDrainLock, type DrainOutcomes } from "./drain";
 export { failedRecordIdsOf, holdMessage, holdReason } from "./hold";
 export {

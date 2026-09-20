@@ -210,6 +210,7 @@ export function PurchaseForm({
 
   return (
     <MainContainer
+      breadcrumbs={[{ label: "Egresos", href: "/expenses" }, { label: "Nueva compra" }]}
       title="Nueva compra"
       description="Proveedor y al menos un insumo con cantidad y precio."
     >

@@ -91,6 +91,7 @@ export function TaskDetail({
 
   return (
     <MainContainer
+      breadcrumbs={[{ label: "Tareas", href: "/tasks" }, { label: task.title }]}
       title={
         <span className="flex flex-wrap items-center gap-2">
           <span>Tarea</span>

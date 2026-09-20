@@ -23,13 +23,16 @@ export const metadata = { title: "Pedido · Kamay" };
  */
 export default async function OrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
 
   const { id } = await params;
+  const { from } = await searchParams;
 
   const orders = new OrderService(context.supabase);
   const order = await orders.getById(context.organizationId, id);
@@ -133,6 +136,7 @@ export default async function OrderDetailPage({
       history={history}
       today={todayInTimezone(context.organization.timezone)}
       timezone={context.organization.timezone}
+      from={from ?? null}
     />
   );
 }

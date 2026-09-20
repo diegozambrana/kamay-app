@@ -1,9 +1,14 @@
-import { MainContainer } from "@/components/layout/main-container";
+import { MainContainer, type Crumb } from "@/components/layout/main-container";
 
 type RouteLoadingProps = {
   /** El mismo título que la página: el encabezado no salta al llegar los datos. */
   title: string;
   description?: string;
+  /**
+   * El tramo padre de las migas de pan, para que tampoco ellas salten. El
+   * resto de la ruta llega con los datos.
+   */
+  breadcrumbs?: Crumb[];
   /** El esqueleto con la forma de lo que viene. */
   children: React.ReactNode;
 };
@@ -16,9 +21,14 @@ type RouteLoadingProps = {
  * abre con `loading.tsx` mientras el segmento llega. El encabezado se pinta
  * ya, con su título, para que la pantalla no dé un salto al completarse.
  */
-export function RouteLoading({ title, description, children }: RouteLoadingProps) {
+export function RouteLoading({
+  title,
+  description,
+  breadcrumbs,
+  children,
+}: RouteLoadingProps) {
   return (
-    <MainContainer title={title} description={description}>
+    <MainContainer title={title} description={description} breadcrumbs={breadcrumbs}>
       {children}
     </MainContainer>
   );

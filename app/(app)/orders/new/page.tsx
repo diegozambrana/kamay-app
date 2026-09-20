@@ -25,9 +25,16 @@ export const metadata = { title: "Nuevo pedido · Kamay" };
  * generando cuando llegue el modo sin conexión, y la segunda es la hora del
  * hecho, no la del servidor de datos.
  */
-export default async function NewOrderPage() {
+export default async function NewOrderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
+
+  // La vista de pedidos de la que se llegó: «Guardar» y la miga vuelven a ella.
+  const { from } = await searchParams;
 
   const lines = await new BusinessLineService(context.supabase).listActive(
     context.organizationId,
@@ -69,6 +76,7 @@ export default async function NewOrderPage() {
       // "Hoy" en la zona de la organización: los atajos de fecha son los del
       // taller, no los del navegador (design.md D12).
       today={todayInTimezone(context.organization.timezone)}
+      from={from ?? null}
     />
   );
 }

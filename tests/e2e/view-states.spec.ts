@@ -42,7 +42,8 @@ test.describe("estados transversales", () => {
     await expect(page.getByTestId("filtered-empty-state")).toHaveCount(0);
 
     await empty.getByRole("link", { name: "Crear pedido" }).click();
-    await page.waitForURL(/\/orders\/new$/);
+    // Lleva la vista de origen (`?from=`) para volver a ella al guardar.
+    await page.waitForURL(/\/orders\/new(\?.*)?$/);
   });
 
   test("filtrar hasta cero ofrece quitar filtros, y quitarlos devuelve la lista", async ({

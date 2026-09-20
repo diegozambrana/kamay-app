@@ -8,7 +8,10 @@ afterEach(cleanup);
 
 type Item = { id: string; title: string };
 
-function renderBoard(onMove = vi.fn()) {
+function renderBoard(
+  onMove = vi.fn(),
+  canMoveTo?: (item: Item, toColumnId: string) => boolean,
+) {
   const columns: KanbanColumn<Item>[] = [
     { id: "todo", label: "Por hacer", header: <h2>Por hacer</h2>, items: [{ id: "t1", title: "Esmaltar" }] },
     { id: "doing", label: "Haciendo", header: <h2>Haciendo</h2>, items: [] },
@@ -20,6 +23,7 @@ function renderBoard(onMove = vi.fn()) {
       testId="test-board"
       columns={columns}
       onMove={onMove}
+      canMoveTo={canMoveTo}
       itemLabel={(item) => `la tarea «${item.title}»`}
       renderCard={(item) => <a href={`/tasks/${item.id}`}>{item.title}</a>}
       renderOverlay={(item) => <span>{item.title}</span>}
@@ -69,5 +73,27 @@ describe("KanbanBoard · alternativa de teclado al arrastre", () => {
     const card = screen.getByRole("link", { name: "Esmaltar" });
     expect(card.parentElement).not.toHaveAttribute("role");
     expect(card.parentElement).not.toHaveAttribute("tabindex");
+  });
+});
+
+describe("KanbanBoard · destinos permitidos", () => {
+  it("«Mover a…» no ofrece una columna que la tarjeta no admite", async () => {
+    const user = userEvent.setup();
+    const onMove = renderBoard(vi.fn(), (_item, to) => to !== "doing");
+
+    await user.click(screen.getByRole("button", { name: /Mover la tarea «Esmaltar»/ }));
+    const destinos = await screen.findAllByRole("menuitem");
+    expect(destinos.map((item) => item.textContent)).toEqual(["Hecho"]);
+
+    await user.click(destinos[0]);
+    expect(onMove).toHaveBeenCalledWith("t1", "done");
+  });
+
+  it("sin destinos permitidos no hay menú", () => {
+    renderBoard(vi.fn(), () => false);
+
+    expect(
+      screen.queryByRole("button", { name: /Mover la tarea «Esmaltar»/ }),
+    ).not.toBeInTheDocument();
   });
 });

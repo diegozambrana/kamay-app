@@ -1,11 +1,17 @@
 import { geeko } from "./helpers/seed-copies";
-import { agregarDelCatalogo, elegirCliente } from "./helpers/order-form";
+import {
+  ORDER_DETAIL,
+  agregarDelCatalogo,
+  elegirCliente,
+  guardarYAbrirPedido,
+} from "./helpers/order-form";
 import { expect, test, type Page } from "./helpers/test";
 
 // Usuarios de supabase/seed.sql (contraseña común de desarrollo).
 const PASSWORD = "kamay123";
 
-const ORDER_DETAIL = /\/orders\/[0-9a-f]{8}-[0-9a-f-]+$/;
+/** La edición; al llegar desde el detalle trae `?from=` (spec `navigation-breadcrumbs`). */
+const EDIT = /\/edit(\?.*)?$/;
 
 async function login(page: Page, email: string) {
   // Se limpian las cookies primero porque una de estas pruebas cambia de
@@ -26,8 +32,16 @@ async function login(page: Page, email: string) {
  */
 async function crearPedido(
   page: Page,
-  { linea = "Alfarería", producto = "Maceta de barro", cliente = "Colegio San Andrés" } = {},
+  opciones: { linea?: string; producto?: string; cliente?: string } = {},
 ): Promise<string> {
+  return (await crearPedidoYCodigo(page, opciones)).path;
+}
+
+/** Como `crearPedido`, y además el número visible del pedido. */
+async function crearPedidoYCodigo(
+  page: Page,
+  { linea = "Alfarería", producto = "Maceta de barro", cliente = "Colegio San Andrés" } = {},
+): Promise<{ path: string; code: string }> {
   await page.goto("/orders/new");
 
   await page.getByTestId("line-select").click();
@@ -36,10 +50,9 @@ async function crearPedido(
   await elegirCliente(page, cliente);
   await agregarDelCatalogo(page, [producto]);
 
-  await page.getByTestId("save-order").click();
-  await page.waitForURL(ORDER_DETAIL);
+  const code = await guardarYAbrirPedido(page);
 
-  return new URL(page.url()).pathname;
+  return { path: new URL(page.url()).pathname, code };
 }
 
 test.describe("edición de pedidos (V5 sobre V4)", () => {
@@ -50,7 +63,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
     await expect(page.getByTestId("order-total")).toHaveText("60.00");
 
     await page.getByTestId("edit-order").click();
-    await page.waitForURL(/\/edit$/);
+    await page.waitForURL(EDIT);
 
     await page.getByRole("button", { name: "En una semana" }).click();
 
@@ -88,7 +101,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
     await crearPedido(page);
 
     await page.getByTestId("edit-order").click();
-    await page.waitForURL(/\/edit$/);
+    await page.waitForURL(EDIT);
 
     await expect(page.getByTestId("line-label")).toContainText("Alfarería");
     await expect(page.getByTestId("line-select")).toHaveCount(0);
@@ -99,7 +112,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
     await crearPedido(page);
 
     await page.getByTestId("edit-order").click();
-    await page.waitForURL(/\/edit$/);
+    await page.waitForURL(EDIT);
 
     await page.getByRole("button", { name: "Quitar Maceta de barro" }).click();
     await page.getByTestId("save-order").click();
@@ -107,7 +120,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
     await expect(page.getByTestId("lines-error")).toContainText(
       "Agrega al menos una línea",
     );
-    await expect(page).toHaveURL(/\/edit$/);
+    await expect(page).toHaveURL(EDIT);
   });
 
   /** Matriz de acceso §16: el ayudante edita pedidos y sus líneas. */
@@ -118,7 +131,7 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
     const pedido = await crearPedido(page);
 
     await page.getByTestId("edit-order").click();
-    await page.waitForURL(/\/edit$/);
+    await page.waitForURL(EDIT);
 
     await page.getByLabel("Cantidad").fill("4");
     await page.getByLabel("Nota").fill("Lo pasa a recoger el lunes.");
@@ -135,6 +148,34 @@ test.describe("edición de pedidos (V5 sobre V4)", () => {
     await expect(
       page.locator('[data-testid="history-entry"][data-action="updated"]'),
     ).toHaveCount(1);
+  });
+});
+
+/** Spec `navigation-breadcrumbs` — «Edición vuelve al detalle o a la lista». */
+test.describe("migas de pan del pedido", () => {
+  test("de la edición al detalle y a la lista, conservando la vista", async ({ page }) => {
+    await login(page, geeko().owner);
+    const code = (await crearPedidoYCodigo(page)).code;
+
+    // Se entra desde la lista con «Ver archivados»: la vista de origen debe
+    // sobrevivir al paso por el detalle y la edición.
+    await page.goto("/orders?view=list&archived=1");
+    await page.getByRole("link", { name: `#${code}`, exact: true }).click();
+    await page.waitForURL(ORDER_DETAIL);
+    await page.getByTestId("edit-order").click();
+    await page.waitForURL(EDIT);
+
+    const migas = page.getByRole("navigation", { name: "Ruta" });
+    await expect(migas).toContainText("Pedidos");
+    await expect(migas).toContainText(`Pedido #${code}`);
+    await expect(migas).toContainText("Editar");
+
+    await migas.getByRole("link", { name: `Pedido #${code}` }).click();
+    await page.waitForURL(ORDER_DETAIL);
+    await expect(page.getByTestId("edit-order")).toBeVisible();
+
+    await page.getByRole("navigation", { name: "Ruta" }).getByRole("link", { name: "Pedidos" }).click();
+    await page.waitForURL(/\/orders\?view=list&archived=1$/);
   });
 });
 

@@ -1,6 +1,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { moveOrderToStatus } from "@/actions/orders";
 import type { BusinessLine, Status, StatusKind } from "@/types";
 
 import type { BoardOrder } from "./board-view";
@@ -18,8 +20,10 @@ vi.mock("@/actions/business-line-context", () => ({
   selectBusinessLine: vi.fn(async () => undefined),
 }));
 
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => router,
   usePathname: () => "/orders",
   useSearchParams: () => new URLSearchParams(searchParams),
 }));
@@ -92,6 +96,7 @@ function order(overrides: Partial<BoardOrder> & { id: string }): BoardOrder {
     archivedAt: null,
     statusId: "",
     queuedAt: null,
+    businessLineId: SUBLI,
     ...overrides,
   };
 }
@@ -149,11 +154,13 @@ function renderScreen(props: Partial<Parameters<typeof OrdersScreen>[0]> = {}) {
       today={TODAY}
       closedLimit={50}
       hasMoreClosed={props.hasMoreClosed ?? false}
+      statusesByLine={props.statusesByLine}
     />,
   );
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   useBoardStore.setState({ pending: {}, pendingQueue: {} });
   searchParams = "";
 });
@@ -209,16 +216,6 @@ describe("OrdersScreen · columnas resueltas por línea", () => {
 
     expect(columnNames()).toContain("Esperando turno");
     expect(columnNames()).not.toContain("En cola");
-  });
-
-  it("con la línea Todas pide elegir y no dibuja ninguna columna", () => {
-    renderScreen({ activeLineId: null, statuses: [] });
-
-    expect(screen.getByTestId("board-needs-line")).toBeInTheDocument();
-    expect(screen.queryAllByTestId("board-column")).toHaveLength(0);
-    // El aviso trae las líneas a mano: es la única vía en móvil.
-    expect(screen.getByRole("button", { name: /Sublimación/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Alfarería/ })).toBeInTheDocument();
   });
 });
 
@@ -335,5 +332,153 @@ describe("OrdersScreen · estados transversales (view-states)", () => {
 
     expect(screen.getByTestId("empty-state")).toHaveTextContent("Aún no hay pedidos");
     expect(screen.queryByTestId("filtered-empty-state")).not.toBeInTheDocument();
+  });
+});
+
+/** «Guardar vuelve a la lista»: el aviso del pedido recién creado. */
+describe("OrdersScreen · pedido recién creado", () => {
+  it("muestra el número y limpia `created` de la dirección", () => {
+    searchParams = "view=list&q=tazas&created=42";
+    renderScreen({ view: "list" });
+
+    expect(screen.getByTestId("order-created-notice")).toHaveTextContent(
+      "Pedido #42 guardado",
+    );
+    expect(router.replace).toHaveBeenCalledWith("/orders?view=list&q=tazas", {
+      scroll: false,
+    });
+  });
+
+  it("sin `created` no hay aviso ni reemplazo", () => {
+    searchParams = "view=list";
+    renderScreen({ view: "list" });
+
+    expect(screen.queryByTestId("order-created-notice")).not.toBeInTheDocument();
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("los enlaces a alta y detalle llevan la vista de origen", () => {
+    searchParams = "view=list&q=tazas";
+    renderScreen({ view: "list" });
+
+    expect(screen.getByTestId("new-order")).toHaveAttribute(
+      "href",
+      "/orders/new?from=view%3Dlist%26q%3Dtazas",
+    );
+    expect(screen.getByRole("link", { name: /^#/ })).toHaveAttribute(
+      "href",
+      "/orders/o-seed?from=view%3Dlist%26q%3Dtazas",
+    );
+  });
+});
+
+/**
+ * Delta `orders` — «Tablero con todas las líneas agrupado por tipo de estado».
+ */
+describe("OrdersScreen · tablero con «Todas»", () => {
+  function renderTodas(orders: BoardOrder[]) {
+    const subli = sublimacionSet();
+    const alfa = alfareriaSet();
+    renderScreen({
+      activeLineId: null,
+      statuses: [],
+      allStatuses: [...subli, ...alfa],
+      statusesByLine: { [SUBLI]: subli, [ALFA]: alfa },
+      orders,
+    });
+    return { subli, alfa };
+  }
+
+  function column(label: string) {
+    return screen
+      .getAllByTestId("board-column")
+      .find((node) => node.getAttribute("data-status-name") === label)!;
+  }
+
+  it("las columnas son los cinco tipos, en orden, no los estados", () => {
+    const subli = sublimacionSet();
+    renderTodas([order({ id: "o1", statusId: subli[0].id, statusKind: "initial" })]);
+
+    expect(screen.queryByTestId("board-needs-line")).not.toBeInTheDocument();
+    expect(columnNames()).toEqual([
+      "Por empezar",
+      "En curso",
+      "En espera",
+      "Terminados",
+      "Cancelados",
+    ]);
+  });
+
+  it("muestra los pedidos de todas las líneas con el nombre de su estado", () => {
+    const subli = sublimacionSet();
+    const alfa = alfareriaSet();
+    renderTodas([
+      order({ id: "o1", code: 11, statusId: subli[1].id, statusKind: "in_progress" }),
+      order({
+        id: "o2",
+        code: 22,
+        statusId: alfa[0].id,
+        statusKind: "initial",
+        businessLineId: ALFA,
+        lineColor: "orange",
+      }),
+    ]);
+
+    const enCurso = within(column("En curso"));
+    expect(enCurso.getByText("#11")).toBeInTheDocument();
+    expect(enCurso.getByTestId("card-status")).toHaveTextContent("En diseño");
+
+    const porEmpezar = within(column("Por empezar"));
+    expect(porEmpezar.getByText("#22")).toBeInTheDocument();
+    expect(porEmpezar.getByTestId("card-status")).toHaveTextContent("Reservado");
+  });
+
+  it("mover a un tipo lleva al primer estado de ese tipo en la línea del pedido", async () => {
+    const user = userEvent.setup();
+    const subli = sublimacionSet();
+    renderTodas([order({ id: "o1", code: 11, statusId: subli[0].id, statusKind: "initial" })]);
+
+    await user.click(screen.getByRole("button", { name: "Mover Pedido #11 a otra columna" }));
+    await user.click(await screen.findByRole("menuitem", { name: "En curso" }));
+
+    // «En diseño» va antes que «Sublimando» en el juego de Sublimación.
+    expect(moveOrderToStatus).toHaveBeenCalledWith({ orderId: "o1", statusId: subli[1].id });
+  });
+
+  it("no ofrece un tipo que la línea del pedido no tiene, ni el propio", async () => {
+    const user = userEvent.setup();
+    const alfa = alfareriaSet();
+    renderTodas([
+      order({
+        id: "o2",
+        code: 22,
+        statusId: alfa[0].id,
+        statusKind: "initial",
+        businessLineId: ALFA,
+      }),
+    ]);
+
+    await user.click(screen.getByRole("button", { name: "Mover Pedido #22 a otra columna" }));
+    const destinos = await screen.findAllByRole("menuitem");
+
+    // Alfarería no tiene estado `in_progress`, y «Por empezar» es donde ya está.
+    expect(destinos.map((item) => item.textContent)).toEqual([
+      "En espera",
+      "Terminados",
+      "Cancelados",
+    ]);
+  });
+
+  it("sin posición de cola: las colas no se numeran con «Todas»", () => {
+    const subli = sublimacionSet();
+    const enCola = subli[2];
+    renderTodas([
+      order({ id: "o1", statusId: enCola.id, statusKind: "waiting", queuedAt: "2026-09-01T10:00:00Z" }),
+      order({ id: "o2", statusId: enCola.id, statusKind: "waiting", queuedAt: "2026-09-01T11:00:00Z" }),
+    ]);
+
+    expect(within(column("En espera")).getAllByTestId("order-card")).toHaveLength(2);
+    expect(screen.queryByTestId("queue-position")).not.toBeInTheDocument();
+    expect(column("En espera")).toHaveAttribute("data-is-queue", "0");
   });
 });

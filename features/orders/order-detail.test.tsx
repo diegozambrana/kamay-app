@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { OrderWithTotal } from "@/services/orders/order-service";
@@ -66,6 +66,7 @@ const order = {
 function renderDetail(
   overrides: Partial<typeof order> = {},
   relatedTasks: RelatedTask[] = [],
+  from?: string,
 ) {
   return render(
     <OrderDetail
@@ -84,6 +85,7 @@ function renderDetail(
       history={{ items: [], activityHref: "/activity" }}
       today="2026-09-07"
       timezone="America/La_Paz"
+      from={from}
     />,
   );
 }
@@ -155,5 +157,38 @@ describe("tareas relacionadas del pedido", () => {
 
     expect(screen.getByText("Tareas relacionadas")).toBeInTheDocument();
     expect(screen.getByTestId("empty-related-tasks")).toBeInTheDocument();
+  });
+});
+
+/** Spec `navigation-breadcrumbs`. */
+describe("OrderDetail · migas de pan", () => {
+  it("Pedidos › Pedido #N, y Pedidos vuelve a la lista", () => {
+    renderDetail();
+
+    const nav = screen.getByRole("navigation", { name: "Ruta" });
+    expect(within(nav).getByRole("link", { name: "Pedidos" })).toHaveAttribute(
+      "href",
+      "/orders",
+    );
+    expect(within(nav).getByText("Pedido #142")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("un solo camino de vuelta: ya no hay «← Pedidos» aparte", () => {
+    renderDetail();
+
+    expect(screen.getAllByRole("link", { name: /Pedidos/ })).toHaveLength(1);
+  });
+
+  it("la vista de origen llega a la miga y al enlace «Editar»", () => {
+    renderDetail({}, [], "view=calendar&q=tazas");
+
+    expect(screen.getByRole("link", { name: "Pedidos" })).toHaveAttribute(
+      "href",
+      "/orders?view=calendar&q=tazas",
+    );
+    expect(screen.getByRole("link", { name: "Editar" })).toHaveAttribute(
+      "href",
+      `/orders/${order.id}/edit?from=view%3Dcalendar%26q%3Dtazas`,
+    );
   });
 });

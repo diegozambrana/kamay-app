@@ -311,3 +311,63 @@ test.describe("detalle de tarea (V18)", () => {
     });
   });
 });
+
+/** Spec `navigation-breadcrumbs` — «Migas legibles en móvil». */
+test.describe("migas de pan en un teléfono", () => {
+  test("un título largo se recorta y la miga de la lista sigue pulsable", async ({ page }) => {
+    const titulo = `Preparar la entrega grande de tazas sublimadas para el colegio ${Date.now()}`.padEnd(
+      80,
+      "x",
+    );
+    const owner = await signedInClient(geeko().owner);
+    const { data: linea } = await owner
+      .from("business_lines")
+      .select("id")
+      .eq("organization_id", geeko().organizationId)
+      .eq("name", "Sublimación")
+      .single();
+    const { data: estado } = await owner
+      .from("statuses")
+      .select("id")
+      .eq("organization_id", geeko().organizationId)
+      .eq("flow", "task")
+      .eq("kind", "initial")
+      .is("business_line_id", null)
+      .single();
+    const { data: tarea, error } = await owner
+      .from("tasks")
+      .insert({
+        organization_id: geeko().organizationId,
+        business_line_id: linea?.id,
+        title: titulo,
+        status_id: estado?.id,
+      })
+      .select("id")
+      .single();
+    if (error || !tarea) throw new Error(`tarea: ${error?.message}`);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page, geeko().owner);
+    await page.goto(`/tasks/${tarea.id}`);
+
+    const migas = page.getByRole("navigation", { name: "Ruta" });
+    const tareas = migas.getByRole("link", { name: "Tareas" });
+    await expect(tareas).toBeVisible();
+    await expect(tareas).toBeInViewport();
+
+    // El título en la miga se recorta: su contenido es más ancho que su caja.
+    const actual = migas.locator('[aria-current="page"]');
+    await expect(actual).toHaveText(titulo);
+    const recortado = await actual.evaluate((node) => node.scrollWidth > node.clientWidth);
+    expect(recortado).toBe(true);
+
+    // Y la página no se desplaza de lado.
+    const desborde = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(desborde).toBeLessThanOrEqual(0);
+
+    await tareas.click();
+    await page.waitForURL(/\/tasks(\?.*)?$/);
+  });
+});

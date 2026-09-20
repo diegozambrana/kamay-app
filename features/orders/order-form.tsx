@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { CustomerPickerDialog } from "@/features/contacts/customer-picker-dialog";
@@ -39,11 +40,13 @@ import {
   type OrderFormValues,
 } from "@/lib/orders/schema";
 import {
+  EDIT_FLUSH_DEADLINE_MS,
   capture,
   drainOutbox,
   enqueue,
   outboxDatabase,
 } from "@/lib/offline";
+import { ordersListHref, withFrom } from "@/lib/orders/list-href";
 import { cn } from "@/lib/utils";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
@@ -54,7 +57,7 @@ import type {
   SalesChannel,
 } from "@/types";
 
-import { DiscardGuard } from "./discard-guard";
+import { DiscardGuard, useDiscardConfirm } from "./discard-guard";
 import { DueDateField } from "./due-date-field";
 import {
   OrderLinesEditor,
@@ -156,6 +159,7 @@ export function OrderForm({
   today,
   attachments = [],
   code,
+  from,
 }: {
   mode: "create" | "edit";
   defaultValues: OrderFormState;
@@ -167,6 +171,8 @@ export function OrderForm({
   today: string;
   attachments?: OrderAttachmentView[];
   code?: number;
+  /** La vista de pedidos de la que se llegó (`?from=`): migas y destino. */
+  from?: string | null;
 }) {
   const router = useRouter();
 
@@ -184,6 +190,10 @@ export function OrderForm({
     reset,
     setValue,
   } = form;
+
+  // Las migas del encabezado son otra salida del formulario: preguntan igual
+  // que «Cancelar» si hay cambios sin guardar.
+  const { confirmHref, dialog: discardDialog } = useDiscardConfirm(isDirty);
 
   const { fields, append, remove, replace } = useFieldArray({
     control,
@@ -414,6 +424,10 @@ export function OrderForm({
         enqueue: (input) => enqueue(input, outboxDatabase()),
         drain: () => drainOutbox({ session: { organizationId, userId } }),
         isOnline: () => isOnline,
+        // La edición termina en el detalle, que se sirve desde el servidor:
+        // con red se espera a que el cambio llegue en lugar de rendirse al
+        // plazo corto del alta (design D3). Sin red `capture` no espera.
+        deadlineMs: mode === "edit" ? EDIT_FLUSH_DEADLINE_MS : undefined,
       },
     );
 
@@ -496,11 +510,36 @@ export function OrderForm({
       // Limpia `isDirty` antes de navegar: la guardia de descarte no debe
       // preguntar después de un guardado exitoso.
       reset(getValues());
-      router.push(`/orders/${saved.orderId}`);
+      // El alta vuelve a la pantalla de pedidos de la que se llegó, con el
+      // número a la vista; la edición, al detalle de lo que se editó.
+      router.push(
+        mode === "create"
+          ? ordersListHref(from, { created: String(saved.code) })
+          : withFrom(`/orders/${saved.orderId}`, from),
+      );
     });
+
+  const listHref = ordersListHref(from);
+  const detailHref = withFrom(`/orders/${defaultValues.id}`, from);
 
   return (
     <MainContainer
+      breadcrumbs={
+        mode === "create"
+          ? [
+              { label: "Pedidos", href: listHref, onClick: confirmHref(listHref) },
+              { label: "Nuevo pedido" },
+            ]
+          : [
+              { label: "Pedidos", href: listHref, onClick: confirmHref(listHref) },
+              {
+                label: `Pedido #${code ?? ""}`,
+                href: detailHref,
+                onClick: confirmHref(detailHref),
+              },
+              { label: "Editar" },
+            ]
+      }
       title={mode === "create" ? "Nuevo pedido" : `Editar pedido #${code ?? ""}`}
       description={
         mode === "create"
@@ -812,10 +851,19 @@ export function OrderForm({
           )}
 
           <Button type="submit" disabled={isSubmitting} data-testid="save-order">
-            Guardar
+            {isSubmitting ? (
+              <>
+                <Spinner aria-hidden aria-label={undefined} role={undefined} />
+                Guardando…
+              </>
+            ) : (
+              "Guardar"
+            )}
           </Button>
         </div>
       </form>
+
+      {discardDialog}
     </MainContainer>
   );
 }

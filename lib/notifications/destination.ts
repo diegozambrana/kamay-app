@@ -46,6 +46,13 @@ export function destinationOf(
     // el tipo ya existe en el catálogo y la bandeja tiene que saber rendirlo.
     case "item":
       return { kind: "path", path: `/catalog/${notification.entityId}` };
+    // KAM-28: la bandeja de solicitudes de pedido, dentro de `(app)`.
+    case "order_request":
+      return { kind: "path", path: `/orders/requests/${notification.entityId}` };
+    // KAM-32: el comentario se lee en el detalle del pedido, no en una
+    // pantalla propia.
+    case "order":
+      return { kind: "path", path: `/orders/${notification.entityId}` };
     default:
       return { kind: "unavailable" };
   }

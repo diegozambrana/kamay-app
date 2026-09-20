@@ -50,6 +50,16 @@ const TYPES: { type: NotificationType; label: string; note: string }[] = [
     label: "Insumo bajo mínimo",
     note: "Cuando un insumo baja de su mínimo. Llegará con el inventario.",
   },
+  {
+    type: "order_request_received",
+    label: "Solicitud de pedido recibida",
+    note: "Cuando un cliente envía sus datos por un enlace público. Solo para dueños.",
+  },
+  {
+    type: "order_comment_received",
+    label: "Comentario en un pedido",
+    note: "Cuando un cliente deja un comentario en el enlace de seguimiento de su pedido. Solo para dueños.",
+  },
 ];
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);

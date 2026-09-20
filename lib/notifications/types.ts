@@ -1,8 +1,13 @@
 /**
- * Los seis tipos de aviso, iguales al `check` de `notifications`.
+ * Los siete tipos de aviso, iguales al `check` de `notifications`.
  *
  * El catálogo es cerrado a propósito y en dos sitios a la vez: un tipo nuevo
  * cuesta una migración revisada, no una cadena suelta en algún `insert`.
+ *
+ * `order_request_received` (KAM-28) es el primero que no nace del trabajo
+ * programado ni de una Server Action con sesión: lo genera
+ * `services/notifications/emit-order-request-events.ts`, llamado desde la
+ * Server Action que recibe el envío público, y solo llega a los dueños.
  */
 export const NOTIFICATION_TYPES = [
   "due_summary",
@@ -11,6 +16,8 @@ export const NOTIFICATION_TYPES = [
   "task_overdue",
   "task_stalled",
   "stock_below_min",
+  "order_request_received",
+  "order_comment_received",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -53,7 +60,7 @@ export type PlannedNotification = {
   type: NotificationType;
   title: string;
   body: string | null;
-  entityType: "task" | "item" | null;
+  entityType: "task" | "item" | "order_request" | "order" | null;
   entityId: string | null;
   dedupeKey: string;
 };

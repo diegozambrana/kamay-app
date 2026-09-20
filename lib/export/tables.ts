@@ -31,6 +31,11 @@ export type ExportTable = {
  */
 export const EXCLUDED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   invitations: ["token_hash"],
+  // Mismo motivo, mismo patrón (KAM-28): el resumen del token de la
+  // solicitud no abre nada por sí solo, pero es material de la llave.
+  order_requests: ["token_hash"],
+  // Mismo motivo (KAM-32): el enlace de seguimiento del pedido.
+  order_shares: ["token_hash"],
 };
 
 /**
@@ -324,6 +329,60 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
     ],
   },
   {
+    table: "order_requests",
+    file: "solicitudes-de-pedido",
+    ownerOnly: false,
+    columns: [
+      "id",
+      "organization_id",
+      "business_line_id",
+      // token_hash excluida, ver EXCLUDED_COLUMNS.
+      "contact_id",
+      "prefilled_name",
+      "prefilled_phone",
+      "declared_name",
+      "declared_phone",
+      "declared_note",
+      "expires_at",
+      "submitted_at",
+      "order_id",
+      "archived_at",
+      "created_by",
+      "created_at",
+      "updated_at",
+    ],
+  },
+  {
+    table: "order_shares",
+    file: "enlaces-de-seguimiento",
+    ownerOnly: false,
+    columns: [
+      "id",
+      "organization_id",
+      "order_id",
+      // token_hash excluida, ver EXCLUDED_COLUMNS.
+      "expires_at",
+      "archived_at",
+      "created_by",
+      "created_at",
+      "updated_at",
+    ],
+  },
+  {
+    table: "order_comments",
+    file: "comentarios-de-pedidos",
+    ownerOnly: false,
+    columns: [
+      "id",
+      "organization_id",
+      "order_id",
+      "author_name",
+      "body",
+      "occurred_at",
+      "archived_at",
+    ],
+  },
+  {
     table: "payments",
     file: "cobros-y-pagos",
     ownerOnly: false,
@@ -500,6 +559,11 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
       "email_enabled",
       "created_at",
       "updated_at",
+      // Añadidas al final por `alter table`, cada una en el cambio que la
+      // trajo (KAM-28, KAM-32): esa es su posición real en el catálogo, no
+      // junto a los demás interruptores de tipo.
+      "order_request_received",
+      "order_comment_received",
     ],
   },
   {

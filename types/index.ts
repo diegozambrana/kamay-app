@@ -299,6 +299,68 @@ export const ITEM_PHOTOS_BUCKET = "item-photos";
 export const ATTACHMENTS_BUCKET = "attachments";
 
 /**
+ * KAM-28 · Una solicitud de pedido: lo que un cliente manda por sí mismo
+ * desde un enlace de un solo uso, antes de que exista ningún pedido.
+ *
+ * Sin campo de estado: se deriva siempre de `submittedAt`, `orderId` y
+ * `archivedAt` (`lib/order-requests/status.ts`), y de `expiresAt` para el
+ * vencimiento — nunca se lee ni se guarda por separado (convención nº 4).
+ */
+export type OrderRequest = {
+  id: string;
+  organizationId: string;
+  businessLineId: string;
+  /** Elegido al generar el enlace, opcional (design D5). */
+  contactId: string | null;
+  /** La foto del prellenado en el momento de generar el enlace. */
+  prefilledName: string;
+  prefilledPhone: string;
+  /** Lo que el cliente escribió al enviar. Nulos hasta entonces. */
+  declaredName: string | null;
+  declaredPhone: string | null;
+  declaredNote: string | null;
+  expiresAt: string;
+  submittedAt: string | null;
+  orderId: string | null;
+  createdBy: string;
+  createdAt: string;
+  archivedAt: string | null;
+};
+
+/** El bucket de la cuarentena de imágenes de las solicitudes públicas. */
+export const ORDER_REQUESTS_BUCKET = "order-requests";
+
+/**
+ * KAM-32 · El enlace público de seguimiento de un pedido, de solo lectura.
+ * Vigencia larga (design D4 de `public-order-share`): a diferencia de
+ * `OrderRequest`, no es de un solo uso — se abre muchas veces mientras el
+ * pedido avanza. Como máximo uno vigente por pedido.
+ */
+export type OrderShare = {
+  id: string;
+  organizationId: string;
+  orderId: string;
+  expiresAt: string;
+  createdBy: string;
+  createdAt: string;
+  archivedAt: string | null;
+};
+
+/**
+ * Un comentario del cliente, del pedido y no de la generación del enlace que
+ * lo recibió: sobrevive a que el enlace se regenere.
+ */
+export type OrderComment = {
+  id: string;
+  organizationId: string;
+  orderId: string;
+  authorName: string;
+  body: string;
+  occurredAt: string;
+  archivedAt: string | null;
+};
+
+/**
  * Pedido y venta directa comparten tabla (esquema §9): en el flujo de trabajo
  * son distintos, en almacenamiento comparten cliente, líneas, precios y
  * cobros. La interfaz mantiene los dos flujos separados.

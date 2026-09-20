@@ -21,6 +21,8 @@ const preferencesSchema = z.object({
   task_overdue: z.boolean(),
   task_stalled: z.boolean(),
   stock_below_min: z.boolean(),
+  order_request_received: z.boolean(),
+  order_comment_received: z.boolean(),
   dailySummaryHour: z.number().int().min(0).max(23),
   emailEnabled: z.boolean(),
 });

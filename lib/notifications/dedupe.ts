@@ -62,3 +62,17 @@ export function taskOverdueKey(taskId: string, dueDate: string): string {
 export function taskStalledKey(taskId: string, statusSince: string): string {
   return `task_stalled:${taskId}:${statusSince}`;
 }
+
+/**
+ * Una solicitud de pedido recibida. El hecho es la solicitud misma, no el
+ * intento de generar el aviso: reintentar el envío no produce un segundo
+ * aviso por dueño (`unique (user_id, dedupe_key)` hace el resto).
+ */
+export function orderRequestReceivedKey(requestId: string): string {
+  return `order_request_received:${requestId}`;
+}
+
+/** Un comentario concreto. El hecho es el comentario, no el pedido. */
+export function orderCommentReceivedKey(commentId: string): string {
+  return `order_comment_received:${commentId}`;
+}

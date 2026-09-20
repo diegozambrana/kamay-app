@@ -27,6 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PaymentBlock } from "@/features/payments/payment-block";
+import { OrderComments } from "@/features/order-shares/order-comments";
+import { ShareBlock } from "@/features/order-shares/share-block";
 import { RelatedTasks } from "@/features/tasks/links/related-tasks";
 import { lineColorClasses } from "@/lib/business-lines/colors";
 import { formatDateTime } from "@/lib/format/datetime";
@@ -40,6 +42,8 @@ import { cn } from "@/lib/utils";
 import type {
   BusinessLine,
   Contact,
+  OrderComment,
+  OrderShare,
   Payment,
   Status,
   StatusKind,
@@ -77,6 +81,8 @@ export function OrderDetail({
   from,
   toolActions = [],
   currency = "",
+  share = null,
+  comments = [],
 }: {
   order: OrderWithTotal;
   lines: OrderItemWithNames[];
@@ -105,6 +111,10 @@ export function OrderDetail({
   toolActions?: readonly OrderToolAction[];
   /** La moneda de la organización, para las herramientas que muestran importes. */
   currency?: string;
+  /** El enlace público de seguimiento vigente, si existe (KAM-32). */
+  share?: OrderShare | null;
+  /** Los comentarios del cliente, del más reciente al más viejo. */
+  comments?: OrderComment[];
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -344,6 +354,19 @@ export function OrderDetail({
         canVoid={canVoidPayments}
         frozen={Boolean(order.archivedAt)}
       />
+
+      {/* KAM-32 · El enlace público de seguimiento, hermano de PaymentBlock
+          (design D9): recibe los datos que este detalle ya cargó, sin volver
+          a pedirlos. */}
+      <ShareBlock
+        orderId={order.id}
+        share={share}
+        preview={{ order, lines, statusName, businessLineName: businessLine?.name ?? "" }}
+      />
+
+      {comments.length > 0 && (
+        <OrderComments orderId={order.id} comments={comments} timezone={timezone} />
+      )}
 
       <Card>
         <CardHeader>

@@ -37,6 +37,19 @@ const nextConfig: NextConfig = {
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
       {
+        // KAM-28 · El enlace público de una solicitud de pedido no debe viajar
+        // como referrer hacia ningún recurso externo que la página cargue: el
+        // token no está en la ruta por decoración (design.md — D8).
+        source: "/r/:token*",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+      {
+        // KAM-32 · Mismo motivo que `/r/:token*`: el enlace público de
+        // seguimiento de un pedido tampoco debe viajar como referrer.
+        source: "/p/:token*",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+      {
         // Cabeceras del service worker, según la guía de PWA de Next. Sin
         // `no-store`, un service worker mal invalidado sirve una versión vieja
         // de la aplicación durante días (KAM-11, design.md — Risks).

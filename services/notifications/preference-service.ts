@@ -5,7 +5,7 @@ import type { PreferencesRow } from "@/lib/notifications/defaults";
 import type { NotificationPreferences } from "@/lib/notifications/types";
 
 const COLUMNS =
-  "user_id, due_summary, task_assigned, task_review, task_overdue, task_stalled, stock_below_min, daily_summary_hour, email_enabled";
+  "user_id, due_summary, task_assigned, task_review, task_overdue, task_stalled, stock_below_min, order_request_received, order_comment_received, daily_summary_hour, email_enabled";
 
 type Row = PreferencesRow & { user_id: string };
 
@@ -98,6 +98,8 @@ export class PreferenceService {
           task_overdue: preferences.task_overdue,
           task_stalled: preferences.task_stalled,
           stock_below_min: preferences.stock_below_min,
+          order_request_received: preferences.order_request_received,
+          order_comment_received: preferences.order_comment_received,
           daily_summary_hour: preferences.dailySummaryHour,
           email_enabled: preferences.emailEnabled,
           updated_at: new Date().toISOString(),

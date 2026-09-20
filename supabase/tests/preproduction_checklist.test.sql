@@ -20,7 +20,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(14);
+select plan(15);
 
 create function pg_temp.login(uid uuid) returns void
 language plpgsql as $$
@@ -89,6 +89,22 @@ select is(
       and cmd in ('DELETE', 'ALL')),
   '{}'::text[],
   'anexo §20: ninguna tabla tiene política DELETE');
+
+-- ── Ninguna política para `anon` en el esquema `public` ──────────────────
+
+-- KAM-28: `order_requests` es la primera tabla con una vía sin sesión (dos
+-- funciones `security definer`), y el criterio de aceptación 5 exige que eso
+-- no se haya resuelto abriendo una política de tabla para `anon`. La regla es
+-- del esquema entero, no solo de esa tabla: `storage.objects` es la única
+-- excepción posible, y queda fuera a propósito de este recorrido.
+select is(
+  (select coalesce(array_agg(schemaname || '.' || tablename || ': ' || p.policyname order by 1), '{}')
+     from pg_policies p
+     cross join lateral unnest(p.roles) as role(rolname)
+    where p.schemaname = 'public'
+      and role.rolname = 'anon'),
+  '{}'::text[],
+  'anexo §20 / KAM-28: ninguna tabla del esquema public tiene una política para anon');
 
 -- ── Ni siquiera TRUNCATE ──────────────────────────────────────────────────
 

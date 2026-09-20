@@ -8,7 +8,10 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # La suite e2e ya ronda los 23 min en un runner compartido y, con el resto
+    # del trabajo, el tope de 30 min cortaba el último paso —el del service
+    # worker tras un despliegue— aunque todo hubiera pasado.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 

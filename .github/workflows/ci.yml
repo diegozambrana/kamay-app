@@ -4,13 +4,17 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Para correr la suite completa —e2e incluido— sobre una rama antes de
+  # fusionarla, sin esperar a `main`.
+  workflow_dispatch:
 
 jobs:
   ci:
     runs-on: ubuntu-latest
-    # La suite e2e ya ronda los 23 min en un runner compartido y, con el resto
-    # del trabajo, el tope de 30 min cortaba el último paso —el del service
-    # worker tras un despliegue— aunque todo hubiera pasado.
+    # Los e2e rondan los 23 min en un runner compartido; con el resto del
+    # trabajo, el tope de 30 min cortaba el último paso aunque todo estuviera
+    # en verde. En un pull request los e2e ya no corren (ver más abajo), así
+    # que este tope solo aplica de verdad a `main` y a la ejecución manual.
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -75,7 +79,16 @@ jobs:
       - name: Service role fuera del paquete del navegador
         run: npm run check:bundle
 
+      # ── De aquí abajo, solo fuera de los pull requests ──────────────────
+      #
+      # Los e2e tardan ~23 min y eran casi todo el tiempo de un PR. En un pull
+      # request el pipeline se queda con lo rápido —lint, tipos, unitarias,
+      # integración, pgTAP, build y el control del paquete del navegador— y los
+      # e2e corren al fusionar (`push` a `main`), en «Estabilidad» (suite
+      # completa, tres vueltas, sin reintentos) y bajo demanda con
+      # `workflow_dispatch` sobre la rama que sea.
       - name: Install Playwright browsers
+        if: github.event_name != 'pull_request'
         run: npx playwright install --with-deps chromium
 
       # La auditoría de accesibilidad va dentro de la suite y bloquea el PR.
@@ -83,11 +96,13 @@ jobs:
       # estabilidad, porque el tiempo de un runner compartido varía demasiado
       # para decidir un PR (KAM-23, design D12).
       - name: End-to-end tests
+        if: github.event_name != 'pull_request'
         run: npm run test:e2e -- --grep-invert @performance
 
       # Aparte y al final: simula un despliegue cambiando `public/sw.js` en
       # disco, y ninguna otra prueba debe verlo (KAM-23).
       - name: Service worker tras un despliegue
+        if: github.event_name != 'pull_request'
         run: npx playwright test --project deployment
         env:
           E2E_DEPLOYMENT: "1"

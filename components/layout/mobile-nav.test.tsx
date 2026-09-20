@@ -199,3 +199,46 @@ describe("panel Más", () => {
     expect(screen.queryByTestId("more-panel")).toBeNull();
   });
 });
+
+/**
+ * KAM-27 · spec `tenant-tools` → *La navegación muestra una sección
+ * Herramientas solo cuando hay algo que mostrar*, escenario «En el celular».
+ */
+describe("panel Más · herramientas (KAM-27)", () => {
+  const calculator = {
+    slug: "print-cost-3d",
+    name: "Calculadora de impresión 3D",
+    href: "/extensions/print-cost-3d",
+  };
+
+  function renderWithTools() {
+    pathname.value = "/orders";
+    useUserStore.setState({
+      role: "owner",
+      membership: { id: "m1", organizationId: "o1", role: "owner", displayName: null },
+    });
+    return render(<MobileNav tools={[calculator]} />);
+  }
+
+  it("la herramienta vive en «Más», bajo su título, y la barra conserva sus ranuras", async () => {
+    renderWithTools();
+
+    // Tres entradas y «Más»: ninguna herramienta ocupa ranura.
+    const bar = screen.getByTestId("bottom-bar");
+    expect(bar.querySelectorAll("a")).toHaveLength(3);
+    expect(bar).not.toHaveTextContent(calculator.name);
+
+    await userEvent.click(screen.getByTestId("bottom-bar-more"));
+    expect(screen.getByText("Herramientas")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: calculator.name })).toHaveAttribute(
+      "href",
+      calculator.href,
+    );
+  });
+
+  it("sin herramientas, «Más» no muestra el título", async () => {
+    renderNav("/orders");
+    await userEvent.click(screen.getByTestId("bottom-bar-more"));
+    expect(screen.queryByText("Herramientas")).not.toBeInTheDocument();
+  });
+});

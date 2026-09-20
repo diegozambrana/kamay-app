@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { OrderLineValues } from "@/lib/orders/schema";
 import type { OrderItem } from "@/types";
 import { chunk } from "@/lib/pagination";
 
@@ -44,6 +45,35 @@ function toNumber(value: number | string): number {
  */
 export class OrderItemService {
   constructor(private readonly supabase: SupabaseClient) {}
+
+  /**
+   * Añade **una** línea a un pedido existente, sin tocar las demás (KAM-27).
+   *
+   * `update_order` recibe la lista completa y archiva lo que no venga: añadir
+   * por ahí obliga a releer y reenviar todas las líneas, y la que otra persona
+   * acabe de añadir entre la lectura y el envío se archivaría en silencio. Un
+   * `insert` no puede pisar nada.
+   *
+   * Que el pedido exista, sea de la organización y no esté archivado lo
+   * comprueba quien llama (`addOrderLine`); la RLS exige ser miembro, y la
+   * bitácora la escribe el trigger de la tabla.
+   */
+  async add(organizationId: string, orderId: string, line: OrderLineValues): Promise<void> {
+    const { error } = await this.supabase.from("order_items").insert({
+      id: line.id,
+      // Convención nº 2: la organización, explícita, aunque RLS ya filtre.
+      organization_id: organizationId,
+      order_id: orderId,
+      item_id: line.itemId,
+      variant_id: line.variantId,
+      description: line.description,
+      quantity: line.quantity,
+      // El precio que se registró, no el que tenga el catálogo (esquema §2).
+      unit_price: line.unitPrice,
+    });
+
+    if (error) throw new Error(error.message);
+  }
 
   async listByOrder(
     organizationId: string,

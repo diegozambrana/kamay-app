@@ -273,3 +273,60 @@ describe("entradas de plataforma (KAM-26)", () => {
     }
   });
 });
+
+/**
+ * KAM-27 · spec `tenant-tools` → *La navegación muestra una sección
+ * Herramientas solo cuando hay algo que mostrar*.
+ */
+describe("navEntriesFor con herramientas activas", () => {
+  const calculator = {
+    slug: "print-cost-3d",
+    name: "Calculadora de impresión 3D",
+    href: "/extensions/print-cost-3d",
+  };
+
+  it("sin herramientas el menú es idéntico al de siempre", () => {
+    for (const role of ["owner", "assistant"] as const) {
+      expect(navEntriesFor(role, false, [])).toEqual(navEntriesFor(role));
+      expect(navEntriesFor(role).some((entry) => entry.group === "tools")).toBe(false);
+    }
+  });
+
+  it("con una activa aparece después de Configuración y antes de la plataforma", () => {
+    const hrefs = navEntriesFor("owner", true, [calculator]).map((entry) => entry.href);
+    const at = hrefs.indexOf(calculator.href);
+
+    expect(at).toBe(hrefs.indexOf("/settings") + 1);
+    expect(at).toBeLessThan(hrefs.indexOf("/admin/organizations"));
+  });
+
+  it("lleva su nombre, su grupo y vive en «Más»", () => {
+    const entry = navEntriesFor("owner", false, [calculator]).find(
+      (candidate) => candidate.href === calculator.href,
+    );
+    expect(entry).toMatchObject({
+      label: "Calculadora de impresión 3D",
+      group: "tools",
+      mobile: "more",
+    });
+  });
+
+  it("nunca ocupa una ranura de la barra inferior: siguen siendo tres", () => {
+    expect(bottomBarEntriesFor("owner", false, [calculator])).toEqual(bottomBarEntriesFor("owner"));
+    expect(bottomBarEntriesFor("owner", false, [calculator])).toHaveLength(3);
+    expect(moreEntriesFor("owner", false, [calculator]).map((entry) => entry.href)).toContain(
+      calculator.href,
+    );
+  });
+
+  it("sin organización activa no hay herramientas, aunque lleguen", () => {
+    const hrefs = navEntriesFor(null, true, [calculator]).map((entry) => entry.href);
+    expect(hrefs).not.toContain(calculator.href);
+  });
+
+  it("no toca la lista declarada", () => {
+    const before = NAV_ENTRIES.length;
+    navEntriesFor("owner", false, [calculator]);
+    expect(NAV_ENTRIES).toHaveLength(before);
+  });
+});

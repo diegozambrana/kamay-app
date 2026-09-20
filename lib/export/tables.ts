@@ -154,6 +154,22 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
     columns: ["id", "organization_id", "code", "name", "archived_at"],
   },
   {
+    // KAM-27 · Qué herramientas activó la organización y con qué parámetros.
+    // Solo de la dueña, como la tabla: los parámetros llevan tarifas y márgenes.
+    table: "organization_tools",
+    file: "herramientas",
+    ownerOnly: true,
+    columns: [
+      "id",
+      "organization_id",
+      "slug",
+      "config",
+      "created_at",
+      "updated_at",
+      "archived_at",
+    ],
+  },
+  {
     table: "statuses",
     file: "estados",
     ownerOnly: false,

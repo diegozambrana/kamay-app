@@ -12,6 +12,7 @@ import {
   TagsIcon,
   UsersIcon,
   WorkflowIcon,
+  WrenchIcon,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -52,6 +53,9 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { href: "/settings/item-categories", label: "Categorías de ítem", group: "Organización", icon: ShapesIcon, ownerOnly: true },
   { href: "/settings/units", label: "Unidades", group: "Organización", icon: RulerIcon, ownerOnly: true },
   { href: "/settings/statuses", label: "Estados", group: "Organización", icon: WorkflowIcon, ownerOnly: true },
+  // KAM-27 · El catálogo de herramientas cierra el grupo: es lo último que se
+  // configura, después de lo que el núcleo necesita para funcionar.
+  { href: "/settings/tools", label: "Herramientas", group: "Organización", icon: WrenchIcon, ownerOnly: true },
   { href: "/settings/members", label: "Usuarios y roles", group: "Equipo", icon: UsersIcon, ownerOnly: true },
   { href: "/settings/notifications", label: "Notificaciones", group: "Preferencias", icon: BellIcon, ownerOnly: false },
   { href: "/settings/retention", label: "Retención", group: "Datos", icon: HistoryIcon, ownerOnly: true },

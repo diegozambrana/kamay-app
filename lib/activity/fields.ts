@@ -69,6 +69,10 @@ export const HIDDEN_REASON: Record<string, string> = {
   "tags.search_name": "duplicado de nombre",
   "item_variants.attributes": "estructura libre",
   "organizations.settings": "estructura libre",
+  // KAM-27 · Los parámetros de una herramienta: su forma la define el esquema
+  // de cada una, no la base. El evento queda —quién los cambió y cuándo—; el
+  // detalle campo a campo no tiene una lectura genérica.
+  "organization_tools.config": "estructura libre",
   "attachments.bucket": "detalle de almacenamiento",
   "attachments.storage_path": "detalle de almacenamiento",
 };
@@ -151,6 +155,14 @@ export const FIELDS: Record<string, Record<string, FieldSpec>> = {
   item_categories: {
     kind: { label: "Tipo de ítem", kind: "enum" },
     name: { label: "Nombre de la categoría", kind: "text" },
+    archived_at: ARCHIVED,
+  },
+
+  // KAM-27 · Herramientas activas de la organización. Activar es una creación,
+  // desactivar un archivado y reactivar un desarchivado.
+  organization_tools: {
+    slug: { label: "Herramienta", kind: "text" },
+    config: hidden("Parámetros"),
     archived_at: ARCHIVED,
   },
 

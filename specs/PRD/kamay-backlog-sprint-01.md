@@ -2,7 +2,7 @@
 
 > Deriva de: `kamay-backlog.md` (Fases 0–4, completado) · especificación funcional v6.0 · esquema de base de datos · mapa de navegación · ARCHITECTURE.md
 > **Origen de las tareas:** observaciones recogidas usando la plataforma ya construida, no una fase planificada de antemano.
-> Estado: **abierto** · tareas comprometidas: 4 · observaciones en bandeja: 0
+> Estado: **abierto** · tareas comprometidas: 7 · observaciones en bandeja: 0
 
 ---
 
@@ -70,10 +70,13 @@ Las Fases 0 a 4 del backlog original están terminadas y archivadas (KAM-01 a KA
 
 | ID | Tarea | Origen (OBS) | Depende de | Vistas | Estado |
 | --- | --- | --- | --- | --- | --- |
-| KAM-27 | Registro de herramientas y catálogo por organización | exploración 2026-09-19 | — | V15 (sección nueva), V4, `/extensions/<slug>` | propuesta |
+| KAM-27 | Registro de herramientas y catálogo por organización | exploración 2026-09-19 | — | V15 (sección nueva), V4, `/extensions/<slug>` | archivada |
 | KAM-28 | Solicitudes de pedido por enlace público | exploración 2026-09-19 | — | nueva bandeja, nueva pública `/r/<token>`, V5, V15 | propuesta |
 | KAM-29 | Tareas: detalle y edición separados | exploración 2026-09-19 | — | V18 (pasa a dos pantallas), V17, V20 | propuesta |
 | KAM-30 | Asistencia de redacción en la descripción de la tarea | exploración 2026-09-19 | 29 | V18, V15 | propuesta |
+| KAM-31 | Atributos de catálogo por organización y disponibilidad por variante | exploración 2026-09-19 | — | V10, V11, V15 | propuesta |
+| KAM-32 | Enlace público del pedido, de solo lectura y con comentarios | exploración 2026-09-19 | comparte infraestructura con 28 | V4, nueva pública `/p/<token>`, V15 | propuesta |
+| KAM-33 | Tablero de tareas con «Todas» las líneas | exploración 2026-09-19 | — | V17 | propuesta |
 
 Estados posibles: `propuesta` · `en cambio de OpenSpec` · `en implementación` · `archivada`.
 
@@ -134,14 +137,14 @@ FIN DE LA PLANTILLA -->
 **Prerrequisito (convención nº 11).** El concepto no puede construirse antes de estar escrito en `kamay-especificacion-producto-v6.md`. La especificación ya nombra «módulos activables» en V15 y «módulos por línea» en la Fase 6, pero con otro significado: apagar partes del núcleo. Antes de abrir el cambio de OpenSpec hay que decidir por escrito si son el mismo concepto o dos, y dejar la definición única en §6.1.
 
 **Alcance**
-- Tabla `organization_tools`: `organization_id`, `slug`, `config jsonb`, `archived_at`. RLS con el patrón de siempre, sin política `DELETE`, y trigger `log_activity()`. Activación **por organización**, no por línea.
+- Tabla `organization_tools`: `organization_id`, `slug`, `config jsonb`, `archived_at`. RLS **solo del dueño** —los parámetros pueden llevar tarifas y márgenes—, sin política `DELETE`, y trigger `log_activity()`. El ayudante solo conoce los slugs activos, por la función `active_tool_slugs`. Activación **por organización**, no por línea.
 - Declararla en `lib/export/tables.ts` con sus columnas, para que la prueba del manifiesto de exportación siga en verde.
-- **Registro en código.** Un manifiesto por herramienta: `slug`, nombre, descripción para el catálogo, esquema Zod de sus parámetros, puntos de enganche, rol mínimo y **capacidades declaradas** (si sale a internet, si guarda credenciales, qué produce). El catálogo lee del registro; nada se resuelve en tiempo de ejecución desde datos.
+- **Registro en código** (`tools/`). Un manifiesto por herramienta: `slug`, nombre, descripción para el catálogo, **tres esquemas Zod (parámetros, entradas y salidas)**, puntos de enganche, rol mínimo, **capacidades declaradas** (si sale a internet, si guarda credenciales, qué produce) y **tablas relacionadas** (las que lee y aquellas sobre las que escribe, nombrando la Server Action). Cada herramienta trae su `README.md`, sus pruebas y sus casos de referencia; una prueba de contrato lo verifica sobre todo el registro. El catálogo lee del registro; nada se resuelve en tiempo de ejecución desde datos.
 - **Catálogo** como sección nueva de `/settings` (`SETTINGS_SECTIONS`, grupo Organización, `ownerOnly`): lista de herramientas disponibles, detalle con lo que hace y sus capacidades en lenguaje llano, botón para agregar y para desactivar.
 - **Formulario de parámetros** derivado del esquema Zod del manifiesto, con los valores del tenant.
 - **Dos puntos de enganche, lista cerrada:** (a) página propia en `/extensions/<slug>`, con su entrada en una sección «Herramientas» del sidebar; (b) acción en el detalle de pedido (V4).
 - `NAV_ENTRIES` pasa a admitir entradas resueltas por organización, además del filtrado por rol que ya hace.
-- **Primera herramienta: calculadora de costo de impresión 3D.** Entradas: gramos de filamento y horas de impresión. Parámetros del tenant: precio del filamento por kilo, costo por hora de máquina, margen unitario, margen por mayor. Salidas: costo, precio unitario, precio por mayor. Desde el detalle de pedido puede agregar una línea llamando a la acción de pedidos que ya existe.
+- **Primera herramienta: calculadora de costo de impresión 3D**, portada de la hoja de cálculo del taller. Entradas por placa: gramos de filamento, minutos de impresión, unidades por placa, colores, armados e insumos extra por unidad. Parámetros del tenant: precio del filamento por kilo, costo por hora de máquina, recargo por color, costo de armado, lista de insumos extra, fondo de fallos, **curva de margen** (anclas costo → margen con interpolación lineal; por defecto 10 → 250 %, 50 → 175 %, 70 → 157 %, 80 → 150 %; una curva que haga bajar el precio al subir el costo se rechaza), proporción por mayor, descuento por docena y redondeo. Salidas: desglose del costo, margen aplicado, precio unitario, por mayor, por docena y de la placa. Solo dueño. Desde el detalle de pedido agrega una línea libre con la acción nueva del núcleo `addOrderLine` (no existía una que añadiera una sola línea: `updateOrder` reemplaza la lista completa).
 - **Frontera de aislamiento verificada:** ningún archivo de herramientas importa un cliente de Supabase ni ejecuta SQL; toda escritura pasa por las Server Actions existentes, con la sesión del usuario, su rol, su RLS y su bitácora.
 
 **Fuera de alcance**
@@ -172,6 +175,22 @@ FIN DE LA PLANTILLA -->
 - pgTAP: RLS de `organization_tools` —aislamiento entre organizaciones, ausencia de `DELETE`, lectura por rol— y el trigger de bitácora.
 - Integración: manifiesto de exportación; recorrido activar → configurar → usar → desactivar → reactivar conservando parámetros.
 - e2e: activar la calculadora, configurar sus parámetros, abrirla desde su página y desde un pedido agregando la línea; catálogo denegado al ayudante.
+
+**Criterio → prueba que lo verifica** (repaso de cierre, 2026-09-20)
+
+| # | Prueba |
+| --- | --- |
+| 1 | `tests/e2e/tools.spec.ts` (catálogo sin activas, sin sección en el menú) · `features/tools/tools-catalog.test.tsx` · `components/layout/app-sidebar.test.tsx` |
+| 2 | `tests/e2e/tools.spec.ts` · `components/layout/nav-entries.test.ts` · `tools/resolve.test.ts` |
+| 3 | `tests/e2e/tools.spec.ts` (desactivar → «no encontrada» → reactivar conserva) · `tests/integration/tools-lifecycle.test.ts` · `supabase/tests/organization_tools.test.sql` |
+| 4 | `tests/e2e/tools.spec.ts` (ayudante) · `features/settings/settings-nav.test.tsx` · `tools/resolve.test.ts` (manifiesto de prueba con rol `assistant`) |
+| 5 | `supabase/tests/organization_tools.test.sql` · `tests/integration/tools-lifecycle.test.ts` («dos organizaciones no se ven») |
+| 6 | `tests/e2e/tools.spec.ts` (línea desde el pedido) · `tests/integration/add-order-line.test.ts` (bitácora: `created`) · `actions/orders.test.ts` · `tools/print-cost-3d/ui/order-action.test.tsx` |
+| 7 | `tools/resolve.test.ts` · `tests/integration/tools-lifecycle.test.ts` («herramienta retirada») · `features/tools/tools-catalog.test.tsx` |
+| 8 | `tools/boundary.test.ts` (y `tools/contract.test.ts`: acciones usadas = acciones declaradas) |
+| 9 | `tools/print-cost-3d/ui/page.test.tsx` («un cálculo no deja rastro», «salir y volver») · `order-action.test.tsx` (la línea no lleva costo ni margen) |
+| 10 | `supabase/tests/organization_tools.test.sql` · `tests/integration/tools-lifecycle.test.ts` (`created`, `updated`, `archived`, `unarchived`) |
+| 11 | `tests/integration/export-manifest.test.ts` · `tests/integration/export.test.ts` (el ayudante no recibe `herramientas.csv`) |
 
 ---
 
@@ -373,6 +392,200 @@ FIN DE LA PLANTILLA -->
 
 ---
 
+## KAM-31 · Atributos de catálogo definidos por la organización, y disponibilidad por variante
+
+**Origen:** exploración del 2026-09-19 (idea del dueño, no de la bandeja).
+**Slug del cambio:** `catalog-custom-attributes`
+
+**Objetivo:** que cada organización describa sus insumos y productos con los datos que su rubro necesita —el color, la marca y las temperaturas de un filamento; la capacidad y el acabado de una taza— y que la disponibilidad se vea por variante y no sumada por ítem, **sin un segundo catálogo y sin guardar nada derivado**.
+
+**Lo que ya existe y no hay que construir**
+- `item_variants.attributes jsonb` está en el esquema desde KAM-06, con los ejemplos `'11oz'`, `'Negro'`, `'XL'` escritos en la migración. Falta quien lo escriba y lo lea, no la columna.
+- `item_categories` por tipo y organización, gestionadas por la dueña en Configuración, con filtro en el catálogo.
+- `expense_items.variant_id` e `inventory_movements.variant_id` existen, y el formulario de compra ya arrastra la variante hasta la base. La entrada de inventario se genera sola desde la línea de compra, con su índice de idempotencia.
+- El último precio pagado ya se ofrece como pista al comprar.
+
+**El hueco real.** `item_balances` agrupa por `i.id` y descarta `variant_id`: el saldo del negro y el del rojo se suman en uno. Ver la disponibilidad por color exige que la vista distinga la variante.
+
+**Lo que no se guarda.** La migración del catálogo es explícita: `items` no tiene `last_cost` ni `current_stock` porque «guardarlos aquí es exactamente el error que hizo inmantenible la versión anterior». **El precio por kilo no es una columna:** se deriva de las compras. Un valor escrito a mano queda viejo al cambiar de proveedor y la calculadora daría un número falso con cara de verdad.
+
+**Alcance**
+- **Definición de atributos por categoría de ítem.** Cada categoría declara una lista ordenada de atributos: nombre, tipo, unidad cuando corresponde, si es obligatorio, y si aplica **al ítem o a la variante**. Se declara una vez y sirve para todos los ítems de esa categoría.
+- Gestión de esa definición dentro de la sección «Categorías de ítem» de Configuración, con el mismo patrón de tabla, menú «⋯», diálogo y archivado que ya usan las demás secciones.
+- **Valores:** los de variante en `item_variants.attributes`, que ya existe; los de ítem en una columna `attributes jsonb` nueva en `items`.
+- Formularios de ítem y de variante: campos generados desde la definición de su categoría, validados con Zod en el cliente **y en el servidor**, con la misma disciplina que `catalog-fields-by-kind` aplicó a los campos por tipo.
+- Detalle de ítem (V11): los atributos se muestran como datos con su etiqueta, no como texto suelto dentro de la descripción.
+- Catálogo (V10): filtro por los atributos de tipo lista, junto al filtro de categoría que ya existe.
+- **Disponibilidad por variante:** `item_balances` distingue la variante, o una vista hermana la agrega. El detalle del ítem muestra el saldo de cada variante.
+- Semilla de la línea de Impresión 3D: categoría de insumo «Filamento» con color, marca, temperatura mínima, temperatura máxima y velocidad recomendada.
+- Declarar la definición de atributos en `lib/export/tables.ts`.
+
+**Fuera de alcance**
+- **Guardar precio por kilo, último costo o saldo en cualquier columna.** Se derivan (convención nº 4) y la prueba que lo vigila sigue en verde.
+- Un catálogo nuevo separado del de ítems. Un filamento es un insumo y una taza es un producto.
+- **Biblioteca de imágenes o diseños disponibles.** No tiene unidad, ni saldo, ni compra, ni mínimo: es otro problema y merece su propia tarea.
+- Mínimo y alerta de bajo stock por variante: el mínimo sigue siendo del ítem.
+- Atributos declarados por línea de negocio en lugar de por categoría.
+- Fórmulas, cálculos o validaciones cruzadas entre atributos.
+- Conectar estos atributos con la calculadora de KAM-27: podrá leerlos, pero cablearla no es parte de esta tarea.
+- Atributos en contactos, pedidos, tareas o egresos.
+
+**Criterios de aceptación**
+1. Dada una categoría de insumo «Filamento» con cinco atributos declarados, cuando se crea una variante de un filamento, entonces el formulario ofrece esos cinco campos y ninguno más.
+2. Dado un atributo obligatorio sin valor, entonces no se guarda, y el rechazo ocurre también en el servidor cuando la petición no viene de la interfaz.
+3. Dado un atributo numérico con unidad, entonces se guarda como número y se muestra con su unidad; un valor no numérico se rechaza.
+4. Dado un atributo retirado de la categoría, entonces los valores ya guardados se conservan y se siguen mostrando, pero el campo no se ofrece de nuevo.
+5. Dado un ítem cuya categoría no declara atributos, entonces su formulario se ve exactamente como hoy.
+6. Dadas dos variantes de un filamento con compras y consumos distintos, entonces la disponibilidad se muestra por variante y cada saldo coincide con la suma de sus movimientos.
+7. El saldo por variante no se almacena en ninguna columna: se deriva, y la prueba de valores derivados lo verifica.
+8. Ninguna columna de `items` ni de `item_variants` guarda precio por kilo, último costo ni saldo.
+9. Dada una compra de una variante de filamento, entonces genera exactamente una entrada de inventario para esa variante, y sincronizarla dos veces sigue dejando una sola.
+10. Dado un ayudante, entonces puede llenar los atributos de un ítem pero no definir, editar ni archivar los atributos de una categoría.
+11. Dada una organización A con atributos definidos, entonces la organización B no los ve ni puede usarlos.
+12. Tras `supabase db reset`, la línea de Impresión 3D tiene la categoría «Filamento» con sus cinco atributos.
+13. Los atributos se declaran una vez por categoría: crear el segundo filamento no vuelve a definirlos.
+14. La definición está declarada en `lib/export/tables.ts` y la prueba del manifiesto de exportación pasa.
+
+**Preguntas de diseño abiertas** (se resuelven en el `design.md`, no aquí)
+- **Qué tipos de atributo admite el primer corte** (texto, número con unidad, lista de opciones, color) y si «color» merece ser un tipo propio o es una lista de opciones definida por la organización.
+- **Precio de referencia de un insumo nunca comprado:** si se admite como atributo claramente rotulado de referencia, con la regla de que el valor derivado de una compra real siempre manda. La alternativa es no admitirlo y que la calculadora pida el dato cuando falta.
+- **Unidad del filamento:** si se registra en kilos o en gramos, y cómo se convierte para la calculadora sin guardar factores en ninguna parte.
+- **Mínimo por variante:** queda fuera de alcance, pero hay que anotar qué se ve en el panel cuando un color se acaba y el ítem completo no está bajo el mínimo.
+
+**Pruebas requeridas**
+- Unitarias: generación del formulario desde la definición; validación por tipo de atributo; conservación del valor de un atributo retirado; la definición de una categoría no se aplica a otra.
+- pgTAP: el saldo por variante coincide con la suma de sus movimientos; ausencia de columnas derivadas; idempotencia de la entrada de compra por variante; RLS de la definición y permisos por rol.
+- Integración: comprar dos variantes y verificar la disponibilidad de cada una; manifiesto de exportación.
+- e2e: definir la categoría «Filamento» con sus atributos, crear dos filamentos con color y marca, comprar uno, y ver en el detalle la disponibilidad por variante y los datos técnicos.
+
+---
+
+## KAM-32 · Enlace público del pedido, de solo lectura y con comentarios del cliente
+
+**Origen:** exploración del 2026-09-19. Promueve el candidato «Seguimiento público del estado del pedido», que estaba anotado desde KAM-28.
+**Slug del cambio:** `public-order-share`
+
+**Objetivo:** que el cliente vea su pedido y pueda decir algo sobre él sin que nadie le dicte el estado por WhatsApp cinco veces, y sin abrir ninguna puerta a lo que no le corresponde.
+
+**Prerrequisito (convención nº 11).** «Seguimiento público del pedido» ya figura en la Fase 6 de la especificación, así que el concepto existe. **El comentario del cliente no.** Alguien de fuera de la organización escribiendo dentro del sistema es un concepto nuevo y tiene que quedar definido en §6.1 antes de construirse, con su frontera: un comentario es contenido, no un evento de bitácora, y no convierte al cliente en usuario.
+
+**Comparte infraestructura con KAM-28.** El grupo de rutas público, el patrón de token con `token_hash` al estilo de `invitations`, la función `security definer` concedida a `anon` y el autor externo en la bitácora son los mismos. La primera de las dos que se implemente los establece; la segunda los reutiliza.
+
+**Alcance**
+- Tabla `order_shares`: organización, pedido, `token_hash bytea` (sha256; el token en claro nunca se guarda), `expires_at`, `archived_at`, quién lo generó. Un solo enlace vigente por pedido, revocable y regenerable. RLS de siempre, sin `DELETE`, con trigger `log_activity()`.
+- Tabla `order_comments`: organización, pedido, nombre declarado por quien comenta, cuerpo, `occurred_at`, `archived_at`. Inmutable para quien la escribió; la organización la archiva, nunca la borra.
+- Función `security definer` concedida a `anon` que resuelve el token y devuelve **solo** el contenido público: número del pedido, estado, fecha comprometida, líneas con su descripción, cantidad y precio unitario, el total de `order_totals`, y la lista de adjuntos. Nada más, y nada de otro pedido.
+- **Lectura pública de las imágenes sin service role.** Política `select` para `anon` sobre el bucket de adjuntos, guardada por una función `security definer` que use la forma de `attachments.storage_path` (`{organization_id}/{entity_type}/{entity_id}/…`) para confirmar que el objeto pertenece a un pedido con enlace vigente. Sin `insert`, `update` ni `delete` para `anon`.
+- Ruta pública `/p/<token>` en el grupo de rutas público, con layout propio sin navegación y fuera del bloqueo de sesión del middleware.
+- Página pública: los datos del pedido, sus imágenes y un campo para dejar un comentario con el nombre de quien lo deja. Límite de comentarios por enlace y ventana de tiempo.
+- **En el detalle del pedido (V4):** un bloque *Compartir con el cliente* con el campo de la URL, **botón de copiar** —siguiendo el patrón ya probado de `features/settings/members/invite-dialog.tsx`, con el navegador inyectado para que la prueba lo lea de vuelta— y **botón de compartir** que invoque la función de compartir del dispositivo, inyectada del mismo modo y con respaldo a copiar cuando no exista.
+- **Vista previa obligatoria antes de activar:** «así lo verá tu cliente», con el contenido exacto. Activar es un acto explícito, nunca un efecto secundario.
+- Los comentarios recibidos se leen en el detalle del pedido.
+- Aviso al dueño cuando llega un comentario: tipo nuevo en `notifications`, apagable por separado.
+- Autor en la bitácora: `actor_label` = «Cliente», sin `actor_id`.
+- Declarar ambas tablas en `lib/export/tables.ts`, con `token_hash` en `EXCLUDED_COLUMNS`.
+
+**Fuera de alcance**
+- **Cualquier cifra que no sea lo que el cliente paga.** Ni costo, ni margen, ni proveedor, ni último precio pagado. El total público es el de `order_totals`, que es precio de venta.
+- Responder al comentario desde la aplicación, o cualquier forma de conversación de ida y vuelta.
+- Que el cliente apruebe, rechace o pida cambios: no es un flujo de aprobación.
+- Que el cliente vea otros pedidos suyos, inicie sesión o tenga cuenta.
+- Pago o anticipo desde el enlace.
+- Documento imprimible o PDF del pedido (Fase 6).
+- Comentarios en tareas, egresos, ítems o contactos.
+- Enlace público de una venta directa: no tiene ciclo que seguir.
+- Aviso automático al cliente cuando el pedido cambia de estado.
+
+**Criterios de aceptación**
+1. Dado un pedido sin enlace, entonces el detalle ofrece generarlo y no muestra ninguna URL.
+2. Dada la generación, entonces antes de activarse se muestra exactamente lo que el cliente verá, y activar requiere una acción explícita.
+3. Dado un enlace vigente, entonces el detalle muestra su URL en un campo, con copiar y compartir.
+4. Dada la acción de copiar, entonces la URL queda en el portapapeles.
+5. Dado un dispositivo con función de compartir del sistema, entonces el botón la invoca con esa URL; sin ella, el botón no se ofrece y copiar sigue disponible.
+6. Dado el enlace abierto sin sesión, entonces se ven el número del pedido, su estado, la fecha comprometida, las líneas con descripción, cantidad y precio unitario, el total y las imágenes adjuntas.
+7. Dado el enlace abierto, entonces **no** se ve ningún costo, margen, proveedor, ni dato de otro pedido, contacto o ítem del catálogo. Verificado sobre la forma del objeto que devuelve la función, no solo sobre la pantalla.
+8. Dado un enlace revocado, vencido, inválido, o de un pedido archivado, entonces la página lo dice **sin revelar si la organización o el pedido existen**.
+9. No existe ninguna política para `anon` sobre ninguna tabla: el acceso público pasa solo por la función de resolución, verificado por pgTAP.
+10. Dada una imagen de un pedido con enlace vigente, entonces un anónimo la lee; la de un pedido sin enlace vigente no, aunque conozca su ruta exacta.
+11. Dado un enlace que se revoca, entonces sus imágenes dejan de ser accesibles de inmediato.
+12. Dado un comentario del cliente, entonces se lee en el detalle del pedido, la bitácora lo registra con `actor_label` «Cliente» y `actor_id` nulo, y se genera el aviso al dueño.
+13. Dado un comentario enviado, entonces quien lo escribió no puede editarlo ni borrarlo; la organización lo archiva y no lo borra.
+14. Dados más comentarios que el límite en su ventana de tiempo, entonces los siguientes se rechazan con un mensaje sobrio.
+15. Ningún total se almacena: el público se lee de `order_totals` como cualquier otro.
+16. Ambas tablas están declaradas en `lib/export/tables.ts`, `token_hash` figura en `EXCLUDED_COLUMNS`, y la prueba del manifiesto pasa.
+
+**Preguntas de diseño abiertas** (se resuelven en el `design.md`, no aquí)
+- **¿Se muestra `orders.notes`?** Es un campo de nota de propósito general y puede contener texto escrito cuando nadie de fuera lo iba a leer: activar un enlace no puede exponer retroactivamente lo que era privado. Tres candidatos: no mostrarlo nunca; agregar un campo aparte de descripción para el cliente; o mostrarlo confiando en que la vista previa obligatoria haga de salvaguarda. **Lo mismo aplica a `order_items.description`.**
+- **¿Se muestran los cobros y el saldo pendiente?** Es útil para el cliente y es información de dinero. Decidirlo a conciencia.
+- **Vigencia del enlace** y qué pasa al regenerarlo: si el anterior muere y si los comentarios recibidos sobreviven.
+- **Qué nombre de estado ve el cliente:** los nombres son configurables por línea y pueden ser jerga interna.
+
+**Pruebas requeridas**
+- Unitarias: armado de la URL; copiar; compartir con y sin la capacidad del dispositivo; **la forma del objeto público no incluye ningún campo interno**; la vista previa muestra lo mismo que la página pública.
+- pgTAP: ausencia de políticas para `anon`; la función de resolución con token vigente, vencido, revocado y de pedido archivado; la política de lectura del bucket en todos sus casos, incluido el intento con ruta conocida y enlace revocado; comentarios sin `DELETE`; bitácora con `actor_label`.
+- Integración: un comentario genera el aviso y respeta la preferencia apagada; revocar corta el acceso a las imágenes.
+- e2e: generar el enlace con su vista previa, abrirlo sin sesión, ver líneas y total, dejar un comentario, leerlo en el detalle, revocar y comprobar que la página ya no responde.
+
+---
+
+## KAM-33 · Tablero de tareas con «Todas» las líneas
+
+**Origen:** exploración del 2026-09-19 (idea del dueño, no de la bandeja).
+**Slug del cambio:** `tasks-all-lines-board`
+
+**Objetivo:** que con «Todas» activa el tablero de tareas muestre el trabajo pendiente completo, igual que ya hace el de pedidos, en lugar de pedir que se elija una línea.
+
+**Resuelve una contradicción que ya está en la especificación.** El requisito *Tarjeta de tarea* dice: «Cuando el selector de línea está en «Todas», cada tarjeta SHALL mostrar además el color de su línea de negocio», con su escenario abriendo **el tablero** en «Todas». Pero `app/(app)/tasks/page.tsx` documenta lo contrario: «Con "Todas" activa no hay un juego único de columnas; el tablero pide elegir línea». Ese escenario hoy no se puede verificar en el tablero. Al cerrar esto vuelve a ser verificable.
+
+**Qué se modifica y qué se conserva.** El requisito *Las columnas del tablero salen del juego de estados de la línea* habla solo de la línea activa: hay que **modificarlo** para cubrir el modo «Todas» con columnas por tipo, marcando el cambio en la delta spec. El requisito de la tarjeta y el del arrastre **no se reemplazan**: se cumplen también en el modo nuevo.
+
+**Ya está construido y probado, del cambio de pedidos de hoy**
+- `KIND_COLUMNS` y `targetStatusFor(lineStatuses, kind)` en `lib/orders/kind-board.ts`, con sus pruebas. No tienen nada de pedidos salvo el comentario.
+- La prop opcional `canMoveTo(item, columnId)` de `components/board/kanban-board.tsx`, que filtra el menú «Mover a…» y trata un soltar no permitido como soltar fuera. El tablero de tareas no la pasa todavía.
+- `app/(app)/tasks/page.tsx` ya carga `listAllForFlow(..., "task")`, así que los estados de todas las líneas ya viajan.
+
+**Alcance**
+- Mover `kind-board.ts` a un lugar compartido —`lib/statuses/` ya existe y contiene `kinds.ts`— y generalizar su comentario. Los dos tableros lo importan del mismo sitio.
+- `app/(app)/tasks/page.tsx`: con «Todas», resolver el juego de estados de tarea de cada línea activa, para que el tablero sepa a qué estado corresponde cada tipo en cada línea. Es lo que ya hace la página de pedidos.
+- `features/tasks/board/tasks-screen.tsx`: con «Todas», el tablero agrupa por tipo de estado en lugar de pedir una línea. Cada tarjeta muestra el color de su línea y el nombre de su estado real.
+- Arrastrar a una columna de tipo mueve la tarea al primer estado de ese tipo del juego de **su** línea; si su línea no tiene ninguno de ese tipo, el destino no se ofrece, vía `canMoveTo`.
+- Soltar en «Terminados» conserva la regla del asistente de cierre: abre V19 solo si la tarea tiene entregables declarados sin cumplir, resolviendo antes el estado `final` de su propia línea.
+
+**Fuera de alcance**
+- Las vistas lista y calendario: **ya cruzan todas las líneas** y no se tocan.
+- El tablero con una línea concreta: se comporta exactamente como hoy.
+- El alta rápida: con «Todas» ya usa la línea compartida, y así queda.
+- El tablero de pedidos, más allá de que su importación apunte al lugar nuevo.
+- Reordenar, agrupar por responsable o por etiqueta, o cualquier columna que no sea un tipo de estado.
+- Renombrar o reordenar los tipos de estado.
+- *Mis pendientes* (V20), que no es un tablero por líneas.
+
+**Criterios de aceptación**
+1. Dado el selector en «Todas», cuando se abre el tablero de tareas, entonces se muestran las tareas de todas las líneas y **no** se pide elegir una línea.
+2. Dado ese modo, entonces las columnas son *Por empezar, En curso, En espera, Terminados y Cancelados*, en ese orden.
+3. Dada una tarjeta en ese modo, entonces muestra el color de su línea y el nombre de su estado real.
+4. Dada una tarea arrastrada a la columna de un tipo, entonces pasa al primer estado de ese tipo, por posición, del juego de **su** línea.
+5. Dada una tarea cuya línea no tiene ningún estado de ese tipo, entonces la columna no la acepta y el menú «Mover a…» no ofrece ese destino.
+6. Dada una tarea con un entregable sin cumplir soltada en «Terminados», entonces se abre el asistente de cierre, igual que con una línea concreta.
+7. Dada una tarea sin entregables soltada en «Terminados», entonces se cierra sin abrir ningún diálogo.
+8. Dado el selector en una línea concreta, entonces el tablero rinde el juego de estados de esa línea, como hoy.
+9. Dadas las vistas lista y calendario, entonces siguen cruzando todas las líneas sin cambio alguno.
+10. Dado un ayudante restringido a una línea con el selector en «Todas», entonces sigue viendo solo las tareas que le corresponden: **«Todas» no amplía la visibilidad de nadie.** Verificado con consulta directa, no solo en la pantalla.
+11. Dado el alta rápida con «Todas», entonces sigue creando la tarea en la línea compartida.
+12. `KIND_COLUMNS` y `targetStatusFor` viven en un solo lugar y los dos tableros lo importan; las pruebas del tablero de pedidos siguen en verde.
+13. Ninguna comparación por nombre de estado: el agrupado y el destino se deciden por `kind` (convención nº 5).
+
+**Preguntas de diseño abiertas** (se resuelven en el `design.md`, no aquí)
+- **El filtro de estado (`?status=`)** apunta a un estado concreto, y en este modo las columnas son tipos y los estados pertenecen a líneas distintas. Decidir si el filtro se conserva, se reinterpreta como filtro por tipo o se oculta.
+- **La ventana de tareas cerradas.** Hoy el tablero limita las cerradas por el presupuesto de rendimiento de KAM-23; con todas las líneas la columna «Terminados» crece. Decidir si el tamaño de la ventana se mantiene o se ajusta, y medirlo.
+
+**Pruebas requeridas**
+- Unitarias: agrupado del tablero por tipo con tareas de tres líneas; `canMoveTo` negando el tipo ausente; la decisión del asistente de cierre disparada desde una columna de tipo; el comportamiento elegido para el filtro de estado. Las pruebas de `kind-board` se mudan con el archivo.
+- Integración: un ayudante restringido a una línea, con «Todas» activa, obtiene el mismo recorte que con su línea.
+- e2e: abrir el tablero con «Todas», mover una tarea entre columnas de tipo y verificar que aterriza en el estado de su propia línea; intentar soltar una tarea en un tipo que su línea no tiene; cerrar con entregables y ver el asistente.
+
+---
+
 ## Candidatos ya identificados
 
 Postergaciones explícitas que ya están escritas en el backlog original o en sus cambios archivados. **No están comprometidas en este sprint**; se listan para no volver a descubrirlas y para tenerlas a mano si una observación las vuelve urgentes.
@@ -383,10 +596,15 @@ Postergaciones explícitas que ya están escritas en el backlog original o en su
 | **Puerta de conexión con otras plataformas** — credencial privada por organización, vínculo entre un ítem del catálogo y su equivalente en un sistema externo, revocación, y la plataforma externa identificada como autor en la bitácora. Caso de uso: publicar productos en Katu. **No es una herramienta más:** guarda un secreto del tenant y deja estado fuera de Kamay que desactivar no revierte. Necesita su propio cambio. | KAM-27, fuera de alcance · especificación v6 §10 (Fase 6) |
 | Envío automatizado por WhatsApp (Business API, plantillas aprobadas) en lugar del enlace `wa.me` que abre el WhatsApp de quien manda | KAM-28, fuera de alcance · especificación v6 §10 «deseables después» |
 | **Enlace abierto de recepción de pedidos** — un enlace fijo por línea, publicable en redes, que cualquiera puede usar. Trae consigo lo que el enlace dirigido no necesita: validación de humano (captcha), límite de envíos por origen, rotación del enlace, y una carpeta de cuarentena que no puede apoyarse en una solicitud preexistente. | KAM-28, fuera de alcance |
+| **Biblioteca de imágenes y diseños disponibles** — la lista de diseños que se pueden imprimir o sublimar. No encaja en el catálogo de ítems: no tiene unidad, ni saldo, ni compra, ni mínimo. Es una biblioteca de archivos con sus propias preguntas (quién los subió, en qué pedidos se usaron, derechos de uso). | KAM-31, fuera de alcance |
+| Mínimo y alerta de bajo stock por variante, en lugar de por ítem | KAM-31, fuera de alcance |
 | Asistencia de redacción en otros campos y pantallas: notas de pedido, descripciones de ítems, nombres de producto, mensajes al cliente | KAM-30, fuera de alcance |
 | Escribir una descripción desde cero con asistencia, cuando no hay nada escrito | KAM-30, fuera de alcance |
 | Credencial de IA propia por organización, en lugar de una sola de la plataforma | KAM-30, fuera de alcance |
-| Seguimiento público del estado del pedido para el cliente | KAM-28, fuera de alcance (Fase 6) |
+| Responder al comentario del cliente desde la aplicación, o conversación de ida y vuelta en el enlace público | KAM-32, fuera de alcance |
+| Que el cliente apruebe, rechace o pida cambios en su pedido desde el enlace | KAM-32, fuera de alcance |
+| Aviso automático al cliente cuando su pedido cambia de estado | KAM-32, fuera de alcance |
+| Documento imprimible o PDF del pedido | KAM-32, fuera de alcance (Fase 6) |
 | Activación de herramientas por línea de negocio, con parámetros por línea | KAM-27, fuera de alcance |
 | Curaduría del catálogo de herramientas por organización (base para planes y cobro) | KAM-27, fuera de alcance |
 | Cierre de feria con resumen del evento | KAM-12, fuera de alcance (Fase 6) |
@@ -409,6 +627,9 @@ Postergaciones explícitas que ya están escritas en el backlog original o en su
 | --- | --- |
 | 2026-09-19 | Documento creado sobre la estructura de `kamay-backlog.md`; bandeja y resumen vacíos, a la espera de observaciones. |
 | 2026-09-19 | Exploración «Recepción de pedidos por enlace». Se comprometió KAM-28. Hallazgo decisivo: lo que llega por el enlace no puede ser un pedido (`order_needs_customer` y el criterio 2 de KAM-08), así que se define el concepto nuevo «solicitud de pedido» con revisión humana obligatoria. WhatsApp se resuelve con un enlace `wa.me`, sin integración. Queda abierta la mecánica de subida de imágenes sin sesión. |
+| 2026-09-19 | Se comprometió KAM-33. La exploración encontró que la especificación **ya exige** que la tarjeta muestre el color de su línea con «Todas» en el tablero, mientras el código pide elegir una línea: el ticket resuelve esa contradicción más que agregar una función. Casi todo está construido por el cambio de pedidos de hoy (`KIND_COLUMNS`, `targetStatusFor`, la prop `canMoveTo`); el trabajo es compartir el helper y respetar la regla del asistente de cierre al soltar en «Terminados». Lista y calendario ya cruzan todas las líneas. |
+| 2026-09-19 | Se comprometió KAM-32, que promueve el candidato «seguimiento público del pedido» (Fase 6). Dos riesgos identificados y cerrados: el total público es **precio de venta**, nunca costo ni margen; y `orders.notes` es un campo general que puede contener texto escrito cuando era privado, así que activar un enlace no puede exponerlo retroactivamente —de ahí la vista previa obligatoria—. Las imágenes se leen sin service role con una política apoyada en la forma de `attachments.storage_path`. El comentario del cliente es un concepto nuevo y va a la especificación primero. |
+| 2026-09-19 | Se comprometió KAM-31. La exploración encontró que el catálogo ya cubre el caso: un filamento es un insumo, cada marca y color es una variante, y `item_variants.attributes` existe desde KAM-06 sin que nadie lo escriba. El trabajo real son los atributos declarados por categoría y que `item_balances` deje de descartar `variant_id`. El precio por kilo **no se guarda**: se deriva de las compras. La biblioteca de imágenes queda fuera porque no es un ítem. |
 | 2026-09-19 | Se comprometió KAM-30 (asistencia de redacción en la descripción de la tarea). Queda fuera del sistema de herramientas de KAM-27 porque no cabe en sus dos puntos de enganche, y establece el puerto para llamar a modelos al estilo de `lib/email/port.ts`. Regla rectora: el asistente propone y la persona acepta; nada se sobrescribe en silencio. |
 | 2026-09-19 | Se comprometió KAM-29 (detalle y edición de tareas separados). Reemplaza el requisito vigente «Los campos de la tarea se editan y se guardan uno a uno» (design D3 de KAM-16), así que va como `BREAKING`. Se trazó la línea: el detalle conserva lo que se hace mientras se trabaja —casillas, adjuntos, vínculos, entregables, estado— y la edición reúne los datos que describen la tarea. Queda por confirmar de qué lado vive el editor del cuerpo en Markdown. |
 | 2026-09-19 | KAM-28 reducida a **enlaces dirigidos de un solo uso**. Dos consecuencias: el captcha sale del alcance porque el token ya es la puerta, y las dos tablas se fusionan en una sola, porque la solicitud existe antes de que el cliente abra el enlace. Las imágenes se resuelven con un bucket de cuarentena `order-requests` con ruta `<organización>/<solicitud>/`. El enlace abierto y público queda como candidato. |

@@ -117,6 +117,18 @@ export type OrderLineValues = z.infer<typeof orderLineSchema>;
 export type OrderLineInput = z.input<typeof orderLineSchema>;
 
 /**
+ * Añadir **una** línea a un pedido que ya existe (KAM-27, spec `orders` →
+ * *Añadir una línea sin tocar las demás*). La línea cumple exactamente las
+ * mismas reglas que en el formulario: es el mismo esquema.
+ */
+export const addOrderLineSchema = z.object({
+  orderId: id,
+  line: orderLineSchema,
+});
+
+export type AddOrderLineInput = z.input<typeof addOrderLineSchema>;
+
+/**
  * El pedido completo. **No lleva `statusId`**: el estado inicial lo resuelve
  * la base desde el juego de la línea (design.md D3), y `z.object` descarta
  * la clave si alguien la manda.

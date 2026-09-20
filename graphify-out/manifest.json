@@ -4047,6 +4047,10 @@
     "mtime": 1789499570.2812855,
     "hash": "0cddf985d45b5d1748e8869ce076bc3d"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/specs/PRD/kamay-backlog-sprint-01.md": {
+    "mtime": 1789877542.8250515,
+    "hash": "f006c70cb9c2eac4dc7101bf479b41f0"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/specs/PRD/kamay-backlog.md": {
     "mtime": 1787171478.7145972,
     "hash": "efc02256e8b5da870c9cea0ddb86bc67"
@@ -4187,6 +4191,10 @@
     "mtime": 1788838584.3289292,
     "hash": "aa5be7e5d32cd9ba0d83b200419797e9"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/navigation-breadcrumbs/spec.md": {
+    "mtime": 1789870175.2526312,
+    "hash": "d1fd56077b40e96159e0d881c5bb5f52"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/activity-log/spec.md": {
     "mtime": 1789072907.4797602,
     "hash": "384b83bcb91464debc159b4642162f5f"
@@ -4216,8 +4224,8 @@
     "hash": "f475b19cd17db88f526b97b79751d190"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/orders/spec.md": {
-    "mtime": 1789677034.7288625,
-    "hash": "5dd214551df73400e6ec3361ee6ba9a8"
+    "mtime": 1789870191.1733084,
+    "hash": "8f9fd76cccb2d5efbe3639e15a80839d"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/offline-capture/spec.md": {
     "mtime": 1788493968.832983,
@@ -4386,6 +4394,26 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-08-kam-17-my-tasks-reminders-notifications/specs/notifications/spec.md": {
     "mtime": 1788842846.3699024,
     "hash": "531adf4a090a018fc431a6a9b3927f1d"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-19-navigation-breadcrumbs-and-all-lines-board/tasks.md": {
+    "mtime": 1789745698.6897285,
+    "hash": "59501b65ec53668eef1792556874edc3"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-19-navigation-breadcrumbs-and-all-lines-board/design.md": {
+    "mtime": 1789743452.270949,
+    "hash": "5365025c73af410160e05563c7d08e2e"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-19-navigation-breadcrumbs-and-all-lines-board/proposal.md": {
+    "mtime": 1789743525.9770627,
+    "hash": "94c4697d939dcb932ebfcaa0a925bc81"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-19-navigation-breadcrumbs-and-all-lines-board/specs/navigation-breadcrumbs/spec.md": {
+    "mtime": 1789743397.82423,
+    "hash": "856903caf350ed8b8f76bbee2405c7d7"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-19-navigation-breadcrumbs-and-all-lines-board/specs/orders/spec.md": {
+    "mtime": 1789743512.1327026,
+    "hash": "547d88e883de300edf1eaba4e33fd379"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-08-20-kam-04-org-configuration/tasks.md": {
     "mtime": 1787233883.2040582,
@@ -4934,26 +4962,6 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-17-order-form-picker-dialogs/specs/orders/spec.md": {
     "mtime": 1789613880.7524335,
     "hash": "99d3cb855e9fd63c5f2ce7e7cace68f9"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/navigation-breadcrumbs-and-all-lines-board/tasks.md": {
-    "mtime": 1789745698.6897285,
-    "hash": "59501b65ec53668eef1792556874edc3"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/navigation-breadcrumbs-and-all-lines-board/design.md": {
-    "mtime": 1789743452.270949,
-    "hash": "5365025c73af410160e05563c7d08e2e"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/navigation-breadcrumbs-and-all-lines-board/proposal.md": {
-    "mtime": 1789743525.9770627,
-    "hash": "94c4697d939dcb932ebfcaa0a925bc81"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/navigation-breadcrumbs-and-all-lines-board/specs/navigation-breadcrumbs/spec.md": {
-    "mtime": 1789743397.82423,
-    "hash": "856903caf350ed8b8f76bbee2405c7d7"
-  },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/navigation-breadcrumbs-and-all-lines-board/specs/orders/spec.md": {
-    "mtime": 1789743512.1327026,
-    "hash": "547d88e883de300edf1eaba4e33fd379"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/docs/manual-de-uso.pdf": {
     "mtime": 1789347940.1419787,

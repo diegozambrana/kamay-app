@@ -191,26 +191,45 @@ select throws_ok(
   '23514', null, 'solicitud archivada: mismo rechazo, sin distinguir el caso');
 
 -- ── `submit_order_request`: recibe, no crea pedido ni contacto ────────────
+--
+-- Los controles de `orders`/`contacts` leen tablas sin política para `anon`
+-- (a propósito: nadie sin sesión debe verlas), así que se hacen con una
+-- sesión de miembro y no mientras se sigue impersonando `anon`.
 
+select pg_temp.logout();
+select pg_temp.login('00000000-0000-0000-0000-000000280a01');
+
+-- Dos, no cero: la semilla ya puso `...aa`/`...bb` para el bloque de
+-- «`order_id` no se reasigna» de más arriba. El control mide que el envío no
+-- sume una tercera, no que A empiece sin ninguna.
 select is(
   (select count(*)::int from orders where organization_id = '00000000-0000-0000-0000-00000028000a'),
-  0, 'antes de enviar, A no tiene ningún pedido (control)');
+  2, 'antes de enviar, A solo tiene los dos pedidos de la semilla (control)');
 
 select is(
   (select count(*)::int from contacts where organization_id = '00000000-0000-0000-0000-00000028000a'),
   0, 'antes de enviar, A no tiene ningún contacto (control)');
 
+select pg_temp.logout();
+select pg_temp.anon();
+
 select lives_ok(
   $$ select * from submit_order_request('token-abierta', 'Cliente Real', '70099999', 'una nota') $$,
   'el envío público se acepta con nombre y teléfono');
 
+select pg_temp.logout();
+select pg_temp.login('00000000-0000-0000-0000-000000280a01');
+
 select is(
   (select count(*)::int from orders where organization_id = '00000000-0000-0000-0000-00000028000a'),
-  0, 'el envío no crea ningún pedido');
+  2, 'el envío no crea ningún pedido nuevo');
 
 select is(
   (select count(*)::int from contacts where organization_id = '00000000-0000-0000-0000-00000028000a'),
   0, 'el envío no crea ningún contacto');
+
+select pg_temp.logout();
+select pg_temp.anon();
 
 select throws_ok(
   $$ select * from submit_order_request('token-abierta', 'Otra vez', '70000000', null) $$,

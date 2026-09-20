@@ -64,6 +64,8 @@ export const UNKNOWN_FIELD_LABEL = "Otro dato";
  */
 export const HIDDEN_REASON: Record<string, string> = {
   "invitations.token_hash": "credencial",
+  "order_requests.token_hash": "credencial",
+  "order_shares.token_hash": "credencial",
   "contacts.search_name": "duplicado de nombre",
   "items.search_name": "duplicado de nombre",
   "tags.search_name": "duplicado de nombre",
@@ -129,6 +131,47 @@ export const FIELDS: Record<string, Record<string, FieldSpec>> = {
     expires_at: { label: "Vence", kind: "datetime" },
     accepted_at: { label: "Aceptada", kind: "datetime" },
     invited_by: { label: "Invitada por", kind: "user" },
+    archived_at: ARCHIVED,
+  },
+
+  // KAM-28 · Solicitud de pedido por enlace público. `prefilled_*` es la foto
+  // del momento en que se generó el enlace; `declared_*`, lo que el cliente
+  // escribió al enviarlo — dos pares con historia distinta, no un duplicado.
+  order_requests: {
+    business_line_id: LINE,
+    token_hash: hidden("Credencial de la solicitud"),
+    contact_id: {
+      label: "Contacto sugerido",
+      kind: "reference",
+      references: "contacts",
+    },
+    prefilled_name: { label: "Nombre prellenado", kind: "text" },
+    prefilled_phone: { label: "Teléfono prellenado", kind: "text" },
+    declared_name: { label: "Nombre declarado por el cliente", kind: "text" },
+    declared_phone: { label: "Teléfono declarado por el cliente", kind: "text" },
+    declared_note: NOTE,
+    expires_at: { label: "Vence", kind: "datetime" },
+    submitted_at: { label: "Recibida", kind: "datetime" },
+    order_id: { label: "Pedido aceptado", kind: "reference", references: "orders" },
+    created_by: AUTHOR,
+    archived_at: ARCHIVED,
+  },
+
+  // KAM-32 · Enlace público de seguimiento de un pedido, de solo lectura, y
+  // los comentarios que deja el cliente desde ahí.
+  order_shares: {
+    order_id: { label: "Pedido", kind: "reference", references: "orders" },
+    token_hash: hidden("Credencial del enlace"),
+    expires_at: { label: "Vence", kind: "datetime" },
+    created_by: AUTHOR,
+    archived_at: ARCHIVED,
+  },
+
+  order_comments: {
+    order_id: { label: "Pedido", kind: "reference", references: "orders" },
+    author_name: { label: "Nombre de quien comenta", kind: "text" },
+    body: NOTE,
+    occurred_at: { label: "Fecha del comentario", kind: "datetime" },
     archived_at: ARCHIVED,
   },
 

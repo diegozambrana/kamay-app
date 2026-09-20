@@ -11,6 +11,7 @@ import { SalesChannelService } from "@/services/configuration/sales-channel-serv
 import { StatusService } from "@/services/configuration/status-service";
 import { OrderItemService } from "@/services/orders/order-item-service";
 import { OrderService } from "@/services/orders/order-service";
+import { OrderShareService } from "@/services/order-shares/order-share-service";
 import { PaymentService } from "@/services/payments/payment-service";
 import { loadRecordHistory } from "@/services/activity/record-history";
 import { TaskService } from "@/services/tasks/task-service";
@@ -125,6 +126,15 @@ export default async function OrderDetailPage({
     })),
   );
 
+  // KAM-32 · El enlace de seguimiento y sus comentarios. El token en claro
+  // nunca viaja hasta aquí: `share` solo dice si hay uno vigente y desde
+  // cuándo (design D5 de `public-order-share`).
+  const shares = new OrderShareService(context.supabase);
+  const [share, comments] = await Promise.all([
+    shares.getActive(context.organizationId, order.id),
+    shares.listComments(context.organizationId, order.id),
+  ]);
+
   return (
     <OrderDetail
       order={order}
@@ -159,6 +169,8 @@ export default async function OrderDetailPage({
       from={from ?? null}
       toolActions={toolActions}
       currency={context.organization.currency}
+      share={share}
+      comments={comments}
     />
   );
 }

@@ -24,6 +24,8 @@ const GROUP_LABELS: Record<NotificationType, string> = {
   task_overdue: "Vencidas",
   task_stalled: "Sin movimiento",
   stock_below_min: "Insumos bajo mínimo",
+  order_request_received: "Solicitudes de pedido",
+  order_comment_received: "Comentarios de pedidos",
 };
 
 export type NotificationListProps = {

@@ -7,6 +7,7 @@ import {
   HomeIcon,
   LayoutDashboardIcon,
   ListChecksIcon,
+  MailPlusIcon,
   PackageIcon,
   ReceiptIcon,
   SettingsIcon,
@@ -103,6 +104,17 @@ export const NAV_ENTRIES: NavEntry[] = [
     icon: ClipboardListIcon,
     roles: ["owner", "assistant"],
     mobile: "bar",
+  },
+  {
+    // KAM-28 · La bandeja de solicitudes de pedido por enlace público. Junto
+    // a Pedidos, no en su propia ranura de barra: la ranura de Pedidos ya
+    // cubre "qué llega por ahí" en el celular, y esta es una pantalla que se
+    // visita mucho menos seguido. Ambos roles, como Pedidos mismo (§16).
+    href: "/orders/requests",
+    label: "Solicitudes",
+    icon: MailPlusIcon,
+    roles: ["owner", "assistant"],
+    mobile: "more",
   },
   {
     // Tercera ranura. En el celular sigue apuntando a *Mis pendientes*, no al

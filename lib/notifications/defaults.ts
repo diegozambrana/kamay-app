@@ -28,6 +28,8 @@ export const DEFAULT_PREFERENCES: NotificationPreferences = {
   task_overdue: true,
   task_stalled: true,
   stock_below_min: true,
+  order_request_received: true,
+  order_comment_received: true,
   dailySummaryHour: DEFAULT_SUMMARY_HOUR,
   emailEnabled: true,
 };
@@ -40,6 +42,8 @@ export type PreferencesRow = {
   task_overdue: boolean | null;
   task_stalled: boolean | null;
   stock_below_min: boolean | null;
+  order_request_received: boolean | null;
+  order_comment_received: boolean | null;
   daily_summary_hour: number | null;
   email_enabled: boolean | null;
 };
@@ -68,6 +72,10 @@ export function resolvePreferences(
     task_overdue: row.task_overdue ?? DEFAULT_PREFERENCES.task_overdue,
     task_stalled: row.task_stalled ?? DEFAULT_PREFERENCES.task_stalled,
     stock_below_min: row.stock_below_min ?? DEFAULT_PREFERENCES.stock_below_min,
+    order_request_received:
+      row.order_request_received ?? DEFAULT_PREFERENCES.order_request_received,
+    order_comment_received:
+      row.order_comment_received ?? DEFAULT_PREFERENCES.order_comment_received,
     dailySummaryHour: validHour(row.daily_summary_hour),
     emailEnabled: row.email_enabled ?? DEFAULT_PREFERENCES.emailEnabled,
   };

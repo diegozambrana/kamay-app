@@ -171,6 +171,7 @@ Herramienta de trabajo, no producto de marketing. Sobria, densa en información,
 | **Variante** | Versión concreta de un ítem. | No es un ítem duplicado. |
 | **Egreso** | Salida de dinero: *compra* (trae ítems) o *gasto* (no trae nada). | No son dos módulos. |
 | **Pedido** | Compromiso de venta con un cliente. | No es una venta cobrada. |
+| **Solicitud de pedido** | Datos de contacto e imágenes de referencia que un cliente manda por sí mismo desde un enlace de un solo uso, generado por una persona de la organización para un cliente concreto. Se acepta o se descarta; solo aceptarla origina un pedido, y siempre por decisión humana. | **No es un pedido**: no tiene línea, ni producto, ni cantidad, ni precio, y `orders` no admite una fila sin cliente ni líneas (KAM-08). Tampoco es el seguimiento público del pedido ni una cotización (Fase 6): esos llegan después de que el pedido ya existe, la solicitud es anterior a que exista cualquier cosa. |
 | **Venta directa** | Venta cobrada en el acto, sin producción previa. | No es un pedido abreviado. |
 | **Movimiento de inventario** | Cambio de saldo: entrada, salida o ajuste. | El inventario es la suma de sus movimientos. |
 | **Cobro / Pago** | Dinero que efectivamente entró o salió. | Pedido pagado ≠ pedido entregado. |
@@ -182,6 +183,7 @@ Herramienta de trabajo, no producto de marketing. Sobria, densa en información,
 | **Etiqueta** | Palabra libre para agrupar de forma transversal (`hornada-07`, `feria-agosto`). | No reemplaza línea ni estado. |
 | **Recordatorio** | Aviso programado asociado a una fecha límite. | No es la fecha límite en sí. |
 | **Evento de bitácora** | Hecho ocurrido en el sistema: quién, qué, cuándo, sobre qué registro y con qué cambio. **Inalterable.** | No es una notificación. |
+| **Comentario del cliente** | Texto que deja quien abre el enlace público de seguimiento de su pedido (Fase 6), con el nombre que declara al escribirlo. | **Es contenido, no un evento de bitácora**: la bitácora registra que llegó, no lo sustituye. **No convierte al cliente en usuario**: no tiene cuenta, no inicia sesión, y escribir un comentario no es lo mismo que ser un contacto del directorio. |
 | **Lote de producción** *(fase posterior)* | Tanda fabricada para stock. | No es un pedido sin cliente. |
 | **Herramienta** | Utilidad opcional que una organización activa desde un catálogo común a todas. Vive fuera del núcleo, solo guarda sus **parámetros**, y todo lo que produce aterriza en un concepto que ya existe (por ejemplo, una línea de pedido). | **No es un módulo activable**: no apaga ni modifica partes del núcleo, no tiene tablas propias y no accede a los datos por su cuenta. |
 

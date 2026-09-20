@@ -10,6 +10,7 @@ import {
   setOrderAttachmentArchived,
   uploadOrderAttachment,
 } from "@/actions/orders";
+import { acceptOrderRequest } from "@/actions/order-requests";
 import { FileDropzone } from "@/components/file-dropzone/file-dropzone";
 import { EntityPickerField } from "@/components/shared/entity-picker-field";
 import { MainContainer } from "@/components/layout/main-container";
@@ -160,6 +161,7 @@ export function OrderForm({
   attachments = [],
   code,
   from,
+  requestId,
 }: {
   mode: "create" | "edit";
   defaultValues: OrderFormState;
@@ -173,6 +175,13 @@ export function OrderForm({
   code?: number;
   /** La vista de pedidos de la que se llegó (`?from=`): migas y destino. */
   from?: string | null;
+  /**
+   * KAM-28 · Se llega desde «Aceptar» en la bandeja de solicitudes
+   * (`/orders/new?request=<id>`). Al guardar con éxito, traslada las
+   * imágenes de la cuarentena y vincula el pedido a la solicitud —sin tocar
+   * el resto del alta.
+   */
+  requestId?: string | null;
 }) {
   const router = useRouter();
 
@@ -222,6 +231,15 @@ export function OrderForm({
   /** Un pedido guardado cuyos adjuntos fallaron: existe, pero seguimos aquí. */
   const [savedId, setSavedId] = useState<string | null>(null);
   const [removed, setRemoved] = useState<string[]>([]);
+  /**
+   * KAM-28 · El pedido de un `requestId` que se guardó pero cuyo vínculo con
+   * la solicitud falló. Reintentar usa este mismo `orderId` —ya en
+   * memoria—, no uno nuevo: reintentar «Aceptar» desde la bandeja crearía un
+   * segundo pedido, porque el `id` del pedido lo genera el cliente antes de
+   * llamar a esta acción (convención nº 9).
+   */
+  const [unlinkedRequestOrderId, setUnlinkedRequestOrderId] = useState<string | null>(null);
+  const [retryingLink, setRetryingLink] = useState(false);
 
   // La captura sin conexión (KAM-11): quién registra y desde qué organización
   // se graba en la entrada de la cola, y la señal decide si vale la pena
@@ -498,6 +516,25 @@ export function OrderForm({
         return;
       }
 
+      // KAM-28 · Se llegó aquí desde «Aceptar» en la bandeja de solicitudes
+      // (`/orders/new?request=<id>`). El pedido ya existe con sus reglas
+      // intactas; esto solo traslada las imágenes de la cuarentena y marca
+      // la solicitud como aceptada. Un fallo aquí no deshace el pedido —ya
+      // es la persona quien lo pidió— y la solicitud queda «recibida» en la
+      // bandeja para reintentarlo.
+      if (mode === "create" && requestId) {
+        const linked = await acceptOrderRequest(requestId, saved.orderId);
+        if (linked?.error) {
+          reset(getValues());
+          setSavedId(saved.orderId);
+          setUnlinkedRequestOrderId(saved.orderId);
+          setError(
+            `El pedido #${saved.code} se guardó, pero no se pudo vincular la solicitud.`,
+          );
+          return;
+        }
+      }
+
       if (mode === "create" && andAnother) {
         reset(blankAfter(getValues()));
         setNames({});
@@ -518,6 +555,29 @@ export function OrderForm({
           : withFrom(`/orders/${saved.orderId}`, from),
       );
     });
+
+  /**
+   * Reintenta el vínculo con el mismo pedido que ya se guardó, no uno
+   * nuevo — a diferencia de volver a pulsar «Aceptar» desde la bandeja,
+   * que generaría un segundo pedido (design.md D6 de `public-order-intake`).
+   */
+  async function retryRequestLink() {
+    if (!requestId || !unlinkedRequestOrderId) return;
+    setRetryingLink(true);
+    try {
+      const linked = await acceptOrderRequest(requestId, unlinkedRequestOrderId);
+      if (linked?.error) {
+        setError("Sigue sin poder vincularse. Intenta de nuevo en un momento.");
+        return;
+      }
+      const linkedOrderId = unlinkedRequestOrderId;
+      setUnlinkedRequestOrderId(null);
+      setError(null);
+      router.push(`/orders/${linkedOrderId}`);
+    } finally {
+      setRetryingLink(false);
+    }
+  }
 
   const listHref = ordersListHref(from);
   const detailHref = withFrom(`/orders/${defaultValues.id}`, from);
@@ -568,6 +628,18 @@ export function OrderForm({
                 </>
               )}
             </AlertDescription>
+            {unlinkedRequestOrderId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                disabled={retryingLink}
+                onClick={retryRequestLink}
+              >
+                {retryingLink ? "Reintentando…" : "Reintentar vincular la solicitud"}
+              </Button>
+            )}
           </Alert>
         )}
 

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type FakeResult = {
   data: unknown;
-  error: { message: string } | null;
+  error: { message: string; code?: string } | null;
   /** Solo para las consultas que piden `{ count: "exact" }`. */
   count?: number;
 };
@@ -104,6 +104,7 @@ export class FakeClient {
     upload?: { error: { message: string } | null };
     copy?: { error: { message: string } | null };
     signed?: { data: { path: string; signedUrl: string }[] | null; error: unknown };
+    list?: { data: { id: string | null; name: string }[] | null; error: unknown };
   } = {};
 
   storage = {
@@ -119,6 +120,10 @@ export class FakeClient {
       remove: async (...args: unknown[]) => {
         this.storageCalls.push({ bucket, method: "remove", args });
         return { error: null };
+      },
+      list: async (...args: unknown[]) => {
+        this.storageCalls.push({ bucket, method: "list", args });
+        return this.storageResults.list ?? { data: [], error: null };
       },
       createSignedUrls: async (...args: unknown[]) => {
         this.storageCalls.push({ bucket, method: "createSignedUrls", args });

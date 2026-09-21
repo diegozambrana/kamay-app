@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { monthlyRequestLimit } from "@/lib/ai/config";
+import { resolveAiAssistant } from "@/lib/ai/resolve";
 import { getSessionContext } from "@/lib/auth/session-context";
 import {
   FILE_TOO_LARGE_MESSAGE,
@@ -18,7 +20,9 @@ import {
 } from "@/lib/tasks/deliverables";
 import { retargetStatusForLine } from "@/lib/tasks/line-change";
 import { taskSchema } from "@/lib/tasks/schema";
+import { AiUsageService } from "@/services/ai/usage-service";
 import { AttachmentService } from "@/services/catalog/attachment-service";
+import { AiWritingAssistService } from "@/services/configuration/ai-writing-assist-service";
 import { emitTaskEvents } from "@/services/notifications/emit-task-events";
 import { StatusService } from "@/services/configuration/status-service";
 import { TagService } from "@/services/tasks/tag-service";
@@ -377,6 +381,13 @@ export async function updateTaskField(
 
 const updateTaskBodySchema = taskIdSchema.extend({
   body: z.string().max(50_000),
+  /**
+   * Si el cuerpo que se guarda proviene de una propuesta de IA aceptada en
+   * esta sesión de edición (KAM-30). Por omisión, no: un guardado que no lo
+   * declara es una edición manual, y apaga la marca de un guardado asistido
+   * anterior.
+   */
+  assisted: z.boolean().optional(),
 });
 
 /**
@@ -406,6 +417,7 @@ export async function updateTaskBody(
 
     await tasks.updateFields(context.organizationId, parsed.data.taskId, {
       bodyMarkdown: parsed.data.body === "" ? null : parsed.data.body,
+      bodyAssistedByAi: parsed.data.assisted ?? false,
     });
   } catch {
     return { error: "No se pudo guardar la descripción. Intenta de nuevo." };
@@ -413,6 +425,67 @@ export async function updateTaskBody(
 
   revalidateTasks();
   revalidatePath(`/tasks/${parsed.data.taskId}`);
+}
+
+const proposeBodyImprovementSchema = taskIdSchema.extend({
+  body: z.string().trim().min(1, "No hay nada que mejorar."),
+});
+
+export type ProposeBodyImprovementResult = { error: string } | { proposal: string };
+
+/**
+ * Pide al modelo una versión mejorada del cuerpo de la tarea (KAM-30).
+ *
+ * Nunca escribe nada: solo devuelve la propuesta para que el editor la
+ * muestre junto al texto actual. Cada rechazo se comprueba en el servidor,
+ * sin confiar en que la interfaz ya lo hizo (spec `ai-writing-assist`).
+ */
+export async function proposeTaskBodyImprovement(
+  input: z.infer<typeof proposeBodyImprovementSchema>,
+): Promise<ProposeBodyImprovementResult> {
+  const parsed = proposeBodyImprovementSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "No se pudo generar la propuesta." };
+  }
+
+  const context = await getSessionContext();
+  if (!context) return { error: NO_SESSION };
+
+  // Variable de entorno ausente: la función queda apagada para todas las
+  // organizaciones, sin importar su interruptor propio.
+  const assistant = resolveAiAssistant();
+  if (!assistant) return { error: "La asistencia de redacción no está disponible." };
+
+  try {
+    const tasks = new TaskService(context.supabase);
+    const task = await tasks.getById(context.organizationId, parsed.data.taskId);
+    if (!task) return { error: "Esa tarea ya no está a tu alcance." };
+    if (task.archivedAt) {
+      return { error: "Esta tarea está archivada. Desarchívala para editarla." };
+    }
+
+    const settings = await new AiWritingAssistService(context.supabase).get(
+      context.organizationId,
+    );
+    if (!settings.enabled) {
+      return { error: "Tu organización no activó la asistencia de redacción." };
+    }
+
+    const usage = new AiUsageService(context.supabase);
+    const used = await usage.countCurrentPeriod(context.organizationId);
+    if (used >= monthlyRequestLimit()) {
+      return { error: "Se alcanzó el límite de uso de la asistencia de redacción este mes." };
+    }
+
+    // Se cuenta antes de llamar al proveedor (design.md → "Cuándo se
+    // cuenta"): a prueba de reintentos y de condiciones de carrera.
+    await usage.recordRequest(context.organizationId, context.userId);
+
+    const { proposal } = await assistant.proposeBodyImprovement(parsed.data.body);
+    return { proposal };
+  } catch {
+    return { error: "El proveedor de IA no respondió. Intenta de nuevo." };
+  }
 }
 
 const toggleChecklistSchema = taskIdSchema.extend({

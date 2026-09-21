@@ -9,8 +9,10 @@ import {
   retentionSettingsSchema,
 } from "@/lib/activity/retention";
 
+import { writingAssistSettingsSchema } from "@/lib/ai/writing-assist-settings";
 import { getOwnerContext } from "@/lib/auth/session-context";
 import { allocationSettingsSchema } from "@/lib/reports/allocation-schema";
+import { AiWritingAssistService } from "@/services/configuration/ai-writing-assist-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
 import { ItemCategoryService } from "@/services/configuration/item-category-service";
@@ -441,6 +443,36 @@ export async function updateAllocationRule(
     );
   } catch {
     return { error: "No se pudo guardar la regla de reparto. Intenta de nuevo." };
+  }
+
+  revalidateConfiguration();
+}
+
+/**
+ * El interruptor de la asistencia de redacción por IA (KAM-30).
+ *
+ * Apagado por omisión: activarlo es la única forma de que el editor de tareas
+ * ofrezca *Mejorar la descripción*, y la propia acción de servidor que genera
+ * una propuesta vuelve a comprobarlo, sin confiar en que la interfaz ya lo
+ * hizo (spec `ai-writing-assist` → "Solo las organizaciones que activaron la
+ * asistencia pueden usarla").
+ */
+export async function updateWritingAssistSettings(
+  input: z.infer<typeof writingAssistSettingsSchema>,
+): Promise<ActionResult> {
+  const parsed = writingAssistSettingsSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  try {
+    await new AiWritingAssistService(context.supabase).save(
+      context.organizationId,
+      parsed.data,
+    );
+  } catch {
+    return { error: "No se pudo guardar la asistencia de redacción. Intenta de nuevo." };
   }
 
   revalidateConfiguration();

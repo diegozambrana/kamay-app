@@ -7,19 +7,24 @@ import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
 // jsdom no implementa matchMedia; next-themes lo necesita para el tema "system".
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+// Guardado con `typeof window`: un archivo con `// @vitest-environment node`
+// —el código de servidor que el SDK de Anthropic obliga a probar así,
+// KAM-30— no tiene `window`, y este `setupFiles` corre igual para todos.
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
 
 // jsdom no implementa ResizeObserver; los primitivos de Radix (Checkbox,
 // Dialog, Select) lo usan para medir sus disparadores.

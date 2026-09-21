@@ -8,6 +8,7 @@ import {
   ListIcon,
   ListChecksIcon,
   PencilIcon,
+  SparklesIcon,
 } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 
@@ -16,9 +17,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDiscardConfirm } from "@/features/orders/discard-guard";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { type ToolbarAction, applyToolbarAction } from "@/lib/markdown/toolbar";
 
 import { ChecklistPreview } from "./checklist-preview";
+import { ImproveBodyDialog } from "./improve-body-dialog";
 
 const TOOLS: { action: ToolbarAction; label: string; Icon: typeof BoldIcon }[] = [
   { action: "bold", label: "Negrita", Icon: BoldIcon },
@@ -36,13 +39,24 @@ export type MarkdownEditorProps = {
   taskId: string;
   /** El cuerpo tal como está guardado. */
   value: string;
-  /** Guarda el cuerpo. Resuelve con el error si lo hubo. */
-  onSave: (body: string) => Promise<{ error: string } | undefined>;
+  /**
+   * Guarda el cuerpo. `assisted` marca si el texto que se guarda proviene de
+   * una propuesta de IA aceptada en esta sesión de edición (KAM-30). Resuelve
+   * con el error si lo hubo.
+   */
+  onSave: (body: string, assisted: boolean) => Promise<{ error: string } | undefined>;
   /** Marca o desmarca una casilla. La reescritura la hace el servidor. */
   onToggleChecklistItem: (
     index: number,
     checked: boolean,
   ) => Promise<{ error: string } | undefined>;
+  /**
+   * Pide una propuesta de mejora del cuerpo (KAM-30). `undefined` cuando la
+   * organización no activó la asistencia: la acción no se ofrece.
+   */
+  onProposeBodyImprovement?: (
+    body: string,
+  ) => Promise<{ error: string } | { proposal: string }>;
   /** Una tarea archivada se lee, no se edita. */
   readOnly?: boolean;
 };
@@ -69,6 +83,7 @@ export function MarkdownEditor({
   value,
   onSave,
   onToggleChecklistItem,
+  onProposeBodyImprovement,
   readOnly = false,
 }: MarkdownEditorProps) {
   const [editing, setEditing] = useState(false);
@@ -77,6 +92,14 @@ export function MarkdownEditor({
   const [error, setError] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { isOnline } = useOnlineStatus();
+
+  // El borrador viene de una propuesta aceptada en esta sesión (KAM-30): se
+  // apaga con cualquier edición manual posterior, incluida la barra de
+  // herramientas — es lo que decide si el guardado que sigue queda marcado
+  // como asistido en la bitácora.
+  const [assisted, setAssisted] = useState(false);
+  const [improving, setImproving] = useState(false);
 
   const dirty = draft !== value;
   const { leave, dialog: discardDialog } = useDiscardConfirm(editing && dirty);
@@ -90,6 +113,7 @@ export function MarkdownEditor({
    */
   function startEditing() {
     setDraft(value);
+    setAssisted(false);
     setTab("write");
     setError(null);
     setEditing(true);
@@ -110,6 +134,7 @@ export function MarkdownEditor({
       action,
     );
     setDraft(result.text);
+    setAssisted(false);
 
     // El foco y la selección vuelven al textarea: aplicar formato no debe
     // costar un clic extra para seguir escribiendo.
@@ -122,7 +147,7 @@ export function MarkdownEditor({
   function save() {
     setError(null);
     startSaving(async () => {
-      const result = await onSave(draft);
+      const result = await onSave(draft, assisted);
       if (result?.error) {
         setError(result.error);
         return;
@@ -132,6 +157,13 @@ export function MarkdownEditor({
       setEditing(false);
     });
   }
+
+  // Visible solo con borrador no vacío y organización activada (spec
+  // `task-detail` → "El editor ofrece mejorar la descripción con un
+  // modelo"); sin conexión se oculta en vez de ofrecer un intento que
+  // fallaría (spec `ai-writing-assist` → "Sin conexión la acción se muestra
+  // no disponible, no fallida").
+  const canImprove = Boolean(onProposeBodyImprovement) && draft.trim() !== "" && isOnline;
 
   return (
     <Card>
@@ -190,24 +222,34 @@ export function MarkdownEditor({
               </ToggleGroup>
 
               {tab === "write" && (
-                <div
-                  className="flex flex-wrap items-center gap-1"
-                  role="toolbar"
-                  aria-label="Formato"
-                >
-                  {TOOLS.map(({ action, label, Icon }) => (
+                <div className="flex flex-wrap items-center gap-1">
+                  <div role="toolbar" aria-label="Formato" className="flex items-center gap-1">
+                    {TOOLS.map(({ action, label, Icon }) => (
+                      <Button
+                        key={action}
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={label}
+                        title={label}
+                        onClick={() => applyTool(action)}
+                      >
+                        <Icon className="size-4" />
+                      </Button>
+                    ))}
+                  </div>
+
+                  {canImprove && (
                     <Button
-                      key={action}
                       type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={label}
-                      title={label}
-                      onClick={() => applyTool(action)}
+                      variant="outline"
+                      size="sm"
+                      data-testid="improve-body"
+                      onClick={() => setImproving(true)}
                     >
-                      <Icon className="size-4" />
+                      <SparklesIcon className="size-4" aria-hidden /> Mejorar la descripción
                     </Button>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
@@ -218,7 +260,10 @@ export function MarkdownEditor({
                 aria-label="Descripción"
                 autoFocus
                 value={draft}
-                onChange={(event) => setDraft(event.target.value)}
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                  setAssisted(false);
+                }}
                 rows={12}
                 className="font-mono text-sm"
                 placeholder="Anota el proceso, los pasos, lo que haga falta recordar."
@@ -277,6 +322,19 @@ export function MarkdownEditor({
       </CardContent>
 
       {discardDialog}
+
+      {improving && onProposeBodyImprovement && (
+        <ImproveBodyDialog
+          currentBody={draft}
+          onClose={() => setImproving(false)}
+          onPropose={onProposeBodyImprovement}
+          onAccept={(proposal) => {
+            setDraft(proposal);
+            setAssisted(true);
+            setImproving(false);
+          }}
+        />
+      )}
     </Card>
   );
 }

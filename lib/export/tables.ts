@@ -478,6 +478,10 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
       "created_at",
       "updated_at",
       "archived_at",
+      // Añadida por `alter table` en KAM-30: aterriza al final del orden del
+      // catálogo, y por eso va al final aquí (no junto a las demás columnas
+      // del cuerpo) — ver kamay-new-table-checklist.
+      "body_assisted_by_ai",
     ],
   },
   {
@@ -583,5 +587,14 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
       "origin",
       "occurred_at",
     ],
+  },
+  {
+    // No lleva el trigger `audit` (no es una tabla cuyo historial le importe
+    // a quien usa el taller), pero sí tiene `organization_id`: es dato de la
+    // organización y la exportación completa no la deja fuera en silencio.
+    table: "ai_writing_assist_requests",
+    file: "solicitudes-de-asistencia-de-redaccion",
+    ownerOnly: false,
+    columns: ["id", "organization_id", "requested_by", "requested_at"],
   },
 ];

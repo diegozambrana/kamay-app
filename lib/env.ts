@@ -36,13 +36,41 @@ const PRODUCTION = {
   APP_URL: z.url({ error: "falta o no es una URL" }),
 };
 
+/**
+ * La asistencia de redacción por IA (KAM-30): un grupo genuinamente
+ * **opcional**, en desarrollo y en producción por igual. Ausente, no es un
+ * problema — la función queda apagada para toda organización, sin importar su
+ * interruptor propio (spec `ai-writing-assist` → "La función se apaga por
+ * completo si falta su configuración"); presente pero mal formada, sí lo es,
+ * con el mismo trato que el resto del módulo: se nombra la variable, nunca el
+ * valor.
+ */
+const AI_WRITING_ASSIST = {
+  ANTHROPIC_API_KEY: z.string().trim().min(1, "está vacía").optional(),
+  AI_WRITING_ASSIST_MONTHLY_LIMIT: z
+    .string()
+    .trim()
+    .regex(/^[1-9]\d*$/, "no es un entero positivo")
+    .optional(),
+};
+
 export type EnvProblem = { name: string; problem: string };
 
 type Env = Record<string, string | undefined>;
 
+/** Secretos que ninguna variable pública puede llevar, con su rótulo. */
+const NEVER_PUBLIC: { name: string; label: string }[] = [
+  { name: "SUPABASE_SERVICE_ROLE_KEY", label: "la clave de service role" },
+  { name: "ANTHROPIC_API_KEY", label: "la credencial de IA" },
+];
+
 /** Los problemas del entorno, por nombre. Vacío si todo está en orden. */
 export function envProblems(env: Env, mode: string | undefined): EnvProblem[] {
-  const shape = mode === "production" ? { ...ALWAYS, ...PRODUCTION } : ALWAYS;
+  const shape = {
+    ...ALWAYS,
+    ...(mode === "production" ? PRODUCTION : {}),
+    ...AI_WRITING_ASSIST,
+  };
   const problems: EnvProblem[] = [];
 
   for (const [name, schema] of Object.entries(shape)) {
@@ -53,12 +81,14 @@ export function envProblems(env: Env, mode: string | undefined): EnvProblem[] {
   }
 
   // La frontera de secretos: ninguna variable pública —las que Next incrusta
-  // en el paquete del navegador— puede llevar la clave de service role.
-  const serviceRole = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (serviceRole) {
+  // en el paquete del navegador— puede llevar un secreto de servidor.
+  for (const { name: secretName, label } of NEVER_PUBLIC) {
+    const secret = env[secretName]?.trim();
+    if (!secret) continue;
+
     for (const [name, value] of Object.entries(env)) {
-      if (name.startsWith("NEXT_PUBLIC_") && value?.trim() === serviceRole) {
-        problems.push({ name, problem: "contiene la clave de service role" });
+      if (name.startsWith("NEXT_PUBLIC_") && value?.trim() === secret) {
+        problems.push({ name, problem: `contiene ${label}` });
       }
     }
   }

@@ -19,6 +19,9 @@ function renderEditor(
   {
     onSave = vi.fn().mockResolvedValue(undefined),
     onToggle = vi.fn().mockResolvedValue(undefined),
+    onProposeBodyImprovement = undefined as
+      | ((body: string) => Promise<{ error: string } | { proposal: string }>)
+      | undefined,
     readOnly = false,
   } = {},
 ) {
@@ -28,6 +31,7 @@ function renderEditor(
       value={value}
       onSave={onSave}
       onToggleChecklistItem={onToggle}
+      onProposeBodyImprovement={onProposeBodyImprovement}
       readOnly={readOnly}
     />,
   );
@@ -125,7 +129,7 @@ describe("editor del cuerpo", () => {
     await user.click(screen.getByTestId("save-body"));
 
     // Ni una transformación: lo que se escribió es lo que viaja.
-    expect(onSave).toHaveBeenCalledWith(texto);
+    expect(onSave).toHaveBeenCalledWith(texto, false);
   });
 
   it("guardar cierra el editor y vuelve a la lectura (Guardar vuelve a la lectura)", async () => {
@@ -136,7 +140,7 @@ describe("editor del cuerpo", () => {
     await user.type(screen.getByLabelText("Descripción"), "Notas");
     await user.click(screen.getByTestId("save-body"));
 
-    expect(onSave).toHaveBeenCalledWith("Notas");
+    expect(onSave).toHaveBeenCalledWith("Notas", false);
     expect(await screen.findByTestId("edit-body")).toBeInTheDocument();
     expect(screen.queryByLabelText("Descripción")).toBeNull();
   });
@@ -210,5 +214,130 @@ describe("editor del cuerpo", () => {
 
     expect(screen.getByLabelText("Descripción")).toHaveValue("Cuerpo guardado");
     expect(onSave).not.toHaveBeenCalled();
+  });
+});
+
+// KAM-30 · Mejorar la descripción con un modelo.
+describe("Mejorar la descripción", () => {
+  it("no aparece si la organización no activó la asistencia", async () => {
+    renderEditor("Texto apurado");
+    const user = userEvent.setup();
+    await abrirEditor(user);
+
+    expect(screen.queryByTestId("improve-body")).toBeNull();
+  });
+
+  it("no aparece con un borrador vacío, aunque la organización la haya activado", async () => {
+    renderEditor("", { onProposeBodyImprovement: vi.fn() });
+    const user = userEvent.setup();
+    await abrirEditor(user);
+
+    expect(screen.queryByTestId("improve-body")).toBeNull();
+  });
+
+  it("pide la propuesta, aceptarla reemplaza el borrador sin guardar nada", async () => {
+    const onPropose = vi.fn().mockResolvedValue({ proposal: "Texto mejorado." });
+    const { onSave } = renderEditor("Texto apurado", {
+      onProposeBodyImprovement: onPropose,
+    });
+    const user = userEvent.setup();
+    await abrirEditor(user);
+
+    await user.click(screen.getByTestId("improve-body"));
+
+    expect(onPropose).toHaveBeenCalledWith("Texto apurado");
+    expect(await screen.findByTestId("improve-body-proposal")).toHaveTextContent(
+      "Texto mejorado.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Aceptar" }));
+
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Texto mejorado.");
+    expect(onSave).not.toHaveBeenCalled();
+
+    // Y ahora sí, guardar registra que este cuerpo viene de una propuesta aceptada.
+    await user.click(screen.getByTestId("save-body"));
+    expect(onSave).toHaveBeenCalledWith("Texto mejorado.", true);
+  });
+
+  it("descartar deja el borrador exactamente como estaba", async () => {
+    const onPropose = vi.fn().mockResolvedValue({ proposal: "Texto mejorado." });
+    renderEditor("Texto apurado", { onProposeBodyImprovement: onPropose });
+    const user = userEvent.setup();
+    await abrirEditor(user);
+
+    await user.click(screen.getByTestId("improve-body"));
+    await screen.findByTestId("improve-body-proposal");
+
+    await user.click(screen.getByRole("button", { name: "Descartar" }));
+
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Texto apurado");
+  });
+
+  it("editar a mano después de aceptar apaga la marca de asistido", async () => {
+    const onPropose = vi.fn().mockResolvedValue({ proposal: "Texto mejorado." });
+    const { onSave } = renderEditor("Texto apurado", {
+      onProposeBodyImprovement: onPropose,
+    });
+    const user = userEvent.setup();
+    await abrirEditor(user);
+
+    await user.click(screen.getByTestId("improve-body"));
+    await screen.findByTestId("improve-body-proposal");
+    await user.click(screen.getByRole("button", { name: "Aceptar" }));
+
+    await user.type(screen.getByLabelText("Descripción"), " a mano");
+    await user.click(screen.getByTestId("save-body"));
+
+    expect(onSave).toHaveBeenCalledWith("Texto mejorado. a mano", false);
+  });
+
+  it("una propuesta que pierde ítems de verificación advierte antes de aceptar", async () => {
+    const onPropose = vi.fn().mockResolvedValue({ proposal: "Solo el primero.\n- [ ] Modelado" });
+    renderEditor("- [ ] Modelado\n- [ ] Hornear", {
+      onProposeBodyImprovement: onPropose,
+    });
+    const user = userEvent.setup();
+    await abrirEditor(user);
+
+    await user.click(screen.getByTestId("improve-body"));
+    await screen.findByTestId("improve-body-proposal");
+
+    const acceptButton = screen.getByRole("button", { name: "Aceptar" });
+    expect(acceptButton).toBeDisabled();
+    expect(screen.getByTestId("checklist-loss-warning")).toHaveTextContent("Hornear");
+
+    await user.click(
+      screen.getByLabelText("Entiendo que se perderían y quiero aceptar igual."),
+    );
+
+    expect(acceptButton).not.toBeDisabled();
+  });
+
+  it("sin conexión, no se ofrece un intento que fallaría", async () => {
+    const onlineSpy = vi.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      renderEditor("Texto apurado", { onProposeBodyImprovement: vi.fn() });
+      const user = userEvent.setup();
+      await abrirEditor(user);
+
+      expect(screen.queryByTestId("improve-body")).toBeNull();
+    } finally {
+      onlineSpy.mockRestore();
+    }
+  });
+
+  it("un proveedor que falla avisa en lenguaje llano y no toca el borrador", async () => {
+    const onPropose = vi.fn().mockResolvedValue({ error: "El proveedor de IA no responde." });
+    renderEditor("Texto apurado", { onProposeBodyImprovement: onPropose });
+    const user = userEvent.setup();
+    await abrirEditor(user);
+
+    await user.click(screen.getByTestId("improve-body"));
+
+    expect(await screen.findByTestId("improve-body-error")).toHaveTextContent(
+      "El proveedor de IA no responde.",
+    );
+    expect(screen.queryByRole("button", { name: "Aceptar" })).toBeNull();
   });
 });

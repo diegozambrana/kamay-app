@@ -34,6 +34,7 @@ function task(overrides: Partial<Task> = {}): Task {
     remindAt: null,
     closedAt: null,
     closedWithoutDeliverables: false,
+    bodyAssistedByAi: false,
     createdBy: ANA,
     createdAt: "2026-09-07T10:00:00Z",
     archivedAt: null,

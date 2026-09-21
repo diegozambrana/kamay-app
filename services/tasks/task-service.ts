@@ -25,14 +25,19 @@ type TaskRow = {
   created_at: string;
   archived_at: string | null;
   task_tags: { tag: { id: string; organization_id: string; name: string } | null }[] | null;
+  body_assisted_by_ai: boolean;
 };
 
-/** Las columnas de una tarea. Todas: KAM-21 encendió la última que faltaba. */
+/**
+ * Las columnas de una tarea. `body_assisted_by_ai` (KAM-30) va al final: es
+ * donde una columna añadida por `alter table` aterriza de verdad en el orden
+ * del catálogo, y `lib/export/tables.ts` la coloca en el mismo punto.
+ */
 const COLUMNS =
   "id, organization_id, business_line_id, status_id, title, body_markdown, " +
   "assignee_id, due_at, remind_at, closed_at, closed_without_deliverables, " +
   "created_by, created_at, archived_at, " +
-  "task_tags (tag:tags (id, organization_id, name))";
+  "task_tags (tag:tags (id, organization_id, name)), body_assisted_by_ai";
 
 export type TaskFilters = {
   businessLineId?: string | null;
@@ -59,6 +64,7 @@ function toTask(row: TaskRow): Task {
     createdBy: row.created_by,
     createdAt: row.created_at,
     archivedAt: row.archived_at,
+    bodyAssistedByAi: row.body_assisted_by_ai,
     tags: (row.task_tags ?? [])
       .map((link) => link.tag)
       .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
@@ -326,6 +332,14 @@ export class TaskService {
       assigneeId?: string | null;
       dueDate?: string | null;
       bodyMarkdown?: string | null;
+      /**
+       * Si el cuerpo que se guarda proviene de una propuesta aceptada en esta
+       * sesión de edición (KAM-30). Solo tiene efecto junto a `bodyMarkdown`:
+       * un guardado del cuerpo que no la declara la apaga, que es lo que hace
+       * que una edición manual posterior borre la marca de un guardado
+       * asistido anterior.
+       */
+      bodyAssistedByAi?: boolean;
       statusId?: string;
       businessLineId?: string;
       remindAt?: string | null;
@@ -341,6 +355,7 @@ export class TaskService {
     }
     if (fields.bodyMarkdown !== undefined) {
       patch.body_markdown = fields.bodyMarkdown;
+      patch.body_assisted_by_ai = fields.bodyAssistedByAi ?? false;
     }
     if (fields.statusId !== undefined) patch.status_id = fields.statusId;
     if (fields.businessLineId !== undefined) {

@@ -21,6 +21,7 @@ vi.mock("@/actions/tasks", () => ({
   toggleTaskChecklistItem: (input: unknown) => toggleTaskChecklistItem(input),
   updateTaskBody: (input: unknown) => updateTaskBody(input),
   updateTaskField: vi.fn(async () => undefined),
+  proposeTaskBodyImprovement: vi.fn(async () => ({ proposal: "no usado en esta prueba" })),
 }));
 
 /**
@@ -35,11 +36,11 @@ vi.mock("@/features/tasks/editor/markdown-editor", () => ({
     onSave,
     onToggleChecklistItem,
   }: {
-    onSave: (body: string) => unknown;
+    onSave: (body: string, assisted: boolean) => unknown;
     onToggleChecklistItem: (index: number, checked: boolean) => unknown;
   }) => (
     <div data-testid="markdown-editor">
-      <button onClick={() => onSave("cuerpo nuevo")}>guardar cuerpo</button>
+      <button onClick={() => onSave("cuerpo nuevo", false)}>guardar cuerpo</button>
       <button onClick={() => onToggleChecklistItem(2, true)}>marcar casilla</button>
     </div>
   ),
@@ -90,6 +91,7 @@ function task(overrides: Partial<Task> = {}): Task {
     remindAt: null,
     closedAt: null,
     closedWithoutDeliverables: false,
+    bodyAssistedByAi: false,
     createdBy: null,
     createdAt: "2026-09-07T10:00:00Z",
     archivedAt: null,
@@ -116,6 +118,7 @@ function renderDetail(from: string | null = null, overrides: Partial<Task> = {})
       history={{ entries: [], visible: true } as never}
       timezone="America/La_Paz"
       from={from}
+      writingAssistEnabled={false}
     />,
   );
 }
@@ -143,6 +146,7 @@ describe("lo que se queda en el detalle", () => {
     expect(updateTaskBody).toHaveBeenCalledWith({
       taskId: TASK,
       body: "cuerpo nuevo",
+      assisted: false,
     });
   });
 

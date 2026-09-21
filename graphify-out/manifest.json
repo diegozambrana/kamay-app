@@ -8,8 +8,8 @@
     "hash": "8b6d93c589eb15588397d62d08647147"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/next-env.d.ts": {
-    "mtime": 1789944330.752754,
-    "hash": "8195d2c60ce847a459ae9d308d6a5724"
+    "mtime": 1790027169.490293,
+    "hash": "aa94238a90e7d04b7a47ecc3145ba6a0"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/proxy.ts": {
     "mtime": 1789404440.8753066,
@@ -24,7 +24,7 @@
     "hash": "709ecc6f92d764daa0622f78c683d1f4"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/vitest.config.ts": {
-    "mtime": 1789880665.3923104,
+    "mtime": 1789953051.9465451,
     "hash": "62a06f2626324a3df95c23311938676d"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/instrumentation.ts": {
@@ -132,8 +132,8 @@
     "hash": "c3a4d3dcf4b7c4843a851335399756fa"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/types/index.ts": {
-    "mtime": 1789913655.2584488,
-    "hash": "e897a6ddfb152187fae0607b5cb99daf"
+    "mtime": 1789953419.485528,
+    "hash": "93a78d867d9b724226c8c9d74769fc2a"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/app/route-states.test.tsx": {
     "mtime": 1789404456.270246,
@@ -220,8 +220,8 @@
     "hash": "65837aa9da60570d5074dc72c3c8d25c"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/app/(app)/settings/general/page.tsx": {
-    "mtime": 1789437774.296376,
-    "hash": "9ec30dc2baa63203cdde5afd12841e59"
+    "mtime": 1789953252.1870058,
+    "hash": "8281226a2537e6f677277a94cf22778c"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/app/(app)/settings/retention/error.tsx": {
     "mtime": 1789097096.603517,
@@ -380,8 +380,8 @@
     "hash": "e48fa920659d62dc069e2bc378577eca"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/app/(app)/tasks/[id]/page.tsx": {
-    "mtime": 1789950279.0677698,
-    "hash": "018a15d670899f90407fb36ecfb5d114"
+    "mtime": 1790027693.237623,
+    "hash": "a214575dd35fd66275516d400aafcf43"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/app/(app)/tasks/[id]/edit/error.tsx": {
     "mtime": 1789950279.0950422,
@@ -807,6 +807,10 @@
     "mtime": 1787233010.9100573,
     "hash": "f9170b6f3cf32647ea6c6e6acfd2936b"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/settings/writing-assist-form.tsx": {
+    "mtime": 1789953226.1727138,
+    "hash": "68ce2c85d7b0876baecb112ecc87d73b"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/settings/line-dialog.tsx": {
     "mtime": 1789432680.0451903,
     "hash": "0a9aeb584fc54491bf1c35e305b5ccc4"
@@ -906,6 +910,10 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/settings/retention-form.test.tsx": {
     "mtime": 1789433246.5677843,
     "hash": "5de44b91003abc17202fd25830e168eb"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/settings/writing-assist-form.test.tsx": {
+    "mtime": 1789953232.9667082,
+    "hash": "00d41d09030e7af0dd6c17c5d6d50817"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/settings/item-categories-section.test.tsx": {
     "mtime": 1789500802.0766444,
@@ -1100,16 +1108,16 @@
     "hash": "dd1722df03a53055b7012f270f66a94b"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tasks/detail/task-detail.test.tsx": {
-    "mtime": 1789950279.0964918,
-    "hash": "0df41d45e2c7a4472b9406c8966d4db7"
+    "mtime": 1789953992.0188131,
+    "hash": "120d9043857672dd3d30665d0b72945a"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tasks/detail/task-detail.tsx": {
-    "mtime": 1789950279.0706885,
-    "hash": "ad4ab8b6ce1fb481dd6214748c260e15"
+    "mtime": 1789953937.6878912,
+    "hash": "4aa4cecb1a91fd0dcf516bd8a444259c"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tasks/detail/task-fields.test.tsx": {
-    "mtime": 1789950279.0708697,
-    "hash": "0fffcc4a2b73ac6a53bcaa7341e8120d"
+    "mtime": 1789953448.619587,
+    "hash": "daa4fd1797f58bb9c8c60c98f866e545"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tasks/links/link-search.tsx": {
     "mtime": 1789014213.826734,
@@ -1172,8 +1180,8 @@
     "hash": "ce17e0989e115ab18461e9f451c9709f"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tasks/editor/markdown-editor.tsx": {
-    "mtime": 1789950279.07152,
-    "hash": "9dbdd545e6605695eceb4df256cc6b58"
+    "mtime": 1790027689.8254387,
+    "hash": "1f734cee71072040fc91abba452e8516"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tasks/editor/checklist-preview.test.tsx": {
     "mtime": 1788838584.3221257,
@@ -1183,9 +1191,13 @@
     "mtime": 1788838584.3224676,
     "hash": "b56502086a770604a3e593023fab33df"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tasks/editor/improve-body-dialog.tsx": {
+    "mtime": 1790027480.1831768,
+    "hash": "55d7e44071190a5c2cbaa1f62301082c"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tasks/editor/markdown-editor.test.tsx": {
-    "mtime": 1789950279.0712526,
-    "hash": "1eeb7f61d6c3808f321296dbf50c05db"
+    "mtime": 1789954088.6555045,
+    "hash": "60c34640b83d2bf87a727b33455dc4ed"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/features/tools/catalog-view.ts": {
     "mtime": 1789881451.2847927,
@@ -2024,8 +2036,8 @@
     "hash": "d50994838b80662b76c9df8b85f408b2"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/tests/setup/unit.ts": {
-    "mtime": 1788488003.9547226,
-    "hash": "be28f61d173a5148a86d4109685c4da5"
+    "mtime": 1789953072.839819,
+    "hash": "866a080aea5a1c3e010deaecf8c67d2b"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/tests/factories/supabase-fake.ts": {
     "mtime": 1789892723.09093,
@@ -2122,6 +2134,10 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/tests/e2e/task-detail.spec.ts": {
     "mtime": 1789950158.5910122,
     "hash": "fcf0fff18858e27c2e915dda73b000cf"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/tests/e2e/task-writing-assist.spec.ts": {
+    "mtime": 1790027696.20385,
+    "hash": "2e61ba980214a4b481c477602d37a9ae"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/tests/e2e/order-requests.spec.ts": {
     "mtime": 1789928171.0218894,
@@ -2283,6 +2299,10 @@
     "mtime": 1789106342.5086908,
     "hash": "6ffb4eb61f4f7655353158f0febdf05d"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/migrations/20260920130000_ai_writing_assist_requests.sql": {
+    "mtime": 1789952754.5369322,
+    "hash": "ec9de10b0aa75bf1870b384e9d46bb3d"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/migrations/20260911090000_tasks_line_index.sql": {
     "mtime": 1789096264.2776976,
     "hash": "4a2801c44957a969d0f05ab59dc13b2c"
@@ -2290,6 +2310,10 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/migrations/20260908160000_assets.sql": {
     "mtime": 1788959315.1732752,
     "hash": "6399c0b32d46156529aa6a0c7385d296"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/migrations/20260920140000_tasks_body_assisted_by_ai.sql": {
+    "mtime": 1789952768.3532586,
+    "hash": "dd8c37f720b26a7189111dfd109f155b"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/migrations/20260903120000_order_entry.sql": {
     "mtime": 1788454154.54445,
@@ -2483,6 +2507,10 @@
     "mtime": 1789499781.056569,
     "hash": "3a7036421e668c46085c5f7eb22953f6"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/writing_assist_settings_access.test.sql": {
+    "mtime": 1789953193.8587556,
+    "hash": "3e98711435e2843eb5224f4e9ea7d2bc"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/platform_activity_mark.test.sql": {
     "mtime": 1789409094.0110846,
     "hash": "3b4a1442f3d5a786287321ebbb12568b"
@@ -2615,6 +2643,10 @@
     "mtime": 1788983338.776696,
     "hash": "8ac80469b6b2af414756fb4d3d382541"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/tasks_body_assisted_by_ai.test.sql": {
+    "mtime": 1789952921.004125,
+    "hash": "958615ab3d0e27daba159097f63d12d2"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/notifications.test.sql": {
     "mtime": 1788843464.572905,
     "hash": "506cc251950de38d820b80cfd67d14cd"
@@ -2658,6 +2690,10 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/best_selling.test.sql": {
     "mtime": 1788521659.5415385,
     "hash": "83ecd2c0a3e6ee8cdccebb2274505b60"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/ai_writing_assist_requests.test.sql": {
+    "mtime": 1789952822.832419,
+    "hash": "0a0ec07ba8690f1da54f5bb43d218bba"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/supabase/tests/expense_integrity.test.sql": {
     "mtime": 1788959315.1767213,
@@ -3047,10 +3083,6 @@
     "mtime": 1789097279.4794433,
     "hash": "bda6f744427835442c12fa3d9ad374e3"
   },
-  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/public/sw.js": {
-    "mtime": 1789882563.1688106,
-    "hash": "48d9ff912034aa458fb4547fa29f0bd0"
-  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/hooks/use-return-focus.ts": {
     "mtime": 1789432534.1540232,
     "hash": "0f250b31b9886964953cce0ba34ce9cb"
@@ -3156,8 +3188,8 @@
     "hash": "448817bc1b1e0a34c289f075077f076b"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/actions/tasks.test.ts": {
-    "mtime": 1789944344.8278854,
-    "hash": "a4b9fa46970a4d1a78fa13eb3da9dd99"
+    "mtime": 1789953617.483433,
+    "hash": "caaea161a6b79aa0921e326a48491df4"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/actions/orders.ts": {
     "mtime": 1789881882.8873599,
@@ -3212,8 +3244,8 @@
     "hash": "a83194f2956137e887c64a883b6a0fad"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/actions/tasks.ts": {
-    "mtime": 1789924989.429006,
-    "hash": "a07cd7fe0bfa3e4eea35a7835851b2b8"
+    "mtime": 1789953515.3751056,
+    "hash": "1d6c325f4c9a9b27eddfc23e80f73313"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/actions/order-requests.ts": {
     "mtime": 1789925523.826818,
@@ -3224,16 +3256,16 @@
     "hash": "1443689c5f533d5a75c5ac21b0d7ddcb"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/actions/configuration.ts": {
-    "mtime": 1789500593.1977775,
-    "hash": "6752ed0caa96d5a7f956da542ce292d1"
+    "mtime": 1789953146.7034934,
+    "hash": "c8af6400093291f26a779e510e91a79b"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/actions/catalog.ts": {
     "mtime": 1789500638.159731,
     "hash": "54c9f67d54507c2a0b08808fb66f0885"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/env.test.ts": {
-    "mtime": 1789107417.7497845,
-    "hash": "d78ed1a72dd39abf32aa11dbf6d8ae69"
+    "mtime": 1789953300.416383,
+    "hash": "3b4accb01b0cc13ec385a5ae21b8e7df"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/pagination.ts": {
     "mtime": 1789103433.4331584,
@@ -3248,8 +3280,8 @@
     "hash": "b04d0e23c1574483ddc22825998bcb35"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/env.ts": {
-    "mtime": 1789312180.8186252,
-    "hash": "1d317147818aa59c84ea0793290f49ac"
+    "mtime": 1789953283.71932,
+    "hash": "bfa7088179d2ff918e9508a9dde32050"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/env-phase.test.ts": {
     "mtime": 1789312919.188553,
@@ -3464,8 +3496,8 @@
     "hash": "d890f315cc37a67e93cc69eba04ba5b9"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/activity/fields.ts": {
-    "mtime": 1789914256.172352,
-    "hash": "230e58329856bf4a3caed585deaba962"
+    "mtime": 1789953692.534397,
+    "hash": "175b88f40c5e85d7ac14eeab9a8b3a32"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/activity/describe.ts": {
     "mtime": 1789914260.1981728,
@@ -3699,6 +3731,50 @@
     "mtime": 1789914009.1745036,
     "hash": "22e9a33c2adf97c79644c3160dc32021"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/checklist-diff.test.ts": {
+    "mtime": 1789953781.6137302,
+    "hash": "0a4fa7951c94dd61f1fdfaef0780055f"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/anthropic.ts": {
+    "mtime": 1789952966.7836554,
+    "hash": "06e2471158ead68419b4787fbcaa85ba"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/checklist-diff.ts": {
+    "mtime": 1789953773.0545163,
+    "hash": "e6ac7fa4699994234e570b17b828badf"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/writing-assist-settings.ts": {
+    "mtime": 1789953095.085892,
+    "hash": "c94c8615aaee027524f06ece79eafae9"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/client-boundary.test.ts": {
+    "mtime": 1789954165.255221,
+    "hash": "d42801b7abece3fdd4d157d3c37e4fd3"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/port.test.ts": {
+    "mtime": 1790027505.919082,
+    "hash": "291c8d7fb6654893774cb4098fb01e0c"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/resolve.test.ts": {
+    "mtime": 1789953056.0440588,
+    "hash": "95d76dd24bb36dbd3b0ac68bed7ced40"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/config.ts": {
+    "mtime": 1789953327.6991117,
+    "hash": "f0814c59247737ce0d3693bdc6877113"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/resolve.ts": {
+    "mtime": 1789952971.9780257,
+    "hash": "26bca7726620d2915a1a580c0dc116d0"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/config.test.ts": {
+    "mtime": 1789953357.7220218,
+    "hash": "92dbb065200b6d623b9d7f0cf8857557"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/ai/port.ts": {
+    "mtime": 1790027499.6024566,
+    "hash": "68fe9ae2b0329efde75da35635ec7698"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/fair/snapshot.ts": {
     "mtime": 1788522472.08342,
     "hash": "6d5cfcd94dac3d7ed2817e3d6eabcaec"
@@ -3872,8 +3948,8 @@
     "hash": "2e9748f7734e66a48740afc256fb3b32"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/export/tables.ts": {
-    "mtime": 1789914292.3565934,
-    "hash": "6f5b0cf9a1321dc9f07de166cf817540"
+    "mtime": 1789953744.582273,
+    "hash": "70b8e2b5c0546a71df58ef817e26eee2"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/lib/export/archive.ts": {
     "mtime": 1789105880.2140155,
@@ -4163,6 +4239,14 @@
     "mtime": 1788983338.7745764,
     "hash": "f966846942ee0221c2a1a29376a575ce"
   },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/configuration/ai-writing-assist-service.test.ts": {
+    "mtime": 1789953115.4753628,
+    "hash": "b3dac57e15709039e389634a2742a4a0"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/configuration/ai-writing-assist-service.ts": {
+    "mtime": 1789953102.2889323,
+    "hash": "79239590e106bf745a71caaf4a55efcf"
+  },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/configuration/expense-category-service.ts": {
     "mtime": 1787232788.275567,
     "hash": "f1770e477106216d311a4aabdccd8971"
@@ -4208,8 +4292,8 @@
     "hash": "ac12826713f6ecf71d29d6692f36f796"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/tasks/task-service.ts": {
-    "mtime": 1789105059.3629024,
-    "hash": "154183609e9218f8f1a6e04003eb1401"
+    "mtime": 1789953412.7074373,
+    "hash": "a62e047f78cdad9c6dacae273417588b"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/tasks/task-service.test.ts": {
     "mtime": 1789072907.4867065,
@@ -4358,6 +4442,14 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/order-shares/order-share-service.test.ts": {
     "mtime": 1789913687.9824173,
     "hash": "eb7b995f4cb7e7e0a123a19e63dbc278"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/ai/usage-service.ts": {
+    "mtime": 1789953338.7305298,
+    "hash": "fd50f72cad342e689e5241dc43d16f08"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/ai/usage-service.test.ts": {
+    "mtime": 1789953347.1683636,
+    "hash": "78ae66f832fcfc64375656674b0daa65"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/services/fair/fair-sale-service.ts": {
     "mtime": 1788521961.0917404,
@@ -4572,8 +4664,8 @@
     "hash": "dcdccecc084b21026c5d54ce87e1fdc3"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/org-configuration/spec.md": {
-    "mtime": 1789534390.284067,
-    "hash": "c8896bfa2c8c8bc04e0b5ff5679d3efd"
+    "mtime": 1790031962.0734324,
+    "hash": "96b741402104fbae318ae1dc1a3b5c75"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/business-line-context/spec.md": {
     "mtime": 1787235425.416776,
@@ -4660,8 +4752,8 @@
     "hash": "d9cd55c81902b14250fe3fd382553442"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/task-detail/spec.md": {
-    "mtime": 1789951188.6184669,
-    "hash": "248648e43167d9e2f4328efda696e4e0"
+    "mtime": 1790031943.3399158,
+    "hash": "d1ddfd6c547fab29a434618c3f58f99a"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/navigation-breadcrumbs/spec.md": {
     "mtime": 1789951143.0473888,
@@ -4714,6 +4806,10 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/assets/spec.md": {
     "mtime": 1789050214.5735974,
     "hash": "9d6940ac8c23db9fc5a33c6119961aa1"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/ai-writing-assist/spec.md": {
+    "mtime": 1790031924.9655333,
+    "hash": "62d5a77967b43d15ca01f7b05dcb89fa"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/specs/order-share/spec.md": {
     "mtime": 1789929695.684034,
@@ -5422,6 +5518,30 @@
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-14-settings-dialogs-and-tables/specs/settings-interaction/spec.md": {
     "mtime": 1789437544.0158007,
     "hash": "9bc628e1106f84f8570b276e9bd85b78"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-21-task-body-writing-assist/tasks.md": {
+    "mtime": 1790027420.577677,
+    "hash": "9dea6ae90d6552da4be1de58c24008d8"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-21-task-body-writing-assist/design.md": {
+    "mtime": 1789953686.9062626,
+    "hash": "8518b48b3685869d5b59f9ec3b736da5"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-21-task-body-writing-assist/proposal.md": {
+    "mtime": 1789952201.8100176,
+    "hash": "8e7ebf217c87a2e0b49fba415a35f517"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-21-task-body-writing-assist/specs/org-configuration/spec.md": {
+    "mtime": 1789952120.774809,
+    "hash": "bac372be2399b9904b39de18e2309ece"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-21-task-body-writing-assist/specs/task-detail/spec.md": {
+    "mtime": 1789952105.9751234,
+    "hash": "4101bbc0d72e84bad1bccbfb804797e6"
+  },
+  "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-21-task-body-writing-assist/specs/ai-writing-assist/spec.md": {
+    "mtime": 1789952098.1787913,
+    "hash": "0d7ac768c55af1cdeb1c6bdfff60f157"
   },
   "/Users/diegoarmandozambranaarze/Projects/KAMAY_PROJECT/kamay-app/openspec/changes/archive/2026-09-14-kam-24-account-menu-and-profile/tasks.md": {
     "mtime": 1789357051.1949267,

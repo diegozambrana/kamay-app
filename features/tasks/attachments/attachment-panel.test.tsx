@@ -69,6 +69,11 @@ function renderPanel(
   return onDetach;
 }
 
+/** Despliega la zona de arrastre, que ya no está desplegada por omisión. */
+async function abrirZona() {
+  await userEvent.setup().click(screen.getByTestId("add-attachment"));
+}
+
 /** Suelta archivos sobre la zona de arrastre. */
 async function soltar(files: File[]) {
   const zona = screen.getByTestId("file-dropzone");
@@ -84,8 +89,9 @@ beforeEach(() => {
 });
 
 describe("panel de adjuntos", () => {
-  it("arrastrar una imagen la encola para subir", async () => {
+  it("arrastrar una imagen la encola para subir (Arrastrar una imagen la adjunta)", async () => {
     renderPanel();
+    await abrirZona();
 
     await soltar([imagen()]);
 
@@ -94,13 +100,32 @@ describe("panel de adjuntos", () => {
     expect(enqueued[0].files[0].name).toBe("taza.jpg");
   });
 
-  it("ofrece elegir del equipo además de arrastrar", () => {
+  it("la zona de arrastre no está desplegada (La zona de arrastre no está desplegada)", () => {
+    renderPanel([adjunto()]);
+
+    // Solo la lista: el recuadro punteado ocupaba sitio en una pantalla que se
+    // abre sobre todo para mirar.
+    expect(screen.getByTestId("attachment")).toBeInTheDocument();
+    expect(screen.queryByTestId("file-dropzone")).toBeNull();
+  });
+
+  it("ofrece elegir del equipo además de arrastrar (Elegir del equipo hace lo mismo)", async () => {
     renderPanel();
+    await abrirZona();
 
     expect(screen.getByRole("button", { name: /elegir/i })).toBeInTheDocument();
   });
 
-  it("un archivo que no es imagen se muestra sin miniatura", () => {
+  it("la zona se repliega al terminar", async () => {
+    renderPanel();
+    await abrirZona();
+    expect(screen.getByTestId("file-dropzone")).toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByTestId("add-attachment"));
+    expect(screen.queryByTestId("file-dropzone")).toBeNull();
+  });
+
+  it("un archivo que no es imagen se muestra sin miniatura (Un archivo que no es imagen se adjunta sin miniatura)", () => {
     renderPanel([
       adjunto({
         fileName: "ficha-esmalte.pdf",
@@ -121,9 +146,10 @@ describe("panel de adjuntos", () => {
     expect(screen.getByTestId("attachment-thumbnail")).toBeInTheDocument();
   });
 
-  it("sin conexión avisa y no encola nada", async () => {
+  it("sin conexión avisa y no encola nada (Sin conexión se avisa y se sigue trabajando)", async () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
     renderPanel();
+    await abrirZona();
 
     await soltar([imagen()]);
 
@@ -133,6 +159,7 @@ describe("panel de adjuntos", () => {
 
   it("el decimosexto no entra", async () => {
     renderPanel(llenar(15));
+    await abrirZona();
 
     await soltar([imagen()]);
 
@@ -142,6 +169,7 @@ describe("panel de adjuntos", () => {
 
   it("un lote que desborda el límite se rechaza entero", async () => {
     renderPanel(llenar(13));
+    await abrirZona();
 
     await soltar([imagen("a.jpg"), imagen("b.jpg"), imagen("c.jpg"), imagen("d.jpg"), imagen("e.jpg")]);
 
@@ -153,6 +181,7 @@ describe("panel de adjuntos", () => {
 
   it("un lote que cabe justo sí entra", async () => {
     renderPanel(llenar(13));
+    await abrirZona();
 
     await soltar([imagen("a.jpg"), imagen("b.jpg")]);
 
@@ -160,7 +189,7 @@ describe("panel de adjuntos", () => {
     expect(enqueued[0].files).toHaveLength(2);
   });
 
-  it("quitar un adjunto lo pide por su identificador", async () => {
+  it("quitar un adjunto lo pide por su identificador (Quitar sigue a un gesto en la fila)", async () => {
     const uno = adjunto({ fileName: "foto.jpg" });
     const onDetach = renderPanel([uno]);
 
@@ -177,11 +206,48 @@ describe("panel de adjuntos", () => {
     expect(screen.getByTestId("empty-attachments")).toBeInTheDocument();
   });
 
-  it("una tarea archivada conserva sus adjuntos y no ofrece agregar ni quitar", () => {
+  it("una tarea archivada conserva sus adjuntos y no ofrece agregar ni quitar (Una tarea archivada conserva sus adjuntos)", () => {
     renderPanel([adjunto()], { readOnly: true });
 
     expect(screen.getByTestId("attachment")).toBeInTheDocument();
+    expect(screen.queryByTestId("add-attachment")).toBeNull();
     expect(screen.queryByTestId("file-dropzone")).toBeNull();
     expect(screen.queryByRole("button", { name: /Quitar/ })).toBeNull();
+  });
+});
+
+/**
+ * KAM-29 · Escenarios del delta spec `task-detail`: una imagen se mira dentro
+ * de la pantalla, no en otra pestaña.
+ */
+describe("el visor de imágenes", () => {
+  it("activar una imagen lo abre (Una imagen se ve dentro de la pantalla)", async () => {
+    renderPanel([adjunto({ fileName: "taza.jpg" })]);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Ver taza.jpg" }));
+
+    expect(screen.getByTestId("image-viewer")).toBeInTheDocument();
+    expect(screen.getByTestId("viewer-image")).toHaveAttribute(
+      "src",
+      "https://firmada/foto.jpg",
+    );
+  });
+
+  it("un archivo que no es imagen no lo abre (Un archivo que no es imagen no abre el visor)", async () => {
+    renderPanel([
+      adjunto({
+        fileName: "ficha.pdf",
+        mimeType: "application/pdf",
+        url: "https://firmada/ficha.pdf",
+      }),
+    ]);
+
+    // No hay nada que «ver»: el PDF se abre como archivo.
+    expect(screen.queryByRole("button", { name: /^Ver / })).toBeNull();
+    expect(screen.getByRole("link", { name: "Abrir" })).toHaveAttribute(
+      "href",
+      "https://firmada/ficha.pdf",
+    );
+    expect(screen.queryByTestId("image-viewer")).toBeNull();
   });
 });

@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
 import { lineColorClasses } from "@/lib/business-lines/colors";
+import { withFrom } from "@/lib/tasks/list-href";
 import { dueSignal } from "@/lib/tasks/overdue";
 import { cn } from "@/lib/utils";
 
@@ -21,12 +24,15 @@ export function ListView({
   statusNames,
   today,
   showLine,
+  from = null,
 }: {
   tasks: BoardTask[];
   /** `statusId → nombre`, de todos los estados del flujo. */
   statusNames: Map<string, string>;
   today: string;
   showLine: boolean;
+  /** La consulta del tablero, para volver a esta vista con sus filtros. */
+  from?: string | null;
 }) {
   if (tasks.length === 0) {
     return <EmptyState title="No hay tareas que mostrar" />;
@@ -56,7 +62,12 @@ export function ListView({
               />
             )}
 
-            <span className="flex-1 min-w-40">{task.title}</span>
+            <Link
+              href={withFrom(`/tasks/${task.id}`, from)}
+              className="flex-1 min-w-40 hover:underline"
+            >
+              {task.title}
+            </Link>
 
             <Badge variant="outline" className="text-[11px]">
               {statusNames.get(task.statusId) ?? "—"}

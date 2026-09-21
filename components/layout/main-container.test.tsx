@@ -102,3 +102,56 @@ describe("MainContainer", () => {
     });
   });
 });
+
+/**
+ * KAM-29 · La edición de tarea es la primera ruta de **tres** tramos cuyo
+ * tramo del medio es un título escrito por la persona. Sin recortarlo, empuja
+ * a «Editar» fuera de la pantalla en 390 px (spec `navigation-breadcrumbs`,
+ * requisito «Migas legibles en móvil»).
+ */
+describe("migas de tres tramos con un título largo", () => {
+  const largo = "Set de seis tazas artesanales esmaltadas para la feria de invierno";
+
+  it("el tramo del medio se recorta y el primero no", () => {
+    render(
+      <MainContainer
+        breadcrumbs={[
+          { label: "Tareas", href: "/tasks" },
+          { label: largo, href: "/tasks/abc" },
+          { label: "Editar" },
+        ]}
+        title="Editar tarea"
+      >
+        contenido
+      </MainContainer>,
+    );
+
+    // El camino de vuelta conserva su ancho: es lo que siempre debe poderse
+    // pulsar.
+    const primero = screen.getByRole("link", { name: "Tareas" });
+    expect(primero.className).not.toContain("truncate");
+
+    // El del medio se recorta.
+    const medio = screen.getByRole("link", { name: largo });
+    expect(medio.className).toContain("truncate");
+
+    // Y el último sigue rindiéndose, marcado como la página actual.
+    expect(screen.getByText("Editar")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("con dos tramos el primero sigue sin recortarse y el último se recorta", () => {
+    render(
+      <MainContainer
+        breadcrumbs={[{ label: "Tareas", href: "/tasks" }, { label: largo }]}
+        title="Tarea"
+      >
+        contenido
+      </MainContainer>,
+    );
+
+    expect(screen.getByRole("link", { name: "Tareas" }).className).not.toContain(
+      "truncate",
+    );
+    expect(screen.getByText(largo).className).toContain("truncate");
+  });
+});

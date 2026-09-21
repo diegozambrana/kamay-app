@@ -117,8 +117,8 @@ test.describe("el enlace de un aviso abre esa tarea", () => {
       .getByRole("link", { name: title })
       .click();
 
-    await page.waitForURL(/\/tasks\/[0-9a-f-]{36}$/);
-    await expect(page.getByLabel("Título")).toHaveValue(title);
+    await page.waitForURL(/\/tasks\/[0-9a-f-]{36}(\?.*)?$/);
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
   });
 
   test("sin sesión, se identifica y aterriza en esa misma tarea", async ({
@@ -136,7 +136,7 @@ test.describe("el enlace de un aviso abre esa tarea", () => {
       .filter({ hasText: title })
       .getByRole("link", { name: title })
       .click();
-    await page.waitForURL(/\/tasks\/[0-9a-f-]{36}$/);
+    await page.waitForURL(/\/tasks\/[0-9a-f-]{36}(\?.*)?$/);
     const taskUrl = new URL(page.url()).pathname;
 
     // Se cierra la sesión: a partir de aquí es quien abre el correo sin haber
@@ -152,7 +152,7 @@ test.describe("el enlace de un aviso abre esa tarea", () => {
 
     // Aterriza en la tarea, no en el panel ni en el registro rápido.
     await page.waitForURL(new RegExp(`${taskUrl}$`), { timeout: 20_000 });
-    await expect(page.getByLabel("Título")).toHaveValue(title);
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
   });
 });
 

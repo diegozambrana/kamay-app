@@ -16,10 +16,12 @@ vi.mock("@/actions/tasks", () => ({
 }));
 
 const pushed: string[] = [];
+/** La consulta del tablero, que las pruebas de origen cambian. */
+const consulta = vi.hoisted(() => ({ actual: "" }));
 vi.mock("next/navigation", () => ({
   usePathname: () => "/tasks",
   useRouter: () => ({ push: (url: string) => pushed.push(url) }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(consulta.actual),
 }));
 
 const ORG = "11111111-1111-4111-8111-111111111111";
@@ -99,6 +101,7 @@ beforeEach(() => {
   enRevision = status("En revisión", "waiting");
   hecho = status("Hecho", "final");
   pushed.length = 0;
+  consulta.actual = "";
   useBoardStore.setState({ pending: {}, pendingQueue: {} });
 });
 
@@ -299,5 +302,42 @@ describe("filtros de vínculo y de cierre sin entregables", () => {
 
     expect(screen.getByLabelText("Vínculo")).toHaveValue("any");
     expect(screen.getByLabelText("Cerradas sin entregables")).toBeChecked();
+  });
+});
+
+/**
+ * KAM-29 · Escenario del delta spec `navigation-breadcrumbs`, requisito «La
+ * miga de la lista de tareas conserva la vista de origen»: lo que sale del
+ * tablero lleva la consulta con la que se estaba trabajando.
+ */
+describe("TasksScreen · la vista de origen viaja al detalle", () => {
+  it("la fila de la lista enlaza al detalle con los filtros (Volver a la lista filtrada)", () => {
+    consulta.actual = "view=list&q=tazas";
+    renderScreen({ view: "list" });
+
+    const enlace = within(screen.getByTestId("task-row")).getByRole("link");
+    expect(enlace).toHaveAttribute(
+      "href",
+      `/tasks/${screen.getByTestId("task-row").dataset.taskId}?from=view%3Dlist%26q%3Dtazas`,
+    );
+  });
+
+  it("sin filtros el enlace va limpio (Enlace directo)", () => {
+    renderScreen({ view: "list" });
+
+    const fila = screen.getByTestId("task-row");
+    expect(within(fila).getByRole("link")).toHaveAttribute(
+      "href",
+      `/tasks/${fila.dataset.taskId}`,
+    );
+  });
+
+  it("abrir una tarjeta del tablero conserva el origen (El origen sobrevive a la edición)", async () => {
+    consulta.actual = "view=board&tag=hornada";
+    renderScreen();
+
+    await userEvent.setup().click(screen.getByTestId("task-card"));
+
+    expect(pushed[0]).toContain("?from=view%3Dboard%26tag%3Dhornada");
   });
 });

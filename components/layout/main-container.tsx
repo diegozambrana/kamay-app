@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { cn } from "@/lib/utils";
 
 /**
  * Un tramo de las migas. El último es la pantalla actual y no enlaza; los
@@ -94,8 +95,13 @@ export function MainContainer({
 
 /**
  * Una sola línea: el último tramo se recorta con puntos suspensivos y los
- * enlaces conservan su ancho y un área táctil de 44 px, para que en 390 px
- * siempre se pueda volver sin desplazar la página.
+ * enlaces conservan su área táctil de 44 px, para que en 390 px siempre se
+ * pueda volver sin desplazar la página.
+ *
+ * El **primer** tramo nunca se recorta: es el camino de vuelta a la lista y
+ * tiene que seguir legible y pulsable. Los intermedios sí, porque pueden ser
+ * un título escrito por la persona —`Tareas › <título de la tarea> › Editar`—
+ * y sin recortarse empujarían al último fuera de la pantalla.
  */
 function Crumbs({ items }: { items: Crumb[] }) {
   return (
@@ -103,10 +109,11 @@ function Crumbs({ items }: { items: Crumb[] }) {
       <BreadcrumbList className="flex-nowrap">
         {items.map((item, index) => {
           const last = index === items.length - 1;
+          const first = index === 0;
           return (
             <Fragment key={`${index}-${item.label}`}>
-              {index > 0 && <BreadcrumbSeparator />}
-              <BreadcrumbItem className={last ? "min-w-0" : "shrink-0"}>
+              {index > 0 && <BreadcrumbSeparator className="shrink-0" />}
+              <BreadcrumbItem className={first && !last ? "shrink-0" : "min-w-0"}>
                 {last || !item.href ? (
                   <BreadcrumbPage className="block truncate">{item.label}</BreadcrumbPage>
                 ) : (
@@ -114,7 +121,10 @@ function Crumbs({ items }: { items: Crumb[] }) {
                     <Link
                       href={item.href}
                       onClick={item.onClick}
-                      className="inline-flex min-h-11 items-center"
+                      className={cn(
+                        "inline-flex min-h-11 items-center",
+                        !first && "block truncate",
+                      )}
                     >
                       {item.label}
                     </Link>

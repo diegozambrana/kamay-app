@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MY_TASKS_ORIGIN, withFrom } from "@/lib/tasks/list-href";
 import { cn } from "@/lib/utils";
 import type { LineColor } from "@/types";
 
@@ -102,7 +103,9 @@ export function PendingRow({
 
       <div className="min-w-0 flex-1">
         <Link
-          href={`/tasks/${task.id}`}
+          // *Mis pendientes* no lleva filtros en la dirección: le basta
+          // con marcarse como origen (design D5).
+          href={withFrom(`/tasks/${task.id}`, MY_TASKS_ORIGIN)}
           className={cn(
             "block truncate text-sm hover:underline",
             // Tachada en su sitio: hacerla desaparecer al instante deja a

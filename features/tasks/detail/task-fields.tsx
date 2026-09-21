@@ -1,23 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import type { UpdateTaskFieldInput } from "@/actions/tasks";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
+import { lineColorClasses } from "@/lib/business-lines/colors";
+import { formatCalendarDate, formatDateTime } from "@/lib/format/datetime";
+import { withFrom } from "@/lib/tasks/list-href";
 import { opensClosingWizard } from "@/lib/tasks/deliverables";
+import { cn } from "@/lib/utils";
 import type { BusinessLine, Status, Task } from "@/types";
-
-/** Un valor de `Select` no puede ser cadena vacía: se usa este centinela. */
-const SIN_ASIGNAR = "unassigned";
 
 export type TaskFieldsProps = {
   task: Task;
@@ -27,16 +28,45 @@ export type TaskFieldsProps = {
   onSave: (input: UpdateTaskFieldInput) => Promise<{ error: string } | undefined>;
   /** Cuántos entregables quedan sin cumplir: decide si el cierre abre V19. */
   pendingDeliverables: number;
+  /** La vista de origen, para que *Editar* y la vuelta la conserven. */
+  from?: string | null;
+  timezone: string;
   readOnly?: boolean;
 };
 
+/** Un dato ausente se dice; no se deja un hueco en blanco. */
+function Dato({
+  label,
+  children,
+  empty = "Sin definir",
+}: {
+  label: string;
+  children?: React.ReactNode;
+  empty?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-muted-foreground text-xs">{label}</span>
+      {/* Cualquier hijo vacío cuenta como ausente, no solo `null`: un
+          `lista.length > 0 && …` devuelve `false`, que `??` dejaría pasar. */}
+      {children ? children : <span className="text-muted-foreground text-sm">{empty}</span>}
+    </div>
+  );
+}
+
 /**
- * La cabecera editable de la tarea.
+ * La cabecera de la tarea: **se lee, no se edita** (KAM-29).
  *
- * **Cada campo guarda por su cuenta** (design D3): una tarea se toca muchas
- * veces al día por un solo dato, y un botón *Guardar* al pie obligaría a bajar
- * hasta él para cambiar un responsable. Ninguno bloquea a los demás mientras
- * viaja.
+ * Hasta KAM-16 cada campo era un control que guardaba solo. La razón era
+ * buena —una tarea se toca muchas veces al día por un solo dato— pero el
+ * precio era que abrir una tarea fuese entrar a un formulario: un `Select`
+ * rozado sin querer cambiaba el responsable, y nada distinguía leer de
+ * modificar.
+ *
+ * Lo que se hace **mientras se trabaja** se quedó aquí: el estado, que además
+ * es la puerta del asistente de cierre, y —fuera de este componente— el
+ * cuerpo, las casillas, los adjuntos, los vínculos y los entregables. Los
+ * datos que **describen** la tarea se cambian en `/tasks/[id]/edit`.
  */
 export function TaskFields({
   task,
@@ -45,181 +75,130 @@ export function TaskFields({
   assignees,
   onSave,
   pendingDeliverables,
+  from = null,
+  timezone,
   readOnly = false,
 }: TaskFieldsProps) {
-  const [title, setTitle] = useState(task.title);
   const [error, setError] = useState<string | null>(null);
   const [, startSaving] = useTransition();
   const router = useRouter();
 
-  function save(input: UpdateTaskFieldInput, onFail?: () => void) {
-    setError(null);
-    startSaving(async () => {
-      const result = await onSave(input);
-      if (result?.error) {
-        setError(result.error);
-        onFail?.();
-      }
-    });
-  }
+  const status = statuses.find((candidate) => candidate.id === task.statusId);
+  const line = businessLines.find((candidate) => candidate.id === task.businessLineId);
+  const assignee = assignees.find((person) => person.userId === task.assigneeId);
 
   /**
    * Cambiar a un estado de tipo `final` con entregables sin cumplir abre el
-   * asistente en vez de cerrar en silencio (design D7).
+   * asistente en vez de cerrar en silencio (design D7 de KAM-21).
    *
    * Es la segunda entrada a V19, y usa la **misma** decisión que el tablero:
    * `opensClosingWizard`. El asistente vive en esta misma pantalla; llevarlo
    * a la dirección es lo que permite llegar también desde el tablero.
    */
   function changeStatus(value: string) {
-    const destination = statuses.find((status) => status.id === value);
+    const destination = statuses.find((candidate) => candidate.id === value);
 
     if (destination && opensClosingWizard(destination.kind, pendingDeliverables)) {
-      router.push(`/tasks/${task.id}?close=${value}`);
+      router.push(withFrom(`/tasks/${task.id}?close=${value}`, from));
       return;
     }
 
-    save({ taskId: task.id, field: "statusId", value });
+    setError(null);
+    startSaving(async () => {
+      const result = await onSave({ taskId: task.id, field: "statusId", value });
+      if (result?.error) setError(result.error);
+    });
   }
-
-  /** La fecha viaja como `YYYY-MM-DD`; el input nativo ya la da así. */
-  const dueDate = task.dueAt ? task.dueAt.slice(0, 10) : "";
-  // `datetime-local` no admite zona: se recorta a minutos, que es la precisión
-  // con la que alguien fija un recordatorio.
-  const remindAt = task.remindAt ? task.remindAt.slice(0, 16) : "";
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="task-title">Título</Label>
-        <Input
-          id="task-title"
-          value={title}
-          disabled={readOnly}
-          onChange={(event) => setTitle(event.target.value)}
-          onBlur={() => {
-            if (title === task.title) return;
-            save({ taskId: task.id, field: "title", value: title }, () =>
-              // El título anterior se conserva: un campo que se queda vacío en
-              // pantalla mientras el servidor dice que no, miente.
-              setTitle(task.title),
-            );
-          }}
-          className="text-lg font-semibold"
-        />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h2 className="text-lg font-semibold">{task.title}</h2>
+
+        {!readOnly && (
+          <Button asChild variant="outline" size="sm" data-testid="edit-task">
+            <Link href={withFrom(`/tasks/${task.id}/edit`, from)}>Editar</Link>
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="task-status">Estado</Label>
+        <Dato label="Estado">
+          {/* El único control vivo de la cabecera: es lo que se hace mientras
+              se trabaja, y arrastrar en el tablero ya lo cambia sin abrir
+              nada. Se toca desde su propia etiqueta de color (design D8). */}
           <Select
             value={task.statusId}
             disabled={readOnly}
-            onValueChange={(value) => changeStatus(value)}
+            onValueChange={changeStatus}
           >
-            <SelectTrigger id="task-status">
-              <SelectValue />
+            <SelectTrigger
+              id="task-status"
+              aria-label="Estado"
+              className="h-auto w-fit border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+            >
+              <Badge
+                variant="secondary"
+                className={cn(status && lineColorClasses(status.color).badge)}
+              >
+                {status?.name ?? "Sin estado"}
+              </Badge>
             </SelectTrigger>
             <SelectContent>
-              {statuses.map((status) => (
-                <SelectItem key={status.id} value={status.id}>
-                  {status.name}
+              {statuses.map((candidate) => (
+                <SelectItem key={candidate.id} value={candidate.id}>
+                  {candidate.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </Dato>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="task-line">Línea</Label>
-          <Select
-            value={task.businessLineId}
-            disabled={readOnly}
-            onValueChange={(value) =>
-              save({ taskId: task.id, field: "businessLineId", value })
-            }
-          >
-            <SelectTrigger id="task-line">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {businessLines.map((line) => (
-                <SelectItem key={line.id} value={line.id}>
-                  {line.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="task-assignee">Responsable</Label>
-          <Select
-            value={task.assigneeId ?? SIN_ASIGNAR}
-            disabled={readOnly}
-            onValueChange={(value) =>
-              save({
-                taskId: task.id,
-                field: "assigneeId",
-                value: value === SIN_ASIGNAR ? null : value,
-              })
-            }
-          >
-            <SelectTrigger id="task-assignee">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SIN_ASIGNAR}>Sin asignar</SelectItem>
-              {assignees.map((person) => (
-                <SelectItem key={person.userId} value={person.userId}>
-                  {person.displayName ?? "Sin nombre"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="task-due">Fecha límite</Label>
-          <Input
-            id="task-due"
-            type="date"
-            defaultValue={dueDate}
-            disabled={readOnly}
-            onChange={(event) =>
-              save({
-                taskId: task.id,
-                field: "dueDate",
-                value: event.target.value === "" ? null : event.target.value,
-              })
-            }
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="task-remind">Recordatorio</Label>
-          <Input
-            id="task-remind"
-            type="datetime-local"
-            defaultValue={remindAt}
-            disabled={readOnly}
-            onChange={(event) =>
-              save({
-                taskId: task.id,
-                field: "remindAt",
-                value:
-                  event.target.value === ""
-                    ? null
-                    : new Date(event.target.value).toISOString(),
-              })
-            }
-          />
-          {!task.dueAt && (
-            <p className="text-muted-foreground text-xs">
-              El recordatorio cuelga de la fecha límite.
-            </p>
+        <Dato label="Línea de negocio" empty="Sin línea">
+          {line && (
+            <span className="flex items-center gap-2 text-sm">
+              <span
+                className={cn("size-2 rounded-full", lineColorClasses(line.color).dot)}
+                aria-hidden
+              />
+              {line.name}
+            </span>
           )}
-        </div>
+        </Dato>
+
+        <Dato label="Responsable" empty="Sin responsable">
+          {task.assigneeId && (
+            <span className="text-sm">
+              {assignee?.displayName ?? "Sin nombre"}
+            </span>
+          )}
+        </Dato>
+
+        <Dato label="Fecha límite" empty="Sin fecha límite">
+          {task.dueAt && (
+            <span className="text-sm">
+              {formatCalendarDate(task.dueAt.slice(0, 10))}
+            </span>
+          )}
+        </Dato>
+
+        <Dato label="Recordatorio" empty="Sin recordatorio">
+          {task.remindAt && (
+            <span className="text-sm">{formatDateTime(task.remindAt, timezone)}</span>
+          )}
+        </Dato>
+
+        <Dato label="Etiquetas" empty="Sin etiquetas">
+          {task.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {task.tags.map((tag) => (
+                <Badge key={tag.id} variant="outline">
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </Dato>
       </div>
 
       {error && (

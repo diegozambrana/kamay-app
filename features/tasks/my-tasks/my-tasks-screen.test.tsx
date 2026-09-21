@@ -201,12 +201,15 @@ describe("MyTasksScreen · posponer", () => {
 
 describe("MyTasksScreen · abrir el detalle", () => {
   // Scenario: Abrir el detalle
-  it("la fila lleva al detalle de esa tarea", () => {
+  // Scenario: Desde Mis pendientes se vuelve a Mis pendientes (KAM-29)
+  it("la fila lleva al detalle de esa tarea, marcando el origen", () => {
     renderScreen([task({ id: "abc-123" })]);
 
+    // *Mis pendientes* no lleva filtros en la dirección: le basta con
+    // marcarse, y el detalle sabrá que la miga inicial la nombra a ella.
     expect(
       within(screen.getByTestId("pending-abc-123")).getByRole("link"),
-    ).toHaveAttribute("href", "/tasks/abc-123");
+    ).toHaveAttribute("href", "/tasks/abc-123?from=my-tasks");
   });
 });
 

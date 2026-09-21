@@ -23,6 +23,7 @@ import { ClosingDialog } from "@/features/tasks/deliverables/closing-dialog";
 import { DeliverablesSection } from "@/features/tasks/deliverables/deliverables-section";
 import { TaskLinks } from "@/features/tasks/links/task-links";
 import type { Deliverable } from "@/lib/tasks/deliverables";
+import { originCrumb, withFrom } from "@/lib/tasks/list-href";
 import type { ResolvedTaskLink } from "@/services/tasks/task-service";
 
 import type { RecordHistory as RecordHistoryData } from "@/services/activity/record-history";
@@ -53,6 +54,8 @@ export type TaskDetailProps = {
   closingStatusId: string | null;
   history: RecordHistoryData;
   timezone: string;
+  /** La vista de origen: el tablero con sus filtros, o *Mis pendientes*. */
+  from?: string | null;
 };
 
 /**
@@ -80,18 +83,23 @@ export function TaskDetail({
   closingStatusId,
   history,
   timezone,
+  from = null,
 }: TaskDetailProps) {
   const router = useRouter();
   const archivada = task.archivedAt !== null;
+  const listCrumb = originCrumb(from);
 
   /** Quita `?close=` sin recargar: cancelar deja la tarea como estaba. */
   function dismissClosing() {
-    router.replace(`/tasks/${task.id}`);
+    router.replace(withFrom(`/tasks/${task.id}`, from));
   }
 
   return (
     <MainContainer
-      breadcrumbs={[{ label: "Tareas", href: "/tasks" }, { label: task.title }]}
+      breadcrumbs={[
+        { label: listCrumb.label, href: listCrumb.href },
+        { label: task.title },
+      ]}
       title={
         <span className="flex flex-wrap items-center gap-2">
           <span>Tarea</span>
@@ -116,43 +124,34 @@ export function TaskDetail({
               businessLines={businessLines}
               assignees={assignees}
               onSave={updateTaskField}
+              from={from}
+              timezone={timezone}
               readOnly={archivada}
             />
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Descripción</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MarkdownEditor
-              taskId={task.id}
-              value={task.bodyMarkdown ?? ""}
-              readOnly={archivada}
-              onSave={(body) => updateTaskBody({ taskId: task.id, body })}
-              onToggleChecklistItem={(index, checked) =>
-                toggleTaskChecklistItem({ taskId: task.id, index, checked })
-              }
-            />
-          </CardContent>
-        </Card>
+        {/* Estas dos tarjetas rinden su propia cabecera: la acción —*Editar*
+            en la descripción, *Añadir* en los adjuntos— depende de un estado
+            que solo el componente conoce (design D3). */}
+        <MarkdownEditor
+          taskId={task.id}
+          value={task.bodyMarkdown ?? ""}
+          readOnly={archivada}
+          onSave={(body) => updateTaskBody({ taskId: task.id, body })}
+          onToggleChecklistItem={(index, checked) =>
+            toggleTaskChecklistItem({ taskId: task.id, index, checked })
+          }
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Adjuntos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AttachmentPanel
-              taskId={task.id}
-              attachments={attachments}
-              readOnly={archivada}
-              onDetach={(attachmentId) =>
-                detachFromTask({ taskId: task.id, attachmentId })
-              }
-            />
-          </CardContent>
-        </Card>
+        <AttachmentPanel
+          taskId={task.id}
+          attachments={attachments}
+          readOnly={archivada}
+          onDetach={(attachmentId) =>
+            detachFromTask({ taskId: task.id, attachmentId })
+          }
+        />
 
         <Card>
           <CardHeader>
@@ -207,7 +206,9 @@ export function TaskDetail({
           supplies={supplies}
           onCancel={dismissClosing}
           onClosed={() => {
-            router.push("/tasks");
+            // Cerrar devuelve a donde se estaba trabajando, no a `/tasks` a
+            // secas: el tablero con sus filtros, o *Mis pendientes*.
+            router.push(listCrumb.href);
           }}
         />
       )}

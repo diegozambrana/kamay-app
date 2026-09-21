@@ -47,7 +47,7 @@ El selector (Todas · Sublimación · Impresión 3D · Alfarería) vive en la ba
 | **Página completa** | Listas, tableros y detalles densos. Cambia la dirección; se puede compartir el enlace. | V2, V3, V4, V7, V10, V11, V12, V13, V14, V15, V16, V17, V20, V22, V23, V24, V25 |
 | **Panel lateral** (Sheet) | Contenido secundario que no debe hacer perder el contexto de fondo. | V21 (notificaciones), V18 en escritorio (opcional), filtros en móvil |
 | **Diálogo** | Acción puntual con principio y fin claros. | V19 (cierre con entregables), registrar cobro, cambiar estado, ajuste por conteo, archivar, confirmar cobro en feria, crear organización (V24), crear y editar entradas de configuración e invitar (V15, V22), confirmar archivar, restaurar, quitar acceso, revocar y las acciones del juego de estados (V15, V22) |
-| **Pantalla completa móvil** | Formularios de captura en el celular. | V5, V8, V9, V18, V19 |
+| **Pantalla completa móvil** | Formularios de captura en el celular. | V5, V8, V9, V18, V18-edit, V19 |
 
 ### 2.4 Profundidad máxima: tres niveles
 
@@ -87,6 +87,7 @@ En cualquier pantalla, el botón **+ Registrar** (flotante en escritorio, en la 
 | V16 | Registro rápido | Página | **Móvil** | Ambos | 1 |
 | V17 | Tablero de tareas | Página | Escritorio | Ambos | 2 |
 | V18 | Detalle de tarea | Página o panel | Ambos | Ambos | 2 |
+| V18-edit | Edición de tarea | Página | Ambos | Ambos | 3 |
 | V19 | Cierre con entregables | Diálogo | Ambos | Ambos | 2 |
 | V20 | Mis pendientes | Página | **Móvil** | Ambos | 2 |
 | V21 | Notificaciones | Panel lateral | Ambos | Ambos | 2 |
@@ -218,9 +219,14 @@ V17 · Tablero de tareas
  └── + Nueva tarea ─────────────────→ V18 (vacía)
 
 V18 · Detalle de tarea
+ ├── Editar ──────────────────────→ V18-edit · Edición de tarea
  ├── Vínculo ─────────────────────→ V4 · V11 · V13 · egreso · V12
  ├── Cambiar a estado final ──────→ V19
  └── Historial ───────────────────→ V23 (filtrada por esta tarea)
+
+V18-edit · Edición de tarea
+ ├── Guardar ─────────────────────→ V18 (con los valores nuevos)
+ └── Cancelar ────────────────────→ V18 (pide confirmación si hay cambios)
 
 V19 · Cierre con entregables
  ├── Crear seleccionados ─────────→ crea registros y vuelve a V17/V18

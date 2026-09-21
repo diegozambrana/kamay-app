@@ -21,12 +21,15 @@ Las rutas SHALL ser:
 | Edición de pedido (también archivado) | Pedidos › Pedido #N › Editar |
 | Nueva tarea | Tareas › Nueva tarea |
 | Detalle de tarea | Tareas › *título de la tarea* |
+| Edición de tarea (también archivada) | Tareas › *título de la tarea* › Editar |
 | Nueva compra | Egresos › Nueva compra |
 | Nuevo gasto | Egresos › Nuevo gasto |
 | Detalle de egreso | Egresos › *tipo del egreso* (Compra o Gasto) |
 | Detalle de ítem del catálogo | Catálogo › *nombre del ítem* |
 | Detalle de organización (plataforma) | Organizaciones › *nombre de la organización* |
 | Detalle de usuario (plataforma) | Usuarios › *nombre o correo del usuario* |
+
+En las pantallas de tarea, el primer tramo SHALL nombrar *Mis pendientes* en lugar de *Tareas* cuando se haya llegado desde esa pantalla, según «La miga de la lista de tareas conserva la vista de origen».
 
 Estas migas SHALL reemplazar los enlaces de vuelta propios que hoy tienen esas pantallas («← Pedidos», «← Egresos», «← Catálogo», «Volver»), de modo que no haya dos caminos de vuelta distintos en el mismo encabezado. Las pantallas de lista, ajustes, reportes, tablero de inicio y perfil SHALL NOT mostrar migas, ni tampoco un detalle mostrado como panel lateral dentro de una lista.
 
@@ -39,6 +42,11 @@ Estas migas SHALL reemplazar los enlaces de vuelta propios que hoy tienen esas p
 
 - **WHEN** el usuario abre la edición del pedido #42
 - **THEN** ve «Pedidos › Pedido #42 › Editar»; «Pedido #42» lleva al detalle del pedido y «Pedidos» a la lista
+
+#### Scenario: La edición de una tarea nombra su tarea
+
+- **WHEN** el usuario abre la edición de una tarea titulada «Cortar tazas»
+- **THEN** ve «Tareas › Cortar tazas › Editar»; «Cortar tazas» lleva al detalle de la tarea y «Tareas» a la pantalla de tareas
 
 #### Scenario: Alta vuelve a la lista
 
@@ -64,7 +72,6 @@ Estas migas SHALL reemplazar los enlaces de vuelta propios que hoy tienen esas p
 
 - **WHEN** el usuario abre la pantalla de pedidos, de tareas o de egresos
 - **THEN** el encabezado no muestra migas de pan
-
 ### Requirement: La miga de la lista de pedidos conserva la vista de origen
 
 Cuando se llega a una pantalla de alta, detalle o edición de pedido desde la pantalla de pedidos, la miga «Pedidos» SHALL volver a esa pantalla con la misma vista y los mismos filtros que tenía al salir (tablero, lista o calendario; búsqueda; «Ver archivados»). Cuando no se llegó desde allí —enlace directo, recarga, otra sección— SHALL llevar a la pantalla de pedidos sin filtros, en su vista por omisión. La vista de origen SHALL conservarse al pasar del detalle a la edición y de vuelta. Solo SHALL aceptarse como vista de origen una dirección de la propia pantalla de pedidos; cualquier otra SHALL ignorarse.
@@ -97,3 +104,42 @@ En pantallas angostas, la ruta de migas SHALL ocupar una sola línea sin desplaz
 
 - **WHEN** en un viewport de 390 px se abre el detalle de una tarea con un título de 80 caracteres
 - **THEN** la miga «Tareas» es visible y pulsable, el título en la miga se recorta con puntos suspensivos y la página no se desplaza horizontalmente
+### Requirement: La miga de la lista de tareas conserva la vista de origen
+
+Cuando se llega al detalle o a la edición de una tarea desde la pantalla de tareas o desde *Mis pendientes*, el primer tramo de las migas SHALL nombrar y enlazar la pantalla de origen —«Tareas» o «Mis pendientes»— y SHALL volver a ella con la misma vista y los mismos filtros que tenía al salir: la vista (tablero, lista o calendario), la búsqueda, el responsable, la etiqueta, el estado, el filtro de vínculo, el de tareas sin entregables, «Ver archivados» y la ventana de cerrados.
+
+La vista de origen SHALL conservarse al pasar del detalle a la edición, al volver de la edición al detalle, y al aterrizar en el detalle tras guardar. Cuando no se llegó desde ninguna de esas dos pantallas —enlace directo, recarga, una notificación, un pedido, un ítem o un contacto— el primer tramo SHALL decir «Tareas» y llevar a la pantalla de tareas sin filtros, en su vista por omisión.
+
+Solo SHALL aceptarse como vista de origen una dirección de la propia pantalla de tareas o de *Mis pendientes*; cualquier otra SHALL ignorarse.
+
+#### Scenario: Volver a la lista filtrada
+
+- **WHEN** desde la vista de lista con la búsqueda «tazas» se abre una tarea y se pulsa la miga «Tareas»
+- **THEN** se vuelve a la vista de lista con la búsqueda «tazas» aplicada
+
+#### Scenario: El origen sobrevive a la edición
+
+- **GIVEN** la vista de lista con «Ver archivados» activo
+- **WHEN** se abre una tarea, se pulsa *Editar* y luego la miga «Tareas»
+- **THEN** se vuelve a la vista de lista con «Ver archivados» activo
+
+#### Scenario: Guardar aterriza en el detalle sin perder el origen
+
+- **GIVEN** el tablero filtrado por una etiqueta
+- **WHEN** se abre una tarea, se edita el responsable, se guarda y luego se pulsa la miga inicial
+- **THEN** tras guardar se está en el detalle de la tarea, y la miga devuelve al tablero con esa etiqueta filtrada
+
+#### Scenario: Desde Mis pendientes se vuelve a Mis pendientes
+
+- **WHEN** se abre una tarea desde *Mis pendientes*, se edita y se guarda
+- **THEN** el primer tramo de las migas dice «Mis pendientes» y lleva de vuelta a esa pantalla
+
+#### Scenario: Enlace directo
+
+- **WHEN** se abre el detalle de una tarea desde un enlace compartido y se pulsa la miga inicial
+- **THEN** se llega a la pantalla de tareas sin filtros, en su vista por omisión
+
+#### Scenario: Origen ajeno ignorado
+
+- **WHEN** la dirección del detalle de una tarea declara como origen una dirección que no es la pantalla de tareas ni *Mis pendientes*
+- **THEN** la miga inicial lleva a la pantalla de tareas sin filtros

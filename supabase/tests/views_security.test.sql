@@ -176,6 +176,11 @@ insert into payments (id, organization_id, direction, order_id, expense_id, amou
   ('00000000-0000-0000-0000-000000002332', '00000000-0000-0000-0000-00000000023b', 'out',
    null, '00000000-0000-0000-0000-000000002321', 40, '2026-02-04 12:00:00-04');
 
+-- Una solicitud de asistencia de redacción, para que
+-- `ai_writing_assist_usage_by_period` (KAM-30) también tenga una fila de B.
+insert into ai_writing_assist_requests (organization_id, requested_by) values
+  ('00000000-0000-0000-0000-00000000023b', '00000000-0000-0000-0000-0000000023b1');
+
 -- Que la semilla alcance de verdad cada vista: sin esto, «cero filas de B»
 -- podría ser cierto solo porque B no tiene nada que mostrar. Se comprueba
 -- como la persona dueña de B y no como `postgres`, porque varias vistas

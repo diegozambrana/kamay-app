@@ -143,12 +143,16 @@ drop table public.kam23_future_table;
 --   · platform_admins           — sin `organization_id` no hay bitácora a la
 --                                 que escribir; su historia son `granted_at`,
 --                                 `note` y `archived_at` (KAM-26).
+--   · ai_writing_assist_requests — telemetría de uso para el límite mensual,
+--                                 no un hecho de negocio que a la dueña le
+--                                 importe leer; igual que `activity_log`, no
+--                                 se audita a sí misma (KAM-30).
 select is(
   (select coalesce(array_agg(t.relname order by t.relname), '{}')
      from pg_temp.app_tables t
     where t.relname not in ('activity_log', 'notifications',
                             'notification_preferences', 'task_tags',
-                            'platform_admins')
+                            'platform_admins', 'ai_writing_assist_requests')
       and not exists (
         select 1 from pg_trigger g
          where g.tgrelid = t.oid

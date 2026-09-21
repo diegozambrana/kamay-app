@@ -20,6 +20,14 @@ const estado = vi.hoisted(() => ({
   activos: 0,
   subidas: [] as unknown[],
   guardados: [] as unknown[],
+  // KAM-30 · asistencia de redacción.
+  asistenteDisponible: true,
+  asistenciaActivada: true,
+  usoDelPeriodo: 0,
+  limiteMensual: 200,
+  solicitudesRegistradas: [] as { org: string; user: string }[],
+  respuestaDelModelo: null as string | null,
+  fallaElModelo: false,
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -101,7 +109,43 @@ vi.mock("@/services/notifications/emit-task-events", () => ({
   emitTaskEvents: vi.fn(async () => {}),
 }));
 
-const { attachToTask, updateTaskField, updateTaskFields } = await import("./tasks");
+vi.mock("@/lib/ai/resolve", () => ({
+  resolveAiAssistant: () =>
+    estado.asistenteDisponible
+      ? {
+          async proposeBodyImprovement(body: string) {
+            if (estado.fallaElModelo) throw new Error("el proveedor de IA no responde");
+            return { proposal: estado.respuestaDelModelo ?? `${body} (mejorado)` };
+          },
+        }
+      : null,
+}));
+
+vi.mock("@/lib/ai/config", () => ({
+  monthlyRequestLimit: () => estado.limiteMensual,
+}));
+
+vi.mock("@/services/configuration/ai-writing-assist-service", () => ({
+  AiWritingAssistService: class {
+    async get() {
+      return { enabled: estado.asistenciaActivada };
+    }
+  },
+}));
+
+vi.mock("@/services/ai/usage-service", () => ({
+  AiUsageService: class {
+    async countCurrentPeriod() {
+      return estado.usoDelPeriodo;
+    }
+    async recordRequest(org: string, user: string) {
+      estado.solicitudesRegistradas.push({ org, user });
+    }
+  },
+}));
+
+const { attachToTask, proposeTaskBodyImprovement, updateTaskBody, updateTaskField, updateTaskFields } =
+  await import("./tasks");
 
 function task(overrides: Partial<Task> = {}): Task {
   return {
@@ -116,6 +160,7 @@ function task(overrides: Partial<Task> = {}): Task {
     remindAt: null,
     closedAt: null,
     closedWithoutDeliverables: false,
+    bodyAssistedByAi: false,
     createdBy: USER,
     createdAt: "2026-09-07T10:00:00Z",
     archivedAt: null,
@@ -142,6 +187,13 @@ beforeEach(() => {
   estado.activos = 0;
   estado.subidas = [];
   estado.guardados = [];
+  estado.asistenteDisponible = true;
+  estado.asistenciaActivada = true;
+  estado.usoDelPeriodo = 0;
+  estado.limiteMensual = 200;
+  estado.solicitudesRegistradas = [];
+  estado.respuestaDelModelo = null;
+  estado.fallaElModelo = false;
 });
 
 describe("attachToTask · el límite no depende del navegador", () => {
@@ -358,5 +410,110 @@ describe("updateTaskFields · el guardado de la edición", () => {
 
       expect(estado.guardados[0]).not.toHaveProperty("statusId");
     });
+  });
+});
+
+// KAM-30 · asistencia de redacción.
+describe("updateTaskBody · la marca de asistido", () => {
+  it("un guardado sin propuesta aceptada se marca como no asistido", async () => {
+    await updateTaskBody({ taskId: TASK, body: "Texto editado a mano" });
+
+    expect(estado.guardados[0]).toMatchObject({
+      bodyMarkdown: "Texto editado a mano",
+      bodyAssistedByAi: false,
+    });
+  });
+
+  it("un guardado que declara la propuesta aceptada se marca como asistido", async () => {
+    await updateTaskBody({ taskId: TASK, body: "Texto mejorado", assisted: true });
+
+    expect(estado.guardados[0]).toMatchObject({
+      bodyMarkdown: "Texto mejorado",
+      bodyAssistedByAi: true,
+    });
+  });
+});
+
+describe("proposeTaskBodyImprovement · el servidor decide, no la interfaz", () => {
+  it("devuelve la propuesta y cuenta la solicitud antes de llamar al proveedor", async () => {
+    estado.respuestaDelModelo = "Descripción mejorada.";
+
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "Texto apurado" });
+
+    expect(result).toEqual({ proposal: "Descripción mejorada." });
+    expect(estado.solicitudesRegistradas).toEqual([{ org: ORG, user: USER }]);
+  });
+
+  it("sin ANTHROPIC_API_KEY, rechaza sin contar ni llamar al proveedor", async () => {
+    estado.asistenteDisponible = false;
+
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "Texto apurado" });
+
+    expect(result).toEqual({ error: expect.any(String) });
+    expect(estado.solicitudesRegistradas).toHaveLength(0);
+  });
+
+  it("una organización sin la asistencia activada se rechaza, verificado sin pasar por la interfaz", async () => {
+    estado.asistenciaActivada = false;
+
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "Texto apurado" });
+
+    expect(result).toEqual({ error: expect.any(String) });
+    expect(estado.solicitudesRegistradas).toHaveLength(0);
+  });
+
+  it("al superar el límite del periodo, rechaza con un mensaje sobrio sin llamar al proveedor", async () => {
+    estado.usoDelPeriodo = 200;
+    estado.limiteMensual = 200;
+
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "Texto apurado" });
+
+    expect(result).toEqual({ error: expect.any(String) });
+    expect(estado.solicitudesRegistradas).toHaveLength(0);
+  });
+
+  it("bajo el límite, la solicitud procede con normalidad", async () => {
+    estado.usoDelPeriodo = 199;
+    estado.limiteMensual = 200;
+
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "Texto apurado" });
+
+    expect(result).not.toHaveProperty("error");
+  });
+
+  it("un proveedor que falla avisa en lenguaje llano y no rompe el editor", async () => {
+    estado.fallaElModelo = true;
+
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "Texto apurado" });
+
+    expect(result).toEqual({ error: expect.any(String) });
+    // Se registró antes de llamar, como declara el diseño: el fallo es del
+    // proveedor, no de la cuenta.
+    expect(estado.solicitudesRegistradas).toHaveLength(1);
+  });
+
+  it("un cuerpo vacío no se ofrece", async () => {
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "   " });
+
+    expect(result).toEqual({ error: expect.any(String) });
+    expect(estado.solicitudesRegistradas).toHaveLength(0);
+  });
+
+  it("no mejora una tarea archivada", async () => {
+    estado.task = task({ archivedAt: "2026-09-08T10:00:00Z" });
+
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "Texto apurado" });
+
+    expect(result).toEqual({ error: expect.any(String) });
+    expect(estado.solicitudesRegistradas).toHaveLength(0);
+  });
+
+  it("no mejora una tarea fuera de alcance", async () => {
+    estado.task = null;
+
+    const result = await proposeTaskBodyImprovement({ taskId: TASK, body: "Texto apurado" });
+
+    expect(result).toEqual({ error: expect.any(String) });
+    expect(estado.solicitudesRegistradas).toHaveLength(0);
   });
 });

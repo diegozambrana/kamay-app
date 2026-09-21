@@ -50,6 +50,36 @@ describe("envProblems", () => {
       { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", problem: "contiene la clave de service role" },
     ]);
   });
+
+  it("la asistencia de redacción por IA es opcional, en desarrollo y en producción", () => {
+    expect(envProblems(BASE, "development")).toEqual([]);
+    expect(envProblems(PRODUCTION, "production")).toEqual([]);
+  });
+
+  it("con ANTHROPIC_API_KEY presente pero vacía, se nombra el problema", () => {
+    const problems = envProblems({ ...BASE, ANTHROPIC_API_KEY: "  " }, "development");
+    expect(problems).toEqual([{ name: "ANTHROPIC_API_KEY", problem: "está vacía" }]);
+  });
+
+  it("un límite mensual que no es un entero positivo se rechaza", () => {
+    const problems = envProblems(
+      { ...BASE, AI_WRITING_ASSIST_MONTHLY_LIMIT: "cero" },
+      "development",
+    );
+    expect(problems).toEqual([
+      { name: "AI_WRITING_ASSIST_MONTHLY_LIMIT", problem: "no es un entero positivo" },
+    ]);
+  });
+
+  it("la credencial de IA en una variable pública se detecta", () => {
+    const problems = envProblems(
+      { ...BASE, ANTHROPIC_API_KEY: "sk-ant-secreta", NEXT_PUBLIC_SUPABASE_ANON_KEY: "sk-ant-secreta" },
+      "development",
+    );
+    expect(problems).toEqual([
+      { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", problem: "contiene la credencial de IA" },
+    ]);
+  });
 });
 
 describe("assertEnv", () => {

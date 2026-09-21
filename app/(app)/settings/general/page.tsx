@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 
 import { AllocationRuleForm } from "@/features/settings/allocation-rule-form";
 import { GeneralForm } from "@/features/settings/general-form";
+import { WritingAssistForm } from "@/features/settings/writing-assist-form";
 import { getOwnerContext } from "@/lib/auth/session-context";
+import { AiWritingAssistService } from "@/services/configuration/ai-writing-assist-service";
 import { AllocationRuleService } from "@/services/configuration/allocation-rule-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { OrganizationService } from "@/services/organization-service";
@@ -13,10 +15,11 @@ export default async function GeneralSettingsPage() {
   const context = await getOwnerContext();
   if (!context) redirect("/dashboard");
 
-  const [organization, lines, allocation] = await Promise.all([
+  const [organization, lines, allocation, writingAssist] = await Promise.all([
     new OrganizationService(context.supabase).getById(context.organizationId),
     new BusinessLineService(context.supabase).listActive(context.organizationId),
     new AllocationRuleService(context.supabase).get(context.organizationId),
+    new AiWritingAssistService(context.supabase).get(context.organizationId),
   ]);
 
   // La línea compartida es la que se reparte: no puede recibir su propia
@@ -40,6 +43,13 @@ export default async function GeneralSettingsPage() {
         se muestra siempre junto al resultado.
       </p>
       <AllocationRuleForm lines={targets} settings={allocation} />
+
+      <h3 className="mt-8 text-base font-medium">Asistencia de redacción</h3>
+      <p className="mt-1 mb-4 max-w-prose text-sm text-muted-foreground">
+        Propone una versión mejorada de la descripción de una tarea. Nunca
+        escribe nada sin que la persona la acepte primero.
+      </p>
+      <WritingAssistForm enabled={writingAssist.enabled} />
     </section>
   );
 }

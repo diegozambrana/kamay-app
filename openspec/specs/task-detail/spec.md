@@ -122,6 +122,28 @@ Una tarea sin cuerpo SHALL ser válida. Una tarea archivada SHALL mostrar su cue
 - **WHEN** se abre el detalle de una tarea archivada con cuerpo
 - **THEN** el cuerpo se muestra rendido y no se ofrece la acción de editarlo
 
+### Requirement: El editor ofrece mejorar la descripción con un modelo
+
+El editor del cuerpo SHALL ofrecer una acción *Mejorar la descripción*, visible junto al resto de la barra de herramientas, solo cuando el borrador no está vacío y la organización activó la asistencia de redacción. Activarla SHALL abrir un panel que muestra la propuesta junto al texto actual del borrador, con *Aceptar* y *Descartar*; ninguna de las dos opciones SHALL alterar el borrador salvo *Aceptar*, y ninguna SHALL guardar el cuerpo por sí misma. El resto del ciclo de edición —*Guardar*, *Cancelar* y su confirmación cuando hay cambios sin guardar— SHALL seguir aplicándose sin cambios sobre un borrador que provenga de una propuesta aceptada.
+
+#### Scenario: La acción aparece junto a la barra de herramientas
+
+- **GIVEN** un editor abierto con un cuerpo no vacío, en una organización con la asistencia activada
+- **WHEN** se observa la barra de herramientas del editor
+- **THEN** la acción *Mejorar la descripción* está visible junto al resto de las herramientas
+
+#### Scenario: La organización sin la asistencia activada no ve la acción
+
+- **GIVEN** un editor abierto con un cuerpo no vacío, en una organización que no activó la asistencia
+- **WHEN** se observa la barra de herramientas del editor
+- **THEN** la acción *Mejorar la descripción* no aparece
+
+#### Scenario: Cancelar tras aceptar una propuesta descarta también la propuesta
+
+- **GIVEN** una propuesta aceptada que reemplazó el borrador del editor
+- **WHEN** se pulsa *Cancelar* y se confirma el descarte
+- **THEN** el editor se cierra y el cuerpo guardado de la tarea sigue siendo el que tenía antes de abrir el editor
+
 ### Requirement: El Markdown rendido se sanea
 
 El sistema SHALL rendir el cuerpo como Markdown y SHALL NOT interpretar el HTML escrito a mano dentro de él: ninguna etiqueta HTML del cuerpo SHALL llegar al documento rendido, ni como elemento ni como texto ejecutable. El sistema SHALL sanear además el resultado, tanto en la vista previa como en cualquier otra lectura del cuerpo, de modo que ningún enlace con esquema peligroso —`javascript:` entre otros— conserve su destino, y SHALL conservar el formato legítimo. Ningún contenido del cuerpo SHALL ejecutarse en el navegador de quien lo lee. Ambas defensas SHALL aplicarse también a los cuerpos guardados con anterioridad, sin depender de que se hayan saneado al escribirse.

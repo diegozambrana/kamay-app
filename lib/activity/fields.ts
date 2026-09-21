@@ -396,6 +396,10 @@ export const FIELDS: Record<string, Record<string, FieldSpec>> = {
     },
     created_by: AUTHOR,
     archived_at: ARCHIVED,
+    body_assisted_by_ai: {
+      label: "Descripción mejorada con IA",
+      kind: "boolean",
+    },
   },
 
   tags: {

@@ -183,6 +183,12 @@ export type Task = {
   createdBy: string | null;
   createdAt: string;
   archivedAt: string | null;
+  /**
+   * El cuerpo guardado proviene de una propuesta de IA aceptada en la última
+   * sesión de edición (KAM-30). Se apaga en cualquier guardado que no lo
+   * declare, incluida una edición manual posterior.
+   */
+  bodyAssistedByAi: boolean;
   tags: Tag[];
 };
 

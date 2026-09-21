@@ -5,6 +5,7 @@ import { getSessionContext } from "@/lib/auth/session-context";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ContactService } from "@/services/catalog/contact-service";
 import { ItemService } from "@/services/catalog/item-service";
+import { AiWritingAssistService } from "@/services/configuration/ai-writing-assist-service";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { StatusService } from "@/services/configuration/status-service";
@@ -51,32 +52,42 @@ export default async function TaskDetailPage({
 
   const isOwner = context.role === "owner";
 
-  const [statuses, allStatuses, businessLines, assignees, history, links, deliverables] =
-    await Promise.all([
-      // El juego de la línea de ESTA tarea: es lo que puede ofrecerse como
-      // destino al cambiar de estado desde el detalle.
-      statusService.resolve(context.organizationId, task.businessLineId, "task"),
-      // El estado actual puede estar archivado y no aparecer en el juego
-      // vigente: se busca aparte para poder nombrarlo igualmente.
-      statusService.listAllForFlow(context.organizationId, "task"),
-      new BusinessLineService(context.supabase).listActive(context.organizationId),
-      tasks.assignees(context.organizationId),
-      // Un solo historial (convención nº 7): sale de `activity_log`. Para el
-      // ayudante llega vacío por RLS, y el bloque lo dice sin dar error.
-      // La misma lectura que `/activity` filtrada por esta tarea.
-      loadRecordHistory(context.supabase, {
-        organizationId: context.organizationId,
-        tableName: "tasks",
-        recordId: task.id,
-        timezone: context.organization.timezone,
-        currency: context.organization.currency,
-      }),
-      // Los vínculos se resuelven contra sus destinos al leer: nada de lo que
-      // se muestra está copiado en `task_links` (D2). El activo se omite para
-      // quien no es dueño (D9).
-      tasks.links(context.organizationId, task.id, isOwner),
-      tasks.deliverables(context.organizationId, task.id),
-    ]);
+  const [
+    statuses,
+    allStatuses,
+    businessLines,
+    assignees,
+    history,
+    links,
+    deliverables,
+    writingAssist,
+  ] = await Promise.all([
+    // El juego de la línea de ESTA tarea: es lo que puede ofrecerse como
+    // destino al cambiar de estado desde el detalle.
+    statusService.resolve(context.organizationId, task.businessLineId, "task"),
+    // El estado actual puede estar archivado y no aparecer en el juego
+    // vigente: se busca aparte para poder nombrarlo igualmente.
+    statusService.listAllForFlow(context.organizationId, "task"),
+    new BusinessLineService(context.supabase).listActive(context.organizationId),
+    tasks.assignees(context.organizationId),
+    // Un solo historial (convención nº 7): sale de `activity_log`. Para el
+    // ayudante llega vacío por RLS, y el bloque lo dice sin dar error.
+    // La misma lectura que `/activity` filtrada por esta tarea.
+    loadRecordHistory(context.supabase, {
+      organizationId: context.organizationId,
+      tableName: "tasks",
+      recordId: task.id,
+      timezone: context.organization.timezone,
+      currency: context.organization.currency,
+    }),
+    // Los vínculos se resuelven contra sus destinos al leer: nada de lo que
+    // se muestra está copiado en `task_links` (D2). El activo se omite para
+    // quien no es dueño (D9).
+    tasks.links(context.organizationId, task.id, isOwner),
+    tasks.deliverables(context.organizationId, task.id),
+    // KAM-30: decide si el editor ofrece *Mejorar la descripción*.
+    new AiWritingAssistService(context.supabase).get(context.organizationId),
+  ]);
 
   // Los buckets son privados: nada se muestra por URL pública, se firma cada
   // lectura, y en lote porque el panel necesita todas las miniaturas a la vez.
@@ -156,6 +167,7 @@ export default async function TaskDetailPage({
       history={history}
       timezone={context.organization.timezone}
       from={query.from ?? null}
+      writingAssistEnabled={writingAssist.enabled}
     />
   );
 }

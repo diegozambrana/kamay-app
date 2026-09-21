@@ -2,6 +2,7 @@
 
 import {
   detachFromTask,
+  proposeTaskBodyImprovement,
   toggleTaskChecklistItem,
   updateTaskBody,
   updateTaskField,
@@ -56,6 +57,8 @@ export type TaskDetailProps = {
   timezone: string;
   /** La vista de origen: el tablero con sus filtros, o *Mis pendientes*. */
   from?: string | null;
+  /** La organización activó la asistencia de redacción por IA (KAM-30). */
+  writingAssistEnabled: boolean;
 };
 
 /**
@@ -84,6 +87,7 @@ export function TaskDetail({
   history,
   timezone,
   from = null,
+  writingAssistEnabled,
 }: TaskDetailProps) {
   const router = useRouter();
   const archivada = task.archivedAt !== null;
@@ -138,9 +142,14 @@ export function TaskDetail({
           taskId={task.id}
           value={task.bodyMarkdown ?? ""}
           readOnly={archivada}
-          onSave={(body) => updateTaskBody({ taskId: task.id, body })}
+          onSave={(body, assisted) => updateTaskBody({ taskId: task.id, body, assisted })}
           onToggleChecklistItem={(index, checked) =>
             toggleTaskChecklistItem({ taskId: task.id, index, checked })
+          }
+          onProposeBodyImprovement={
+            writingAssistEnabled
+              ? (body) => proposeTaskBodyImprovement({ taskId: task.id, body })
+              : undefined
           }
         />
 

@@ -30,8 +30,11 @@ export default async function TaskDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  /** `close=<statusId>` abre el asistente de cierre (KAM-21, design D7). */
-  searchParams: Promise<{ close?: string }>;
+  /**
+   * `close=<statusId>` abre el asistente de cierre (KAM-21, design D7).
+   * `from` conserva la vista de origen (KAM-29, design D5).
+   */
+  searchParams: Promise<{ close?: string; from?: string }>;
 }) {
   const context = await getSessionContext();
   if (!context) redirect("/auth/login");
@@ -97,7 +100,8 @@ export default async function TaskDetailPage({
    * Solo se cargan si hay un cierre en curso: la pantalla se abre muchas veces
    * al día y estas tres consultas solo sirven para el diálogo.
    */
-  const closingStatusId = (await searchParams).close ?? null;
+  const query = await searchParams;
+  const closingStatusId = query.close ?? null;
 
   const [suppliers, expenseCategories, supplies] = closingStatusId
     ? await Promise.all([
@@ -151,6 +155,7 @@ export default async function TaskDetailPage({
       closingStatusId={closingStatusId}
       history={history}
       timezone={context.organization.timezone}
+      from={query.from ?? null}
     />
   );
 }

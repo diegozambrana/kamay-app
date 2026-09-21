@@ -49,6 +49,9 @@ const CAPTURE_ROUTES = [
   // pantalla completa (mapa §4), y la barra taparía el editor y los adjuntos.
   // `/tasks` a secas —el tablero— sí la conserva.
   /^\/tasks\/[^/]+$/,
+  // La edición de tarea (KAM-29) no la cubre el patrón de arriba, que se
+  // detiene en el primer segmento: es una ruta más honda y necesita la suya.
+  /^\/tasks\/[^/]+\/edit$/,
 ];
 
 export function isCaptureRoute(pathname: string): boolean {

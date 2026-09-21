@@ -87,6 +87,15 @@ describe("MobileNav", () => {
     expect(screen.queryByTestId("bottom-bar")).toBeNull();
   });
 
+  it("no se rinde en la edición de una tarea (En móvil ocupa la pantalla completa)", () => {
+    // KAM-29: el patrón del detalle se detiene en el primer segmento, así que
+    // sin una entrada propia la barra volvería a aparecer justo en la pantalla
+    // donde tapa el guardar y ofrece una salida sin confirmar el descarte.
+    renderNav("/tasks/86e70354-5706-4f88-9122-b2474f9cc9fc/edit");
+
+    expect(screen.queryByTestId("bottom-bar")).toBeNull();
+  });
+
   it("sí se rinde en el tablero de tareas", () => {
     // El tablero no es captura: la barra es su navegación.
     renderNav("/tasks");

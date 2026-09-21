@@ -95,6 +95,10 @@ export function TasksScreen({
 
   const statusNames = new Map(allStatuses.map((status) => [status.id, status.name]));
 
+  // La consulta actual es la vista de origen: el detalle y la edición la
+  // conservan para poder volver aquí con estos mismos filtros (design D5).
+  const from = params.toString();
+
   function updateParams(changes: Record<string, string | null>) {
     const next = new URLSearchParams(params.toString());
     for (const [key, value] of Object.entries(changes)) {
@@ -292,6 +296,7 @@ export function TasksScreen({
             showLine={showLine}
             quickAddLineId={quickAddLineId}
             onError={setError}
+            from={from}
           />
         )}
 
@@ -301,6 +306,7 @@ export function TasksScreen({
             statusNames={statusNames}
             today={today}
             showLine={showLine}
+            from={from}
           />
         )}
 

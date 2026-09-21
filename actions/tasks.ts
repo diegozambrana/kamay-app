@@ -16,6 +16,7 @@ import {
   DELIVERABLE_TYPES,
   canDeclare,
 } from "@/lib/tasks/deliverables";
+import { retargetStatusForLine } from "@/lib/tasks/line-change";
 import { taskSchema } from "@/lib/tasks/schema";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { emitTaskEvents } from "@/services/notifications/emit-task-events";
@@ -39,13 +40,20 @@ const taskIdSchema = z.object({ taskId: z.guid() });
 const moveTaskSchema = taskIdSchema.extend({ statusId: z.guid() });
 
 const updateTaskSchema = taskIdSchema.extend({
-  title: z.string().trim().min(1).max(200).optional(),
+  title: z
+    .string()
+    .trim()
+    .min(1, "El título no puede quedar vacío.")
+    .max(200)
+    .optional(),
+  businessLineId: z.guid().optional(),
   assigneeId: z.guid().nullable().optional(),
   dueDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullable()
     .optional(),
+  remindAt: z.iso.datetime().nullable().optional(),
   tagNames: z.array(z.string().trim().min(1)).optional(),
 });
 
@@ -147,57 +155,143 @@ export async function moveTaskToStatus(
   revalidateTasks();
 }
 
-/** Responsable, fecha límite, título y etiquetas: el alcance de KAM-15. */
+/**
+ * Guarda de una vez los datos que **describen** la tarea: título, línea,
+ * responsable, fecha límite, recordatorio y etiquetas.
+ *
+ * Es el guardado de `/tasks/[id]/edit` (KAM-29). Un campo `undefined` no se
+ * escribe: el formulario manda **solo los campos que se tocaron** (design D2),
+ * y esa es la razón de que dos pantallas abiertas a la vez no se pisen —lo que
+ * este formulario no menciona, no puede sobrescribirlo— y de que la bitácora
+ * registre exactamente los campos cambiados y ninguno más.
+ *
+ * El estado no entra aquí: se cambia desde el detalle con `updateTaskField`.
+ * La única forma en que esta acción lo toca es al reubicarlo cuando cambia la
+ * línea (design D4).
+ */
 export async function updateTaskFields(
   input: z.infer<typeof updateTaskSchema>,
 ): Promise<TaskActionResult> {
   const parsed = updateTaskSchema.safeParse(input);
-  if (!parsed.success) return { error: "No se pudieron guardar los cambios." };
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? "No se pudieron guardar los cambios.",
+    };
+  }
 
   const context = await getSessionContext();
   if (!context) return { error: NO_SESSION };
 
+  const { taskId, title, businessLineId, assigneeId, dueDate, remindAt, tagNames } =
+    parsed.data;
+
   try {
     const tasks = new TaskService(context.supabase);
 
-    // Se lee antes para saber si el responsable **cambia**: reasignar a quien
-    // ya la tenía no es un hecho nuevo y no debe volver a avisar.
-    const before =
-      parsed.data.assigneeId !== undefined
-        ? await tasks.getById(context.organizationId, parsed.data.taskId)
-        : null;
+    // Se lee siempre antes de escribir: las reglas se comprueban contra la
+    // tarea guardada, no contra la copia que la pantalla creía tener.
+    const before = await tasks.getById(context.organizationId, taskId);
+    if (!before) return { error: "Esa tarea ya no está a tu alcance." };
+    if (before.archivedAt) {
+      return { error: "Esta tarea está archivada. Desarchívala para editarla." };
+    }
 
-    await tasks.updateFields(context.organizationId, parsed.data.taskId, {
-      title: parsed.data.title,
-      assigneeId: parsed.data.assigneeId,
-      dueDate: parsed.data.dueDate,
+    /**
+     * Quitar la fecha límite se lleva por delante el recordatorio guardado:
+     * dejarlo colgando rompería `reminder_needs_due_date` en la siguiente
+     * escritura. Pero solo si la edición **no menciona** el recordatorio: un
+     * recordatorio recién escrito no se tira en silencio, se rechaza abajo.
+     */
+    const remindPatch =
+      remindAt !== undefined ? remindAt : dueDate === null ? null : undefined;
+
+    /**
+     * El recordatorio se valida contra **el resultado**: la fecha límite que
+     * quedará y el recordatorio que quedará, vengan del formulario o de la
+     * tarea. Un formulario que solo toca el recordatorio no trae la fecha, y
+     * uno que borra la fecha y fija un recordatorio a la vez se contradice.
+     */
+    const resultingDue = dueDate !== undefined ? dueDate : before.dueAt;
+    const resultingRemind = remindPatch !== undefined ? remindPatch : before.remindAt;
+
+    if (resultingRemind !== null && !resultingDue) {
+      return {
+        error:
+          "Primero ponle una fecha límite a la tarea; el recordatorio cuelga de ella.",
+      };
+    }
+
+    /**
+     * Cambiar la línea reubica el estado (spec `tasks`, design D4).
+     *
+     * `assign_initial_task_status` es un trigger `before insert`: sin esto la
+     * tarea se quedaría con el estado del juego de la línea vieja y
+     * desaparecería del tablero de su línea nueva.
+     */
+    let retargetedStatusId: string | undefined;
+
+    if (businessLineId !== undefined && businessLineId !== before.businessLineId) {
+      const statusService = new StatusService(context.supabase);
+
+      // El estado actual puede estar archivado y no aparecer en ningún juego
+      // resuelto: se busca entre todos los del flujo para conocer su tipo.
+      const all = await statusService.listAllForFlow(context.organizationId, "task");
+      const current = all.find((status) => status.id === before.statusId);
+      if (!current) {
+        return { error: "No se pudo identificar el estado actual de la tarea." };
+      }
+
+      const destination = await statusService.resolve(
+        context.organizationId,
+        businessLineId,
+        "task",
+      );
+
+      const retarget = retargetStatusForLine(current, destination);
+      if (retarget.kind === "impossible") {
+        return {
+          error: `La línea de destino no tiene ningún estado equivalente a «${current.name}». Configúrale uno antes de mover la tarea.`,
+        };
+      }
+      if (retarget.kind === "moved") retargetedStatusId = retarget.status.id;
+    }
+
+    await tasks.updateFields(context.organizationId, taskId, {
+      title,
+      businessLineId,
+      assigneeId,
+      dueDate,
+      remindAt: remindPatch,
+      ...(retargetedStatusId ? { statusId: retargetedStatusId } : {}),
     });
 
-    if (before && before.assigneeId !== parsed.data.assigneeId) {
+    // Reasignar a quien ya la tenía no es un hecho nuevo y no debe avisar.
+    if (assigneeId !== undefined && before.assigneeId !== assigneeId) {
       await emitTaskEvents({
         organizationId: context.organizationId,
         actorId: context.userId,
         task: {
           id: before.id,
-          title: parsed.data.title ?? before.title,
-          assigneeId: parsed.data.assigneeId ?? null,
+          title: title ?? before.title,
+          assigneeId: assigneeId ?? null,
         },
-        assignedTo: parsed.data.assigneeId ?? null,
+        assignedTo: assigneeId ?? null,
       });
     }
 
-    if (parsed.data.tagNames) {
+    if (tagNames) {
       const tagIds = await new TagService(context.supabase).resolveNames(
         context.organizationId,
-        parsed.data.tagNames,
+        tagNames,
       );
-      await tasks.setTags(context.organizationId, parsed.data.taskId, tagIds);
+      await tasks.setTags(context.organizationId, taskId, tagIds);
     }
   } catch {
     return { error: "No se pudieron guardar los cambios. Intenta de nuevo." };
   }
 
   revalidateTasks();
+  revalidatePath(`/tasks/${taskId}`);
 }
 
 /** Archivar es del dueño; lo hace cumplir el trigger de la base. */
@@ -227,53 +321,28 @@ export async function archiveTask(
 }
 
 // ── KAM-16 · Detalle de tarea ──────────────────────────────────────────────
-// Cada campo se guarda por su cuenta (design D3). Un `updateTask` que
-// recibiera la tarea entera convertiría cada guardado parcial en una
-// lectura-modificación-escritura capaz de pisar lo que otra persona acaba de
-// cambiar, que es justo lo que una pantalla tocada muchas veces al día no
-// puede permitirse.
+// El estado se cambia **desde el detalle**, de a uno, sin pasar por la
+// edición: es lo que se hace mientras se trabaja, y arrastrar una tarjeta en
+// el tablero ya lo cambia sin abrir nada (KAM-29).
+//
+// KAM-16 guardaba así los siete campos de la cabecera. KAM-29 mudó los otros
+// seis a `updateTaskFields`, que los escribe de una vez desde el formulario;
+// aquí solo queda el estado.
 
-const updateTaskFieldSchema = z.discriminatedUnion("field", [
-  z.object({
-    taskId: z.guid(),
-    field: z.literal("title"),
-    value: z.string().trim().min(1, "El título no puede quedar vacío.").max(200),
-  }),
-  z.object({ taskId: z.guid(), field: z.literal("statusId"), value: z.guid() }),
-  z.object({
-    taskId: z.guid(),
-    field: z.literal("businessLineId"),
-    value: z.guid(),
-  }),
-  z.object({
-    taskId: z.guid(),
-    field: z.literal("assigneeId"),
-    value: z.guid().nullable(),
-  }),
-  z.object({
-    taskId: z.guid(),
-    field: z.literal("dueDate"),
-    value: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/)
-      .nullable(),
-  }),
-  z.object({
-    taskId: z.guid(),
-    field: z.literal("remindAt"),
-    value: z.iso.datetime().nullable(),
-  }),
-]);
+const updateTaskFieldSchema = z.object({
+  taskId: z.guid(),
+  field: z.literal("statusId"),
+  value: z.guid(),
+});
 
 export type UpdateTaskFieldInput = z.infer<typeof updateTaskFieldSchema>;
 
 /**
- * Guarda un solo campo de la tarea.
+ * Cambia el estado de la tarea desde el detalle.
  *
- * El título vacío y el recordatorio sin fecha límite se rechazan **aquí**, con
- * su mensaje: la base los impide igualmente —`task_needs_title` y
- * `reminder_needs_due_date`—, pero un error de restricción no le dice a nadie
- * qué hacer a continuación.
+ * Una tarea archivada se rechaza **aquí**, con su mensaje: la base lo impide
+ * igualmente —el trigger `enforce_archive`—, pero un error de restricción no
+ * le dice a nadie qué hacer a continuación.
  */
 export async function updateTaskField(
   input: UpdateTaskFieldInput,
@@ -297,22 +366,7 @@ export async function updateTaskField(
       return { error: "Esta tarea está archivada. Desarchívala para editarla." };
     }
 
-    // Un recordatorio necesita una fecha límite. Se comprueba contra la tarea
-    // ya guardada, no contra lo que la pantalla creía tener.
-    if (field === "remindAt" && value !== null && !task.dueAt) {
-      return {
-        error: "Primero ponle una fecha límite a la tarea; el recordatorio cuelga de ella.",
-      };
-    }
-
-    // Quitar la fecha límite se lleva por delante el recordatorio: dejarlo
-    // colgando rompería la restricción de la base en la siguiente escritura.
-    const alsoClearsReminder = field === "dueDate" && value === null;
-
-    await tasks.updateFields(context.organizationId, taskId, {
-      [field]: value,
-      ...(alsoClearsReminder ? { remindAt: null } : {}),
-    });
+    await tasks.updateFields(context.organizationId, taskId, { [field]: value });
   } catch {
     return { error: "No se pudo guardar el cambio. Intenta de nuevo." };
   }

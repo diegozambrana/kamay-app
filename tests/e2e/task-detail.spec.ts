@@ -37,7 +37,7 @@ async function createTask(page: Page, prefix: string): Promise<{ title: string; 
   await expect(page.getByText(title)).toBeVisible();
 
   await page.locator('[data-testid="task-card"]', { hasText: title }).click();
-  await page.waitForURL(/\/tasks\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/tasks\/[0-9a-f-]{36}(\?.*)?$/);
 
   return { title, url: page.url() };
 }
@@ -60,12 +60,28 @@ async function toggleChecklist(page: Page, index: number, checked: boolean) {
   ]);
 }
 
-/** Escribe el cuerpo y lo guarda, esperando a que el guardado se asiente. */
+/**
+ * Abre el editor, escribe el cuerpo y lo guarda.
+ *
+ * Desde KAM-29 el cuerpo se lee por omisión: escribir empieza por *Editar* —o
+ * por la invitación, cuando la tarea todavía no tiene descripción—.
+ */
 async function writeBody(page: Page, body: string) {
-  const area = page.getByLabel("Descripción");
-  await area.fill(body);
-  await page.getByRole("button", { name: "Guardar descripción" }).click();
-  await expect(page.getByRole("button", { name: "Guardar descripción" })).toBeDisabled();
+  const invitacion = page.getByTestId("write-body");
+  if (await invitacion.count()) await invitacion.click();
+  else await page.getByTestId("edit-body").click();
+
+  await page.getByLabel("Descripción").fill(body);
+  await page.getByTestId("save-body").click();
+
+  // Guardar cierra el editor: que vuelva *Editar* es la señal de que asentó.
+  await expect(page.getByTestId("edit-body")).toBeVisible();
+}
+
+/** Despliega la zona de arrastre, que ya no está desplegada por omisión. */
+async function openDropzone(page: Page) {
+  await page.getByTestId("add-attachment").click();
+  await expect(page.getByTestId("file-dropzone")).toBeVisible();
 }
 
 /**
@@ -81,19 +97,24 @@ test.describe("detalle de tarea (V18)", () => {
       await login(page, geeko().owner);
       const { title, url } = await createTask(page, "Detalle desde tablero");
 
-      // Se llega desde el tablero.
-      await expect(page.getByLabel("Título")).toHaveValue(title);
+      // Se llega desde el tablero. El título se lee: desde KAM-29 la
+      // cabecera del detalle no tiene controles.
+      await expect(page.getByRole("heading", { name: title })).toBeVisible();
 
       // Y la misma dirección, abierta a pelo, resuelve la misma tarea: es lo
       // que hace que un aviso o un vínculo puedan enlazarla.
       await page.goto("/dashboard");
       await page.goto(url);
-      await expect(page.getByLabel("Título")).toHaveValue(title);
+      await expect(page.getByRole("heading", { name: title })).toBeVisible();
     });
 
-    test("editar el cuerpo con la barra y verlo en la vista previa", async ({ page }) => {
+    test("editar el cuerpo con la barra y verlo rendido", async ({ page }) => {
       await login(page, geeko().owner);
       await createTask(page, "Cuerpo con negrita");
+
+      // El cuerpo se lee: el editor está detrás de la invitación a escribirlo.
+      await expect(page.getByLabel("Descripción")).toHaveCount(0);
+      await page.getByTestId("write-body").click();
 
       const area = page.getByLabel("Descripción");
       await area.fill("Set de 6 tazas de gres");
@@ -104,12 +125,14 @@ test.describe("detalle de tarea (V18)", () => {
       await page.getByRole("button", { name: "Negrita" }).click();
       await expect(area).toHaveValue("Set de **6 tazas** de gres");
 
-      await page.getByRole("button", { name: "Guardar descripción" }).click();
-      await expect(page.getByRole("button", { name: "Guardar descripción" })).toBeDisabled();
+      await page.getByTestId("save-body").click();
+      await expect(page.getByTestId("edit-body")).toBeVisible();
 
+      // Al recargar, el cuerpo se lee rendido sin tocar nada más
+      // («Abrir una tarea muestra el cuerpo rendido»).
       await page.reload();
-      await page.getByRole("radio", { name: "Vista previa" }).click();
       await expect(page.locator("strong", { hasText: "6 tazas" })).toBeVisible();
+      await expect(page.getByLabel("Descripción")).toHaveCount(0);
     });
 
     test("marcar una casilla persiste y no toca las demás", async ({ page }) => {
@@ -127,7 +150,8 @@ test.describe("detalle de tarea (V18)", () => {
         ].join("\n"),
       );
 
-      await page.getByRole("radio", { name: "Vista previa" }).click();
+      // Se marcan desde la lectura: ya no hay que pasar por ninguna pestaña
+      // («Marcar una casilla sigue costando un gesto»).
       const casillas = page.locator("[data-checklist-index]");
       await expect(casillas).toHaveCount(5);
 
@@ -135,7 +159,6 @@ test.describe("detalle de tarea (V18)", () => {
       await expect(casillas.nth(2)).toBeChecked();
 
       await page.reload();
-      await page.getByRole("radio", { name: "Vista previa" }).click();
 
       // Sigue marcada, y las otras cuatro no se movieron.
       await expect(page.locator("[data-checklist-index]").nth(2)).toBeChecked();
@@ -146,7 +169,6 @@ test.describe("detalle de tarea (V18)", () => {
       // Y desmarcar también persiste.
       await toggleChecklist(page, 2, false);
       await page.reload();
-      await page.getByRole("radio", { name: "Vista previa" }).click();
       await expect(page.locator("[data-checklist-index]").nth(2)).not.toBeChecked();
     });
 
@@ -159,6 +181,7 @@ test.describe("detalle de tarea (V18)", () => {
       const buffer = noisePng(2000, 2000);
       expect(buffer.length).toBeGreaterThan(8 * MB);
 
+      await openDropzone(page);
       await page.locator('input[type="file"]').setInputFiles({
         name: "avance-hornada.png",
         mimeType: "image/png",
@@ -177,16 +200,44 @@ test.describe("detalle de tarea (V18)", () => {
       expect(sizeBytes).toBeLessThanOrEqual(5 * MB);
     });
 
+    test("una imagen adjunta se mira dentro de la pantalla", async ({ page }) => {
+      await login(page, geeko().owner);
+      await createTask(page, "Tarea con imagen que se mira");
+
+      await openDropzone(page);
+      await page.locator('input[type="file"]').setInputFiles({
+        name: "avance.png",
+        mimeType: "image/png",
+        buffer: noisePng(200, 150),
+      });
+      await expect(page.getByTestId("attachment")).toHaveCount(1, { timeout: 60_000 });
+
+      // Mirar un adjunto no cuesta perder la tarea de vista.
+      await page.getByRole("button", { name: "Ver avance.png" }).click();
+
+      const visor = page.getByTestId("image-viewer");
+      await expect(visor).toBeVisible();
+      await expect(page.getByTestId("viewer-image")).toBeVisible();
+      await expect(visor).toContainText("avance.png");
+
+      // Y se cierra sin cambiar nada: el adjunto sigue ahí.
+      await page.keyboard.press("Escape");
+      await expect(visor).toHaveCount(0);
+      await expect(page.getByTestId("attachment")).toHaveCount(1);
+    });
+
     test("quitar un adjunto libera ranura y no lo borra", async ({ page }) => {
       await login(page, geeko().owner);
       await createTask(page, "Tarea con adjunto retirado");
 
-      const subir = (name: string) =>
-        page.locator('input[type="file"]').setInputFiles({
+      const subir = async (name: string) => {
+        await openDropzone(page);
+        await page.locator('input[type="file"]').setInputFiles({
           name,
           mimeType: "image/png",
           buffer: noisePng(80, 80),
         });
+      };
 
       await subir("primera.png");
       await expect(page.getByTestId("attachment")).toHaveCount(1, { timeout: 60_000 });
@@ -205,18 +256,36 @@ test.describe("detalle de tarea (V18)", () => {
       // (`attachments_storage.test.sql`), que es donde se puede mirar la fila.
     });
 
-    test("cambiar el responsable no exige guardar nada más", async ({ page }) => {
+    test("el estado se cambia desde el detalle, sin pasar por la edición", async ({
+      page,
+    }) => {
+      // KAM-29 mudó el responsable al formulario y dejó aquí el estado: es lo
+      // que se hace mientras se trabaja, y es la puerta del asistente de
+      // cierre. El resto de la cabecera se lee.
       await login(page, geeko().owner);
-      await createTask(page, "Tarea reasignada");
+      await createTask(page, "Tarea que avanza");
 
-      await page.getByLabel("Responsable").click();
+      await page.getByLabel("Estado").click();
       const opcion = page.getByRole("option").nth(1);
       const nombre = (await opcion.textContent())?.trim() ?? "";
-      await opcion.click();
+
+      // Se espera a que la escritura llegue al servidor: el cambio es
+      // optimista y recargar antes corre una carrera contra la Server Action.
+      await Promise.all([
+        page.waitForResponse(
+          (response) => response.request().method() === "POST" && response.status() < 400,
+        ),
+        opcion.click(),
+      ]);
 
       // Sin pulsar ningún guardar: se recarga y el cambio está.
       await page.reload();
-      await expect(page.getByLabel("Responsable")).toContainText(nombre);
+      await expect(page.getByLabel("Estado")).toContainText(nombre);
+
+      // Y la cabecera no ofrece campos: para cambiar el responsable hay que
+      // entrar a editar.
+      await expect(page.getByLabel("Responsable")).toHaveCount(0);
+      await expect(page.getByTestId("edit-task")).toBeVisible();
     });
 
     test("el historial sale de la bitácora, con la creación primero", async ({ page }) => {

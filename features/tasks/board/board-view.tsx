@@ -6,6 +6,7 @@ import { useTransition } from "react";
 import { moveTaskToStatus } from "@/actions/tasks";
 import { KanbanBoard, type KanbanColumn } from "@/components/board/kanban-board";
 import { opensClosingWizard } from "@/lib/tasks/deliverables";
+import { withFrom } from "@/lib/tasks/list-href";
 import { Badge } from "@/components/ui/badge";
 import { displayedPlacement, useBoardStore } from "@/stores/board-store";
 import type { Status } from "@/types";
@@ -36,6 +37,7 @@ export function BoardView({
   showLine,
   quickAddLineId,
   onError,
+  from = null,
 }: {
   tasks: BoardTask[];
   statuses: Status[];
@@ -44,6 +46,8 @@ export function BoardView({
   /** La línea que usará el alta rápida, o `null` si hay que pedirla. */
   quickAddLineId: string | null;
   onError: (message: string) => void;
+  /** La consulta del tablero, para volver a él con sus filtros. */
+  from?: string | null;
 }) {
   const [, startTransition] = useTransition();
   const router = useRouter();
@@ -113,7 +117,7 @@ export function BoardView({
       destination &&
       opensClosingWizard(destination.kind, task.pendingDeliverableCount)
     ) {
-      router.push(`/tasks/${taskId}?close=${statusId}`);
+      router.push(withFrom(`/tasks/${taskId}?close=${statusId}`, from));
       return;
     }
 
@@ -154,7 +158,7 @@ export function BoardView({
             // y etiquetas en un panel provisional y dejó dicho que al llegar
             // KAM-16 «sustituir este panel es cambiar a dónde apunta la
             // tarjeta»: esto es ese cambio.
-            onOpen={() => router.push(`/tasks/${task.id}`)}
+            onOpen={() => router.push(withFrom(`/tasks/${task.id}`, from))}
           />
         )}
         renderOverlay={(task) => (

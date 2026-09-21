@@ -12,7 +12,7 @@ Convierte la tarea en el lugar donde vive el trabajo y no solo su rótulo: un cu
 
 ### Requirement: El detalle de tarea es una página con dirección propia
 
-El sistema SHALL ofrecer el detalle de una tarea en `/tasks/[id]` como página con dirección propia, alcanzable en escritorio y en móvil. La dirección SHALL poder abrirse directamente y SHALL resolver la misma tarea que se alcanza desde el tablero. En móvil la página SHALL ocupar la pantalla completa, sin la barra de navegación inferior. Una tarea de otra organización SHALL NOT ser accesible por dirección directa. Una tarea archivada SHALL abrirse en solo lectura, informando de su estado y sin ofrecer guardar.
+El sistema SHALL ofrecer el detalle de una tarea en `/tasks/[id]` y su edición en `/tasks/[id]/edit` como páginas con dirección propia, alcanzables en escritorio y en móvil. Ambas direcciones SHALL poder abrirse directamente y SHALL resolver la misma tarea que se alcanza desde el tablero. En móvil ambas páginas SHALL ocupar la pantalla completa, sin la barra de navegación inferior. Una tarea que la persona no alcanza —de otra organización, o de una línea que su rol no ve— SHALL NOT ser accesible por ninguna de las dos direcciones. Una tarea archivada SHALL abrirse en solo lectura: el detalle SHALL informar de su estado, mostrar sus datos sin poder cambiarlos y SHALL NOT ofrecer la acción *Editar*; `/tasks/[id]/edit` SHALL informar de su estado y SHALL NOT ofrecer el formulario.
 
 #### Scenario: Se llega desde el tablero
 
@@ -26,71 +26,101 @@ El sistema SHALL ofrecer el detalle de una tarea en `/tasks/[id]` como página c
 
 #### Scenario: En móvil ocupa la pantalla completa
 
-- **WHEN** se abre el detalle de una tarea en un viewport de 390 px
-- **THEN** la barra de navegación inferior no se rinde y el contenido no exige desplazamiento horizontal
+- **WHEN** se abre el detalle de una tarea, y luego su edición, en un viewport de 390 px
+- **THEN** en ninguna de las dos se rinde la barra de navegación inferior, y el contenido no exige desplazamiento horizontal
 
 #### Scenario: Una tarea de otra organización no se abre
 
 - **WHEN** una persona de la organización A abre la dirección de una tarea de la organización B
-- **THEN** el sistema no muestra la tarea
+- **THEN** el sistema no muestra la tarea, ni en el detalle ni en la edición
+
+#### Scenario: El ayudante no edita lo que no ve
+
+- **GIVEN** una tarea de una línea que un ayudante no tiene asignada
+- **WHEN** ese ayudante abre `/tasks/[id]/edit` de esa tarea
+- **THEN** el sistema no la muestra, igual que no muestra su detalle
 
 #### Scenario: Una tarea archivada no se edita
 
 - **WHEN** se abre el detalle de una tarea archivada
-- **THEN** sus campos se muestran sin poder editarse y la pantalla informa de que está archivada
+- **THEN** sus datos se muestran sin poder cambiarse, la pantalla informa de que está archivada y no se ofrece la acción *Editar*
 
-### Requirement: Los campos de la tarea se editan y se guardan uno a uno
+#### Scenario: La edición de una tarea archivada lo explica
 
-El sistema SHALL permitir editar desde el detalle el título, el estado, la línea de negocio, el responsable, la fecha límite, el recordatorio y las etiquetas de la tarea. Cada campo SHALL guardarse por sí solo al confirmarlo, sin exigir una acción de guardado global ni bloquear la edición de los demás. Un título vacío SHALL NOT guardarse. Un recordatorio SHALL NOT poder fijarse en una tarea sin fecha límite. El cambio de estado SHALL compararse por el tipo declarado del estado y nunca por su nombre. Todo cambio guardado SHALL quedar registrado en la bitácora.
-
-#### Scenario: Cambiar el responsable no exige guardar nada más
-
-- **WHEN** se elige otro responsable en el detalle
-- **THEN** el cambio queda guardado sin ninguna otra acción y el resto de campos sigue editable
-
-#### Scenario: El título no puede quedar vacío
-
-- **WHEN** se borra el título y se confirma el campo
-- **THEN** el sistema impide el guardado y conserva el título anterior
-
-#### Scenario: Un recordatorio necesita fecha límite
-
-- **WHEN** se intenta fijar un recordatorio en una tarea sin fecha límite
-- **THEN** el sistema lo impide y explica que primero hace falta una fecha límite
-
-#### Scenario: Cada cambio deja rastro
-
-- **WHEN** se cambia la fecha límite de una tarea
-- **THEN** la bitácora registra el cambio con su autor y su hora
+- **WHEN** se abre `/tasks/[id]/edit` de una tarea archivada
+- **THEN** la pantalla explica que está archivada, no ofrece el formulario ni guardar, y conserva sus migas de pan
 
 ### Requirement: El cuerpo se escribe en Markdown con ayuda de una barra de herramientas
 
-El sistema SHALL ofrecer para el cuerpo de la tarea un editor de Markdown con una barra de herramientas que aplique al menos negrita, cursiva, encabezado, lista, lista de verificación y enlace sobre la selección o en la posición del cursor. La escritura directa de sintaxis Markdown SHALL seguir funcionando. El editor SHALL ofrecer las vistas **Escribir** y **Vista previa** sobre el mismo contenido. El cuerpo SHALL guardarse tal como se escribió, sin transformarlo. Una tarea sin cuerpo SHALL ser válida.
+El detalle SHALL mostrar el cuerpo de la tarea **rendido** por omisión, no en su forma de origen: abrir una tarea es leerla. Las casillas de verificación del cuerpo SHALL seguir siendo marcables directamente desde esa lectura, sin abrir nada.
+
+El sistema SHALL ofrecer una acción explícita para editar el cuerpo. Solo esa acción SHALL abrir el editor; activar el cuerpo rendido SHALL NOT abrirlo, de modo que marcar una casilla siga costando un solo gesto. Cuando la tarea no tiene cuerpo, el sistema SHALL mostrar en su lugar una invitación a escribirlo que abre el editor.
+
+El editor SHALL ofrecer una barra de herramientas que aplique al menos negrita, cursiva, encabezado, lista, lista de verificación y enlace sobre la selección o en la posición del cursor. La escritura directa de sintaxis Markdown SHALL seguir funcionando. El editor SHALL permitir alternar entre **Escribir** y **Vista previa** sobre el mismo contenido mientras está abierto. SHALL ofrecer *Guardar* y *Cancelar*: guardar SHALL escribir el cuerpo tal como se escribió, sin transformarlo, y volver a la lectura; cancelar SHALL volver a la lectura descartando lo escrito. Si hay cambios sin guardar, cancelar SHALL pedir confirmación antes de descartarlos.
+
+Una tarea sin cuerpo SHALL ser válida. Una tarea archivada SHALL mostrar su cuerpo rendido y SHALL NOT ofrecer la acción de editar.
+
+#### Scenario: Abrir una tarea muestra el cuerpo rendido
+
+- **GIVEN** una tarea cuyo cuerpo es `Set de **6 tazas** de gres`
+- **WHEN** se abre su detalle
+- **THEN** se lee «Set de 6 tazas de gres» con «6 tazas» en negrita, y no se muestra ni el texto con asteriscos ni el editor
 
 #### Scenario: Aplicar formato sin saber Markdown
 
-- **WHEN** se selecciona un texto del cuerpo y se activa el botón de negrita
+- **WHEN** se abre el editor, se selecciona un texto del cuerpo y se activa el botón de negrita
 - **THEN** el texto seleccionado queda en negrita y la vista previa lo muestra así
 
 #### Scenario: Crear una lista de verificación desde la barra
 
-- **WHEN** se activa el botón de lista de verificación con el cursor en una línea vacía
+- **WHEN** se abre el editor y se activa el botón de lista de verificación con el cursor en una línea vacía
 - **THEN** la línea pasa a ser un elemento de lista de verificación sin marcar
 
 #### Scenario: La sintaxis escrita a mano funciona igual
 
-- **WHEN** se escribe `**taza**` en el cuerpo y se abre la vista previa
+- **WHEN** se escribe `**taza**` en el editor y se abre la vista previa
 - **THEN** la palabra aparece en negrita
 
 #### Scenario: El cuerpo se guarda tal cual
 
 - **WHEN** se guarda un cuerpo y se vuelve a abrir la tarea
-- **THEN** el editor muestra exactamente el mismo texto que se escribió
+- **THEN** el cuerpo rendido corresponde exactamente al texto que se escribió, y al volver a abrir el editor este muestra ese mismo texto
+
+#### Scenario: Guardar vuelve a la lectura
+
+- **WHEN** se edita el cuerpo y se pulsa *Guardar*
+- **THEN** el cuerpo queda guardado, el editor se cierra y la tarjeta vuelve a mostrar el cuerpo rendido
+
+#### Scenario: Cancelar descarta lo escrito
+
+- **WHEN** se edita el cuerpo y se pulsa *Cancelar*, y se confirma el descarte
+- **THEN** el editor se cierra, el cuerpo sigue siendo el guardado y nada se escribió
+
+#### Scenario: Cancelar sin cambios no pregunta nada
+
+- **WHEN** se abre el editor y se pulsa *Cancelar* sin escribir nada
+- **THEN** el editor se cierra sin ninguna confirmación
+
+#### Scenario: Activar el cuerpo no abre el editor
+
+- **WHEN** se pulsa sobre el cuerpo rendido
+- **THEN** el editor no se abre y la tarjeta sigue en lectura
+
+#### Scenario: Marcar una casilla sigue costando un gesto
+
+- **GIVEN** una tarea cuyo cuerpo tiene una lista de verificación
+- **WHEN** se marca una casilla desde la lectura
+- **THEN** queda marcada y persiste, sin haber abierto el editor
 
 #### Scenario: Una tarea puede no tener cuerpo
 
 - **WHEN** se abre una tarea cuyo cuerpo está vacío
-- **THEN** el editor se rinde vacío y la tarea es válida
+- **THEN** la tarjeta muestra una invitación a escribir la descripción, la tarea es válida, y activar esa invitación abre el editor
+
+#### Scenario: Una tarea archivada se lee y no se edita
+
+- **WHEN** se abre el detalle de una tarea archivada con cuerpo
+- **THEN** el cuerpo se muestra rendido y no se ofrece la acción de editarlo
 
 ### Requirement: El Markdown rendido se sanea
 
@@ -157,11 +187,20 @@ El sistema SHALL rendir cada elemento `- [ ]` o `- [x]` del cuerpo como una casi
 
 ### Requirement: Los adjuntos se agregan arrastrando o eligiendo del equipo
 
-El sistema SHALL ofrecer en el detalle una zona que acepte archivos arrastrados y SHALL ofrecer además la alternativa de elegirlos del equipo. Los adjuntos SHALL guardarse asociados a la tarea con `entity_type = 'task'` en el bucket privado de adjuntos. Cada adjunto SHALL mostrarse con su nombre, su peso y quién lo subió; los que son imagen SHALL mostrar además una miniatura. Ningún adjunto SHALL mostrarse por URL pública: cada lectura SHALL firmarse. Agregar un adjunto SHALL requerir conexión; sin ella el sistema SHALL informarlo y SHALL NOT impedir editar ni guardar el resto de la tarea.
+El detalle SHALL mostrar por omisión **solo la lista** de adjuntos de la tarea. El sistema SHALL ofrecer una acción explícita para añadir, que revela una zona que acepta archivos arrastrados y la alternativa de elegirlos del equipo; esa zona SHALL poder replegarse. Quitar un adjunto SHALL seguir disponible en su fila, sin entrar en ningún modo de edición.
+
+Los adjuntos SHALL guardarse asociados a la tarea con `entity_type = 'task'` en el bucket privado de adjuntos. Cada adjunto SHALL mostrarse con su nombre, su peso y quién lo subió; los que son imagen SHALL mostrar además una miniatura. Ningún adjunto SHALL mostrarse por URL pública: cada lectura SHALL firmarse. Agregar un adjunto SHALL requerir conexión; sin ella el sistema SHALL informarlo y SHALL NOT impedir editar ni guardar el resto de la tarea. Una tarea archivada SHALL conservar su lista y SHALL NOT ofrecer añadir ni quitar.
+
+Activar un adjunto que es imagen SHALL abrirlo en un visor dentro de la propia pantalla, que muestra la imagen a tamaño completo con su nombre y ofrece abrir el original y —salvo en una tarea archivada— quitarlo. Cuando la tarea tiene varias imágenes, el visor SHALL permitir pasar a la siguiente y a la anterior sin cerrarse. Cerrar el visor SHALL devolver al detalle sin cambiar nada. Un adjunto que no es imagen SHALL seguir abriéndose como archivo.
+
+#### Scenario: La zona de arrastre no está desplegada
+
+- **WHEN** se abre el detalle de una tarea
+- **THEN** se ve la lista de sus adjuntos y no la zona de arrastre, hasta que se active la acción de añadir
 
 #### Scenario: Arrastrar una imagen la adjunta
 
-- **WHEN** se arrastra una imagen sobre la zona de adjuntos
+- **WHEN** se activa la acción de añadir y se arrastra una imagen sobre la zona
 - **THEN** queda adjunta a la tarea y aparece en la lista con su miniatura
 
 #### Scenario: Elegir del equipo hace lo mismo
@@ -174,11 +213,36 @@ El sistema SHALL ofrecer en el detalle una zona que acepte archivos arrastrados 
 - **WHEN** se adjunta un PDF a la tarea
 - **THEN** aparece en la lista con su nombre, su peso y quién lo subió, sin miniatura
 
+#### Scenario: Una imagen se ve dentro de la pantalla
+
+- **WHEN** se activa un adjunto que es imagen
+- **THEN** se abre un visor con la imagen a tamaño completo y su nombre, sin salir del detalle ni abrir otra pestaña
+
+#### Scenario: El visor pasa de una imagen a otra
+
+- **GIVEN** una tarea con tres imágenes adjuntas
+- **WHEN** se abre el visor en la primera y se pide la siguiente
+- **THEN** el visor muestra la segunda imagen sin cerrarse
+
+#### Scenario: Un archivo que no es imagen no abre el visor
+
+- **WHEN** se activa un PDF adjunto
+- **THEN** se abre como archivo y el visor no aparece
+
+#### Scenario: Quitar sigue a un gesto en la fila
+
+- **WHEN** se quita un adjunto desde su fila
+- **THEN** deja de figurar entre los vigentes sin haber entrado en ningún modo de edición
+
 #### Scenario: Sin conexión se avisa y se sigue trabajando
 
 - **WHEN** se intenta adjuntar un archivo sin conexión
 - **THEN** el sistema informa de que hace falta conexión y el cuerpo y los campos de la tarea siguen editables y guardables
 
+#### Scenario: Una tarea archivada conserva sus adjuntos
+
+- **WHEN** se abre el detalle de una tarea archivada con adjuntos
+- **THEN** se ve su lista, no se ofrece añadir ni quitar, y sus imágenes siguen abriéndose en el visor
 ### Requirement: Las imágenes se comprimen y todo adjunto sube en segundo plano
 
 El sistema SHALL comprimir en el navegador las imágenes adjuntadas hasta que pesen 5 MB o menos antes de subirlas. Un archivo que no es imagen SHALL subirse sin transformar y SHALL rechazarse con mensaje claro si pasa de 5 MB. La subida SHALL ocurrir en segundo plano: mientras un adjunto viaja, el título, el cuerpo, el estado y los demás campos de la tarea SHALL seguir editables y guardables. Cada adjunto en vuelo SHALL mostrarse como tal. Si una subida falla, el sistema SHALL avisar cuál falló y SHALL permitir reintentarla, sin afectar a las demás ni al resto de la tarea.
@@ -299,3 +363,136 @@ El sistema SHALL mostrar en el detalle un bloque de historial con lo ocurrido en
 
 - **WHEN** se abre el detalle de una tarea recién creada
 - **THEN** el historial muestra su creación
+### Requirement: El detalle presenta los datos de la tarea y los cambia en una pantalla aparte
+
+El detalle de la tarea SHALL mostrar su título, su línea de negocio, su responsable, su fecha límite, su recordatorio y sus etiquetas como texto, y SHALL NOT ofrecer controles para cambiarlos. SHALL ofrecer una acción *Editar* que lleva a `/tasks/[id]/edit`. Un dato sin valor —sin responsable, sin fecha límite, sin recordatorio, sin etiquetas— SHALL presentarse como ausente y no como un hueco en blanco.
+
+Lo que se hace **mientras se trabaja** SHALL seguir ocurriendo en el detalle, sin pasar por la edición:
+
+- El **estado** SHALL cambiarse desde el detalle, comparado por su tipo declarado y nunca por su nombre. Llevarlo a un estado de tipo `final` con entregables sin cumplir SHALL abrir el asistente de cierre, como hasta ahora.
+- El **cuerpo en Markdown** SHALL escribirse, rendirse y marcarse en el detalle, con su propio guardado y sin exigir entrar a la edición.
+- Los **adjuntos**, los **vínculos**, los **entregables** y el **historial** SHALL permanecer en el detalle, con su comportamiento actual.
+
+Ningún dato de la tarea SHALL calcularse ni guardarse dos veces por existir dos pantallas: el detalle y la edición SHALL leer la misma fuente.
+
+#### Scenario: La cabecera se lee, no se edita
+
+- **WHEN** se abre el detalle de una tarea
+- **THEN** su título, su línea, su responsable, su fecha límite, su recordatorio y sus etiquetas se muestran como texto, sin campos ni selectores que los cambien
+
+#### Scenario: Editar lleva al formulario
+
+- **WHEN** se activa la acción *Editar* en el detalle de una tarea
+- **THEN** se abre `/tasks/[id]/edit` con el formulario de esa tarea
+
+#### Scenario: Las etiquetas se ven en el detalle
+
+- **GIVEN** una tarea con las etiquetas «Hornada-07» y «Urgente»
+- **WHEN** se abre su detalle
+- **THEN** ambas etiquetas se muestran
+
+#### Scenario: Un dato ausente se dice
+
+- **GIVEN** una tarea sin responsable y sin fecha límite
+- **WHEN** se abre su detalle
+- **THEN** ambos datos se presentan como ausentes, y no como espacios vacíos
+
+#### Scenario: El estado se cambia sin salir del detalle
+
+- **WHEN** se elige otro estado en el detalle de una tarea
+- **THEN** el cambio queda guardado ahí mismo, sin abrir la edición, y la bitácora lo registra
+
+#### Scenario: Cerrar con entregables pendientes sigue abriendo el asistente
+
+- **GIVEN** una tarea con un entregable sin cumplir
+- **WHEN** desde el detalle se la lleva a un estado de tipo `final`
+- **THEN** se abre el asistente de cierre, como antes de existir la pantalla de edición
+
+#### Scenario: Marcar una casilla no exige editar
+
+- **GIVEN** una tarea cuyo cuerpo tiene una lista de verificación
+- **WHEN** se marca una casilla desde el detalle
+- **THEN** queda marcada y persiste, sin pasar por `/tasks/[id]/edit`
+
+#### Scenario: El cuerpo se escribe en el detalle
+
+- **WHEN** se escribe en la descripción desde el detalle y se guarda
+- **THEN** el cuerpo queda guardado sin abrir la pantalla de edición
+
+#### Scenario: Adjuntos, vínculos y entregables siguen en el detalle
+
+- **WHEN** se adjunta un archivo, se declara un entregable o se vincula un pedido
+- **THEN** las tres cosas ocurren en el detalle, y la pantalla de edición no las ofrece
+
+### Requirement: La edición de la tarea reúne sus datos en un formulario con un solo Guardar
+
+`/tasks/[id]/edit` SHALL ofrecer un formulario con el título, la línea de negocio, el responsable, la fecha límite, el recordatorio y las etiquetas de la tarea, cargado con sus valores actuales. El estado, el cuerpo, los adjuntos, los vínculos y los entregables SHALL NOT formar parte de este formulario. El alta de tarea SHALL conservar sus campos, su destino y su comportamiento actuales.
+
+Un título vacío SHALL NOT guardarse, y el mensaje SHALL señalar el campo. Un recordatorio SHALL NOT poder fijarse en una tarea sin fecha límite. Quitar la fecha límite SHALL quitar también el recordatorio.
+
+Al pulsar Guardar con conexión, el sistema SHALL escribir los campos cambiados en una única operación, SHALL esperar a que el envío se confirme —indicando que está guardando— y SHALL llevar a `/tasks/[id]`, que SHALL mostrar los valores nuevos. Si el envío falla, el formulario SHALL quedarse abierto con el error y con los datos escritos. La bitácora SHALL registrar exactamente los campos cambiados, con su valor anterior y el nuevo, y ningún campo más.
+
+Si el formulario tiene cambios sin guardar y se intenta salir —cancelar, seguir una miga de pan, o abandonar la página—, el sistema SHALL pedir confirmación antes de descartar. Si no tiene cambios, SHALL salir sin preguntar. Tras un guardado exitoso, la salida SHALL NOT pedir confirmación.
+
+#### Scenario: El formulario llega con los valores actuales
+
+- **GIVEN** una tarea titulada «Cortar tazas», de la línea Alfarería, con responsable, fecha límite y una etiqueta
+- **WHEN** se abre `/tasks/[id]/edit`
+- **THEN** el formulario muestra esos mismos valores, y no muestra el estado ni el cuerpo de la tarea
+
+#### Scenario: Guardar lleva al detalle con los valores nuevos
+
+- **WHEN** se cambia el título y se pulsa Guardar con conexión
+- **THEN** el formulario indica que está guardando y, al confirmarse el envío, navega a `/tasks/[id]`, que muestra el título nuevo
+
+#### Scenario: Tres campos, un solo registro de bitácora
+
+- **WHEN** se cambian de una vez el título, el responsable y la fecha límite, y se guarda
+- **THEN** la bitácora registra esos tres campos, cada uno con su valor anterior y el nuevo, y ningún otro campo de la tarea
+
+#### Scenario: Un campo que no se tocó no se registra
+
+- **GIVEN** una tarea cuya descripción y cuyas etiquetas no se tocan en el formulario
+- **WHEN** se cambia solo la fecha límite y se guarda
+- **THEN** la bitácora registra la fecha límite y nada más
+
+#### Scenario: El título no puede quedar vacío
+
+- **WHEN** se borra el título y se intenta guardar
+- **THEN** el guardado se impide con un mensaje que señala el campo, y la tarea conserva su título
+
+#### Scenario: Un recordatorio necesita fecha límite
+
+- **WHEN** se fija un recordatorio en una tarea sin fecha límite y se intenta guardar
+- **THEN** el guardado se impide y el mensaje explica que primero hace falta una fecha límite
+
+#### Scenario: Quitar la fecha límite quita el recordatorio
+
+- **GIVEN** una tarea con fecha límite y recordatorio
+- **WHEN** se borra la fecha límite y se guarda
+- **THEN** la tarea queda sin fecha límite y sin recordatorio
+
+#### Scenario: Salir con cambios pide confirmación
+
+- **WHEN** se cambia el responsable y se pulsa Cancelar, o la miga de pan de la tarea
+- **THEN** se pide confirmación; al rechazarla sigue en el formulario con el cambio intacto, y al aceptarla sale sin guardar
+
+#### Scenario: Salir sin cambios no pregunta nada
+
+- **WHEN** se abre el formulario y se sale sin tocar ningún campo
+- **THEN** la salida ocurre sin ninguna confirmación
+
+#### Scenario: Salir tras guardar no pregunta nada
+
+- **WHEN** se guarda con éxito
+- **THEN** la navegación al detalle ocurre sin confirmación de descarte
+
+#### Scenario: Un fallo deja el formulario abierto
+
+- **WHEN** el envío de la edición falla
+- **THEN** el formulario sigue abierto con el error y con los datos escritos, y la tarea conserva sus valores anteriores
+
+#### Scenario: El alta no cambia
+
+- **WHEN** se abre el alta de tarea y se guarda con título, línea, responsable, fecha límite y etiquetas
+- **THEN** la tarea queda creada con todo ello y el alta se comporta como antes de existir la pantalla de edición

@@ -1,16 +1,18 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { opensClosingWizard } from "@/lib/tasks/deliverables";
 import type { BusinessLine, Status, Task } from "@/types";
 
 import { TaskFields } from "./task-fields";
 
+const push = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ push, refresh: vi.fn(), replace: vi.fn() }),
 }));
 
+beforeEach(() => push.mockClear());
 afterEach(cleanup);
 
 const TASK = "22222222-2222-4222-8222-222222222222";
@@ -40,8 +42,11 @@ function task(overrides: Partial<Task> = {}): Task {
   };
 }
 
+const ENTREGADO = "77777777-7777-4777-8777-777777777777";
+
 const statuses = [
-  { id: STATUS, name: "Haciendo", kind: "in_progress" },
+  { id: STATUS, name: "Haciendo", kind: "in_progress", color: "blue" },
+  { id: ENTREGADO, name: "Entregado", kind: "final", color: "green" },
 ] as unknown as Status[];
 
 const lines = [{ id: LINE, name: "Alfarería", color: "amber" }] as unknown as BusinessLine[];
@@ -54,6 +59,7 @@ const assignees = [
 function renderFields(
   overrides: Partial<Task> = {},
   onSave = vi.fn().mockResolvedValue(undefined),
+  extra: { pendingDeliverables?: number; from?: string | null } = {},
 ) {
   render(
     <TaskFields
@@ -62,89 +68,14 @@ function renderFields(
       businessLines={lines}
       assignees={assignees}
       onSave={onSave}
-      pendingDeliverables={0}
+      pendingDeliverables={extra.pendingDeliverables ?? 0}
+      from={extra.from ?? null}
+      timezone="America/La_Paz"
       readOnly={overrides.archivedAt !== undefined && overrides.archivedAt !== null}
     />,
   );
   return onSave;
 }
-
-describe("campos con guardado propio", () => {
-  it("guarda el título al salir del campo, sin ninguna otra acción", async () => {
-    const onSave = renderFields();
-    const user = userEvent.setup();
-
-    const titulo = screen.getByLabelText("Título");
-    await user.clear(titulo);
-    await user.type(titulo, "Set de 8 tazas");
-    await user.tab();
-
-    expect(onSave).toHaveBeenCalledWith({
-      taskId: TASK,
-      field: "title",
-      value: "Set de 8 tazas",
-    });
-    // Un solo campo viaja: ni el responsable ni la fecha se reenvían.
-    expect(onSave).toHaveBeenCalledTimes(1);
-  });
-
-  it("no guarda si el título no cambió", async () => {
-    const onSave = renderFields();
-    const user = userEvent.setup();
-
-    await user.click(screen.getByLabelText("Título"));
-    await user.tab();
-
-    expect(onSave).not.toHaveBeenCalled();
-  });
-
-  it("impide el título vacío y conserva el anterior", async () => {
-    const onSave = vi
-      .fn()
-      .mockResolvedValue({ error: "El título no puede quedar vacío." });
-    renderFields({}, onSave);
-    const user = userEvent.setup();
-
-    const titulo = screen.getByLabelText("Título");
-    await user.clear(titulo);
-    await user.tab();
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "El título no puede quedar vacío.",
-    );
-    // El campo vuelve al título guardado: no puede quedar en pantalla algo que
-    // el servidor rechazó.
-    expect(titulo).toHaveValue("Set de 6 tazas artesanales");
-  });
-
-  it("avisa de que un recordatorio necesita fecha límite", async () => {
-    const onSave = vi.fn().mockResolvedValue({
-      error: "Primero ponle una fecha límite a la tarea; el recordatorio cuelga de ella.",
-    });
-    renderFields({ dueAt: null }, onSave);
-
-    // La pantalla lo anuncia antes de intentarlo…
-    expect(
-      screen.getByText("El recordatorio cuelga de la fecha límite."),
-    ).toBeInTheDocument();
-
-    // …y si aun así se intenta, el mensaje del servidor se muestra.
-    const recordatorio = screen.getByLabelText("Recordatorio");
-    await userEvent.setup().type(recordatorio, "2026-09-19T09:00");
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Primero ponle una fecha límite",
-    );
-  });
-
-  it("una tarea archivada no ofrece editar ningún campo", () => {
-    renderFields({ archivedAt: "2026-09-08T10:00:00Z" });
-
-    expect(screen.getByLabelText("Título")).toBeDisabled();
-    expect(screen.getByLabelText("Fecha límite")).toBeDisabled();
-    expect(screen.getByLabelText("Recordatorio")).toBeDisabled();
-  });
-});
 
 /**
  * KAM-21 · La segunda entrada al asistente de cierre.
@@ -163,5 +94,101 @@ describe("cambiar a un estado final desde el detalle", () => {
     expect(opensClosingWizard("final", 1)).toBe(true);
     expect(opensClosingWizard("final", 0)).toBe(false);
     expect(opensClosingWizard("in_progress", 1)).toBe(false);
+  });
+});
+
+/**
+ * KAM-29 · Escenarios del delta spec `task-detail`, requisito «El detalle
+ * presenta los datos de la tarea y los cambia en una pantalla aparte».
+ */
+describe("la cabecera se lee, no se edita", () => {
+  it("rinde los datos como texto y sin controles (La cabecera se lee, no se edita)", () => {
+    renderFields({ remindAt: "2026-09-19T13:00:00Z" });
+
+    expect(screen.getByText("Set de 6 tazas artesanales")).toBeInTheDocument();
+    expect(screen.getByText("Alfarería")).toBeInTheDocument();
+    expect(screen.getByText("Ana Quispe")).toBeInTheDocument();
+    expect(screen.getByText("20/09/2026")).toBeInTheDocument();
+
+    // Ni un solo campo de texto: lo que antes era un formulario ahora se lee.
+    expect(screen.queryByLabelText("Título")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Línea")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Responsable")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Fecha límite")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Recordatorio")).not.toBeInTheDocument();
+  });
+
+  it("muestra las etiquetas (Las etiquetas se ven en el detalle)", () => {
+    renderFields({
+      tags: [
+        { id: "t1", organizationId: "org", name: "Hornada-07" },
+        { id: "t2", organizationId: "org", name: "Urgente" },
+      ],
+    });
+
+    expect(screen.getByText("Hornada-07")).toBeInTheDocument();
+    expect(screen.getByText("Urgente")).toBeInTheDocument();
+  });
+
+  it("dice lo que falta en vez de dejarlo en blanco (Un dato ausente se dice)", () => {
+    renderFields({ assigneeId: null, dueAt: null, remindAt: null, tags: [] });
+
+    expect(screen.getByText("Sin responsable")).toBeInTheDocument();
+    expect(screen.getByText("Sin fecha límite")).toBeInTheDocument();
+    expect(screen.getByText("Sin recordatorio")).toBeInTheDocument();
+    expect(screen.getByText("Sin etiquetas")).toBeInTheDocument();
+  });
+
+  it("ofrece Editar hacia la pantalla de edición (Editar lleva al formulario)", () => {
+    renderFields();
+
+    expect(screen.getByTestId("edit-task")).toHaveAttribute(
+      "href",
+      `/tasks/${TASK}/edit`,
+    );
+  });
+
+  it("Editar conserva la vista de origen", () => {
+    renderFields({}, vi.fn().mockResolvedValue(undefined), { from: "view=list" });
+
+    expect(screen.getByTestId("edit-task")).toHaveAttribute(
+      "href",
+      `/tasks/${TASK}/edit?from=view%3Dlist`,
+    );
+  });
+
+  it("una tarea archivada no ofrece Editar (Una tarea archivada no se edita)", () => {
+    renderFields({ archivedAt: "2026-09-08T10:00:00Z" });
+
+    expect(screen.queryByTestId("edit-task")).not.toBeInTheDocument();
+  });
+
+  it("el estado sigue cambiándose aquí mismo (El estado se cambia sin salir del detalle)", async () => {
+    const onSave = renderFields();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByLabelText("Estado"));
+    await user.click(await screen.findByRole("option", { name: "Entregado" }));
+
+    expect(onSave).toHaveBeenCalledWith({
+      taskId: TASK,
+      field: "statusId",
+      value: ENTREGADO,
+    });
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("con entregables pendientes abre el asistente (Cerrar con entregables pendientes sigue abriendo el asistente)", async () => {
+    const onSave = renderFields({}, vi.fn().mockResolvedValue(undefined), {
+      pendingDeliverables: 1,
+    });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByLabelText("Estado"));
+    await user.click(await screen.findByRole("option", { name: "Entregado" }));
+
+    // No guarda en silencio: lleva a la dirección que abre V19.
+    expect(onSave).not.toHaveBeenCalled();
+    expect(push).toHaveBeenCalledWith(`/tasks/${TASK}?close=${ENTREGADO}`);
   });
 });

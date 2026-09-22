@@ -2,7 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Item, ItemCategory, ItemKind } from "@/types";
+import type { Item, ItemCategory, ItemCategoryAttribute, ItemKind } from "@/types";
 
 import { ItemFormDialog } from "./item-form-dialog";
 
@@ -26,6 +26,7 @@ function item(kind: ItemKind): Item {
     description: null,
     unitId: null,
     categoryId: null,
+    attributes: {},
     salePrice: kind === "product" ? 45 : null,
     minStock: kind === "supply" ? 12 : null,
     archivedAt: null,
@@ -254,5 +255,150 @@ describe("ItemFormDialog · categoría", () => {
     const aviso = within(dialog).getByTestId("item-category-empty");
     expect(aviso).toHaveTextContent("La persona dueña las define en Configuración.");
     expect(within(aviso).queryByRole("link")).toBeNull();
+  });
+});
+
+/**
+ * Cambio `catalog-custom-attributes`: los campos de atributo de la categoría
+ * elegida, validados como en el servidor.
+ */
+describe("ItemFormDialog · atributos de la categoría", () => {
+  const FILAMENTO: ItemCategory = {
+    id: "66666666-6666-4666-8666-000000000001",
+    organizationId: ORG,
+    kind: "supply",
+    name: "Filamento",
+    archivedAt: null,
+  };
+  const SUSTRATOS: ItemCategory = {
+    id: "66666666-6666-4666-8666-000000000002",
+    organizationId: ORG,
+    kind: "supply",
+    name: "Sustratos",
+    archivedAt: null,
+  };
+
+  function atributo(
+    overrides: Partial<ItemCategoryAttribute> & Pick<ItemCategoryAttribute, "id" | "name">,
+  ): ItemCategoryAttribute {
+    return {
+      organizationId: ORG,
+      categoryId: FILAMENTO.id,
+      type: "text",
+      unit: null,
+      options: [],
+      required: false,
+      scope: "item",
+      position: 1,
+      archivedAt: null,
+      ...overrides,
+    };
+  }
+
+  const DEFINICIONES = [
+    atributo({ id: "vel", name: "Velocidad recomendada", type: "number", unit: "mm/s", position: 4 }),
+    atributo({ id: "marca", name: "Marca", type: "list", options: ["Sunlu", "eSun"], position: 1 }),
+    atributo({ id: "tmin", name: "Temperatura mínima", type: "number", unit: "°C", position: 2 }),
+    atributo({ id: "tmax", name: "Temperatura máxima", type: "number", unit: "°C", position: 3 }),
+    atributo({ id: "color", name: "Color", type: "list", options: ["Negro"], scope: "variant", position: 5 }),
+  ];
+
+  function renderFilamento(editing?: Item) {
+    render(
+      <ItemFormDialog
+        open
+        onOpenChange={() => {}}
+        lines={[]}
+        units={[]}
+        kind="supply"
+        item={editing}
+        categories={[FILAMENTO, SUSTRATOS]}
+        currentCategory={editing?.categoryId === FILAMENTO.id ? FILAMENTO : null}
+        attributeDefinitions={DEFINICIONES}
+      />,
+    );
+    return screen.getByRole("dialog");
+  }
+
+  function etiquetas(dialog: HTMLElement) {
+    const fields = within(dialog).queryByTestId("attribute-fields");
+    return fields
+      ? Array.from(fields.querySelectorAll("label")).map((label) => label.textContent)
+      : [];
+  }
+
+  it("un filamento ofrece sus cuatro campos de ítem en orden, con su unidad, y no el color", () => {
+    // «El formulario de ítem ofrece los atributos de ítem».
+    const dialog = renderFilamento({ ...item("supply"), categoryId: FILAMENTO.id });
+
+    expect(etiquetas(dialog)).toEqual([
+      "Marca",
+      "Temperatura mínima",
+      "Temperatura máxima",
+      "Velocidad recomendada",
+    ]);
+    expect(within(dialog).getAllByText("°C")).toHaveLength(2);
+    expect(within(dialog).getByText("mm/s")).toBeInTheDocument();
+    expect(within(dialog).queryByText("Color")).toBeNull();
+  });
+
+  it("sin categoría o con una sin atributos, el formulario es el de siempre", () => {
+    // «Un ítem sin atributos declarados se ve como hoy» y «La definición de una
+    // categoría no se aplica a otra».
+    const sinCategoria = renderFilamento();
+    expect(within(sinCategoria).queryByTestId("attribute-fields")).toBeNull();
+    cleanup();
+
+    const sustratos = renderFilamento({ ...item("supply"), categoryId: SUSTRATOS.id });
+    expect(within(sustratos).queryByTestId("attribute-fields")).toBeNull();
+  });
+
+  it("cambiar la categoría muestra los campos de la nueva", async () => {
+    // «Cambiar la categoría cambia los campos».
+    const dialog = renderFilamento({ ...item("supply"), categoryId: SUSTRATOS.id });
+
+    await userEvent.click(within(dialog).getByRole("combobox", { name: "Categoría" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Filamento" }));
+
+    expect(etiquetas(dialog)).toContain("Temperatura mínima");
+  });
+
+  it("envía los valores escritos por id de atributo", async () => {
+    const dialog = renderFilamento({ ...item("supply"), categoryId: FILAMENTO.id });
+
+    await userEvent.type(within(dialog).getByLabelText("Temperatura mínima"), "190");
+    await userEvent.click(within(dialog).getByRole("combobox", { name: "Marca" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Sunlu" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attributes: { marca: "Sunlu", tmin: "190", tmax: "", vel: "" },
+      }),
+    );
+  });
+
+  it("un número mal escrito no se envía y se explica", async () => {
+    // «Un valor no numérico se rechaza», nivel de formulario.
+    const dialog = renderFilamento({ ...item("supply"), categoryId: FILAMENTO.id });
+
+    await userEvent.type(within(dialog).getByLabelText("Temperatura mínima"), "caliente");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateItem).not.toHaveBeenCalled();
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "«Temperatura mínima» tiene que ser un número.",
+    );
+  });
+
+  it("los valores guardados llegan puestos", () => {
+    const dialog = renderFilamento({
+      ...item("supply"),
+      categoryId: FILAMENTO.id,
+      attributes: { tmin: 190, marca: "Sunlu" },
+    });
+
+    expect(within(dialog).getByLabelText("Temperatura mínima")).toHaveValue("190");
+    expect(within(dialog).getByRole("combobox", { name: "Marca" })).toHaveTextContent("Sunlu");
   });
 });

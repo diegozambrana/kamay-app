@@ -56,6 +56,7 @@ const RECORD_KINDS: Record<string, string> = {
   sales_channels: "Canal",
   expense_categories: "Categoría de gasto",
   item_categories: "Categoría de ítem",
+  item_category_attributes: "Atributo de categoría",
   units: "Unidad",
   memberships: "Equipo",
   membership_lines: "Acceso a línea",

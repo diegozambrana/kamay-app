@@ -9,10 +9,12 @@ import { loadRecordHistory } from "@/services/activity/record-history";
 import { ItemService } from "@/services/catalog/item-service";
 import { ItemVariantService } from "@/services/catalog/item-variant-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
+import { ItemCategoryAttributeService } from "@/services/configuration/item-category-attribute-service";
 import { ItemCategoryService } from "@/services/configuration/item-category-service";
 import { UnitService } from "@/services/configuration/unit-service";
 import { ItemLastCostService } from "@/services/expenses/item-last-cost-service";
 import { MovementService } from "@/services/inventory/movement-service";
+import { VariantBalanceService } from "@/services/inventory/variant-balance-service";
 import { TaskService } from "@/services/tasks/task-service";
 
 export const metadata = { title: "Ítem · Catálogo · Kamay" };
@@ -74,6 +76,17 @@ export default async function ItemDetailPage({
     ),
   ]);
 
+  // Los atributos de esas categorías, archivados incluidos
+  // (catalog-custom-attributes): los vigentes se piden en los formularios, y
+  // todos rotulan lo que el ítem tenga guardado, también de otra categoría.
+  const attributeDefinitions = await new ItemCategoryAttributeService(
+    context.supabase,
+  ).listForCategories(
+    context.organizationId,
+    categories.map((category) => category.id),
+    { includeArchived: true },
+  );
+
   /**
    * Las tres secciones de inventario (KAM-18) son solo de los insumos: un
    * producto o un activo no tiene saldo que explicar.
@@ -87,13 +100,19 @@ export default async function ItemDetailPage({
   const lastCosts = new ItemLastCostService(context.supabase);
   const isSupply = item.kind === "supply";
 
-  const [balance, itemMovements, prices, lastCostMap] = await Promise.all([
+  const [balance, itemMovements, prices, lastCostMap, variantBalances] = await Promise.all([
     isSupply ? movements.balanceFor(context.organizationId, item.id) : null,
     isSupply
       ? movements.forItem(context.organizationId, item.id, { limit: MOVEMENT_PAGE })
       : [],
     isSupply ? lastCosts.pricesFor(context.organizationId, item.id) : [],
     isSupply ? lastCosts.mapFor(context.organizationId) : new Map(),
+    // El saldo por variante (catalog-custom-attributes). La vista incluye las
+    // variantes archivadas, así que se pide siempre para un insumo: su fila
+    // «Sin variante» también cuenta cuando ya no le quedan vigentes.
+    isSupply
+      ? new VariantBalanceService(context.supabase).forItem(context.organizationId, item.id)
+      : [],
   ]);
 
   /**
@@ -140,11 +159,13 @@ export default async function ItemDetailPage({
       lines={lines}
       units={units}
       categories={categories}
+      attributeDefinitions={attributeDefinitions}
       history={history}
       relatedTasks={relatedTasks}
       role={context.role}
       timeZone={context.organization.timezone}
       balance={balance}
+      variantBalances={variantBalances}
       movements={itemMovements}
       hasMoreMovements={itemMovements.length === MOVEMENT_PAGE}
       prices={prices}

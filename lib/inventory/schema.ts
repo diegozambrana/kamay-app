@@ -84,6 +84,12 @@ export const countSchema = z.object({
   ),
   occurredAt,
   note: optionalText,
+  /**
+   * El conteo viene de la fila «Sin variante» de un ítem que tiene variantes
+   * (`catalog-custom-attributes`, design D7): solo así se acepta un ajuste sin
+   * variante en ese ítem. El consumo no tiene esta excepción.
+   */
+  countsUnassigned: z.boolean().optional(),
 });
 
 export type CountValues = z.infer<typeof countSchema>;

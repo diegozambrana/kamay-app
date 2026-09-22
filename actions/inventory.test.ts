@@ -12,6 +12,7 @@ const estado = vi.hoisted(() => ({
   ajustes: [] as unknown[],
   fallo: null as unknown,
   revalidadas: [] as string[],
+  variantes: [] as { id: string; archivedAt: string | null }[],
 }));
 
 vi.mock("next/cache", () => ({
@@ -30,6 +31,21 @@ vi.mock("@/lib/auth/session-context", () => ({
           membership: { role: "assistant" },
         }
       : null,
+}));
+
+vi.mock("@/services/catalog/item-variant-service", () => ({
+  ItemVariantService: class {
+    async listForItem() {
+      return estado.variantes.map((variant) => ({
+        organizationId: ORG,
+        itemId: ITEM,
+        name: variant.id,
+        attributes: {},
+        salePrice: null,
+        ...variant,
+      }));
+    }
+  },
 }));
 
 vi.mock("@/services/inventory/movement-service", () => ({
@@ -68,6 +84,7 @@ beforeEach(() => {
   estado.ajustes = [];
   estado.fallo = null;
   estado.revalidadas = [];
+  estado.variantes = [];
 });
 
 describe("registerConsumption", () => {
@@ -165,5 +182,89 @@ describe("registerCountAdjustment", () => {
     estado.fallo = { code: "42501", message: "permiso denegado" };
 
     expect(await registerCountAdjustment(ajuste)).toEqual({ error: "permiso denegado" });
+  });
+});
+
+/**
+ * Cambio `catalog-custom-attributes`: consumo y conteo por variante, del lado
+ * del servidor. Lo encolado sin conexión pasa por estas mismas acciones.
+ */
+describe("movimientos por variante", () => {
+  const NEGRO = "66666666-6666-4666-8666-666666666666";
+  const ROJO = "77777777-7777-4777-8777-777777777777";
+  const VIEJA = "88888888-8888-4888-8888-888888888888";
+
+  beforeEach(() => {
+    estado.variantes = [
+      { id: NEGRO, archivedAt: null },
+      { id: ROJO, archivedAt: null },
+      { id: VIEJA, archivedAt: "2026-09-01T00:00:00Z" },
+    ];
+  });
+
+  it("un consumo sin variante de un ítem con variantes se rechaza sin escribir", async () => {
+    // «El servidor rechaza el consumo sin variante».
+    const result = await registerConsumption(consumo);
+
+    expect(result).toEqual({ error: "Elige la variante: este insumo tiene variantes." });
+    expect(estado.consumos).toEqual([]);
+  });
+
+  it("una variante de otro ítem o archivada se rechaza", async () => {
+    // «El servidor rechaza una variante ajena».
+    const ajena = await registerConsumption({
+      ...consumo,
+      variantId: "99999999-9999-4999-8999-999999999999",
+    });
+    const archivada = await registerConsumption({ ...consumo, variantId: VIEJA });
+
+    expect(ajena).toEqual({ error: "Esa variante no es de este insumo." });
+    expect(archivada).toEqual({ error: "Esa variante está archivada. Elige otra." });
+    expect(estado.consumos).toEqual([]);
+  });
+
+  it("un consumo con su variante se guarda con ella", async () => {
+    const result = await registerConsumption({ ...consumo, variantId: NEGRO });
+
+    expect(result).toBeUndefined();
+    expect(estado.consumos).toEqual([expect.objectContaining({ variantId: NEGRO })]);
+  });
+
+  it("un conteo sin variante de un ítem con variantes se rechaza", async () => {
+    // «El servidor rechaza el conteo sin variante».
+    const result = await registerCountAdjustment(ajuste);
+
+    expect(result).toEqual({ error: "Elige la variante: este insumo tiene variantes." });
+    expect(estado.ajustes).toEqual([]);
+  });
+
+  it("el conteo de la fila «Sin variante» se acepta con su marca", async () => {
+    // «Poner en cero lo que no tiene variante», nivel de acción.
+    const result = await registerCountAdjustment({
+      ...ajuste,
+      difference: "0.4",
+      countsUnassigned: true,
+    });
+
+    expect(result).toBeUndefined();
+    expect(estado.ajustes).toEqual([
+      expect.objectContaining({ variantId: null, difference: 0.4 }),
+    ]);
+  });
+
+  it("el conteo de una variante se guarda con ella", async () => {
+    // «Conteo de una variante», nivel de acción.
+    const result = await registerCountAdjustment({ ...ajuste, difference: "-0.3", variantId: NEGRO });
+
+    expect(result).toBeUndefined();
+    expect(estado.ajustes).toEqual([
+      expect.objectContaining({ variantId: NEGRO, difference: -0.3 }),
+    ]);
+  });
+
+  it("un ítem sin variantes sigue igual que antes", async () => {
+    estado.variantes = [];
+    expect(await registerConsumption(consumo)).toBeUndefined();
+    expect(await registerCountAdjustment(ajuste)).toBeUndefined();
   });
 });

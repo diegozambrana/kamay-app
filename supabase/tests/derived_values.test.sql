@@ -10,7 +10,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(19);
+select plan(28);
 
 -- ── Semilla propia ────────────────────────────────────────────────────────
 
@@ -215,6 +215,83 @@ select is_empty(
          or column_name like '%saldo%'  or column_name like '%avg_cost%'
          or column_name like '%last_cost%' or column_name like '%margin%') $$,
   'catálogo e inventario: ninguna columna almacena saldo, último costo ni margen');
+
+-- ── `item_variant_balances` · catalog-custom-attributes ──────────────────
+-- Un filamento con tres colores. Los movimientos llevan su variante; uno, a
+-- propósito, no, para ejercitar la fila «Sin variante».
+
+insert into items (id, organization_id, kind, name, min_stock) values
+  ('00000000-0000-0000-0000-000000000dc1', '00000000-0000-0000-0000-0000000000d9', 'supply', 'PLA Sunlu', null),
+  ('00000000-0000-0000-0000-000000000dc2', '00000000-0000-0000-0000-0000000000d9', 'supply', 'PETG con colores', null),
+  ('00000000-0000-0000-0000-000000000dc3', '00000000-0000-0000-0000-0000000000d9', 'supply', 'Resina de dos colores', 1);
+
+insert into item_variants (id, organization_id, item_id, name) values
+  ('00000000-0000-0000-0000-000000000dd1', '00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc1', 'Negro'),
+  ('00000000-0000-0000-0000-000000000dd2', '00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc1', 'Rojo'),
+  ('00000000-0000-0000-0000-000000000dd3', '00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc1', 'Azul'),
+  ('00000000-0000-0000-0000-000000000dd4', '00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc2', 'Blanco'),
+  ('00000000-0000-0000-0000-000000000dd5', '00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc3', 'Gris'),
+  ('00000000-0000-0000-0000-000000000dd6', '00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc3', 'Negro');
+
+insert into inventory_movements (organization_id, item_id, variant_id, kind, quantity, source_type) values
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc1', '00000000-0000-0000-0000-000000000dd1', 'in',          2,   'manual'),
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc1', '00000000-0000-0000-0000-000000000dd2', 'in',          1,   'manual'),
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc1', '00000000-0000-0000-0000-000000000dd1', 'out',        -0.5, 'manual'),
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc1', '00000000-0000-0000-0000-000000000dd2', 'adjustment', -0.2, 'count'),
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc1', null,                                   'out',        -0.4, 'manual'),
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc2', '00000000-0000-0000-0000-000000000dd4', 'in',          3,   'manual'),
+  ('00000000-0000-0000-0000-0000000000d9', '00000000-0000-0000-0000-000000000dc3', '00000000-0000-0000-0000-000000000dd6', 'in',          3,   'manual');
+
+-- ── Scenario: Cada saldo coincide con la suma de sus movimientos ──────────
+
+select is(
+  (select balance from item_variant_balances where variant_id = '00000000-0000-0000-0000-000000000dd1'),
+  1.5::numeric, 'item_variant_balances: Negro, 2 de entrada y 0,5 de consumo, queda en 1,5');
+
+select is(
+  (select balance from item_variant_balances where variant_id = '00000000-0000-0000-0000-000000000dd2'),
+  0.8::numeric, 'item_variant_balances: Rojo, 1 de entrada y −0,2 de ajuste, queda en 0,8');
+
+select is(
+  (select sum(balance) from item_variant_balances where item_id = '00000000-0000-0000-0000-000000000dc1'),
+  (select balance from item_balances where item_id = '00000000-0000-0000-0000-000000000dc1'),
+  'item_variant_balances: la suma de las filas de un ítem es su saldo');
+
+select is(
+  (select balance from item_variant_balances where variant_id = '00000000-0000-0000-0000-000000000dd1'),
+  (select sum(quantity) from inventory_movements where variant_id = '00000000-0000-0000-0000-000000000dd1'),
+  'item_variant_balances: el saldo de una variante es exactamente la suma de sus movimientos');
+
+-- ── Scenario: Una variante que nunca se movió ─────────────────────────────
+
+select is(
+  (select balance from item_variant_balances where variant_id = '00000000-0000-0000-0000-000000000dd3'),
+  0::numeric, 'item_variant_balances: una variante sin movimientos aparece con cero');
+
+-- ── Scenario: Movimientos anteriores sin variante ─────────────────────────
+
+select is(
+  (select balance from item_variant_balances
+    where item_id = '00000000-0000-0000-0000-000000000dc1' and variant_id is null),
+  -0.4::numeric, 'item_variant_balances: los movimientos sin variante forman su propia fila');
+
+-- ── Scenario: Sin fila «Sin variante» cuando no hace falta ────────────────
+
+select is_empty(
+  $$ select 1 from item_variant_balances
+     where item_id = '00000000-0000-0000-0000-000000000dc2' and variant_id is null $$,
+  'item_variant_balances: sin movimientos sin variante, no hay fila sin variante');
+
+-- ── Scenario: Un color agotado no dispara la alerta del ítem ─────────────
+-- Gris en cero, Negro en 3, mínimo 1: el ítem suma 3 y no está bajo mínimo.
+
+select is(
+  (select balance from item_variant_balances where variant_id = '00000000-0000-0000-0000-000000000dd5'),
+  0::numeric, 'item_variant_balances: el gris está agotado');
+
+select ok(
+  (select not below_min from item_balances where item_id = '00000000-0000-0000-0000-000000000dc3'),
+  'item_balances: un color agotado no pone bajo mínimo a un ítem que suma 3 sobre 1');
 
 select * from finish();
 

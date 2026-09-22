@@ -429,13 +429,13 @@ Esta decisión simplifica el sistema más de lo que parece:
 
 **Contactos** — registro mínimo, roles, historial.
 
-**Catálogo** — ítems con tipo, unidad, categoría (elegida de la lista que la organización define para cada tipo), línea y variantes; precio referencial y último costo conocido.
+**Catálogo** — ítems con tipo, unidad, categoría (elegida de la lista que la organización define para cada tipo), línea y variantes; atributos que cada categoría declara para sus ítems o sus variantes (color, marca, temperaturas); precio referencial y último costo conocido.
 
 **Egresos** — compras y gastos con línea obligatoria, comprobante y estado de pago.
 
 **Pedidos y ventas** — pedido con cliente, líneas, fecha comprometida, **modo de entrega**, notas y fotos; tablero con estados configurables y **cola ordenada por antigüedad**; venta directa de feria en dos toques; anticipos, saldos, por cobrar y por pagar; acción *Crear tarea para este pedido*.
 
-**Inventario suave** — saldo = compras − consumos ± ajustes; consumo rápido; ajuste por conteo; mínimo y alerta; stock de piezas terminadas para feria.
+**Inventario suave** — saldo = compras − consumos ± ajustes, por ítem y por variante; consumo rápido y ajuste por conteo, que eligen la variante cuando el ítem las tiene; mínimo y alerta, por ítem; stock de piezas terminadas para feria.
 
 **Activos** — maquinaria con costo, fecha y línea; indicador de recuperación de inversión.
 
@@ -491,10 +491,10 @@ Proveedor, fecha, línea, insumos con cantidad y precio, total, estado de pago, 
 Monto, categoría, línea, fecha, nota, comprobante, etiqueta, casilla "asignar a un pedido". Deliberadamente corto.
 
 ### V10 · Catálogo
-Lista filtrable por tipo y línea; saldo, último costo, precio de venta, etiqueta de línea o "compartido"; filtro *Ver archivados*.
+Lista filtrable por tipo, línea, categoría y los atributos de lista de la categoría elegida; saldo, último costo, precio de venta, etiqueta de línea o "compartido"; filtro *Ver archivados*.
 
 ### V11 · Detalle de ítem
-Datos generales, variantes, evolución de precios de compra, historial de consumo o ventas, mínimo, proveedores habituales, líneas donde se usa, tareas relacionadas e historial de cambios.
+Datos generales con los atributos de su categoría rotulados, variantes con sus atributos y su disponibilidad, evolución de precios de compra, historial de consumo o ventas, mínimo, proveedores habituales, líneas donde se usa, tareas relacionadas e historial de cambios.
 
 ### V12 · Activos
 Lista con costo, fecha, línea y **barra de recuperación de inversión**; tareas de mantenimiento relacionadas.
@@ -506,7 +506,7 @@ Directorio buscable con rol, datos, totales acumulados, líneas relacionadas, ta
 Selector de periodo y de línea; cinco informes con gráfico y tabla ordenable; regla de reparto de gastos compartidos visible; exportar. **Solo dueño.**
 
 ### V15 · Configuración de la organización
-Nombre, logo, moneda; líneas de negocio; canales; **juegos de estados** (V22); categorías de gasto; categorías de ítem (una lista por tipo: insumo, producto, activo); unidades; preferencias de notificación; política de retención de la bitácora; módulos activables; **herramientas** (catálogo, activación y parámetros — solo dueño); usuarios y roles; regla de reparto.
+Nombre, logo, moneda; líneas de negocio; canales; **juegos de estados** (V22); categorías de gasto; categorías de ítem (una lista por tipo: insumo, producto, activo), cada una con sus atributos; unidades; preferencias de notificación; política de retención de la bitácora; módulos activables; **herramientas** (catálogo, activación y parámetros — solo dueño); usuarios y roles; regla de reparto.
 
 ### V16 · Registro rápido (móvil)
 Botones grandes: Venta rápida · Pedido · Compra · Gasto · Consumo · Tarea. Formularios mínimos. Funciona sin conexión.

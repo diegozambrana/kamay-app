@@ -1,4 +1,4 @@
-import type { ItemKind } from "@/types";
+import type { AttributeScope, AttributeType, ItemKind } from "@/types";
 
 /** Cómo se nombran los tipos de ítem en la interfaz (mapa de navegación V10). */
 export const ITEM_KIND_LABELS: Record<ItemKind, string> = {
@@ -87,3 +87,42 @@ export const NO_CATEGORY_LABEL = "Sin categoría";
  * El ítem sirve a todas las líneas.
  */
 export const SHARED_LINE_LABEL = "Compartido";
+
+// ── Atributos de categoría (catalog-custom-attributes) ─────────────────────
+
+export const ATTRIBUTE_TYPE_LABELS: Record<AttributeType, string> = {
+  text: "Texto",
+  number: "Número",
+  list: "Lista",
+  color: "Color",
+};
+
+/** A qué se aplica: «Ítem» o «Variante», como lo dice la tabla de atributos. */
+export const ATTRIBUTE_SCOPE_LABELS: Record<AttributeScope, string> = {
+  item: "Ítem",
+  variant: "Variante",
+};
+
+/** Lo que el selector de un atributo de lista muestra para «sin valor». */
+export const NO_ATTRIBUTE_VALUE_LABEL = "Sin indicar";
+
+/** El rótulo de una opción que ya no está en la lista pero sigue guardada. */
+export const RETIRED_OPTION_SUFFIX = "(opción retirada)";
+
+/**
+ * Cómo se describe el tipo en la tabla de atributos: el número con su
+ * unidad, la lista con cuántas opciones tiene.
+ */
+export function attributeTypeSummary(attribute: {
+  type: AttributeType;
+  unit: string | null;
+  options: readonly string[];
+}): string {
+  const label = ATTRIBUTE_TYPE_LABELS[attribute.type];
+  if (attribute.type === "number" && attribute.unit) return `${label} (${attribute.unit})`;
+  if (attribute.type === "list") {
+    const count = attribute.options.length;
+    return `${label} (${count} ${count === 1 ? "opción" : "opciones"})`;
+  }
+  return label;
+}

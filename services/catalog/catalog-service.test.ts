@@ -159,6 +159,65 @@ describe("ItemService", () => {
     ).toBe(CATEGORY);
   });
 
+  // «Filtrar por un atributo de lista», nivel de servicio.
+  it("cada atributo elegido filtra por contención sobre los atributos del ítem", async () => {
+    const client = new FakeClient([{ data: [itemRow], error: null }]);
+    await new ItemService(client.asSupabase()).list(ORG, {
+      attributes: { "attr-marca": "Sunlu", "attr-material": "PLA" },
+    });
+
+    expect(client.queries[0].has("contains", "attributes", { "attr-marca": "Sunlu" })).toBe(true);
+    expect(client.queries[0].has("contains", "attributes", { "attr-material": "PLA" })).toBe(true);
+  });
+
+  it("sin atributos elegidos no filtra por atributos", async () => {
+    const client = new FakeClient([{ data: [itemRow], error: null }]);
+    await new ItemService(client.asSupabase()).list(ORG, {});
+    expect(client.queries[0].argsOf("contains")).toBeUndefined();
+  });
+
+  it("crear escribe los atributos, y editar solo si llegan", async () => {
+    const values = {
+      name: "PLA Sunlu",
+      kind: "supply" as const,
+      businessLineId: LINE,
+      unitId: null,
+      categoryId: null,
+      description: null,
+      salePrice: null,
+      minStock: null,
+    };
+    const client = new FakeClient([
+      { data: itemRow, error: null },
+      { data: itemRow, error: null },
+      { data: itemRow, error: null },
+      { data: itemRow, error: null },
+    ]);
+    const service = new ItemService(client.asSupabase());
+
+    await service.create(ORG, ITEM, { ...values, attributes: { marca: "Sunlu" } });
+    await service.create(ORG, ITEM, values);
+    await service.update(ORG, ITEM, { ...values, attributes: { marca: "eSun" } });
+    await service.update(ORG, ITEM, values);
+
+    const written = (i: number, method: string) =>
+      client.queries[i].argsOf(method)?.[0] as Record<string, unknown>;
+    expect(written(0, "insert").attributes).toEqual({ marca: "Sunlu" });
+    expect(written(1, "insert").attributes).toEqual({});
+    expect(written(2, "update").attributes).toEqual({ marca: "eSun" });
+    expect(written(3, "update")).not.toHaveProperty("attributes");
+  });
+
+  it("entrega los atributos guardados, o un objeto vacío", async () => {
+    const client = new FakeClient([
+      { data: { ...itemRow, attributes: { marca: "Sunlu" } }, error: null },
+      { data: { ...itemRow, attributes: null }, error: null },
+    ]);
+    const service = new ItemService(client.asSupabase());
+    expect((await service.findById(ORG, ITEM))?.attributes).toEqual({ marca: "Sunlu" });
+    expect((await service.findById(ORG, ITEM))?.attributes).toEqual({});
+  });
+
   // «Editar no cambia el tipo», a nivel de servicio.
   it("editar no escribe el tipo: se fija al crear", async () => {
     const client = new FakeClient([{ data: itemRow, error: null }]);
@@ -223,6 +282,51 @@ describe("ItemVariantService", () => {
     >;
     expect(inserted.id).toBe("55555555-5555-5555-5555-555555555555");
     expect(inserted.organization_id).toBe(ORG);
+    expect(inserted.attributes).toEqual({});
+  });
+
+  it("escribe los atributos de la variante al crear y al editar, si llegan", async () => {
+    const variantRow = {
+      id: "55555555-5555-5555-5555-555555555555",
+      organization_id: ORG,
+      item_id: ITEM,
+      name: "Negro",
+      attributes: {},
+      sale_price: null,
+      archived_at: null,
+    };
+    const client = new FakeClient([
+      { data: variantRow, error: null },
+      { data: variantRow, error: null },
+      { data: variantRow, error: null },
+    ]);
+    const service = new ItemVariantService(client.asSupabase());
+
+    await service.create(ORG, ITEM, variantRow.id, {
+      name: "Negro",
+      salePrice: null,
+      attributes: { color: "Negro" },
+    });
+    await service.update(ORG, variantRow.id, {
+      name: "Negro",
+      salePrice: null,
+      attributes: { color: "Negro" },
+    });
+    await service.update(ORG, variantRow.id, { name: "Negro mate", salePrice: null });
+
+    const written = (i: number, method: string) =>
+      client.queries[i].argsOf(method)?.[0] as Record<string, unknown>;
+    expect(written(0, "insert").attributes).toEqual({ color: "Negro" });
+    expect(written(1, "update").attributes).toEqual({ color: "Negro" });
+    expect(written(2, "update")).not.toHaveProperty("attributes");
+  });
+
+  it("busca una variante por id dentro de la organización", async () => {
+    const client = new FakeClient([{ data: null, error: null }]);
+    const found = await new ItemVariantService(client.asSupabase()).findById(ORG, ITEM);
+    expect(found).toBeNull();
+    expect(client.queries[0].has("eq", "organization_id", ORG)).toBe(true);
+    expect(client.queries[0].has("eq", "id", ITEM)).toBe(true);
   });
 });
 

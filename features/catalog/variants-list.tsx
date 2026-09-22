@@ -21,9 +21,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { attributeSwatch, formatAttributeValue } from "@/lib/catalog/attributes";
 import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
-import type { ItemKind, ItemVariant, Role } from "@/types";
+import type { ItemCategoryAttribute, ItemKind, ItemVariant, Role } from "@/types";
 
+import { ColorSwatch } from "./color-swatch";
 import { VariantFormDialog } from "./variant-form-dialog";
 
 /**
@@ -39,6 +41,7 @@ export function VariantsList({
   variants,
   role,
   readOnly,
+  attributeFields = [],
 }: {
   itemId: string;
   itemKind: ItemKind;
@@ -46,6 +49,12 @@ export function VariantsList({
   role: Role;
   /** El ítem está archivado: no se edita nada suyo hasta desarchivarlo. */
   readOnly: boolean;
+  /**
+   * Los atributos vigentes de alcance variante de la categoría del ítem
+   * (`catalog-custom-attributes`): una columna cada uno, y sus campos en el
+   * formulario.
+   */
+  attributeFields?: ItemCategoryAttribute[];
 }) {
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -94,6 +103,9 @@ export function VariantsList({
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre</TableHead>
+                {attributeFields.map((field) => (
+                  <TableHead key={field.id}>{field.name}</TableHead>
+                ))}
                 {hasPrice && (
                   <TableHead className="text-right">Precio</TableHead>
                 )}
@@ -106,6 +118,19 @@ export function VariantsList({
               {variants.map((variant) => (
                 <TableRow key={variant.id} data-testid="variant-row">
                   <TableCell className="font-medium">{variant.name}</TableCell>
+                  {attributeFields.map((field) => {
+                    const value = variant.attributes[field.id];
+                    const swatch = attributeSwatch(field, value);
+                    return (
+                      <TableCell key={field.id} data-testid="variant-attribute">
+                        {swatch ? (
+                          <ColorSwatch hex={swatch} />
+                        ) : (
+                          formatAttributeValue(field, value) || "—"
+                        )}
+                      </TableCell>
+                    );
+                  })}
                   {hasPrice && (
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {variant.salePrice === null
@@ -146,6 +171,7 @@ export function VariantsList({
         onOpenChange={setAdding}
         itemId={itemId}
         itemKind={itemKind}
+        attributeFields={attributeFields}
       />
       {/* La clave reinicia el formulario al cambiar de variante editada. */}
       {editing && (
@@ -156,6 +182,7 @@ export function VariantsList({
           itemId={itemId}
           itemKind={itemKind}
           variant={editing}
+          attributeFields={attributeFields}
         />
       )}
     </Card>

@@ -10,6 +10,7 @@ import type {
   Item,
   ItemBalance,
   ItemCategory,
+  ItemCategoryAttribute,
   ItemVariant,
   Role,
   Unit,
@@ -69,6 +70,7 @@ function item(overrides: Partial<Item> = {}): Item {
     description: null,
     unitId: UNIT.id,
     categoryId: null,
+    attributes: {},
     salePrice: null,
     minStock: null,
     archivedAt: null,
@@ -547,5 +549,177 @@ describe("ItemDetail · migas de pan", () => {
       "page",
     );
     expect(screen.getAllByRole("link", { name: "Catálogo" })).toHaveLength(1);
+  });
+});
+
+/**
+ * Cambio `catalog-custom-attributes`: el detalle muestra los atributos como
+ * datos rotulados y la lista de variantes, una columna por atributo.
+ */
+describe("ItemDetail · atributos", () => {
+  const FILAMENTO: ItemCategory = {
+    id: "66666666-6666-4666-8666-000000000001",
+    organizationId: ORG,
+    kind: "supply",
+    name: "Filamento",
+    archivedAt: null,
+  };
+  const OTRA: ItemCategory = {
+    id: "66666666-6666-4666-8666-000000000002",
+    organizationId: ORG,
+    kind: "supply",
+    name: "Resinas",
+    archivedAt: null,
+  };
+
+  function atributo(
+    overrides: Partial<ItemCategoryAttribute> & Pick<ItemCategoryAttribute, "id" | "name">,
+  ): ItemCategoryAttribute {
+    return {
+      organizationId: ORG,
+      categoryId: FILAMENTO.id,
+      type: "text",
+      unit: null,
+      options: [],
+      required: false,
+      scope: "item",
+      position: 1,
+      archivedAt: null,
+      ...overrides,
+    };
+  }
+
+  const MARCA = atributo({ id: "marca", name: "Marca", type: "list", options: ["Sunlu"], position: 1 });
+  const TMIN = atributo({ id: "tmin", name: "Temperatura mínima", type: "number", unit: "°C", position: 2 });
+  const VEL = atributo({
+    id: "vel",
+    name: "Velocidad recomendada",
+    type: "number",
+    unit: "mm/s",
+    position: 4,
+    archivedAt: "2026-09-21T00:00:00Z",
+  });
+  const EXPOSICION = atributo({ id: "expo", name: "Exposición", categoryId: OTRA.id, unit: null });
+  const COLOR = atributo({
+    id: "color",
+    name: "Color",
+    type: "list",
+    options: ["Negro", "Rojo"],
+    scope: "variant",
+    position: 5,
+  });
+
+  function renderFilamento(
+    overrides: Partial<Item>,
+    definitions: ItemCategoryAttribute[] = [MARCA, TMIN, VEL, EXPOSICION, COLOR],
+    variants: ItemVariant[] = [],
+  ) {
+    return render(
+      <ItemDetail
+        relatedTasks={[]}
+        item={item({ categoryId: FILAMENTO.id, description: "Rollo de 1 kg.", ...overrides })}
+        variants={variants}
+        photos={[]}
+        lines={[LINE]}
+        units={[UNIT]}
+        categories={[FILAMENTO, OTRA]}
+        attributeDefinitions={definitions}
+        history={{ items: [], activityHref: "/activity" }}
+        role="owner"
+        timeZone="America/La_Paz"
+      />,
+    );
+  }
+
+  it("los datos técnicos son datos rotulados, con su unidad, y la descripción no cambia", () => {
+    // «Datos técnicos en los datos generales» y «Un número se guarda como número
+    // y se muestra con su unidad», nivel de detalle.
+    renderFilamento({ attributes: { marca: "Sunlu", tmin: 190 } });
+
+    const rows = screen.getAllByTestId("item-attribute").map((row) => row.textContent);
+    expect(rows).toEqual(["MarcaSunlu", "Temperatura mínima190 °C"]);
+    expect(screen.getByTestId("item-general")).toHaveTextContent("Rollo de 1 kg.");
+    expect(screen.queryByTestId("item-retired-attributes")).toBeNull();
+  });
+
+  it("un atributo archivado y uno de otra categoría van a «Datos que ya no se piden»", () => {
+    // «Un atributo retirado conserva y muestra su valor» y «Los valores de la
+    // categoría anterior se conservan», nivel de detalle.
+    renderFilamento({ attributes: { marca: "Sunlu", vel: 60, expo: "8 s" } });
+
+    const retired = screen.getByTestId("item-retired-attributes");
+    expect(retired).toHaveTextContent("Datos que ya no se piden");
+    expect(retired).toHaveTextContent("Velocidad recomendada60 mm/s");
+    expect(retired).toHaveTextContent("Exposición8 s");
+    expect(screen.getAllByTestId("item-attribute").map((row) => row.textContent)).toEqual([
+      "MarcaSunlu",
+    ]);
+  });
+
+  it("un atributo renombrado se rotula con su nombre de hoy", () => {
+    // «Renombrar un atributo no pierde valores», nivel de detalle.
+    renderFilamento({ attributes: { marca: "Sunlu" } }, [{ ...MARCA, name: "Fabricante" }]);
+
+    expect(screen.getByTestId("item-attribute")).toHaveTextContent("FabricanteSunlu");
+  });
+
+  it("la lista de variantes tiene una columna por atributo de variante", () => {
+    // «La lista de variantes muestra sus atributos».
+    const negro = { ...variant("Negro"), attributes: { color: "Negro" } };
+    const rojo = { ...variant("Rojo"), attributes: { color: "Rojo" } };
+    renderFilamento({}, undefined, [negro, rojo]);
+
+    const list = screen.getByTestId("variant-list");
+    expect(within(list).getByRole("columnheader", { name: "Color" })).toBeInTheDocument();
+    expect(within(list).getAllByTestId("variant-attribute").map((cell) => cell.textContent)).toEqual([
+      "Negro",
+      "Rojo",
+    ]);
+  });
+});
+
+describe("ItemDetail · atributo de color", () => {
+  it("la lista de variantes muestra la muestra del color con su hex", () => {
+    // «El color se ve como muestra».
+    const categoria: ItemCategory = {
+      id: "66666666-6666-4666-8666-000000000009",
+      organizationId: ORG,
+      kind: "supply",
+      name: "Filamento",
+      archivedAt: null,
+    };
+    const tono: ItemCategoryAttribute = {
+      id: "tono",
+      organizationId: ORG,
+      categoryId: categoria.id,
+      name: "Color de rollo",
+      type: "color",
+      unit: null,
+      options: [],
+      required: false,
+      scope: "variant",
+      position: 1,
+      archivedAt: null,
+    };
+    const rojo = { ...variant("Rojo"), attributes: { tono: "#C62828" } };
+    render(
+      <ItemDetail
+        relatedTasks={[]}
+        item={item({ categoryId: categoria.id })}
+        variants={[rojo]}
+        photos={[]}
+        lines={[LINE]}
+        units={[UNIT]}
+        categories={[categoria]}
+        attributeDefinitions={[tono]}
+        history={{ items: [], activityHref: "/activity" }}
+        role="owner"
+        timeZone="America/La_Paz"
+      />,
+    );
+
+    const cell = screen.getByTestId("variant-attribute");
+    expect(within(cell).getByTestId("color-swatch")).toHaveTextContent("#C62828");
+    expect(cell.querySelector("[style]")).toHaveStyle({ backgroundColor: "#C62828" });
   });
 });

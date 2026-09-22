@@ -27,11 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { consumptionSchema } from "@/lib/inventory/schema";
+import { movementVariantProblem } from "@/lib/inventory/variants";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
-import type { Item } from "@/types";
+import type { Item, ItemVariant } from "@/types";
+
+/** Un insumo con sus variantes vigentes: lo que ofrece el registro rápido. */
+export type ConsumableSupply = Item & { variants?: ItemVariant[] };
 
 import { captureConsumption } from "./sync/capture-movement";
 
@@ -48,20 +53,30 @@ import { captureConsumption } from "./sync/capture-movement";
  * Todo consumo se guarda con origen `manual`, venga de donde venga (design
  * D5). Lo que cambia según el punto de entrada es la **nota**, que llega
  * prellenada con la referencia y es modificable.
+ *
+ * Un insumo con variantes exige elegir cuál (`catalog-custom-attributes`,
+ * design D7): desde la fila de una variante viene puesta y siguen siendo dos
+ * interacciones; si no, se elige con un toque entre sus variantes vigentes.
  */
 export function ConsumptionDialog({
   open,
   onOpenChange,
   supplies,
   item,
+  variants,
+  variant,
   defaultNote,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Los insumos elegibles. Se ignora cuando `item` viene puesto. */
-  supplies?: Item[];
+  /** Los insumos elegibles, con sus variantes. Se ignora cuando `item` viene puesto. */
+  supplies?: ConsumableSupply[];
   /** El insumo, cuando el punto de entrada ya lo conoce. */
   item?: Item;
+  /** Las variantes vigentes de `item`, cuando viene puesto. */
+  variants?: ItemVariant[];
+  /** La variante, cuando se abre desde su fila en el detalle. */
+  variant?: ItemVariant;
   /** Prellenada con la referencia del pedido o de la tarea de origen. */
   defaultNote?: string;
 }) {
@@ -70,6 +85,14 @@ export function ConsumptionDialog({
   const organizationId = useOrganizationStore((state) => state.organization?.id);
   const userId = useUserStore((state) => state.user?.id);
   const { isOnline, reportSendResult } = useOnlineStatus();
+  const [chosenItemId, setChosenItemId] = useState("");
+  const [chosenVariantId, setChosenVariantId] = useState("");
+
+  const itemId = item?.id ?? chosenItemId;
+  const itemVariants = (
+    item ? (variants ?? []) : (supplies?.find((supply) => supply.id === itemId)?.variants ?? [])
+  ).filter((candidate) => candidate.archivedAt === null);
+  const variantId = variant?.id ?? (chosenVariantId || null);
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,11 +103,19 @@ export function ConsumptionDialog({
       return;
     }
 
+    // La misma regla que aplica el servidor, avisada antes de enviar.
+    const variantProblem = variant ? null : movementVariantProblem(itemVariants, variantId);
+    if (itemId && variantProblem) {
+      setError(variantProblem);
+      return;
+    }
+
     const parsed = consumptionSchema.safeParse({
       // Identificador generado en el cliente (convención nº 9): el reintento
       // reenvía el mismo y la clave primaria impide el segundo movimiento.
       id: crypto.randomUUID(),
-      itemId: item?.id ?? String(data.get("itemId") ?? ""),
+      itemId,
+      variantId,
       quantity: String(data.get("quantity") ?? ""),
       note: String(data.get("note") ?? ""),
       // La hora del hecho es la de registrar, no la de abrir el diálogo: sin
@@ -128,7 +159,7 @@ export function ConsumptionDialog({
             <DialogTitle>Registrar consumo</DialogTitle>
             <DialogDescription>
               {item
-                ? `Cuánto se usó de ${item.name}.`
+                ? `Cuánto se usó de ${item.name}${variant ? ` · ${variant.name}` : ""}.`
                 : "Qué insumo se usó y cuánto."}
             </DialogDescription>
           </DialogHeader>
@@ -144,7 +175,16 @@ export function ConsumptionDialog({
             {!item && (
               <Field>
                 <FieldLabel htmlFor="consumption-item">Insumo</FieldLabel>
-                <Select name="itemId" required>
+                <Select
+                  name="itemId"
+                  required
+                  value={chosenItemId}
+                  onValueChange={(value) => {
+                    setChosenItemId(value);
+                    // La variante elegida era de otro insumo.
+                    setChosenVariantId("");
+                  }}
+                >
                   <SelectTrigger id="consumption-item">
                     <SelectValue placeholder="Elige un insumo" />
                   </SelectTrigger>
@@ -156,6 +196,28 @@ export function ConsumptionDialog({
                     ))}
                   </SelectContent>
                 </Select>
+              </Field>
+            )}
+
+            {!variant && itemVariants.length > 0 && (
+              <Field>
+                <FieldLabel id="consumption-variant-label">Variante</FieldLabel>
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
+                  value={chosenVariantId}
+                  onValueChange={setChosenVariantId}
+                  aria-labelledby="consumption-variant-label"
+                  className="flex-wrap justify-start"
+                  data-testid="consumption-variant"
+                >
+                  {itemVariants.map((candidate) => (
+                    <ToggleGroupItem key={candidate.id} value={candidate.id}>
+                      {candidate.name}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+                <FieldDescription>De cuál se usó.</FieldDescription>
               </Field>
             )}
 

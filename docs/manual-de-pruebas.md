@@ -322,6 +322,15 @@ Aplicar a **cada vista con datos** (pedidos, tareas, egresos, catálogo, contact
 | CAT-14 | P1 | Archivar la categoría de un insumo en Configuración y abrir el insumo | El detalle la muestra con la marca **Archivada**; al editar el insumo aparece como *(archivada)* y se conserva al guardar; **Nuevo insumo** ya no la ofrece. |
 | CAT-15 | P2 | Ayudante, **Nuevo activo** en una organización sin categorías de activo | El campo dice que la dueña las define en Configuración, sin enlace; a la dueña le aparece el enlace a **Categorías de ítem**. |
 | CAT-11 | P2 | Más de 50 ítems | *Se muestran los primeros 50 por orden alfabético* con **Mostrar más**. |
+| CAT-16 | P0 | Detalle de *PLA Sunlu* (Impresión 3D) | **Datos generales** muestra *Marca Sunlu*, *Temperatura mínima 190 °C*, *Temperatura máxima 220 °C* y *Velocidad recomendada 60 mm/s* como datos rotulados; la lista de variantes tiene la columna **Color** con *Negro* y *Rojo*. |
+| CAT-17 | P1 | **Nuevo insumo** → categoría *Sustratos*; luego cambiar a *Filamento* | Con *Sustratos* el formulario es el de siempre; con *Filamento* aparecen **Marca**, las dos temperaturas con °C y **Velocidad recomendada** con mm/s, y no **Color**. |
+| CAT-18 | P0 | En *PLA Sunlu*, **Agregar variante** `Azul` sin elegir **Color** | *«Color» es obligatorio.* y no se guarda; eligiendo *Azul* se guarda y aparece en la lista. |
+| CAT-19 | P1 | Editar *PLA Sunlu* y escribir `caliente` en **Temperatura mínima** | *«Temperatura mínima» tiene que ser un número.*; `190,5` se guarda como 190,5 °C. |
+| CAT-20 | P1 | Configuración: quitar *Azul* de las opciones de **Color**; editar la variante *Azul* y guardar sin tocar el color | El selector muestra *Azul (opción retirada)* y se guarda; en otra variante, *Azul* ya no se ofrece. |
+| CAT-21 | P1 | Configuración: archivar **Velocidad recomendada**; abrir *PLA Sunlu* y editarlo | El detalle la muestra en **Datos que ya no se piden** con *60 mm/s*; el formulario ya no pide el campo; al guardar el valor sigue. **Restaurar** la devuelve con su valor. |
+| CAT-23 | P0 | Con un atributo de tipo color de variante: **Agregar variante** y escribir `c62828` en el campo | El selector toma ese rojo; al guardar, la lista de variantes muestra la muestra y `#C62828`. Elegir otro color con el selector llena el campo con su hex. |
+| CAT-24 | P1 | Escribir `rojizo` o `#12345` en un atributo de color | *«…» tiene que ser un color en hex, como #1A1A1A.* y no se guarda. |
+| CAT-22 | P1 | Filtro **Categoría** = *Filamento* → **Marca** = *Sunlu*; luego cambiar a *Sustratos* | Solo los filamentos Sunlu, con `attr_` en la dirección; no hay filtro de **Color**. Al cambiar de categoría el filtro de marca desaparece. Sin categoría elegida no hay filtros de atributo. |
 
 ### INV · Inventario
 
@@ -336,6 +345,12 @@ Aplicar a **cada vista con datos** (pedidos, tareas, egresos, catálogo, contact
 | INV-07 | P1 | Registro rápido → **Consumo** | Diálogo con selector de insumo; registrar en 3 interacciones. |
 | INV-08 | P0 | Ayudante en el detalle del insumo | Puede registrar consumo y conteo; **no** ve *Evolución de precios de compra* ni ningún costo. |
 | INV-09 | P1 | Subir el saldo por encima del mínimo con un conteo | El badge **Bajo mínimo** desaparece del catálogo, del panel y del reporte *Insumos por acabarse*. |
+| INV-10 | P0 | Comprar 2 kg de *PLA Sunlu · Negro* y 1 kg de *Rojo*; abrir el detalle | Saldo total 3 kg y una fila por color: *Negro 2 kg*, *Rojo 1 kg*. No aparece **Ajuste por conteo** del ítem entero. |
+| INV-11 | P0 | Fila *Negro* → **Registrar consumo** 0,3 | Tres interacciones; solo *Negro* baja a 1,7. El movimiento dice *Negro*. |
+| INV-12 | P1 | Registro rápido → **Consumo** → *PLA Sunlu* | Aparecen las variantes como botones y no deja registrar sin elegir una; con *Rojo* son cuatro interacciones y solo baja *Rojo*. |
+| INV-13 | P1 | Fila *Negro* → **Ajustar** con 1,5 | *Ajuste por conteo* de la diferencia solo en *Negro*; *Rojo* no cambia. |
+| INV-14 | P1 | Un insumo con un consumo registrado antes de tener variantes; añadirle variantes | Aparece la fila **Sin variante** con ese saldo; **Ajustar** con 0 la deja en cero y la fila desaparece. |
+| INV-15 | P1 | *PLA Sunlu* con mínimo 1: dejar *Negro* en 0 y *Rojo* en 3 | Ni el catálogo ni el panel lo marcan **Bajo mínimo**: el mínimo es del ítem y el total es 3. |
 
 ### CON · Contactos
 
@@ -427,6 +442,12 @@ Aplicar a **cada vista con datos** (pedidos, tareas, egresos, catálogo, contact
 | CFG-16 | P1 | Retención: 0, 121, 6.5, 24 | Errores para los tres primeros; 24 guarda y la cabecera de la bitácora dice *24 meses*. |
 | CFG-17 | P1 | Exportar (dueña) → **Descargar exportación** | Progreso *Armando el archivo…*; ZIP `kamay-exportacion-…zip` con un CSV por tabla incluida `bitacora.csv`; la bitácora registra *exportó*. |
 | CFG-18 | P1 | Exportar (ayudante) | ZIP sin `egresos`, `lineas-de-compra`, `activos`, `invitaciones` ni `bitacora`. |
+| CFG-19 | P0 | Categorías de ítem › **⋯** de *Filamento* → **Atributos** | Menú **Editar**, **Atributos**, **Archivar**. La página *Atributos de «Filamento»* lista *Marca*, las dos temperaturas, *Velocidad recomendada* y *Color · Lista (4 opciones) · Obligatorio · Variante*; la vuelta lleva a la pestaña Insumos. |
+| CFG-20 | P1 | **Nuevo atributo** tipo *Lista* sin opciones; luego con `Negro` y ` negro ` | *Una lista necesita al menos una opción.*; después *Las opciones de la lista no se pueden repetir.* El diálogo sigue abierto con lo escrito. |
+| CFG-21 | P1 | **Nuevo atributo** `color` en *Filamento* | *Ya existe un atributo con ese nombre en esta categoría.* En otra categoría, `Color` sí se crea. |
+| CFG-22 | P1 | **Editar** un atributo | Ofrece **Nombre**, **Unidad** (números), **Opciones** (listas) y **Obligatorio**; no ofrece **Tipo** ni **Aplica a**. |
+| CFG-24 | P1 | **Nuevo atributo** tipo *Color* en *Filamento*, aplica a *Variante* | No pide **Unidad** ni **Opciones**; la tabla lo rotula *Color*. |
+| CFG-23 | P1 | Ayudante abre `/settings/item-categories/<id>` | Vuelve al inicio, como cualquier sección de la dueña; no ve **Configuración** en su menú. |
 
 ### OFF · Sin conexión
 
@@ -489,7 +510,7 @@ npm run test:e2e:ui
 
 ### 6.2 Recorridos e2e disponibles
 
-`accessibility`, `activity`, `archive-restore`, `assets`, `assistant-permissions`, `auth`, `deployment`, `expenses`, `fair-offline`, `images`, `inventory`, `invitation`, `mobile-capture`, `my-tasks`, `offline-capture`, `order-board`, `order-edit`, `order-entry`, `order-flow`, `order-payments`, `orders-tasks-independence`, `pagination`, `performance`, `production-settings`, `reports`, `settings`, `status-config`, `task-board`, `task-deliverables`, `task-detail`, `task-from-order`, `task-quick-add`, `theme`, `view-states`.
+`accessibility`, `activity`, `archive-restore`, `assets`, `assistant-permissions`, `auth`, `catalog-attributes`, `deployment`, `expenses`, `fair-offline`, `images`, `inventory`, `invitation`, `mobile-capture`, `my-tasks`, `offline-capture`, `order-board`, `order-edit`, `order-entry`, `order-flow`, `order-payments`, `orders-tasks-independence`, `pagination`, `performance`, `production-settings`, `reports`, `settings`, `status-config`, `task-board`, `task-deliverables`, `task-detail`, `task-from-order`, `task-quick-add`, `theme`, `view-states`.
 
 Cada uno crea su propia organización de prueba, así que se pueden correr en paralelo y no ensucian Geeko Store (salvo algunas de integración, que sí escriben en Geeko Store: por eso `supabase db reset` antes de una ronda manual).
 

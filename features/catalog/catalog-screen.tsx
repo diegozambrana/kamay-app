@@ -32,6 +32,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useFilterState, useSearchReset } from "@/hooks/use-filter-state";
 import { usePendingToggle } from "@/hooks/use-pending-toggle";
+import { attributeFieldsFor } from "@/lib/catalog/attributes";
 import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
 import {
   ITEM_KIND_COPY,
@@ -44,6 +45,7 @@ import {
   type BusinessLine,
   type Item,
   type ItemCategory,
+  type ItemCategoryAttribute,
   type ItemKind,
   type Role,
   type Unit,
@@ -76,6 +78,14 @@ export type CatalogRow = Item & {
 const CATALOG_FILTERS = ["q", "line", "category"] as const;
 
 /**
+ * Prefijo de los filtros por atributo de lista (`catalog-custom-attributes`,
+ * design D8): `attr_<id del atributo>=<opción>`. Son filtros como los demás,
+ * pero su lista depende de la categoría elegida.
+ */
+const ATTRIBUTE_FILTER_PREFIX = "attr_";
+const ALL_OPTIONS = "all";
+
+/**
  * V10 · Catálogo. El alcance vive en la dirección (`?kind=&line=&q=&archived=`)
  * para que el listado sea enlazable y el servidor entregue exactamente lo que
  * se pide.
@@ -94,6 +104,8 @@ export function CatalogScreen({
   lineFilter,
   categoryFilter = ALL_CATEGORIES_OPTION,
   categories = [],
+  attributeDefinitions = [],
+  attributeFilters = {},
   search,
   includeArchived,
   role,
@@ -110,6 +122,10 @@ export function CatalogScreen({
   categoryFilter?: string;
   /** Las categorías del tipo de la pestaña, archivadas incluidas. */
   categories?: ItemCategory[];
+  /** Los atributos vigentes de esas categorías (`catalog-custom-attributes`). */
+  attributeDefinitions?: ItemCategoryAttribute[];
+  /** Las opciones elegidas por atributo, ya validadas por la página. */
+  attributeFilters?: Record<string, string>;
   search: string;
   includeArchived: boolean;
   role: Role;
@@ -126,7 +142,15 @@ export function CatalogScreen({
   const [showArchived, setShowArchived] = usePendingToggle(includeArchived);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
-  const { hasActiveFilters, clearFilters } = useFilterState(CATALOG_FILTERS);
+  // Los filtros por atributo presentes en la dirección cuentan como filtros:
+  // «Quitar filtros» los quita junto con la búsqueda, la línea y la categoría.
+  const attributeParamKeys = [...params.keys()].filter((key) =>
+    key.startsWith(ATTRIBUTE_FILTER_PREFIX),
+  );
+  const { hasActiveFilters, clearFilters } = useFilterState([
+    ...CATALOG_FILTERS,
+    ...attributeParamKeys,
+  ]);
   const { searchKey, armSearchReset } = useSearchReset(search);
 
   const isOwner = role === "owner";
@@ -140,6 +164,18 @@ export function CatalogScreen({
     item?.categoryId
       ? (categories.find((category) => category.id === item.categoryId) ?? null)
       : null;
+  // Con una categoría elegida, un filtro por cada atributo de lista del ítem.
+  // Los de variante, de texto y de número no filtran (D8).
+  const attributeFilterFields =
+    categoryFilter === ALL_CATEGORIES_OPTION || categoryFilter === NO_CATEGORY_OPTION
+      ? []
+      : attributeFieldsFor(attributeDefinitions, categoryFilter, "item").filter(
+          (field) => field.type === "list",
+        );
+  /** Cambiar de pestaña o de categoría descarta los filtros por atributo. */
+  const withoutAttributeFilters = Object.fromEntries(
+    attributeParamKeys.map((key) => [key, null]),
+  );
   const lineName = (id: string | null) =>
     id === null
       ? SHARED_LINE_LABEL
@@ -277,7 +313,9 @@ export function CatalogScreen({
         // Radix emite "" al deseleccionar: el catálogo siempre muestra un tipo.
         // Cada tipo tiene sus propias categorías: la elegida no sobrevive al
         // cambio de pestaña.
-        onValueChange={(value) => value && navigate({ kind: value, category: null })}
+        onValueChange={(value) =>
+          value && navigate({ ...withoutAttributeFilters, kind: value, category: null })
+        }
         aria-label="Tipo de ítem"
         className="w-fit"
       >
@@ -333,7 +371,10 @@ export function CatalogScreen({
           <Select
             value={categoryFilter}
             onValueChange={(value) =>
-              navigate({ category: value === ALL_CATEGORIES_OPTION ? null : value })
+              navigate({
+                ...withoutAttributeFilters,
+                category: value === ALL_CATEGORIES_OPTION ? null : value,
+              })
             }
           >
             <SelectTrigger id="catalog-category" data-testid="catalog-category">
@@ -354,6 +395,34 @@ export function CatalogScreen({
             </SelectContent>
           </Select>
         </Field>
+
+        {attributeFilterFields.map((field) => (
+          <Field key={field.id} className="w-44">
+            <FieldLabel htmlFor={`catalog-attr-${field.id}`}>{field.name}</FieldLabel>
+            <Select
+              value={attributeFilters[field.id] ?? ALL_OPTIONS}
+              onValueChange={(value) =>
+                navigate({
+                  [`${ATTRIBUTE_FILTER_PREFIX}${field.id}`]: value === ALL_OPTIONS ? null : value,
+                })
+              }
+            >
+              <SelectTrigger id={`catalog-attr-${field.id}`} data-testid="catalog-attribute-filter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value={ALL_OPTIONS}>Todos</SelectItem>
+                  {field.options.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+        ))}
 
         <Field orientation="horizontal" className="w-fit pb-2">
           <Checkbox
@@ -397,6 +466,7 @@ export function CatalogScreen({
         defaultLineId={activeLineId}
         categories={activeCategories}
         canManageCategories={isOwner}
+        attributeDefinitions={attributeDefinitions}
       />
 
       {editing && (
@@ -411,6 +481,7 @@ export function CatalogScreen({
           categories={activeCategories}
           currentCategory={categoryOf(editing)}
           canManageCategories={isOwner}
+          attributeDefinitions={attributeDefinitions}
         />
       )}
 

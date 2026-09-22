@@ -77,7 +77,9 @@ export async function AppShell({
    * carga todos los últimos costos de una vez.
    */
   const supplies = organizationId
-    ? await new ItemService(supabase).list(organizationId, { kind: "supply" })
+    ? // Con sus variantes vigentes: el consumo exige elegir una
+      // (catalog-custom-attributes, design D7).
+      await new ItemService(supabase).listSuppliesWithVariants(organizationId)
     : [];
 
   // La bandeja y el contador se componen aquí, en el cascarón, porque la

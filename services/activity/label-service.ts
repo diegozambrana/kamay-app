@@ -31,6 +31,7 @@ const LABEL_COLUMNS: Record<string, string> = {
   sales_channels: "name",
   expense_categories: "name",
   item_categories: "name",
+  item_category_attributes: "name",
   units: "name",
   tags: "name",
   organizations: "name",

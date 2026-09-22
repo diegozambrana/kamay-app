@@ -9,8 +9,15 @@ import {
 import { useConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
+import type { RowAction } from "@/components/shared/row-actions-menu";
 
-export type ConfigEntity = "line" | "channel" | "category" | "unit" | "itemCategory";
+export type ConfigEntity =
+  | "line"
+  | "channel"
+  | "category"
+  | "unit"
+  | "itemCategory"
+  | "itemCategoryAttribute";
 
 export type EntityCopy = {
   /** El vacío de la sección, dicho por su nombre, y qué hacer con él. */
@@ -75,6 +82,17 @@ export const ENTITY_COPY: Record<ConfigEntity, EntityCopy> = {
     archiveEffect:
       "Deja de ofrecerse en los formularios y en el filtro del catálogo. Los ítems que ya la usan la conservan y la siguen mostrando.",
   },
+  // catalog-custom-attributes: los atributos de una categoría de ítem.
+  itemCategoryAttribute: {
+    empty: "Aún no hay atributos en esta categoría",
+    emptyHint: "Usa «Nuevo atributo» para agregar el primero.",
+    createButton: "Nuevo atributo",
+    createSubmit: "Crear atributo",
+    newTitle: "Nuevo atributo",
+    editTitle: "Editar atributo",
+    archiveEffect:
+      "Deja de pedirse en los formularios y de ofrecerse en el filtro del catálogo. Los valores que ya se guardaron se conservan y se siguen mostrando.",
+  },
   unit: {
     empty: "Aún no hay unidades de medida",
     emptyHint: "Usa «Nueva unidad» para agregar la primera.",
@@ -107,6 +125,7 @@ export function ConfigTables<T extends ConfigRow>({
   labelOf,
   isProtected,
   onEdit,
+  extraActions,
   copy: copyOverride,
 }: {
   entity: ConfigEntity;
@@ -119,6 +138,11 @@ export function ConfigTables<T extends ConfigRow>({
   /** Las filas protegidas no ofrecen archivar (la línea compartida). */
   isProtected?: (item: T) => boolean;
   onEdit: (item: T) => void;
+  /**
+   * Acciones propias de la sección, entre «Editar» y «Archivar»: los
+   * «Atributos» de una categoría de ítem. Las demás secciones no las usan.
+   */
+  extraActions?: (item: T) => RowAction[];
   /** Textos que dependen de algo más que la entidad (el tipo de ítem). */
   copy?: Partial<EntityCopy>;
 }) {
@@ -157,6 +181,7 @@ export function ConfigTables<T extends ConfigRow>({
         rowActionsLabel={(item) => `Acciones de ${labelOf(item)}`}
         rowActions={(item) => [
           { label: "Editar", icon: PencilIcon, onSelect: () => onEdit(item) },
+          ...(extraActions?.(item) ?? []),
           ...(isProtected?.(item)
             ? []
             : [

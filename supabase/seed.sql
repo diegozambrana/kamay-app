@@ -226,6 +226,7 @@ begin
     (e2e.gid(p_org, '92000000-0000-0000-0000-000000000001'), p_org, 'supply', 'Sustratos'),
     (e2e.gid(p_org, '92000000-0000-0000-0000-000000000002'), p_org, 'supply', 'Materia prima'),
     (e2e.gid(p_org, '92000000-0000-0000-0000-000000000003'), p_org, 'supply', 'Embalaje'),
+    (e2e.gid(p_org, '92000000-0000-0000-0000-000000000004'), p_org, 'supply', 'Filamento'),
     (e2e.gid(p_org, '92000000-0000-0000-0000-000000000011'), p_org, 'product', 'Regalos'),
     (e2e.gid(p_org, '92000000-0000-0000-0000-000000000012'), p_org, 'product', 'Decoración'),
     (e2e.gid(p_org, '92000000-0000-0000-0000-000000000013'), p_org, 'product', 'Vajilla'),
@@ -259,9 +260,39 @@ begin
     (e2e.gid(p_org, '90000000-0000-0000-0000-000000000021'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000001'), 'asset', 'Prensa de tazas',   'Prensa térmica de 6 tazas.', e2e.gid(p_org, '60000000-0000-0000-0000-000000000001')),
     (e2e.gid(p_org, '90000000-0000-0000-0000-000000000022'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000002'), 'asset', 'Impresora 3D Ender', 'Compra 2025, en uso diario.', e2e.gid(p_org, '60000000-0000-0000-0000-000000000001'));
 
-  insert into item_variants (id, organization_id, item_id, name, attributes, sale_price) values
-    (e2e.gid(p_org, '91000000-0000-0000-0000-000000000001'), p_org, e2e.gid(p_org, '90000000-0000-0000-0000-000000000011'), '11oz', '{"capacidad":"11oz"}'::jsonb, 45),
-    (e2e.gid(p_org, '91000000-0000-0000-0000-000000000002'), p_org, e2e.gid(p_org, '90000000-0000-0000-0000-000000000011'), '15oz', '{"capacidad":"15oz"}'::jsonb, 55);
+  -- Las tazas no tienen atributos declarados: el nombre de la variante ya
+  -- dice la capacidad. La clave antigua `capacidad` se quitó con
+  -- `catalog-custom-attributes`, que guarda los valores por id de atributo.
+  insert into item_variants (id, organization_id, item_id, name, sale_price) values
+    (e2e.gid(p_org, '91000000-0000-0000-0000-000000000001'), p_org, e2e.gid(p_org, '90000000-0000-0000-0000-000000000011'), '11oz', 45),
+    (e2e.gid(p_org, '91000000-0000-0000-0000-000000000002'), p_org, e2e.gid(p_org, '90000000-0000-0000-0000-000000000011'), '15oz', 55);
+
+  -- ── Filamento: atributos por categoría (catalog-custom-attributes) ──────
+  -- La categoría declara sus atributos una vez: marca, temperaturas y
+  -- velocidad describen al ítem (dependen de la marca, no del color); el
+  -- color describe a la variante. «PLA Sunlu» es el ítem y cada color una
+  -- variante. Los valores se guardan con el id del atributo como clave.
+  -- Sin compras sembradas: las pruebas que miden saldos crean las suyas.
+  insert into item_category_attributes (id, organization_id, category_id, name, type, unit, options, required, scope, position) values
+    (e2e.gid(p_org, '93000000-0000-0000-0000-000000000001'), p_org, e2e.gid(p_org, '92000000-0000-0000-0000-000000000004'), 'Marca',                 'list',   null,   '["Sunlu","eSun","Creality"]'::jsonb,      false, 'item',    1),
+    (e2e.gid(p_org, '93000000-0000-0000-0000-000000000002'), p_org, e2e.gid(p_org, '92000000-0000-0000-0000-000000000004'), 'Temperatura mínima',    'number', '°C',   '[]'::jsonb,                              false, 'item',    2),
+    (e2e.gid(p_org, '93000000-0000-0000-0000-000000000003'), p_org, e2e.gid(p_org, '92000000-0000-0000-0000-000000000004'), 'Temperatura máxima',    'number', '°C',   '[]'::jsonb,                              false, 'item',    3),
+    (e2e.gid(p_org, '93000000-0000-0000-0000-000000000004'), p_org, e2e.gid(p_org, '92000000-0000-0000-0000-000000000004'), 'Velocidad recomendada', 'number', 'mm/s', '[]'::jsonb,                              false, 'item',    4),
+    (e2e.gid(p_org, '93000000-0000-0000-0000-000000000005'), p_org, e2e.gid(p_org, '92000000-0000-0000-0000-000000000004'), 'Color',                 'list',   null,   '["Negro","Blanco","Rojo","Azul"]'::jsonb, true,  'variant', 5);
+
+  insert into items (id, organization_id, business_line_id, kind, name, description, unit_id, category_id, min_stock, attributes) values
+    (e2e.gid(p_org, '90000000-0000-0000-0000-000000000005'), p_org, e2e.gid(p_org, '30000000-0000-0000-0000-000000000002'), 'supply', 'PLA Sunlu', 'Rollo de 1 kg, 1,75 mm.', e2e.gid(p_org, '60000000-0000-0000-0000-000000000002'), e2e.gid(p_org, '92000000-0000-0000-0000-000000000004'), 1,
+     jsonb_build_object(
+       e2e.gid(p_org, '93000000-0000-0000-0000-000000000001')::text, 'Sunlu',
+       e2e.gid(p_org, '93000000-0000-0000-0000-000000000002')::text, 190,
+       e2e.gid(p_org, '93000000-0000-0000-0000-000000000003')::text, 220,
+       e2e.gid(p_org, '93000000-0000-0000-0000-000000000004')::text, 60));
+
+  insert into item_variants (id, organization_id, item_id, name, attributes) values
+    (e2e.gid(p_org, '91000000-0000-0000-0000-000000000021'), p_org, e2e.gid(p_org, '90000000-0000-0000-0000-000000000005'), 'Negro',
+     jsonb_build_object(e2e.gid(p_org, '93000000-0000-0000-0000-000000000005')::text, 'Negro')),
+    (e2e.gid(p_org, '91000000-0000-0000-0000-000000000022'), p_org, e2e.gid(p_org, '90000000-0000-0000-0000-000000000005'), 'Rojo',
+     jsonb_build_object(e2e.gid(p_org, '93000000-0000-0000-0000-000000000005')::text, 'Rojo'));
 
   -- ── Pedidos (KAM-07) ──────────────────────────────────────────────────────
   -- Hasta KAM-08 no hay pantalla de alta, así que el tablero y las pruebas

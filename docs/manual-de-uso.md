@@ -510,6 +510,7 @@ Ruta: `/catalog`. Lo que compras (**Insumos**), lo que vendes (**Productos**) y 
 
 - Pestañas **Insumos / Productos / Activos**.
 - **Buscar** por nombre (sin importar tildes), filtro de **Línea** (incluye *Compartido*), filtro de **Categoría** (las de la pestaña, o *Sin categoría*) y **Ver archivados**. Al cambiar de pestaña, la categoría elegida se descarta: cada tipo tiene las suyas.
+- Con una categoría elegida aparece un filtro por cada **atributo de lista** del ítem que esa categoría declara (por ejemplo **Marca**). Los atributos de variante, como el color, no filtran. Al cambiar de categoría o de pestaña, estos filtros se descartan, y **Quitar filtros** también los limpia.
 - Los insumos por debajo del mínimo llevan la marca **Bajo mínimo**.
 - Menú **Acciones** por fila: **Ver**, **Editar**, **Archivar** (solo dueño) o **Desarchivar**.
 - Se muestran 50 por página con **Mostrar más**.
@@ -524,8 +525,9 @@ Ruta: `/catalog`. Lo que compras (**Insumos**), lo que vendes (**Productos**) y 
    - Un **insumo** pide el **Mínimo** (para las alertas de inventario) y no tiene precio de venta, porque no se vende.
    - Un **producto** pide el **Precio de venta referencial** (no es el costo de compra) y no tiene mínimo.
    - Un **activo** no pide ninguno de los dos.
-4. **Descripción** y **Fotografía** opcionales.
-5. **Crear insumo**, **Crear producto** o **Crear activo**.
+4. Si la categoría declara **atributos** (18.3), aparecen sus campos: texto, número con su unidad (por ejemplo °C), una lista de opciones o un color. El color se elige con el selector o se escribe en hex (`#C62828` o `c62828`). Cambian al cambiar de categoría. Un atributo obligatorio no deja guardar sin su dato, y un número mal escrito se rechaza. Se acepta la coma decimal.
+5. **Descripción** y **Fotografía** opcionales.
+6. **Crear insumo**, **Crear producto** o **Crear activo**.
 
 La columna **Precio de venta** del listado solo aparece en la pestaña de productos.
 
@@ -533,9 +535,10 @@ La columna **Precio de venta** del listado solo aparece en la pestaña de produc
 
 ![Detalle de producto](capturas/catalogo-detalle.png)
 
-- **Datos generales** con **Editar** y **Archivar**. La **Categoría** muestra su nombre, *Sin categoría* o la marca **Archivada**.
+- **Datos generales** con **Editar** y **Archivar**. La **Categoría** muestra su nombre, *Sin categoría* o la marca **Archivada**. Los **atributos** con valor se ven como datos rotulados, con su unidad; un color se ve como una muestra junto a su hex.
+- Si el ítem guarda valores de un atributo que se archivó, o de la categoría que tenía antes, se ven aparte en **Datos que ya no se piden**. No se pierden al editar.
 - **Fotografía**.
-- **Variantes** (tamaño, color…): **Agregar variante** con nombre y, solo en productos, precio propio opcional.
+- **Variantes** (tamaño, color…): **Agregar variante** con nombre, los atributos de variante de su categoría (por ejemplo **Color**) y, solo en productos, precio propio opcional. La lista muestra una columna por atributo de variante.
 - **Tareas relacionadas** e **Historial**.
 
 Para un **insumo** aparecen además las secciones de inventario:
@@ -546,7 +549,7 @@ Para un **insumo** aparecen además las secciones de inventario:
 
 El saldo de un insumo **no se escribe a mano**: es la suma de sus movimientos (entradas por compra, consumos y ajustes).
 
-- **Registrar consumo** (también desde **Consumo** en Registro rápido): elige el insumo, la cantidad y una nota opcional; pulsa **Registrar**.
+- **Registrar consumo** (también desde **Consumo** en Registro rápido): elige el insumo, la cantidad y una nota opcional; pulsa **Registrar**. Si el insumo tiene variantes, hay que elegir de cuál se usó.
 
   ![Registrar consumo](capturas/inventario-registrar-consumo.png)
 
@@ -554,7 +557,11 @@ El saldo de un insumo **no se escribe a mano**: es la suma de sus movimientos (e
 
   ![Ajuste por conteo](capturas/inventario-ajuste-conteo.png)
 
-- **Movimientos**: historial del insumo.
+- **Disponibilidad por variante**: un insumo con variantes (por ejemplo, un filamento con varios colores) muestra el saldo de cada una debajo del total. Cada fila trae su **Registrar consumo** y su **Ajustar**, con la variante ya puesta. En ese caso no hay ajuste del ítem entero: se cuenta color por color.
+  - Si hay movimientos anteriores a que el insumo tuviera variantes, aparece una fila **Sin variante**. Su **Ajustar** la deja en el valor contado, normalmente cero.
+  - El mínimo sigue siendo del ítem: un color agotado no enciende la alerta si el total está por encima del mínimo.
+  - Una compra de una variante sube el saldo de esa variante.
+- **Movimientos**: historial del insumo, con la variante de cada uno cuando las tiene.
 - **Evolución de precios de compra** (solo dueño): último costo y precios por proveedor.
 
 El ayudante puede registrar consumos y conteos, pero no ve precios de compra.
@@ -707,6 +714,12 @@ Hay dos listas de categorías, cada una en su pestaña:
   - El nombre no se repite dentro del mismo tipo, sin importar mayúsculas: *sustratos* choca con *Sustratos*. En otro tipo sí puede repetirse: *Embalaje* puede ser de insumo y de producto.
   - **Archivar** una categoría deja de ofrecerla en los formularios y en el filtro del catálogo. Los ítems que ya la usan la conservan y la siguen mostrando. **Restaurar** la devuelve.
   - Solo la dueña las gestiona. El ayudante las elige al registrar un ítem.
+- **Atributos de una categoría de ítem**: desde el menú **⋯** de una categoría, **Atributos** abre los datos que describen a sus ítems o a sus variantes. Se declaran una vez y sirven para todos los ítems de la categoría.
+  - **Nuevo atributo** pide **Nombre**, **Tipo** (*Texto*, *Número*, *Lista* o *Color*), **Unidad** (solo números, por ejemplo °C o mm/s), **Opciones** (solo listas, una por línea), **Obligatorio** y **Aplica a** (*Ítem* o *Variante*). Al ítem, lo que describe al ítem entero, como la marca; a la variante, lo que cambia en cada una, como el color.
+  - El tipo y a qué se aplica no cambian después. **Editar** permite cambiar el nombre, la unidad, las opciones y si es obligatorio. Renombrar no pierde ningún valor.
+  - Quitar una opción de una lista no borra los valores que ya la usan: se siguen mostrando y se conservan si nadie los cambia, pero no se pueden elegir de nuevo.
+  - **Archivar** un atributo deja de pedirlo en los formularios y de ofrecerlo en el filtro. Los valores guardados se conservan y se siguen mostrando. **Restaurar** lo devuelve con sus valores.
+  - Solo la dueña los gestiona. El ayudante llena los valores al registrar ítems y variantes.
 
 ### 18.4 Estados
 

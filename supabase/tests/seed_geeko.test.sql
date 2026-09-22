@@ -12,7 +12,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(34);
+select plan(40);
 
 -- ── Scenario: Reset leaves Geeko Store ready ──────────────────────────────
 
@@ -307,6 +307,50 @@ select is(
             '90000000-0000-0000-0000-000000000015', '90000000-0000-0000-0000-000000000016')
       and c.kind = i.kind),
   10, 'semilla: cada insumo y producto sembrado apunta a una categoría de su tipo');
+
+-- ── Scenario: Filamento de la semilla con sus atributos ───────────────────
+-- (catalog-custom-attributes). Por identificador: `e2e.gid` devuelve tal cual
+-- los de Geeko, y la categoría, sus atributos y el filamento los crea la
+-- semilla, no una conversión.
+
+select is(
+  (select string_agg(name, ', ' order by position) from item_category_attributes
+    where category_id = '92000000-0000-0000-0000-000000000004' and archived_at is null),
+  'Marca, Temperatura mínima, Temperatura máxima, Velocidad recomendada, Color',
+  'semilla: «Filamento» declara sus cinco atributos en orden');
+
+select is(
+  (select string_agg(name || ':' || type || ':' || scope, ', ' order by position)
+     from item_category_attributes
+    where category_id = '92000000-0000-0000-0000-000000000004'),
+  'Marca:list:item, Temperatura mínima:number:item, Temperatura máxima:number:item, Velocidad recomendada:number:item, Color:list:variant',
+  'semilla: marca, temperaturas y velocidad al ítem; color a la variante');
+
+select ok(
+  (select required and options = '["Negro","Blanco","Rojo","Azul"]'::jsonb
+     from item_category_attributes where id = '93000000-0000-0000-0000-000000000005'),
+  'semilla: el color es una lista obligatoria de cuatro opciones');
+
+select is(
+  (select attributes from items where id = '90000000-0000-0000-0000-000000000005'),
+  jsonb_build_object(
+    '93000000-0000-0000-0000-000000000001', 'Sunlu',
+    '93000000-0000-0000-0000-000000000002', 190,
+    '93000000-0000-0000-0000-000000000003', 220,
+    '93000000-0000-0000-0000-000000000004', 60),
+  'semilla: «PLA Sunlu» tiene marca, temperaturas y velocidad, guardadas por id de atributo');
+
+select ok(
+  (select business_line_id = '30000000-0000-0000-0000-000000000002'
+      and category_id = '92000000-0000-0000-0000-000000000004'
+     from items where id = '90000000-0000-0000-0000-000000000005'),
+  'semilla: «PLA Sunlu» es de Impresión 3D y de la categoría «Filamento»');
+
+select is(
+  (select string_agg(name || '=' || (attributes ->> '93000000-0000-0000-0000-000000000005'), ', ' order by name)
+     from item_variants where item_id = '90000000-0000-0000-0000-000000000005'),
+  'Negro=Negro, Rojo=Rojo',
+  'semilla: «PLA Sunlu» tiene las variantes Negro y Rojo con su color');
 
 select * from finish();
 

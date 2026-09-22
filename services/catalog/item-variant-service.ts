@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { ItemVariantFormValues } from "@/lib/catalog/schema";
-import type { ItemVariant } from "@/types";
+import type { AttributeValues, ItemVariant } from "@/types";
 
 export type VariantRow = {
   id: string;
@@ -74,11 +74,48 @@ export class ItemVariantService {
     return (data ?? []).map((row) => this.toEntity(row as VariantRow));
   }
 
+  /** Varias variantes por id, vigentes o archivadas, dentro de la organización. */
+  async listByIds(organizationId: string, ids: readonly string[]): Promise<ItemVariant[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await this.supabase
+      .from("item_variants")
+      .select(COLUMNS)
+      .eq("organization_id", organizationId)
+      .in("id", [...ids])
+      .overrideTypes<VariantRow[]>();
+
+    if (error) {
+      throw new Error(`No se pudieron cargar las variantes: ${error.message}`);
+    }
+
+    return (data ?? []).map((row) => this.toEntity(row as VariantRow));
+  }
+
+  async findById(organizationId: string, id: string): Promise<ItemVariant | null> {
+    const { data, error } = await this.supabase
+      .from("item_variants")
+      .select(COLUMNS)
+      .eq("organization_id", organizationId)
+      .eq("id", id)
+      .maybeSingle()
+      .overrideTypes<VariantRow | null>();
+
+    if (error) {
+      throw new Error(`No se pudo cargar la variante: ${error.message}`);
+    }
+
+    return data ? this.toEntity(data as VariantRow) : null;
+  }
+
+  /**
+   * `attributes` es el objeto completo ya validado y combinado con lo guardado
+   * (`mergeAttributes`): este servicio no interpreta atributos.
+   */
   async create(
     organizationId: string,
     itemId: string,
     id: string,
-    input: ItemVariantFormValues,
+    input: ItemVariantFormValues & { attributes?: AttributeValues },
   ): Promise<ItemVariant> {
     const { data, error } = await this.supabase
       .from("item_variants")
@@ -88,6 +125,7 @@ export class ItemVariantService {
         item_id: itemId,
         name: input.name,
         sale_price: input.salePrice,
+        attributes: input.attributes ?? {},
       })
       .select(COLUMNS)
       .single()
@@ -103,13 +141,15 @@ export class ItemVariantService {
   async update(
     organizationId: string,
     id: string,
-    input: ItemVariantFormValues,
+    input: ItemVariantFormValues & { attributes?: AttributeValues },
   ): Promise<ItemVariant> {
     const { data, error } = await this.supabase
       .from("item_variants")
       .update({
         name: input.name,
         sale_price: input.salePrice,
+        // Sin `attributes` en la carga, lo guardado no se toca.
+        ...(input.attributes === undefined ? {} : { attributes: input.attributes }),
         updated_at: new Date().toISOString(),
       })
       .eq("organization_id", organizationId)

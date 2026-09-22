@@ -45,6 +45,7 @@ const SUBJECTS: Record<string, string> = {
   sales_channels: "el canal",
   expense_categories: "la categoría de gasto",
   item_categories: "la categoría de ítem",
+  item_category_attributes: "el atributo de categoría",
   organization_tools: "la herramienta",
   units: "la unidad",
   organizations: "la organización",

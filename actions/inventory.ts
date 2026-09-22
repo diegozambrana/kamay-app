@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getSessionContext } from "@/lib/auth/session-context";
+import { getSessionContext, type SessionContext } from "@/lib/auth/session-context";
 import { consumptionSchema, countSchema } from "@/lib/inventory/schema";
+import { movementVariantProblem } from "@/lib/inventory/variants";
+import { ItemVariantService } from "@/services/catalog/item-variant-service";
 import { MovementService } from "@/services/inventory/movement-service";
 
 export type ActionResult = { error: string } | undefined;
@@ -48,6 +50,26 @@ function message(error: unknown, fallback: string): string {
 }
 
 /**
+ * Las variantes del ítem, vigentes y archivadas, para decidir si el
+ * movimiento puede llevar la que trae (`movementVariantProblem`). Lo encolado
+ * sin conexión pasa por aquí igual: un consumo sin variante de un ítem que
+ * ganó variantes mientras tanto se rechaza al sincronizar, con el mensaje.
+ */
+async function variantProblem(
+  context: SessionContext,
+  itemId: string,
+  variantId: string | null,
+  options: { allowUnassigned?: boolean } = {},
+): Promise<string | null> {
+  const variants = await new ItemVariantService(context.supabase).listForItem(
+    context.organizationId,
+    itemId,
+    true,
+  );
+  return movementVariantProblem(variants, variantId, options);
+}
+
+/**
  * Registrar un consumo (V11, V16 y el diálogo desde pedido o tarea).
  *
  * Es de **ambos roles**: la matriz de acceso §16 da *Leer, crear* sobre
@@ -62,6 +84,13 @@ export async function registerConsumption(input: unknown): Promise<ActionResult>
   if (!context) return { error: NO_SESSION };
 
   try {
+    const problem = await variantProblem(
+      context,
+      parsed.data.itemId,
+      parsed.data.variantId,
+    );
+    if (problem) return { error: problem };
+
     await new MovementService(context.supabase).registerConsumption(
       context.organizationId,
       parsed.data,
@@ -93,6 +122,14 @@ export async function registerCountAdjustment(input: unknown): Promise<ActionRes
   if (!context) return { error: NO_SESSION };
 
   try {
+    const problem = await variantProblem(
+      context,
+      parsed.data.itemId,
+      parsed.data.variantId,
+      { allowUnassigned: parsed.data.countsUnassigned },
+    );
+    if (problem) return { error: problem };
+
     await new MovementService(context.supabase).registerCountAdjustment(
       context.organizationId,
       parsed.data,

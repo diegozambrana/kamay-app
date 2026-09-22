@@ -10,7 +10,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(12);
+select plan(18);
 
 -- ── Semilla propia ────────────────────────────────────────────────────────
 
@@ -162,6 +162,84 @@ select is_empty(
      where organization_id = '00000000-0000-0000-0000-000000018d01'
        and kind = 'adjustment' $$,
   'inventory: archivar no generó ningún ajuste automático');
+
+-- ── catalog-custom-attributes · la compra de una variante ─────────────────
+-- Un filamento con dos colores y otro ítem con su propia variante, para
+-- comprobar que la base no deja cruzar la variante de un ítem con otro.
+
+insert into items (id, organization_id, business_line_id, kind, name) values
+  ('00000000-0000-0000-0000-000000018d61', '00000000-0000-0000-0000-000000018d01',
+   '00000000-0000-0000-0000-000000018d11', 'supply', 'PLA Sunlu'),
+  ('00000000-0000-0000-0000-000000018d62', '00000000-0000-0000-0000-000000018d01',
+   '00000000-0000-0000-0000-000000018d11', 'supply', 'Resina');
+
+insert into item_variants (id, organization_id, item_id, name) values
+  ('00000000-0000-0000-0000-000000018d71', '00000000-0000-0000-0000-000000018d01',
+   '00000000-0000-0000-0000-000000018d61', 'Negro'),
+  ('00000000-0000-0000-0000-000000018d72', '00000000-0000-0000-0000-000000018d01',
+   '00000000-0000-0000-0000-000000018d61', 'Rojo'),
+  ('00000000-0000-0000-0000-000000018d73', '00000000-0000-0000-0000-000000018d01',
+   '00000000-0000-0000-0000-000000018d62', 'Gris');
+
+insert into expenses (id, organization_id, business_line_id, kind, contact_id, occurred_at) values
+  ('00000000-0000-0000-0000-000000018d32', '00000000-0000-0000-0000-000000018d01',
+   '00000000-0000-0000-0000-000000018d11', 'purchase',
+   '00000000-0000-0000-0000-000000018d12', now());
+
+-- ── Scenario: La compra de una variante sube el saldo de esa variante ─────
+-- La segunda llegada se simula como arriba: el movimiento ya existe cuando
+-- llega su línea, y el trigger lo absorbe.
+
+insert into inventory_movements
+  (organization_id, item_id, variant_id, kind, quantity, source_type, source_id, occurred_at)
+values
+  ('00000000-0000-0000-0000-000000018d01', '00000000-0000-0000-0000-000000018d61',
+   '00000000-0000-0000-0000-000000018d71', 'in', 1, 'expense_item',
+   '00000000-0000-0000-0000-000000018d81', now());
+
+select lives_ok(
+  $$ insert into expense_items (id, organization_id, expense_id, item_id, variant_id, quantity, unit_price)
+     values ('00000000-0000-0000-0000-000000018d81', '00000000-0000-0000-0000-000000018d01',
+             '00000000-0000-0000-0000-000000018d32', '00000000-0000-0000-0000-000000018d61',
+             '00000000-0000-0000-0000-000000018d71', 1, 175) $$,
+  'La compra de una variante sube el saldo de esa variante: la segunda llegada se guarda sin error');
+
+select is(
+  (select count(*)::int from inventory_movements
+   where source_type = 'expense_item'
+     and source_id = '00000000-0000-0000-0000-000000018d81'
+     and variant_id = '00000000-0000-0000-0000-000000018d71'),
+  1, 'La compra de una variante sube el saldo de esa variante: una sola entrada, con su variante');
+
+insert into expense_items (id, organization_id, expense_id, item_id, variant_id, quantity, unit_price) values
+  ('00000000-0000-0000-0000-000000018d82', '00000000-0000-0000-0000-000000018d01',
+   '00000000-0000-0000-0000-000000018d32', '00000000-0000-0000-0000-000000018d61',
+   '00000000-0000-0000-0000-000000018d71', 2, 175);
+
+select is(
+  (select balance from item_variant_balances
+   where variant_id = '00000000-0000-0000-0000-000000018d71'),
+  3::numeric, 'La compra de una variante sube el saldo de esa variante: Negro suma sus dos compras');
+
+select is(
+  (select balance from item_variant_balances
+   where variant_id = '00000000-0000-0000-0000-000000018d72'),
+  0::numeric, 'La compra de una variante sube el saldo de esa variante: Rojo no cambia');
+
+-- ── La variante de un movimiento es de su ítem ────────────────────────────
+
+select throws_ok(
+  $$ insert into inventory_movements (organization_id, item_id, variant_id, kind, quantity, source_type)
+     values ('00000000-0000-0000-0000-000000018d01', '00000000-0000-0000-0000-000000018d61',
+             '00000000-0000-0000-0000-000000018d73', 'out', -1, 'manual') $$,
+  '23503', null, 'inventory: un movimiento con la variante de otro ítem se rechaza');
+
+select throws_ok(
+  $$ insert into expense_items (id, organization_id, expense_id, item_id, variant_id, quantity, unit_price)
+     values ('00000000-0000-0000-0000-000000018d83', '00000000-0000-0000-0000-000000018d01',
+             '00000000-0000-0000-0000-000000018d32', '00000000-0000-0000-0000-000000018d61',
+             '00000000-0000-0000-0000-000000018d73', 1, 175) $$,
+  '23503', null, 'inventory: una línea de compra con la variante de otro ítem no llega a moverlo');
 
 select * from finish();
 rollback;

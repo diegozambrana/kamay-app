@@ -153,6 +153,27 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
     ],
   },
   {
+    // catalog-custom-attributes: los atributos que declara cada categoría.
+    table: "item_category_attributes",
+    file: "atributos-categoria",
+    ownerOnly: false,
+    columns: [
+      "id",
+      "organization_id",
+      "category_id",
+      "name",
+      "type",
+      "unit",
+      "options",
+      "required",
+      "scope",
+      "position",
+      "created_at",
+      "updated_at",
+      "archived_at",
+    ],
+  },
+  {
     table: "units",
     file: "unidades",
     ownerOnly: false,
@@ -235,6 +256,8 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
       "archived_at",
       // Añadida por `item-categories`: va donde la pone la base, al final.
       "category_id",
+      // Añadida por `catalog-custom-attributes`, también al final.
+      "attributes",
     ],
   },
   {

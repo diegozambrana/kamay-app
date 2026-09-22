@@ -7,6 +7,8 @@ import { getSessionContext } from "@/lib/auth/session-context";
 import { resolveActiveLine } from "@/lib/business-lines/active-line";
 import { itemKindSchema } from "@/lib/catalog/schema";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
+import { attributeFieldsFor } from "@/lib/catalog/attributes";
+import { ItemCategoryAttributeService } from "@/services/configuration/item-category-attribute-service";
 import { ItemCategoryService } from "@/services/configuration/item-category-service";
 import { UnitService } from "@/services/configuration/unit-service";
 import { AttachmentService } from "@/services/catalog/attachment-service";
@@ -36,6 +38,11 @@ export default async function CatalogPage({
     limit?: string;
     /** El ítem recién creado desde esta pantalla. */
     created?: string;
+    /**
+     * `attr_<id del atributo>`: la opción elegida en un filtro por atributo de
+     * lista (`catalog-custom-attributes`, design D8).
+     */
+    [attributeParam: `attr_${string}`]: string | undefined;
   }>;
 }) {
   const context = await getSessionContext();
@@ -76,6 +83,28 @@ export default async function CatalogPage({
       : (allCategories.find((category) => category.id === requestedCategory)?.id ??
         "all");
 
+  // Los atributos vigentes de las categorías de la pestaña: el formulario de
+  // alta y edición cambia de campos al cambiar de categoría.
+  const attributeDefinitions = await new ItemCategoryAttributeService(
+    context.supabase,
+  ).listActiveForCategories(
+    context.organizationId,
+    allCategories.map((category) => category.id),
+  );
+
+  // Con una categoría elegida, cada atributo de lista del ítem filtra por su
+  // opción. Un valor que no es una opción de esa categoría no filtra, como un
+  // enlace viejo de otra categoría (D8).
+  const attributeFilters: Record<string, string> = {};
+  if (categoryFilter !== "all" && categoryFilter !== "none") {
+    for (const field of attributeFieldsFor(attributeDefinitions, categoryFilter, "item")) {
+      const value = params[`attr_${field.id}`];
+      if (field.type === "list" && value && field.options.includes(value)) {
+        attributeFilters[field.id] = value;
+      }
+    }
+  }
+
   // Una ventana del catálogo, no el catálogo entero (KAM-23,
   // `performance-budget`): una fila de más dice si hay más.
   const limit = resolveLimit(params.limit);
@@ -86,6 +115,7 @@ export default async function CatalogPage({
       businessLineId:
         lineFilter === "all" ? null : (lineFilter as string | "shared"),
       categoryId: categoryFilter === "all" ? null : categoryFilter,
+      attributes: attributeFilters,
       search,
       includeArchived,
       limit: limit + 1,
@@ -106,6 +136,7 @@ export default async function CatalogPage({
       kind,
       lineFilter,
       categoryFilter,
+      attributeFilters,
       search,
       includeArchived,
     })
@@ -170,6 +201,8 @@ export default async function CatalogPage({
       lineFilter={lineFilter}
       categoryFilter={categoryFilter}
       categories={allCategories}
+      attributeDefinitions={attributeDefinitions}
+      attributeFilters={attributeFilters}
       search={search}
       includeArchived={includeArchived}
       role={context.role}

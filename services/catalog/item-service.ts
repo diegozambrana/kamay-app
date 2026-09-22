@@ -7,7 +7,7 @@ import {
   variantFromRow,
   type VariantRow,
 } from "@/services/catalog/item-variant-service";
-import type { Item, ItemKind, ItemVariant } from "@/types";
+import type { AttributeValues, Item, ItemKind, ItemVariant } from "@/types";
 
 type ItemRow = {
   id: string;
@@ -20,11 +20,12 @@ type ItemRow = {
   category_id: string | null;
   sale_price: number | string | null;
   min_stock: number | string | null;
+  attributes: Record<string, unknown> | null;
   archived_at: string | null;
 };
 
 const COLUMNS =
-  "id, organization_id, business_line_id, kind, name, description, unit_id, category_id, sale_price, min_stock, archived_at";
+  "id, organization_id, business_line_id, kind, name, description, unit_id, category_id, sale_price, min_stock, attributes, archived_at";
 
 export type ItemFilters = {
   kind?: ItemKind;
@@ -33,6 +34,12 @@ export type ItemFilters = {
   /** `null` no filtra por categoría; para ver los que no tienen, `"none"`. */
   categoryId?: string | "none" | null;
   search?: string;
+  /**
+   * Opción elegida por atributo de lista (`catalog-custom-attributes`, D8):
+   * el id del atributo y el valor. Cada uno se aplica como contención sobre
+   * `items.attributes`.
+   */
+  attributes?: Record<string, string>;
   includeArchived?: boolean;
   /** Cuántas filas como máximo: la pantalla del catálogo pide una ventana. */
   limit?: number;
@@ -66,6 +73,7 @@ export class ItemService {
       categoryId: row.category_id,
       salePrice: toNumber(row.sale_price),
       minStock: toNumber(row.min_stock),
+      attributes: row.attributes ?? {},
       archivedAt: row.archived_at,
     };
   }
@@ -88,6 +96,10 @@ export class ItemService {
       query = query.is("category_id", null);
     } else if (filters.categoryId) {
       query = query.eq("category_id", filters.categoryId);
+    }
+
+    for (const [attributeId, value] of Object.entries(filters.attributes ?? {})) {
+      query = query.contains("attributes", { [attributeId]: value });
     }
 
     // Lo archivado no aparece salvo que se pida: es la regla de todo listado.
@@ -203,10 +215,14 @@ export class ItemService {
     return data ? this.toEntity(data as ItemRow) : null;
   }
 
+  /**
+   * `attributes` es el objeto completo ya validado y combinado con lo guardado
+   * (`mergeAttributes`): este servicio no interpreta atributos.
+   */
   async create(
     organizationId: string,
     id: string,
-    input: ItemFormValues,
+    input: ItemFormValues & { attributes?: AttributeValues },
   ): Promise<Item> {
     const { data, error } = await this.supabase
       .from("items")
@@ -221,6 +237,7 @@ export class ItemService {
         category_id: input.categoryId,
         sale_price: input.salePrice,
         min_stock: input.minStock,
+        attributes: input.attributes ?? {},
       })
       .select(COLUMNS)
       .single()
@@ -241,7 +258,7 @@ export class ItemService {
   async update(
     organizationId: string,
     id: string,
-    input: Omit<ItemFormValues, "kind">,
+    input: Omit<ItemFormValues, "kind"> & { attributes?: AttributeValues },
   ): Promise<Item> {
     const { data, error } = await this.supabase
       .from("items")
@@ -253,6 +270,8 @@ export class ItemService {
         category_id: input.categoryId,
         sale_price: input.salePrice,
         min_stock: input.minStock,
+        // Sin `attributes` en la carga, lo guardado no se toca.
+        ...(input.attributes === undefined ? {} : { attributes: input.attributes }),
         updated_at: new Date().toISOString(),
       })
       .eq("organization_id", organizationId)

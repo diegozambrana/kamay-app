@@ -35,9 +35,9 @@ export default async function QuickPage() {
       timezone,
     ),
     new BusinessLineService(context.supabase).listActive(context.organizationId),
-    new ItemService(context.supabase).list(context.organizationId, {
-      kind: "supply",
-    }),
+    // Con sus variantes vigentes: un insumo con variantes exige elegir cuál
+    // (catalog-custom-attributes, design D7).
+    new ItemService(context.supabase).listSuppliesWithVariants(context.organizationId),
   ]);
 
   const lineNames = Object.fromEntries(lines.map((line) => [line.id, line.name]));

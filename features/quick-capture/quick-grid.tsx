@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { ConsumptionDialog } from "@/features/inventory/consumption-dialog";
+import {
+  ConsumptionDialog,
+  type ConsumableSupply,
+} from "@/features/inventory/consumption-dialog";
 import { destinationsFor, isAvailable } from "@/lib/quick-capture/destinations";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
-import type { Item } from "@/types";
 
 /**
  * V16 · La retícula de registro rápido.
@@ -26,7 +28,7 @@ import type { Item } from "@/types";
  * exactamente igual que los demás —mismo tamaño, misma jerarquía— porque la
  * forma de un destino no es asunto de quien lo pulsa.
  */
-export function QuickGrid({ supplies = [] }: { supplies?: Item[] }) {
+export function QuickGrid({ supplies = [] }: { supplies?: ConsumableSupply[] }) {
   const role = useUserStore((state) => state.role);
   const destinations = destinationsFor(role);
   const [consuming, setConsuming] = useState(false);

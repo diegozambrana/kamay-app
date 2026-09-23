@@ -25,7 +25,7 @@ import { countAdjustment } from "@/lib/inventory/count";
 import { countSchema } from "@/lib/inventory/schema";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
-import type { Item } from "@/types";
+import type { Item, ItemVariant } from "@/types";
 
 import { captureAdjustment } from "./sync/capture-movement";
 
@@ -41,18 +41,29 @@ import { captureAdjustment } from "./sync/capture-movement";
  * que viaja. Si este ajuste se sincroniza dos horas más tarde y alguien
  * registró un consumo entre medias, los dos hechos sobreviven; guardando «pon
  * el saldo en 57» el consumo intermedio desaparecería sin dejar rastro.
+ *
+ * En un insumo con variantes se cuenta **por variante**
+ * (`catalog-custom-attributes`, design D7): el diálogo se abre desde la fila
+ * de la variante, con su saldo, o desde la fila «Sin variante», que junta lo
+ * que se movió sin variante.
  */
 export function CountDialog({
   open,
   onOpenChange,
   item,
   balance,
+  variant = null,
+  unassigned = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: Item;
-  /** El saldo derivado en el momento de contar. */
+  /** El saldo derivado en el momento de contar: del ítem, o de la fila contada. */
   balance: number;
+  /** La variante que se cuenta. */
+  variant?: ItemVariant | null;
+  /** Se cuenta la fila «Sin variante» de un ítem que tiene variantes. */
+  unassigned?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -90,6 +101,8 @@ export function CountDialog({
     const parsed = countSchema.safeParse({
       id: crypto.randomUUID(),
       itemId: item.id,
+      variantId: variant?.id ?? null,
+      ...(unassigned ? { countsUnassigned: true } : {}),
       difference: outcome.difference,
       note: String(data.get("note") ?? ""),
       occurredAt: new Date().toISOString(),
@@ -126,8 +139,9 @@ export function CountDialog({
           <DialogHeader>
             <DialogTitle>Ajuste por conteo</DialogTitle>
             <DialogDescription>
-              Cuenta lo que hay de {item.name} y escribe el número. El sistema
-              anota la diferencia.
+              Cuenta lo que hay de {item.name}
+              {variant ? ` · ${variant.name}` : unassigned ? " sin variante" : ""} y escribe el
+              número. El sistema anota la diferencia.
             </DialogDescription>
           </DialogHeader>
 

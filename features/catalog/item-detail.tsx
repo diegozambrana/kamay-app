@@ -22,6 +22,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { attributeFieldsFor, describeAttributes } from "@/lib/catalog/attributes";
 import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
 import {
   ITEM_KIND_SINGULAR,
@@ -35,7 +36,9 @@ import type {
   Item,
   ItemBalance,
   ItemCategory,
+  ItemCategoryAttribute,
   ItemVariant,
+  VariantBalance,
   Role,
   Unit,
 } from "@/types";
@@ -51,6 +54,7 @@ import { ArchiveWarning } from "@/features/tasks/links/archive-warning";
 import { RelatedTasks } from "@/features/tasks/links/related-tasks";
 import type { RelatedTask } from "@/services/tasks/task-service";
 
+import { ColorSwatch } from "./color-swatch";
 import { ItemFormDialog } from "./item-form-dialog";
 import { ItemPhotos, type ItemPhoto } from "./item-photos";
 import { VariantsList } from "./variants-list";
@@ -76,11 +80,13 @@ export function ItemDetail({
   lines,
   units,
   categories = [],
+  attributeDefinitions = [],
   history,
   relatedTasks,
   role,
   timeZone,
   balance = null,
+  variantBalances = [],
   movements = [],
   hasMoreMovements = false,
   prices = [],
@@ -96,6 +102,12 @@ export function ItemDetail({
   units: Unit[];
   /** Las categorías del tipo del ítem, archivadas incluidas. */
   categories?: ItemCategory[];
+  /**
+   * Los atributos de esas categorías, archivados incluidos
+   * (`catalog-custom-attributes`): los vigentes se piden en los formularios,
+   * y todos sirven para rotular lo que el ítem tenga guardado.
+   */
+  attributeDefinitions?: ItemCategoryAttribute[];
   /** Vacío para el ayudante: la bitácora solo la lee el dueño. */
   history: RecordHistoryData;
   /** Las tareas que apuntan a este ítem (KAM-21). */
@@ -103,6 +115,8 @@ export function ItemDetail({
   role: Role;
   /** Solo para los insumos; `null` en productos y activos. */
   balance?: ItemBalance | null;
+  /** El saldo de cada variante de un insumo (`catalog-custom-attributes`). */
+  variantBalances?: VariantBalance[];
   movements?: InventoryMovement[];
   hasMoreMovements?: boolean;
   /** Vacío para el ayudante: RLS no le da los precios de compra. */
@@ -130,6 +144,13 @@ export function ItemDetail({
     ? (categories.find((candidate) => candidate.id === item.categoryId) ?? null)
     : null;
   const activeCategories = categories.filter((candidate) => candidate.archivedAt === null);
+  const itemAttributes = describeAttributes(
+    item.attributes,
+    attributeDefinitions,
+    item.categoryId,
+    "item",
+  );
+  const variantFields = attributeFieldsFor(attributeDefinitions, item.categoryId, "variant");
   const line = lines.find((candidate) => candidate.id === item.businessLineId);
   const unit = units.find((candidate) => candidate.id === item.unitId);
 
@@ -245,11 +266,56 @@ export function ItemDetail({
                     </dd>
                   </div>
                 )}
+                {/* Los atributos de la categoría, como datos rotulados y no
+                    dentro de la descripción (catalog-custom-attributes). */}
+                {itemAttributes.current.map((attribute) => (
+                  <div
+                    key={attribute.id}
+                    className="flex flex-col gap-1"
+                    data-testid="item-attribute"
+                  >
+                    <dt className="text-muted-foreground">{attribute.label}</dt>
+                    <dd>
+                      {attribute.swatch ? <ColorSwatch hex={attribute.swatch} /> : attribute.value}
+                    </dd>
+                  </div>
+                ))}
                 <div className="flex flex-col gap-1 sm:col-span-2">
                   <dt className="text-muted-foreground">Descripción</dt>
                   <dd>{item.description ?? "—"}</dd>
                 </div>
               </dl>
+
+              {/* Valores de atributos archivados o de otra categoría: se
+                  conservan y se muestran, pero el formulario ya no los pide. */}
+              {itemAttributes.retired.length > 0 && (
+                <section
+                  className="mt-4 rounded-md border border-dashed p-3 text-sm"
+                  data-testid="item-retired-attributes"
+                  aria-labelledby="item-retired-attributes-title"
+                >
+                  <h3
+                    id="item-retired-attributes-title"
+                    className="mb-2 text-xs font-medium text-muted-foreground"
+                  >
+                    Datos que ya no se piden
+                  </h3>
+                  <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+                    {itemAttributes.retired.map((attribute) => (
+                      <div key={attribute.id} className="flex flex-col gap-0.5">
+                        <dt className="text-muted-foreground">{attribute.label}</dt>
+                        <dd>
+                          {attribute.swatch ? (
+                            <ColorSwatch hex={attribute.swatch} />
+                          ) : (
+                            attribute.value
+                          )}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
 
               <div className="mt-4 flex gap-2">
                 <Button size="sm" onClick={() => setEditing(true)}>
@@ -279,6 +345,9 @@ export function ItemDetail({
             categories={activeCategories}
             currentCategory={category}
             canManageCategories={isOwner}
+            attributeDefinitions={attributeDefinitions.filter(
+              (definition) => definition.archivedAt === null,
+            )}
           />
         </>
       )}
@@ -296,6 +365,7 @@ export function ItemDetail({
         variants={variants}
         role={role}
         readOnly={isArchived}
+        attributeFields={variantFields}
       />
 
       {/* Inventario (KAM-18). Solo los insumos tienen saldo: `item_balances`
@@ -308,11 +378,22 @@ export function ItemDetail({
             balance={balance}
             unit={unit}
             readOnly={isArchived}
+            variants={variants}
+            variantBalances={variantBalances}
           />
           <MovementsSection
             movements={movements}
             timeZone={timeZone}
             hasMore={hasMoreMovements}
+            variantNames={
+              variantBalances.some((row) => row.variantId !== null)
+                ? Object.fromEntries(
+                    variantBalances
+                      .filter((row) => row.variantId !== null)
+                      .map((row) => [row.variantId as string, row.variantName ?? ""]),
+                  )
+                : undefined
+            }
           />
         </>
       )}

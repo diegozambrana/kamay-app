@@ -26,8 +26,15 @@ export function MovementsSection({
   movements,
   timeZone,
   hasMore = false,
+  variantNames,
 }: {
   movements: InventoryMovement[];
+  /**
+   * Los nombres de las variantes del ítem, por id (`catalog-custom-attributes`).
+   * Con ellos aparece la columna «Variante»; sin ellos, la tabla es la de
+   * siempre.
+   */
+  variantNames?: Record<string, string>;
   /** Zona horaria de la organización: la historia se cuenta en hora del taller. */
   timeZone: string;
   /** Hay más páginas de las que caben aquí. */
@@ -51,6 +58,7 @@ export function MovementsSection({
               <TableHeader>
                 <TableRow>
                   <TableHead>Qué pasó</TableHead>
+                  {variantNames && <TableHead>Variante</TableHead>}
                   <TableHead className="text-right">Cantidad</TableHead>
                   <TableHead>Nota</TableHead>
                   <TableHead className="text-right">Cuándo</TableHead>
@@ -62,6 +70,13 @@ export function MovementsSection({
                     <TableCell className="font-medium">
                       {movementLabel(movement)}
                     </TableCell>
+                    {variantNames && (
+                      <TableCell data-testid="movement-variant">
+                        {movement.variantId
+                          ? (variantNames[movement.variantId] ?? "—")
+                          : "Sin variante"}
+                      </TableCell>
+                    )}
                     <TableCell className="text-right tabular-nums">
                       {signedQuantity(movement)}
                     </TableCell>

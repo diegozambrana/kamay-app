@@ -10,6 +10,9 @@ const estado = vi.hoisted(() => ({
   llamadas: [] as { servicio: string; metodo: string; id: string }[],
   esDuenna: true,
   categorias: [] as { metodo: string; valores: unknown }[],
+  atributos: [] as { metodo: string; valores: unknown }[],
+  categoriaExiste: true,
+  atributoGuardado: null as null | { id: string; type: string },
   fallo: null as Error | null,
 }));
 
@@ -56,6 +59,9 @@ vi.mock("@/services/configuration/item-category-service", () => ({
       if (estado.fallo) throw estado.fallo;
       estado.categorias.push({ metodo: "rename", valores: { id, ...(valores as object) } });
     }
+    async findById(_org: string, id: string) {
+      return estado.categoriaExiste ? { id } : null;
+    }
     async archive(_org: string, id: string) {
       estado.llamadas.push({ servicio: "itemCategory", metodo: "archive", id });
     }
@@ -64,10 +70,33 @@ vi.mock("@/services/configuration/item-category-service", () => ({
     }
   },
 }));
+vi.mock("@/services/configuration/item-category-attribute-service", () => ({
+  ItemCategoryAttributeService: class {
+    async create(_org: string, valores: unknown) {
+      if (estado.fallo) throw estado.fallo;
+      estado.atributos.push({ metodo: "create", valores });
+    }
+    async update(_org: string, id: string, valores: unknown) {
+      if (estado.fallo) throw estado.fallo;
+      estado.atributos.push({ metodo: "update", valores: { id, ...(valores as object) } });
+    }
+    async findById() {
+      return estado.atributoGuardado;
+    }
+    async archive(_org: string, id: string) {
+      estado.llamadas.push({ servicio: "itemCategoryAttribute", metodo: "archive", id });
+    }
+    async unarchive(_org: string, id: string) {
+      estado.llamadas.push({ servicio: "itemCategoryAttribute", metodo: "unarchive", id });
+    }
+  },
+}));
 
 const {
   archiveConfigurationItem,
   createItemCategory,
+  createItemCategoryAttribute,
+  updateItemCategoryAttribute,
   unarchiveConfigurationItem,
   updateBusinessLine,
   updateItemCategory,
@@ -78,6 +107,9 @@ beforeEach(() => {
   estado.llamadas = [];
   estado.esDuenna = true;
   estado.categorias = [];
+  estado.atributos = [];
+  estado.categoriaExiste = true;
+  estado.atributoGuardado = null;
   estado.fallo = null;
 });
 
@@ -180,6 +212,142 @@ describe("categorías de ítem", () => {
     expect(estado.llamadas).toEqual([
       { servicio: "itemCategory", metodo: "archive", id: CATEGORY },
       { servicio: "itemCategory", metodo: "unarchive", id: CATEGORY },
+    ]);
+  });
+});
+
+/**
+ * Cambio `catalog-custom-attributes`: alta, edición y archivado de los
+ * atributos de una categoría.
+ */
+describe("atributos de categoría", () => {
+  const CATEGORY = "33333333-3333-4333-8333-333333333333";
+  const ATTRIBUTE = "44444444-4444-4444-8444-444444444444";
+
+  it("crear llega al servicio con la definición normalizada", async () => {
+    // «Owner declares the attributes of a category», nivel de acción.
+    const result = await createItemCategoryAttribute({
+      categoryId: CATEGORY,
+      name: " Color ",
+      type: "list",
+      scope: "variant",
+      required: true,
+      unit: "kg",
+      options: ["Negro", " Rojo ", ""],
+    });
+
+    expect(result).toBeUndefined();
+    expect(estado.atributos).toEqual([
+      {
+        metodo: "create",
+        valores: {
+          categoryId: CATEGORY,
+          name: "Color",
+          type: "list",
+          scope: "variant",
+          required: true,
+          unit: null,
+          options: ["Negro", "Rojo"],
+        },
+      },
+    ]);
+  });
+
+  it("sin contexto de dueña no se llama al servicio", async () => {
+    // «The assistant cannot define attributes», nivel de acción.
+    estado.esDuenna = false;
+    const result = await createItemCategoryAttribute({
+      categoryId: CATEGORY,
+      name: "Marca",
+      type: "text",
+      scope: "item",
+    });
+
+    expect(result).toEqual({ error: expect.any(String) });
+    expect(estado.atributos).toEqual([]);
+  });
+
+  it("una categoría que no es de la organización se rechaza antes de escribir", async () => {
+    estado.categoriaExiste = false;
+    const result = await createItemCategoryAttribute({
+      categoryId: CATEGORY,
+      name: "Marca",
+      type: "text",
+      scope: "item",
+    });
+
+    expect(result).toEqual({ error: "No se encontró la categoría." });
+    expect(estado.atributos).toEqual([]);
+  });
+
+  it("un nombre repetido en la categoría se explica en español", async () => {
+    // «Duplicate attribute name in the same category is rejected», nivel de acción.
+    estado.fallo = new Error(
+      'duplicate key value violates unique constraint "item_category_attributes_name_key"',
+    );
+    const result = await createItemCategoryAttribute({
+      categoryId: CATEGORY,
+      name: "color",
+      type: "text",
+      scope: "item",
+    });
+
+    expect(result).toEqual({ error: "Ya existe un atributo con ese nombre en esta categoría." });
+  });
+
+  it("una lista sin opciones se rechaza sin llegar al servicio", async () => {
+    const result = await createItemCategoryAttribute({
+      categoryId: CATEGORY,
+      name: "Acabado",
+      type: "list",
+      scope: "item",
+      options: [],
+    });
+
+    expect(result).toEqual({ error: "Una lista necesita al menos una opción." });
+    expect(estado.atributos).toEqual([]);
+  });
+
+  it("editar no pasa tipo ni alcance, y normaliza según el tipo guardado", async () => {
+    // «Type and scope cannot change», nivel de acción.
+    estado.atributoGuardado = { id: ATTRIBUTE, type: "number" };
+    await updateItemCategoryAttribute({
+      id: ATTRIBUTE,
+      name: "Temperatura",
+      unit: "°C",
+      options: ["no corresponde"],
+      required: false,
+      ...({ type: "list", scope: "variant" } as object),
+    } as { id: string; name: string });
+
+    expect(estado.atributos).toEqual([
+      {
+        metodo: "update",
+        valores: { id: ATTRIBUTE, name: "Temperatura", unit: "°C", options: [], required: false },
+      },
+    ]);
+  });
+
+  it("editar una lista dejándola sin opciones se rechaza", async () => {
+    estado.atributoGuardado = { id: ATTRIBUTE, type: "list" };
+    const result = await updateItemCategoryAttribute({ id: ATTRIBUTE, name: "Color", options: [] });
+
+    expect(result).toEqual({ error: "Una lista necesita al menos una opción." });
+    expect(estado.atributos).toEqual([]);
+  });
+
+  it("editar un atributo que no existe se rechaza", async () => {
+    const result = await updateItemCategoryAttribute({ id: ATTRIBUTE, name: "Color" });
+    expect(result).toEqual({ error: "No se encontró el atributo." });
+  });
+
+  it("archivar y restaurar un atributo llegan a su servicio", async () => {
+    await archiveConfigurationItem({ entity: "itemCategoryAttribute", id: ATTRIBUTE });
+    await unarchiveConfigurationItem({ entity: "itemCategoryAttribute", id: ATTRIBUTE });
+
+    expect(estado.llamadas).toEqual([
+      { servicio: "itemCategoryAttribute", metodo: "archive", id: ATTRIBUTE },
+      { servicio: "itemCategoryAttribute", metodo: "unarchive", id: ATTRIBUTE },
     ]);
   });
 });

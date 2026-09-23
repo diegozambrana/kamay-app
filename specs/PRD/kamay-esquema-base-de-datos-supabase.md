@@ -246,9 +246,35 @@ create table item_categories (
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now(),
   archived_at     timestamptz,
-  unique (id, organization_id, kind)
+  unique (id, organization_id, kind),
+  unique (id, organization_id)         -- destino de la clave de sus atributos
 );
 create unique index on item_categories (organization_id, kind, lower(name));
+
+-- Atributos de una categoría de ítem (cambio `catalog-custom-attributes`).
+-- La organización declara, una vez por categoría, qué datos describen a sus
+-- ítems o a sus variantes: color, marca, temperaturas. Los valores viven en
+-- `items.attributes` e `item_variants.attributes`, con el id del atributo
+-- como clave. Tipo, alcance y categoría no cambian después de creados (lo
+-- garantiza un trigger): los valores guardados perderían su sentido.
+create table item_category_attributes (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id),
+  category_id     uuid not null,
+  name            text not null check (name = btrim(name) and name <> ''),
+  type            text not null check (type in ('text','number','list','color')),  -- color: hex '#RRGGBB'
+  unit            text,                -- '°C', 'mm/s'; solo para números
+  options         jsonb not null default '[]'::jsonb,  -- solo para listas
+  required        boolean not null default false,
+  scope           text not null check (scope in ('item','variant')),
+  position        integer not null,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  archived_at     timestamptz,
+  foreign key (category_id, organization_id)
+    references item_categories (id, organization_id)
+);
+create unique index on item_category_attributes (category_id, lower(name));
 
 -- Unidades de medida
 create table units (
@@ -418,7 +444,11 @@ create table items (
   created_by       uuid references auth.users(id),
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now(),
-  archived_at      timestamptz
+  archived_at      timestamptz,
+  -- Valores de los atributos de alcance ítem de su categoría, por id de
+  -- atributo. Siempre un objeto; la validación por tipo es del servidor.
+  attributes       jsonb not null default '{}'::jsonb
+                   check (jsonb_typeof(attributes) = 'object')
 );
 
 -- La categoría es de la misma organización y del mismo tipo que el ítem, o
@@ -435,10 +465,12 @@ create table item_variants (
   id          uuid primary key default gen_random_uuid(),
   item_id     uuid not null references items(id),
   name        text not null,          -- '11oz', 'Negro', 'XL'
-  attributes  jsonb not null default '{}'::jsonb,
+  attributes  jsonb not null default '{}'::jsonb  -- por id de atributo
+              check (jsonb_typeof(attributes) = 'object'),
   sale_price  numeric(14,2),          -- si difiere del ítem base
   archived_at timestamptz,
-  unique (item_id, name)
+  unique (item_id, name),
+  unique (id, item_id)                -- destino de la clave de los movimientos
 );
 
 -- Datos propios de la maquinaria (kind = 'asset')
@@ -622,6 +654,13 @@ create index on inventory_movements (item_id, occurred_at desc);
 create index on inventory_movements (organization_id, occurred_at desc);
 create unique index on inventory_movements (source_type, source_id)
   where source_type in ('expense_item','order_item');
+
+-- La variante de un movimiento es de su ítem (cambio
+-- `catalog-custom-attributes`). Sin esto, un movimiento cruzado sumaría a la
+-- variante de otro ítem y el saldo por variante dejaría de cuadrar.
+alter table inventory_movements add constraint inventory_movements_variant_of_item_fk
+  foreign key (variant_id, item_id) references item_variants (id, item_id);
+create index on inventory_movements (variant_id) where variant_id is not null;
 ```
 
 Ese índice único final es importante: garantiza que una línea de compra **no pueda generar dos entradas de inventario**, aunque la sincronización sin conexión reintente la operación.
@@ -645,6 +684,26 @@ select
   (i.min_stock is not null and coalesce(sum(m.quantity), 0) < i.min_stock) as below_min
 from items i
 left join inventory_movements m on m.item_id = i.id
+where i.kind = 'supply'
+group by i.id;
+
+-- Saldo por variante (cambio `catalog-custom-attributes`). Una fila por
+-- variante, vigente o archivada, y una fila sin variante con los movimientos
+-- que no la llevan, solo si existen. La suma de las filas de un ítem es su
+-- saldo en `item_balances`. El mínimo y la alerta siguen siendo del ítem.
+create view item_variant_balances with (security_invoker = true) as
+select i.id as item_id, i.organization_id,
+       v.id as variant_id, v.name as variant_name, v.archived_at as variant_archived_at,
+       coalesce(sum(m.quantity), 0) as balance
+from items i
+join item_variants v on v.item_id = i.id
+left join inventory_movements m on m.item_id = i.id and m.variant_id = v.id
+where i.kind = 'supply'
+group by i.id, v.id
+union all
+select i.id, i.organization_id, null, null, null, sum(m.quantity)
+from items i
+join inventory_movements m on m.item_id = i.id and m.variant_id is null
 where i.kind = 'supply'
 group by i.id;
 
@@ -981,7 +1040,7 @@ create policy "orders: editar si es miembro"
 | Tabla | Ayudante | Dueño | Administrador de la plataforma |
 |---|---|---|---|
 | `organizations`, `business_lines`, `sales_channels`, `units` | Leer | Todo | Todo, como dueño |
-| `statuses`, `expense_categories`, `item_categories` | Leer | Todo | Todo, como dueño |
+| `statuses`, `expense_categories`, `item_categories`, `item_category_attributes` | Leer | Todo | Todo, como dueño |
 | `contacts`, `items`, `item_variants` | Leer, crear, editar | Todo | Todo, como dueño |
 | `orders`, `order_items` | Leer, crear, editar | Todo | Todo, como dueño |
 | `payments` | Crear cobros (`direction = 'in'`) | Todo | Todo, como dueño |

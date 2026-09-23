@@ -15,6 +15,7 @@ const ITEM: Item = {
   description: null,
   unitId: null,
   categoryId: null,
+  attributes: {},
   salePrice: 45,
   minStock: null,
   archivedAt: null,
@@ -67,6 +68,15 @@ describe("joinsCatalogWindow", () => {
     expect(joinsCatalogWindow(conCategoria, { ...SCOPE, categoryFilter: "none" })).toBe(false);
     expect(joinsCatalogWindow(ITEM, { ...SCOPE, categoryFilter: "none" })).toBe(true);
     expect(joinsCatalogWindow(ITEM, { ...SCOPE, categoryFilter: VAJILLA })).toBe(false);
+  });
+
+  it("respeta los filtros por atributo de lista (catalog-custom-attributes)", () => {
+    const sunlu = { ...ITEM, attributes: { marca: "Sunlu", tmin: 190 } };
+
+    expect(joinsCatalogWindow(sunlu, { ...SCOPE, attributeFilters: { marca: "Sunlu" } })).toBe(true);
+    expect(joinsCatalogWindow(sunlu, { ...SCOPE, attributeFilters: { marca: "eSun" } })).toBe(false);
+    expect(joinsCatalogWindow(ITEM, { ...SCOPE, attributeFilters: { marca: "Sunlu" } })).toBe(false);
+    expect(joinsCatalogWindow(sunlu, { ...SCOPE, attributeFilters: {} })).toBe(true);
   });
 
   it("un archivado solo entra si se piden los archivados", () => {

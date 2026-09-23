@@ -32,6 +32,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  attributeFieldsFor,
+  attributeInputsFrom,
+  attributesSchema,
+} from "@/lib/catalog/attributes";
 import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
 import {
   ITEM_CATEGORY_COPY,
@@ -41,7 +46,16 @@ import {
 } from "@/lib/catalog/labels";
 import { ITEM_PHOTO_ACCEPT } from "@/lib/catalog/photos";
 import { itemFormSchema } from "@/lib/catalog/schema";
-import type { BusinessLine, Item, ItemCategory, ItemKind, Unit } from "@/types";
+import type {
+  BusinessLine,
+  Item,
+  ItemCategory,
+  ItemCategoryAttribute,
+  ItemKind,
+  Unit,
+} from "@/types";
+
+import { AttributeFields } from "./attribute-fields";
 
 /** "Compartido", "Sin unidad" y "Sin categoría" son opciones con nombre, no valores vacíos. */
 const SHARED = "shared";
@@ -71,6 +85,7 @@ export function ItemFormDialog({
   categories = [],
   currentCategory = null,
   canManageCategories = false,
+  attributeDefinitions = [],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -93,6 +108,12 @@ export function ItemFormDialog({
   currentCategory?: ItemCategory | null;
   /** La dueña recibe el enlace a Configuración cuando el tipo no tiene categorías. */
   canManageCategories?: boolean;
+  /**
+   * Los atributos vigentes de las categorías del tipo
+   * (`catalog-custom-attributes`). El formulario ofrece los de alcance ítem de
+   * la categoría elegida, y cambian al cambiar de categoría.
+   */
+  attributeDefinitions?: ItemCategoryAttribute[];
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -107,6 +128,11 @@ export function ItemFormDialog({
   const archivedCurrent =
     currentCategory && currentCategory.archivedAt !== null ? currentCategory : null;
   const categoryCopy = ITEM_CATEGORY_COPY[kind];
+  const attributeFields = attributeFieldsFor(
+    attributeDefinitions,
+    categoryId === NO_CATEGORY ? null : categoryId,
+    "item",
+  );
   const [photos, setPhotos] = useState<File[]>([]);
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -129,9 +155,20 @@ export function ItemFormDialog({
       return;
     }
 
+    // Los atributos se validan aquí con el mismo esquema que usa el servidor,
+    // que igual los vuelve a validar contra la definición vigente.
+    const attributes = attributeInputsFrom(data, attributeFields);
+    const checked = attributesSchema(attributeFields, item?.attributes ?? {}).safeParse(
+      attributes,
+    );
+    if (!checked.success) {
+      setError(checked.error.issues[0].message);
+      return;
+    }
+
     setError(null);
     startTransition(async () => {
-      const values = { ...parsed.data };
+      const values = { ...parsed.data, attributes };
       const itemId = item?.id ?? crypto.randomUUID();
       const result = item
         ? await updateItem({ ...values, id: itemId })
@@ -298,6 +335,15 @@ export function ItemFormDialog({
                 </Field>
               )}
             </div>
+
+            {/* Los atributos de la categoría elegida; la clave los reinicia al
+                cambiar de categoría. */}
+            <AttributeFields
+              key={categoryId}
+              fields={attributeFields}
+              values={item?.attributes ?? {}}
+              idPrefix="item"
+            />
 
             <Field>
               <FieldLabel htmlFor="item-description">Descripción</FieldLabel>

@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Item } from "@/types";
+import type { Item, ItemVariant } from "@/types";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const USER = "55555555-5555-4555-8555-555555555555";
@@ -49,6 +49,7 @@ const item: Item = {
   description: null,
   unitId: null,
   categoryId: null,
+  attributes: {},
   salePrice: null,
   minStock: 12,
   archivedAt: null,
@@ -158,5 +159,43 @@ describe("CountDialog", () => {
 
     expect(screen.getByText("No se pudo guardar.")).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+/** Cambio `catalog-custom-attributes`: el conteo por variante. */
+describe("CountDialog · variantes", () => {
+  const negro: ItemVariant = {
+    id: "66666666-6666-4666-8666-666666666666",
+    organizationId: ORG,
+    itemId: item.id,
+    name: "Negro",
+    attributes: {},
+    salePrice: null,
+    archivedAt: null,
+  };
+
+  it("el conteo de una variante envía su diferencia con la variante", async () => {
+    // «Conteo de una variante», nivel unitario.
+    render(<CountDialog open item={item} balance={1.5} variant={negro} onOpenChange={vi.fn()} />);
+
+    expect(screen.getByText(/Taza para sublimación · Negro/)).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Cantidad contada"), "1.2");
+    await userEvent.click(screen.getByRole("button", { name: "Guardar conteo" }));
+
+    expect(estado.encolados).toEqual([
+      expect.objectContaining({ variantId: negro.id, difference: -0.3 }),
+    ]);
+  });
+
+  it("el conteo de «Sin variante» va marcado y sin variante", async () => {
+    // «Poner en cero lo que no tiene variante», nivel unitario.
+    render(<CountDialog open item={item} balance={-0.4} unassigned onOpenChange={vi.fn()} />);
+
+    await userEvent.type(screen.getByLabelText("Cantidad contada"), "0");
+    await userEvent.click(screen.getByRole("button", { name: "Guardar conteo" }));
+
+    expect(estado.encolados).toEqual([
+      expect.objectContaining({ variantId: null, countsUnassigned: true, difference: 0.4 }),
+    ]);
   });
 });

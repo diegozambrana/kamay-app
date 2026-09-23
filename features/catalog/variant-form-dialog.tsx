@@ -21,9 +21,12 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { attributeInputsFrom, attributesSchema } from "@/lib/catalog/attributes";
 import { itemVariantFormSchema } from "@/lib/catalog/schema";
 import { ITEM_KIND_FIELDS } from "@/lib/catalog/fields";
-import type { ItemKind, ItemVariant } from "@/types";
+import type { ItemCategoryAttribute, ItemKind, ItemVariant } from "@/types";
+
+import { AttributeFields } from "./attribute-fields";
 
 /** Alta y edición de una variante ('11oz', 'Negro', 'XL'), en diálogo. */
 export function VariantFormDialog({
@@ -32,6 +35,7 @@ export function VariantFormDialog({
   itemId,
   itemKind,
   variant,
+  attributeFields = [],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -39,6 +43,12 @@ export function VariantFormDialog({
   /** El precio solo se pide si el ítem es un producto (`ITEM_KIND_FIELDS`). */
   itemKind: ItemKind;
   variant?: ItemVariant;
+  /**
+   * Los atributos vigentes de alcance variante de la categoría del ítem
+   * (`catalog-custom-attributes`), en orden. Sin ellos, el formulario es el
+   * de siempre.
+   */
+  attributeFields?: ItemCategoryAttribute[];
 }) {
   const hasPrice = ITEM_KIND_FIELDS[itemKind].salePrice;
   const [error, setError] = useState<string | null>(null);
@@ -57,12 +67,23 @@ export function VariantFormDialog({
       return;
     }
 
+    // El mismo esquema que el servidor, que igual vuelve a validar.
+    const attributes = attributeInputsFrom(data, attributeFields);
+    const checked = attributesSchema(attributeFields, variant?.attributes ?? {}).safeParse(
+      attributes,
+    );
+    if (!checked.success) {
+      setError(checked.error.issues[0].message);
+      return;
+    }
+
     setError(null);
     startTransition(async () => {
       const result = variant
-        ? await updateItemVariant({ ...parsed.data, id: variant.id, itemId })
+        ? await updateItemVariant({ ...parsed.data, attributes, id: variant.id, itemId })
         : await createItemVariant({
             ...parsed.data,
+            attributes,
             // Identificador generado en el cliente (convención nº 9).
             id: crypto.randomUUID(),
             itemId,
@@ -120,6 +141,11 @@ export function VariantFormDialog({
                 </FieldDescription>
               </Field>
             )}
+            <AttributeFields
+              fields={attributeFields}
+              values={variant?.attributes ?? {}}
+              idPrefix="variant"
+            />
           </FieldGroup>
 
           <DialogFooter className="mt-6">

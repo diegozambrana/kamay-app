@@ -12,11 +12,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { ConsumptionDialog } from "@/features/inventory/consumption-dialog";
+import {
+  ConsumptionDialog,
+  type ConsumableSupply,
+} from "@/features/inventory/consumption-dialog";
 import { destinationsFor, isAvailable } from "@/lib/quick-capture/destinations";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
-import type { Item } from "@/types";
 
 /**
  * *+ Registrar*: el acceso al menú de creación desde cualquier pantalla.
@@ -34,7 +36,7 @@ import type { Item } from "@/types";
  * requisito exige que ninguna superficie pueda ofrecer lo que la otra no
  * (KAM-14, design D10).
  */
-export function RegisterButton({ supplies = [] }: { supplies?: Item[] }) {
+export function RegisterButton({ supplies = [] }: { supplies?: ConsumableSupply[] }) {
   const role = useUserStore((state) => state.role);
   const pathname = usePathname();
   const [open, setOpen] = useState(false);

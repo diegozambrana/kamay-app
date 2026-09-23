@@ -11,10 +11,17 @@ import {
 
 import { writingAssistSettingsSchema } from "@/lib/ai/writing-assist-settings";
 import { getOwnerContext } from "@/lib/auth/session-context";
+import {
+  attributeShapeProblem,
+  createAttributeDefinitionSchema,
+  normalizeForType,
+  updateAttributeDefinitionSchema,
+} from "@/lib/catalog/attribute-definition-schema";
 import { allocationSettingsSchema } from "@/lib/reports/allocation-schema";
 import { AiWritingAssistService } from "@/services/configuration/ai-writing-assist-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
+import { ItemCategoryAttributeService } from "@/services/configuration/item-category-attribute-service";
 import { ItemCategoryService } from "@/services/configuration/item-category-service";
 import { SalesChannelService } from "@/services/configuration/sales-channel-service";
 import { UnitService } from "@/services/configuration/unit-service";
@@ -118,7 +125,14 @@ export async function updateBusinessLine(
 
 // ── Archivado y desarchivado (las cuatro entidades) ────────────────────────
 
-const entities = ["line", "channel", "category", "unit", "itemCategory"] as const;
+const entities = [
+  "line",
+  "channel",
+  "category",
+  "unit",
+  "itemCategory",
+  "itemCategoryAttribute",
+] as const;
 type Entity = (typeof entities)[number];
 
 const archiveSchema = z.object({ entity: z.enum(entities), id });
@@ -135,6 +149,8 @@ function serviceFor(entity: Entity, supabase: SupabaseClient) {
       return new UnitService(supabase);
     case "itemCategory":
       return new ItemCategoryService(supabase);
+    case "itemCategoryAttribute":
+      return new ItemCategoryAttributeService(supabase);
   }
 }
 
@@ -316,6 +332,84 @@ export async function updateItemCategory(
     );
   } catch (error) {
     return { error: toMessage(error, "No se pudo guardar la categoría.") };
+  }
+
+  revalidateConfiguration();
+}
+
+// ── Atributos de categoría (catalog-custom-attributes) ─────────────────────
+// Archivar y desarchivar pasan por `archiveConfigurationItem` con la entidad
+// `itemCategoryAttribute`. La revalidación del layout alcanza al catálogo,
+// cuyos formularios, detalle y filtros leen estos atributos.
+
+const DUPLICATE_ATTRIBUTE = "Ya existe un atributo con ese nombre en esta categoría.";
+
+function attributeMessage(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : "";
+  if (message.includes("duplicate key")) return DUPLICATE_ATTRIBUTE;
+  return `${fallback} Intenta de nuevo.`;
+}
+
+export async function createItemCategoryAttribute(
+  input: z.input<typeof createAttributeDefinitionSchema>,
+): Promise<ActionResult> {
+  const parsed = createAttributeDefinitionSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  // La clave compuesta ya exige que la categoría sea de la organización; se
+  // comprueba antes para devolver un mensaje y no un error de la base.
+  const category = await new ItemCategoryService(context.supabase).findById(
+    context.organizationId,
+    parsed.data.categoryId,
+  );
+  if (!category) return { error: "No se encontró la categoría." };
+
+  try {
+    await new ItemCategoryAttributeService(context.supabase).create(
+      context.organizationId,
+      parsed.data,
+    );
+  } catch (error) {
+    return { error: attributeMessage(error, "No se pudo crear el atributo.") };
+  }
+
+  revalidateConfiguration();
+}
+
+/**
+ * Nombre, unidad, opciones y obligatoriedad. El tipo se toma del atributo
+ * guardado —la petición no puede cambiarlo— para validar y normalizar lo que
+ * corresponde a ese tipo.
+ */
+export async function updateItemCategoryAttribute(
+  input: z.input<typeof updateAttributeDefinitionSchema>,
+): Promise<ActionResult> {
+  const parsed = updateAttributeDefinitionSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  const service = new ItemCategoryAttributeService(context.supabase);
+  const stored = await service.findById(context.organizationId, parsed.data.id);
+  if (!stored) return { error: "No se encontró el atributo." };
+
+  const values = normalizeForType(stored.type, parsed.data);
+  const problem = attributeShapeProblem(stored.type, values);
+  if (problem) return { error: problem };
+
+  try {
+    await service.update(context.organizationId, stored.id, {
+      name: values.name,
+      unit: values.unit,
+      options: values.options,
+      required: values.required,
+    });
+  } catch (error) {
+    return { error: attributeMessage(error, "No se pudo guardar el atributo.") };
   }
 
   revalidateConfiguration();

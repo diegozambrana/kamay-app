@@ -70,6 +70,12 @@ export const HIDDEN_REASON: Record<string, string> = {
   "items.search_name": "duplicado de nombre",
   "tags.search_name": "duplicado de nombre",
   "item_variants.attributes": "estructura libre",
+  // catalog-custom-attributes · Los valores de atributos del ítem, por id de
+  // atributo: la misma razón que los de la variante.
+  "items.attributes": "estructura libre",
+  // Las opciones de un atributo de lista son un arreglo: el cambio legible es
+  // el del atributo en sí (nombre, obligatorio), no el de la lista.
+  "item_category_attributes.options": "estructura libre",
   "organizations.settings": "estructura libre",
   // KAM-27 · Los parámetros de una herramienta: su forma la define el esquema
   // de cada una, no la base. El evento queda —quién los cambió y cuándo—; el
@@ -201,6 +207,23 @@ export const FIELDS: Record<string, Record<string, FieldSpec>> = {
     archived_at: ARCHIVED,
   },
 
+  // catalog-custom-attributes · Los atributos que declara cada categoría.
+  item_category_attributes: {
+    category_id: {
+      label: "Categoría",
+      kind: "reference",
+      references: "item_categories",
+    },
+    name: { label: "Nombre del atributo", kind: "text" },
+    type: { label: "Tipo de atributo", kind: "enum" },
+    unit: { label: "Unidad", kind: "text" },
+    options: hidden("Opciones"),
+    required: { label: "Obligatorio", kind: "boolean" },
+    scope: { label: "Aplica a", kind: "enum" },
+    position: { label: "Posición", kind: "number" },
+    archived_at: ARCHIVED,
+  },
+
   // KAM-27 · Herramientas activas de la organización. Activar es una creación,
   // desactivar un archivado y reactivar un desarchivado.
   organization_tools: {
@@ -258,6 +281,7 @@ export const FIELDS: Record<string, Record<string, FieldSpec>> = {
     search_name: hidden("Nombre normalizado"),
     created_by: AUTHOR,
     archived_at: ARCHIVED,
+    attributes: hidden("Atributos"),
   },
 
   item_variants: {
@@ -456,6 +480,13 @@ export const ENUM_LABELS: Record<string, Record<string, string>> = {
     cancelled: "Cancelado",
   },
   "items.kind": { supply: "Insumo", product: "Producto", asset: "Activo" },
+  "item_category_attributes.type": {
+    text: "Texto",
+    number: "Número",
+    list: "Lista",
+    color: "Color",
+  },
+  "item_category_attributes.scope": { item: "Ítem", variant: "Variante" },
   "orders.kind": { order: "Pedido", direct_sale: "Venta directa" },
   "orders.delivery_mode": { pickup: "Recojo", delivery: "Entrega" },
   "expenses.kind": { purchase: "Compra", expense: "Gasto" },

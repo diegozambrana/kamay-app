@@ -8,6 +8,11 @@ export type CatalogScope = {
   lineFilter: string;
   /** `"all"`, `"none"` (sin categoría) o el id de una categoría del tipo. */
   categoryFilter: string;
+  /**
+   * Opción elegida por atributo de lista (`catalog-custom-attributes`): el id
+   * del atributo y el valor. Vacío o ausente no filtra.
+   */
+  attributeFilters?: Record<string, string>;
   search: string;
   includeArchived: boolean;
 };
@@ -43,6 +48,11 @@ export function joinsCatalogWindow(item: Item, scope: CatalogScope): boolean {
     item.categoryId !== scope.categoryFilter
   ) {
     return false;
+  }
+
+  // Igual que la contención `attributes @> {id: valor}` de la base.
+  for (const [attributeId, value] of Object.entries(scope.attributeFilters ?? {})) {
+    if (item.attributes[attributeId] !== value) return false;
   }
 
   const term = normalizeForSearch(scope.search);

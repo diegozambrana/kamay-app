@@ -612,6 +612,10 @@ const OWNER_ONLY_ROUTES = [
   "/settings/categories",
   // Cambio `item-categories` → «The Item categories section guards itself».
   "/settings/item-categories",
+  // Cambio `catalog-custom-attributes` → «The assistant cannot reach the
+  // attributes». La página redirige antes de buscar la categoría, así que
+  // sirve el id sembrado de «Filamento».
+  "/settings/item-categories/92000000-0000-0000-0000-000000000004",
   "/settings/units",
   "/settings/statuses",
   "/settings/members",

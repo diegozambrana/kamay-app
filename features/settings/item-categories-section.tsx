@@ -1,5 +1,6 @@
 "use client";
 
+import { ListTreeIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 import {
@@ -75,6 +76,15 @@ export function ItemCategoriesSection({
         caption={`Categorías de ${ITEM_KIND_LABELS[kind].toLowerCase()}`}
         labelOf={(item) => item.name}
         onEdit={dialog.openEdit}
+        // Los atributos de la categoría viven en su propia página
+        // (`catalog-custom-attributes`, design D5).
+        extraActions={(item) => [
+          {
+            label: "Atributos",
+            icon: ListTreeIcon,
+            href: `/settings/item-categories/${item.id}`,
+          },
+        ]}
         copy={copy}
         columns={[
           {

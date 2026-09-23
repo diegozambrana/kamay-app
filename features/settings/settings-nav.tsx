@@ -99,7 +99,10 @@ export function SettingsNav({ isOwner = true }: { isOwner?: boolean }) {
     >
       <ul className="flex gap-1 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:px-6 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden">
         {sections.map((section, index) => {
-          const active = pathname === section.href;
+          // Una subpágina marca su sección: los atributos de una categoría
+          // (`/settings/item-categories/<id>`) siguen en «Categorías de ítem».
+          const active =
+            pathname === section.href || pathname.startsWith(`${section.href}/`);
           const Icon = section.icon;
           const startsGroup = index === 0 || sections[index - 1].group !== section.group;
 

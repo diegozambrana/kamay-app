@@ -39,6 +39,19 @@ describe("describeEvent", () => {
     expect(sentence).toBe("Diego registró la categoría de ítem Sustratos");
   });
 
+  // Cambio `catalog-custom-attributes`: la tabla nueva se nombra en la frase.
+  it("nombra un atributo de categoría sin enseñar la tabla", () => {
+    const sentence = describeEvent({
+      action: "archived",
+      tableName: "item_category_attributes",
+      actorName: "Diego",
+      recordLabel: "Velocidad recomendada",
+    });
+
+    expect(sentence).toContain("el atributo de categoría Velocidad recomendada");
+    expect(sentence).not.toContain("_");
+  });
+
   // Scenario: A system actor is named
   it("atribuye la acción a la etiqueta cuando no hay persona", () => {
     const sentence = describeEvent({

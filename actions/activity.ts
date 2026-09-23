@@ -45,6 +45,8 @@ const UNARCHIVERS: Record<
     unarchiveConfigurationItem({ entity: "category", id }),
   item_categories: (id) =>
     unarchiveConfigurationItem({ entity: "itemCategory", id }),
+  item_category_attributes: (id) =>
+    unarchiveConfigurationItem({ entity: "itemCategoryAttribute", id }),
   units: (id) => unarchiveConfigurationItem({ entity: "unit", id }),
 };
 

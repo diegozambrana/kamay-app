@@ -26,6 +26,7 @@ function supply(id: string, name: string): PickableItem {
     description: null,
     unitId: null,
     categoryId: null,
+    attributes: {},
     salePrice: null,
     minStock: null,
     archivedAt: null,

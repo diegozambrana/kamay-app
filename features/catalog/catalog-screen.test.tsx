@@ -2,7 +2,14 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { BusinessLine, ItemCategory, ItemKind, Role, Unit } from "@/types";
+import type {
+  BusinessLine,
+  ItemCategory,
+  ItemCategoryAttribute,
+  ItemKind,
+  Role,
+  Unit,
+} from "@/types";
 
 import { CatalogScreen, type CatalogRow } from "./catalog-screen";
 
@@ -53,6 +60,7 @@ function item(overrides: Partial<CatalogRow> = {}): CatalogRow {
     description: null,
     unitId: UNIT.id,
     categoryId: null,
+    attributes: {},
     salePrice: 45,
     minStock: null,
     archivedAt: null,
@@ -461,5 +469,135 @@ describe("CatalogScreen · filtro por categoría", () => {
     expect(within(dialog).getByRole("combobox", { name: "Categoría" })).toHaveTextContent(
       "Tintas (archivada)",
     );
+  });
+});
+
+/**
+ * Cambio `catalog-custom-attributes`: con una categoría elegida, un filtro por
+ * cada atributo de lista del ítem, que viaja en la dirección.
+ */
+describe("CatalogScreen · filtros por atributo", () => {
+  const FILAMENTO: ItemCategory = {
+    id: "66666666-6666-4666-8666-000000000001",
+    organizationId: ORG,
+    kind: "supply",
+    name: "Filamento",
+    archivedAt: null,
+  };
+  const SUSTRATOS: ItemCategory = {
+    id: "66666666-6666-4666-8666-000000000002",
+    organizationId: ORG,
+    kind: "supply",
+    name: "Sustratos",
+    archivedAt: null,
+  };
+
+  function atributo(
+    overrides: Partial<ItemCategoryAttribute> & Pick<ItemCategoryAttribute, "id" | "name">,
+  ): ItemCategoryAttribute {
+    return {
+      organizationId: ORG,
+      categoryId: FILAMENTO.id,
+      type: "list",
+      unit: null,
+      options: [],
+      required: false,
+      scope: "item",
+      position: 1,
+      archivedAt: null,
+      ...overrides,
+    };
+  }
+
+  const MARCA = atributo({ id: "marca", name: "Marca", options: ["Sunlu", "eSun"] });
+  const TMIN = atributo({ id: "tmin", name: "Temperatura mínima", type: "number", position: 2 });
+  const COLOR = atributo({ id: "color", name: "Color", options: ["Negro"], scope: "variant", position: 3 });
+
+  function renderFiltered(
+    categoryFilter: string,
+    attributeFilters: Record<string, string> = {},
+    items: CatalogRow[] = [item()],
+  ) {
+    return render(
+      <CatalogScreen
+        items={items}
+        lines={[LINE]}
+        units={[UNIT]}
+        kind="supply"
+        lineFilter="all"
+        categoryFilter={categoryFilter}
+        categories={[FILAMENTO, SUSTRATOS]}
+        attributeDefinitions={[MARCA, TMIN, COLOR]}
+        attributeFilters={attributeFilters}
+        search=""
+        includeArchived={false}
+        role="owner"
+        activeLineId={null}
+      />,
+    );
+  }
+
+  it("elegir una marca navega con el filtro del atributo", async () => {
+    // «Filtrar por un atributo de lista», nivel de pantalla.
+    direccion.query = `category=${FILAMENTO.id}`;
+    renderFiltered(FILAMENTO.id);
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Marca" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Sunlu" }));
+
+    expect(push).toHaveBeenCalledWith(expect.stringContaining("attr_marca=Sunlu"));
+    expect(push).toHaveBeenCalledWith(expect.stringContaining(`category=${FILAMENTO.id}`));
+  });
+
+  it("sin categoría elegida no hay filtros por atributo", () => {
+    // «Sin categoría elegida no hay filtros de atributo».
+    renderFiltered("all");
+    expect(screen.queryByTestId("catalog-attribute-filter")).toBeNull();
+  });
+
+  it("solo filtran los atributos de lista del ítem, no los de variante ni los números", () => {
+    // «Los atributos de variante no filtran».
+    renderFiltered(FILAMENTO.id);
+
+    expect(screen.getAllByTestId("catalog-attribute-filter")).toHaveLength(1);
+    expect(screen.getByRole("combobox", { name: "Marca" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Color" })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: "Temperatura mínima" })).toBeNull();
+  });
+
+  it("cambiar de categoría quita los filtros por atributo", async () => {
+    // «Cambiar de categoría descarta el filtro de atributo».
+    direccion.query = `category=${FILAMENTO.id}&attr_marca=Sunlu`;
+    renderFiltered(FILAMENTO.id, { marca: "Sunlu" });
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Categoría" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Sustratos" }));
+
+    const url = push.mock.calls.at(-1)?.[0] as string;
+    expect(url).toContain(`category=${SUSTRATOS.id}`);
+    expect(url).not.toContain("attr_marca");
+  });
+
+  it("cambiar de pestaña también los quita", async () => {
+    direccion.query = `category=${FILAMENTO.id}&attr_marca=Sunlu`;
+    renderFiltered(FILAMENTO.id, { marca: "Sunlu" });
+
+    await userEvent.click(screen.getByRole("radio", { name: "Productos" }));
+
+    const url = push.mock.calls.at(-1)?.[0] as string;
+    expect(url).toContain("kind=product");
+    expect(url).not.toContain("attr_marca");
+    expect(url).not.toContain("category=");
+  });
+
+  it("«Quitar filtros» limpia también los atributos", async () => {
+    // «Quitar filtros incluye los atributos».
+    direccion.query = `category=${FILAMENTO.id}&attr_marca=eSun&q=pla&line=${LINE.id}`;
+    renderFiltered(FILAMENTO.id, { marca: "eSun" }, []);
+
+    await userEvent.click(screen.getByRole("button", { name: "Quitar filtros" }));
+
+    const url = push.mock.calls.at(-1)?.[0] as string;
+    expect(url).toBe("/catalog");
   });
 });

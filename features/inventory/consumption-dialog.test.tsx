@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Item } from "@/types";
+import type { Item, ItemVariant } from "@/types";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const USER = "55555555-5555-4555-8555-555555555555";
@@ -50,6 +50,7 @@ function supply(id: string, name: string): Item {
     description: null,
     unitId: null,
     categoryId: null,
+    attributes: {},
     salePrice: null,
     minStock: 12,
     archivedAt: null,
@@ -183,5 +184,81 @@ describe("ConsumptionDialog", () => {
 
     expect(screen.getByText("No se pudo guardar.")).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+/** Cambio `catalog-custom-attributes`: el consumo de un insumo con variantes. */
+describe("ConsumptionDialog · variantes", () => {
+  const pla = supply("44444444-4444-4444-8444-444444444444", "PLA Sunlu");
+
+  function variante(id: string, name: string, archivedAt: string | null = null): ItemVariant {
+    return { id, organizationId: ORG, itemId: pla.id, name, attributes: {}, salePrice: null, archivedAt };
+  }
+
+  const negro = variante("66666666-6666-4666-8666-666666666666", "Negro");
+  const rojo = variante("77777777-7777-4777-8777-777777777777", "Rojo");
+  const vieja = variante("88888888-8888-4888-8888-888888888888", "Verde", "2026-09-01T00:00:00Z");
+
+  it("con la variante puesta no pregunta cuál, y la envía", async () => {
+    // «Consumo desde la fila de una variante», nivel unitario.
+    render(<ConsumptionDialog open item={pla} variant={negro} onOpenChange={vi.fn()} />);
+
+    expect(screen.queryByTestId("consumption-variant")).not.toBeInTheDocument();
+    expect(screen.getByText("Cuánto se usó de PLA Sunlu · Negro.")).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Cantidad"), "0.3");
+    await userEvent.click(screen.getByRole("button", { name: "Registrar" }));
+
+    expect(estado.encolados).toEqual([
+      expect.objectContaining({ itemId: pla.id, variantId: negro.id, quantity: 0.3 }),
+    ]);
+  });
+
+  it("sin variante elegida no envía nada y pide elegirla", async () => {
+    // «Consumo de un ítem con variantes exige elegir cuál».
+    render(
+      <ConsumptionDialog open item={pla} variants={[negro, rojo, vieja]} onOpenChange={vi.fn()} />,
+    );
+
+    expect(screen.getByRole("radio", { name: "Negro" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Verde" })).not.toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Cantidad"), "0.3");
+    await userEvent.click(screen.getByRole("button", { name: "Registrar" }));
+
+    expect(estado.encolados).toEqual([]);
+    expect(screen.getByRole("alert")).toHaveTextContent("Elige la variante");
+  });
+
+  it("elegir la variante con un toque la envía", async () => {
+    render(<ConsumptionDialog open item={pla} variants={[negro, rojo]} onOpenChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole("radio", { name: "Rojo" }));
+    await userEvent.type(screen.getByLabelText("Cantidad"), "1");
+    await userEvent.click(screen.getByRole("button", { name: "Registrar" }));
+
+    expect(estado.encolados).toEqual([expect.objectContaining({ variantId: rojo.id })]);
+  });
+
+  it("desde el registro rápido, las variantes aparecen al elegir el insumo", async () => {
+    // «Registro rápido de un ítem con variantes», nivel unitario.
+    render(
+      <ConsumptionDialog
+        open
+        supplies={[taza, { ...pla, variants: [negro, rojo] }]}
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByTestId("consumption-variant")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("combobox", { name: "Insumo" }));
+    await userEvent.click(await screen.findByRole("option", { name: "PLA Sunlu" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Rojo" }));
+    await userEvent.type(screen.getByLabelText("Cantidad"), "1");
+    await userEvent.click(screen.getByRole("button", { name: "Registrar" }));
+
+    expect(estado.encolados).toEqual([
+      expect.objectContaining({ itemId: pla.id, variantId: rojo.id }),
+    ]);
   });
 });

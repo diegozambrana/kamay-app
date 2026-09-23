@@ -46,7 +46,9 @@ afterEach(cleanup);
  * la sección «Categorías de ítem».
  */
 describe("ItemCategoriesSection", () => {
-  it("la fila ofrece «Editar» y «Archivar» en su menú y ningún otro botón", async () => {
+  // «An item category row offers its actions from the menu» y, del cambio
+  // `catalog-custom-attributes`, «A category row offers its attributes».
+  it("la fila ofrece «Editar», «Atributos» y «Archivar» en su menú y ningún otro botón", async () => {
     render(<ItemCategoriesSection kind="supply" categories={[category("Sustratos")]} />);
 
     const table = screen.getByRole("table", { name: "Categorías de insumos" });
@@ -61,8 +63,13 @@ describe("ItemCategoriesSection", () => {
     const menu = await screen.findByRole("menu");
     expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
       "Editar",
+      "Atributos",
       "Archivar",
     ]);
+    expect(within(menu).getByRole("menuitem", { name: "Atributos" })).toHaveAttribute(
+      "href",
+      "/settings/item-categories/id-Sustratos",
+    );
   });
 
   it("un tipo sin categorías muestra su vacío con el nombre del tipo", () => {

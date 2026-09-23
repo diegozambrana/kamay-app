@@ -7,7 +7,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(44);
+select plan(45);
 
 -- ── Helpers: simular usuarios autenticados ────────────────────────────────
 
@@ -132,6 +132,18 @@ select is(
       and column_name <> 'min_stock'
       and (column_name ~ '(stock|cost|costo|margin|margen|balance|saldo|average|promedio)')),
   0, 'items/item_variants: ninguna columna de saldo, costo ni margen');
+
+-- `catalog-custom-attributes`: tampoco precio por unidad de compra (el precio
+-- por kilo de un filamento se deriva de sus compras), ni saldo por variante
+-- en ninguna de las tres tablas que podrían tentar a guardarlo. Los valores
+-- de atributos viven en `attributes`, un objeto; su nombre no es un dato.
+select is(
+  (select count(*)::int from information_schema.columns
+    where table_schema = 'public'
+      and table_name in ('items', 'item_variants', 'inventory_movements')
+      and column_name <> 'min_stock'
+      and (column_name ~ '(stock|cost|costo|margin|margen|balance|saldo|average|promedio|per_kg|per_kilo|por_kilo|price_per|precio_por|unit_price)')),
+  0, 'Inspección de las columnas del catálogo / El saldo por variante tampoco se guarda: ni precio por kilo ni saldo por variante');
 
 -- ── Scenario: El ayudante crea y edita ────────────────────────────────────
 

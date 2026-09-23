@@ -217,6 +217,12 @@ export type Item = {
   salePrice: number | null;
   /** Solo aplica a insumos; el saldo con el que se compara llega en KAM-18. */
   minStock: number | null;
+  /**
+   * Valores de los atributos de alcance ítem de su categoría, por id de
+   * atributo (`catalog-custom-attributes`). Puede traer claves de atributos
+   * archivados o de otra categoría: se conservan y se muestran aparte.
+   */
+  attributes: AttributeValues;
   archivedAt: string | null;
 };
 
@@ -232,12 +238,49 @@ export type ItemCategory = {
   archivedAt: string | null;
 };
 
+/**
+ * Valores de atributos guardados en `items.attributes` o
+ * `item_variants.attributes`: el id del atributo como clave. Texto y opción
+ * de lista van como cadena; número, como número. `unknown` porque la base
+ * solo garantiza que es un objeto: lo demás lo interpreta
+ * `lib/catalog/attributes.ts`.
+ */
+export type AttributeValues = Record<string, unknown>;
+
+/** `color` guarda un hex `#RRGGBB` (design D11). */
+export const ATTRIBUTE_TYPES = ["text", "number", "list", "color"] as const;
+export type AttributeType = (typeof ATTRIBUTE_TYPES)[number];
+
+/** A qué describe un atributo: al ítem entero o a cada una de sus variantes. */
+export const ATTRIBUTE_SCOPES = ["item", "variant"] as const;
+export type AttributeScope = (typeof ATTRIBUTE_SCOPES)[number];
+
+/**
+ * Un atributo que una categoría de ítem declara (`item_category_attributes`).
+ * Tipo, alcance y categoría no cambian después de creado.
+ */
+export type ItemCategoryAttribute = {
+  id: string;
+  organizationId: string;
+  categoryId: string;
+  name: string;
+  type: AttributeType;
+  /** Solo para números: '°C', 'mm/s'. */
+  unit: string | null;
+  /** Solo para listas; vacío en los demás tipos. */
+  options: string[];
+  required: boolean;
+  scope: AttributeScope;
+  position: number;
+  archivedAt: string | null;
+};
+
 export type ItemVariant = {
   id: string;
   organizationId: string;
   itemId: string;
   name: string;
-  attributes: Record<string, unknown>;
+  attributes: AttributeValues;
   salePrice: number | null;
   archivedAt: string | null;
 };
@@ -633,6 +676,19 @@ export type ItemBalance = {
   balance: number;
   minStock: number | null;
   belowMin: boolean;
+};
+
+/**
+ * Saldo de una variante de un insumo (`item_variant_balances`). La fila con
+ * `variantId` nulo junta los movimientos que no llevan variante («Sin
+ * variante»). Las filas de un ítem suman su saldo.
+ */
+export type VariantBalance = {
+  itemId: string;
+  variantId: string | null;
+  variantName: string | null;
+  variantArchivedAt: string | null;
+  balance: number;
 };
 
 // ── Activos (KAM-19) ────────────────────────────────────────────────────────

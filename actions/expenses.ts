@@ -12,6 +12,7 @@ import {
 } from "@/lib/expenses/schema";
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ContactService } from "@/services/catalog/contact-service";
+import { ItemVariantService } from "@/services/catalog/item-variant-service";
 import { ExpenseService } from "@/services/expenses/expense-service";
 import { RECEIPTS_BUCKET } from "@/types";
 
@@ -75,6 +76,27 @@ export async function createPurchase(input: unknown): Promise<CreateExpenseResul
     );
     if (!supplier || !supplier.isSupplier || supplier.archivedAt) {
       return { error: "Elige o crea un proveedor." };
+    }
+
+    // La variante de cada línea es de su ítem (`catalog-custom-attributes`,
+    // design D6). La base lo exige en el movimiento de inventario que la
+    // compra genera, y fallaría la compra entera con un error de clave; aquí
+    // se avisa antes con un mensaje que se entiende.
+    const variantIds = parsed.data.items
+      .map((line) => line.variantId)
+      .filter((variantId): variantId is string => variantId !== null);
+    if (variantIds.length > 0) {
+      const variants = await new ItemVariantService(context.supabase).listByIds(
+        context.organizationId,
+        variantIds,
+      );
+      const itemOf = new Map(variants.map((variant) => [variant.id, variant.itemId]));
+      const mismatch = parsed.data.items.some(
+        (line) => line.variantId !== null && itemOf.get(line.variantId) !== line.itemId,
+      );
+      if (mismatch) {
+        return { error: "Una de las variantes no es del ítem de su línea. Vuelve a elegirla." };
+      }
     }
 
     const expenseId = await new ExpenseService(context.supabase).createPurchase(

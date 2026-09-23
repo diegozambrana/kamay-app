@@ -156,6 +156,21 @@ describe("SettingsNav", () => {
     );
   });
 
+  // catalog-custom-attributes: los atributos de una categoría son una subpágina
+  // de «Categorías de ítem», y la sección sigue marcada.
+  it("en los atributos de una categoría, «Categorías de ítem» sigue siendo la página actual", () => {
+    ruta.actual = "/settings/item-categories/92000000-0000-0000-0000-000000000004";
+    render(<SettingsNav isOwner />);
+
+    expect(screen.getByRole("link", { name: "Categorías de ítem" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Categorías de gasto" })).not.toHaveAttribute(
+      "aria-current",
+    );
+  });
+
   // KAM-27 · spec `settings-interaction` → «Tools closes the Organización group».
   it("en /settings/tools, Herramientas cierra Organización y es la página actual", () => {
     ruta.actual = "/settings/tools";
@@ -223,6 +238,15 @@ describe("guardia de rol de cada sección de configuración", () => {
         `Desde KAM-17 el layout ya no la aplica (design D6): cada sección del ` +
         `taller tiene que llamar a getOwnerContext() ella misma.`,
     ).toEqual([]);
+  });
+
+  // catalog-custom-attributes · «The assistant cannot reach the attributes».
+  it("la página de atributos de una categoría también exige ser dueño", () => {
+    const page = readFileSync(
+      `${SETTINGS_DIR}/item-categories/[categoryId]/page.tsx`,
+      "utf8",
+    );
+    expect(page).toMatch(CALLS_OWNER_GUARD);
   });
 
   it("el layout ya no aplica la guardia, y por eso las de arriba importan", () => {

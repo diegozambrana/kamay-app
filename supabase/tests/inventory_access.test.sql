@@ -11,7 +11,7 @@ begin;
 
 set search_path to public, extensions;
 
-select plan(10);
+select plan(12);
 
 -- ── Helpers: simular usuarios autenticados ────────────────────────────────
 
@@ -78,6 +78,15 @@ insert into expense_items (id, organization_id, expense_id, item_id, quantity, u
 insert into inventory_movements (organization_id, item_id, kind, quantity, source_type) values
   ('00000000-0000-0000-0000-00000000018b', '00000000-0000-0000-0000-0000000018b5', 'in', 99, 'manual');
 
+-- Una variante en B (catalog-custom-attributes), con su propio movimiento:
+-- B tiene así una fila por variante y una sin variante en la vista hermana.
+insert into item_variants (id, organization_id, item_id, name) values
+  ('00000000-0000-0000-0000-0000000018b8', '00000000-0000-0000-0000-00000000018b',
+   '00000000-0000-0000-0000-0000000018b5', '11oz');
+insert into inventory_movements (organization_id, item_id, variant_id, kind, quantity, source_type) values
+  ('00000000-0000-0000-0000-00000000018b', '00000000-0000-0000-0000-0000000018b5',
+   '00000000-0000-0000-0000-0000000018b8', 'in', 5, 'manual');
+
 -- ── Scenario: Movimientos de otra organización ────────────────────────────
 
 select pg_temp.login('00000000-0000-0000-0000-0000000018a1');
@@ -104,6 +113,18 @@ select is(
   (select balance from item_balances
    where item_id = '00000000-0000-0000-0000-0000000018a5'),
   40::numeric, 'item_balances: A ve su propio saldo, generado por la compra');
+
+-- ── Scenario: Saldos por variante de otra organización ────────────────────
+
+select is(
+  (select count(*)::int from item_variant_balances
+   where organization_id = '00000000-0000-0000-0000-00000000018b'),
+  0, 'item_variant_balances: A obtiene cero filas de los saldos por variante de B');
+
+select is(
+  (select balance from item_variant_balances
+   where item_id = '00000000-0000-0000-0000-0000000018a5' and variant_id is null),
+  40::numeric, 'item_variant_balances: A ve su propia fila, la de la compra sin variante');
 
 -- ── Scenario: Escritura cruzada ───────────────────────────────────────────
 

@@ -7,6 +7,11 @@ import {
   getSessionContext,
   type SessionContext,
 } from "@/lib/auth/session-context";
+import {
+  attributeFieldsFor,
+  attributesSchema,
+  mergeAttributes,
+} from "@/lib/catalog/attributes";
 import { catalogErrorMessage } from "@/lib/catalog/errors";
 import { applyKindFields, variantSalePriceFor } from "@/lib/catalog/fields";
 import { MAX_FILE_SIZE } from "@/lib/catalog/photos";
@@ -18,8 +23,15 @@ import {
 import { AttachmentService } from "@/services/catalog/attachment-service";
 import { ItemService } from "@/services/catalog/item-service";
 import { ItemVariantService } from "@/services/catalog/item-variant-service";
+import { ItemCategoryAttributeService } from "@/services/configuration/item-category-attribute-service";
 import { ItemCategoryService } from "@/services/configuration/item-category-service";
-import { ITEM_PHOTOS_BUCKET, type ItemKind } from "@/types";
+import {
+  ITEM_PHOTOS_BUCKET,
+  type AttributeScope,
+  type AttributeValues,
+  type Item,
+  type ItemKind,
+} from "@/types";
 
 export type ActionResult = { error: string } | undefined;
 
@@ -62,6 +74,45 @@ async function categoryProblem(
   return null;
 }
 
+/**
+ * Los valores de atributos que llegan en la petición: texto por id de
+ * atributo. Los esquemas del ítem y de la variante no los conocen, así que se
+ * leen aparte.
+ */
+const attributesInputSchema = z.record(z.string(), z.unknown()).optional();
+
+type AttributesOutcome = { values: AttributeValues } | { error: string };
+
+/**
+ * Valida los atributos de la categoría que decide la acción y los combina con
+ * lo guardado (`catalog-custom-attributes`, design D4). La definición la lee
+ * aquí el servidor: una petición que no viene de la interfaz no puede saltarse
+ * un obligatorio ni guardar un número mal escrito.
+ *
+ * Sin categoría, o con una categoría sin atributos de ese alcance, la carga se
+ * ignora y lo guardado queda intacto.
+ */
+async function resolveAttributes(
+  context: SessionContext,
+  categoryId: string | null,
+  scope: AttributeScope,
+  stored: AttributeValues,
+  input: Record<string, unknown> | undefined,
+): Promise<AttributesOutcome> {
+  if (categoryId === null) return { values: stored };
+
+  const definitions = await new ItemCategoryAttributeService(
+    context.supabase,
+  ).listForCategory(context.organizationId, categoryId);
+  const fields = attributeFieldsFor(definitions, categoryId, scope);
+  if (fields.length === 0) return { values: stored };
+
+  const parsed = attributesSchema(fields, stored).safeParse(input ?? {});
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  return { values: mergeAttributes(stored, parsed.data, fields) };
+}
+
 function revalidateCatalog(itemId?: string) {
   revalidatePath("/catalog");
   if (itemId) revalidatePath(`/catalog/${itemId}`);
@@ -72,12 +123,17 @@ function revalidateCatalog(itemId?: string) {
  * sin conexión de KAM-11): la acción lo recibe, no lo inventa.
  */
 export async function createItem(
-  input: z.input<typeof itemFormSchema> & { id: string },
+  input: z.input<typeof itemFormSchema> & {
+    id: string;
+    attributes?: Record<string, unknown>;
+  },
 ): Promise<ActionResult> {
   const parsedId = id.safeParse(input.id);
   const parsed = itemFormSchema.safeParse(input);
+  const attributesInput = attributesInputSchema.safeParse(input.attributes);
   if (!parsedId.success) return { error: "No se pudo identificar el ítem." };
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!attributesInput.success) return { error: "Los atributos no tienen un formato válido." };
 
   // Crear y editar son de todo miembro (matriz de acceso §16).
   const context = await getSessionContext();
@@ -91,10 +147,19 @@ export async function createItem(
     );
     if (problem) return { error: problem };
 
+    const attributes = await resolveAttributes(
+      context,
+      parsed.data.categoryId,
+      "item",
+      {},
+      attributesInput.data,
+    );
+    if ("error" in attributes) return { error: attributes.error };
+
     await new ItemService(context.supabase).create(
       context.organizationId,
       parsedId.data,
-      parsed.data,
+      { ...parsed.data, attributes: attributes.values },
     );
   } catch (error) {
     return { error: catalogErrorMessage(error, "No se pudo crear el ítem.") };
@@ -110,13 +175,18 @@ export async function createItem(
  * se va en esta edición (y la bitácora lo registra).
  */
 export async function updateItem(
-  input: z.input<typeof itemFormSchema> & { id: string },
+  input: z.input<typeof itemFormSchema> & {
+    id: string;
+    attributes?: Record<string, unknown>;
+  },
 ): Promise<ActionResult> {
   const parsedId = id.safeParse(input.id);
   // Sin normalizar: se normaliza una sola vez, con el tipo guardado.
   const parsed = itemFieldsSchema.safeParse(input);
+  const attributesInput = attributesInputSchema.safeParse(input.attributes);
   if (!parsedId.success) return { error: "No se pudo identificar el ítem." };
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!attributesInput.success) return { error: "Los atributos no tienen un formato válido." };
 
   const context = await getSessionContext();
   if (!context) return { error: NO_SESSION };
@@ -134,12 +204,27 @@ export async function updateItem(
     );
     if (problem) return { error: problem };
 
+    // Sin `attributes` en la petición, lo guardado no se toca. Con ellos, se
+    // validan contra la categoría efectiva: la nueva si cambia. Los valores de
+    // la categoría anterior se conservan (`mergeAttributes`).
+    let attributes: AttributeValues | undefined;
+    if (attributesInput.data !== undefined) {
+      const outcome = await resolveAttributes(
+        context,
+        parsed.data.categoryId,
+        "item",
+        stored.attributes,
+        attributesInput.data,
+      );
+      if ("error" in outcome) return { error: outcome.error };
+      attributes = outcome.values;
+    }
+
     // El `kind` de la carga no llega a la base: `update` no escribe el tipo.
-    await items.update(
-      context.organizationId,
-      parsedId.data,
-      applyKindFields(stored.kind, parsed.data),
-    );
+    await items.update(context.organizationId, parsedId.data, {
+      ...applyKindFields(stored.kind, parsed.data),
+      attributes,
+    });
   } catch (error) {
     return { error: catalogErrorMessage(error, "No se pudo guardar el ítem.") };
   }
@@ -186,24 +271,26 @@ export async function setItemArchived(
 const variantSchema = itemVariantFormSchema.extend({
   id,
   itemId: id,
+  attributes: attributesInputSchema,
 });
 
 /**
  * El precio de una variante sigue la regla de su ítem: solo un producto lo
- * lleva. El tipo se lee del ítem padre guardado, no de la petición.
+ * lleva. El tipo se lee del ítem padre guardado, no de la petición. Se
+ * devuelve también el ítem: su categoría decide los atributos de la variante.
  */
 async function normalizeVariant(
   context: SessionContext,
   variant: z.infer<typeof variantSchema>,
-): Promise<z.infer<typeof variantSchema> | null> {
+): Promise<{ variant: z.infer<typeof variantSchema>; item: Item } | null> {
   const item = await new ItemService(context.supabase).findById(
     context.organizationId,
     variant.itemId,
   );
   if (!item) return null;
   return {
-    ...variant,
-    salePrice: variantSalePriceFor(item.kind, variant.salePrice),
+    item,
+    variant: { ...variant, salePrice: variantSalePriceFor(item.kind, variant.salePrice) },
   };
 }
 
@@ -217,14 +304,24 @@ export async function createItemVariant(
   if (!context) return { error: NO_SESSION };
 
   try {
-    const variant = await normalizeVariant(context, parsed.data);
-    if (!variant) return { error: ITEM_NOT_FOUND };
+    const normalized = await normalizeVariant(context, parsed.data);
+    if (!normalized) return { error: ITEM_NOT_FOUND };
+    const { variant, item } = normalized;
+
+    const attributes = await resolveAttributes(
+      context,
+      item.categoryId,
+      "variant",
+      {},
+      variant.attributes,
+    );
+    if ("error" in attributes) return { error: attributes.error };
 
     await new ItemVariantService(context.supabase).create(
       context.organizationId,
       variant.itemId,
       variant.id,
-      variant,
+      { name: variant.name, salePrice: variant.salePrice, attributes: attributes.values },
     );
   } catch (error) {
     return { error: catalogErrorMessage(error, "No se pudo crear la variante.") };
@@ -243,14 +340,33 @@ export async function updateItemVariant(
   if (!context) return { error: NO_SESSION };
 
   try {
-    const variant = await normalizeVariant(context, parsed.data);
-    if (!variant) return { error: ITEM_NOT_FOUND };
+    const normalized = await normalizeVariant(context, parsed.data);
+    if (!normalized) return { error: ITEM_NOT_FOUND };
+    const { variant, item } = normalized;
 
-    await new ItemVariantService(context.supabase).update(
-      context.organizationId,
-      variant.id,
-      variant,
-    );
+    const variants = new ItemVariantService(context.supabase);
+    let attributes: AttributeValues | undefined;
+    if (variant.attributes !== undefined) {
+      const stored = await variants.findById(context.organizationId, variant.id);
+      if (!stored || stored.itemId !== item.id) {
+        return { error: "No se encontró la variante. Recarga la página." };
+      }
+      const outcome = await resolveAttributes(
+        context,
+        item.categoryId,
+        "variant",
+        stored.attributes,
+        variant.attributes,
+      );
+      if ("error" in outcome) return { error: outcome.error };
+      attributes = outcome.values;
+    }
+
+    await variants.update(context.organizationId, variant.id, {
+      name: variant.name,
+      salePrice: variant.salePrice,
+      attributes,
+    });
   } catch (error) {
     return {
       error: catalogErrorMessage(error, "No se pudo guardar la variante."),

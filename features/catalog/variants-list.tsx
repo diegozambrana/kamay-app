@@ -58,6 +58,8 @@ export function VariantsList({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  // La clave reinicia el alta en cada apertura, igual que en el catálogo.
+  const [createKey, setCreateKey] = useState(0);
   const [editing, setEditing] = useState<ItemVariant | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -78,7 +80,13 @@ export function VariantsList({
         <CardTitle>Variantes</CardTitle>
         {!readOnly && (
           <CardAction>
-            <Button size="sm" onClick={() => setAdding(true)}>
+            <Button
+              size="sm"
+              onClick={() => {
+                setCreateKey((key) => key + 1);
+                setAdding(true);
+              }}
+            >
               <PlusIcon data-icon="inline-start" />
               Agregar variante
             </Button>
@@ -167,6 +175,7 @@ export function VariantsList({
       </CardContent>
 
       <VariantFormDialog
+        key={createKey}
         open={adding}
         onOpenChange={setAdding}
         itemId={itemId}

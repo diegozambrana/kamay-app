@@ -138,6 +138,16 @@ export function CatalogScreen({
   const router = useRouter();
   const params = useSearchParams();
   const [adding, setAdding] = useState(false);
+  // Cada apertura del alta es una instancia nueva del formulario: nada de un
+  // alta anterior (foto, línea, categoría, error) sobrevive, y la pestaña y la
+  // línea vigentes se toman al abrir. Se cuenta al abrir, no al cerrar, para no
+  // vaciar el diálogo durante su animación de salida.
+  const [createKey, setCreateKey] = useState(0);
+
+  function openCreate() {
+    setCreateKey((key) => key + 1);
+    setAdding(true);
+  }
   const [editing, setEditing] = useState<CatalogRow | null>(null);
   const [showArchived, setShowArchived] = usePendingToggle(includeArchived);
   const [error, setError] = useState<string | null>(null);
@@ -437,7 +447,7 @@ export function CatalogScreen({
           <FieldLabel htmlFor="catalog-archived">Ver archivados</FieldLabel>
         </Field>
 
-        <Button className="ml-auto" onClick={() => setAdding(true)}>
+        <Button className="ml-auto" onClick={openCreate}>
           <PlusIcon data-icon="inline-start" />
           {copy.newLabel}
         </Button>
@@ -451,6 +461,7 @@ export function CatalogScreen({
       )}
 
       <ItemFormDialog
+        key={createKey}
         open={adding}
         onOpenChange={setAdding}
         // Lo nuevo se ve aunque caiga fuera de la ventana alfabética: la
@@ -510,7 +521,7 @@ export function CatalogScreen({
             <EmptyState
               title={`Aún no hay ${ITEM_KIND_LABELS[kind].toLowerCase()} en el catálogo`}
               action={
-                <Button type="button" onClick={() => setAdding(true)}>
+                <Button type="button" onClick={openCreate}>
                   {copy.firstLabel}
                 </Button>
               }

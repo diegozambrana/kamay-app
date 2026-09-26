@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -29,7 +29,7 @@ vi.mock("@/actions/catalog", () => ({
   uploadItemPhoto: vi.fn(async () => undefined),
 }));
 
-import { createItem, setItemArchived } from "@/actions/catalog";
+import { createItem, setItemArchived, uploadItemPhoto } from "@/actions/catalog";
 
 const ORG = "11111111-1111-1111-1111-111111111111";
 const LINE: BusinessLine = {
@@ -599,5 +599,197 @@ describe("CatalogScreen · filtros por atributo", () => {
 
     const url = push.mock.calls.at(-1)?.[0] as string;
     expect(url).toBe("/catalog");
+  });
+});
+
+/**
+ * Escenarios del delta `catalog-directory` del cambio
+ * `catalog-create-form-reset`, requisito "Los formularios de alta del catálogo
+ * se abren en blanco".
+ */
+describe("CatalogScreen · el alta se abre en blanco", () => {
+  const TAZAS: BusinessLine = { ...LINE, id: "22222222-2222-4222-8222-000000000002", name: "Tazas", position: 2 };
+  const FILAMENTO: ItemCategory = {
+    id: "92000000-0000-4000-8000-000000000021",
+    organizationId: ORG,
+    kind: "supply",
+    name: "Filamento",
+    archivedAt: null,
+  };
+  const VAJILLA: ItemCategory = { ...FILAMENTO, id: "92000000-0000-4000-8000-000000000022", kind: "product", name: "Vajilla" };
+
+  function screenFor(props: {
+    kind?: ItemKind;
+    items?: CatalogRow[];
+    categories?: ItemCategory[];
+    activeLineId?: string | null;
+  } = {}) {
+    return (
+      <CatalogScreen
+        items={props.items ?? []}
+        lines={[LINE, TAZAS]}
+        units={[UNIT]}
+        kind={props.kind ?? "supply"}
+        lineFilter={props.activeLineId ?? "all"}
+        categories={props.categories ?? [FILAMENTO]}
+        search=""
+        includeArchived={false}
+        role="owner"
+        activeLineId={props.activeLineId ?? null}
+      />
+    );
+  }
+
+  const foto = () => new File(["png"], "taza.png", { type: "image/png" });
+
+  async function openCreate(user: ReturnType<typeof userEvent.setup>, label: string) {
+    await user.click(screen.getByRole("button", { name: label }));
+    return screen.findByRole("dialog");
+  }
+
+  async function choose(
+    user: ReturnType<typeof userEvent.setup>,
+    dialog: HTMLElement,
+    field: string,
+    option: string,
+  ) {
+    await user.click(within(dialog).getByRole("combobox", { name: field }));
+    await user.click(await screen.findByRole("option", { name: option }));
+  }
+
+  async function closed() {
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  }
+
+  beforeEach(() => {
+    URL.createObjectURL = vi.fn(() => "blob:preview");
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  it("la foto del producto anterior no pasa al siguiente", async () => {
+    const user = userEvent.setup();
+    render(screenFor({ kind: "product", categories: [VAJILLA] }));
+
+    let dialog = await openCreate(user, "Nuevo producto");
+    await user.type(within(dialog).getByLabelText("Nombre"), "Taza blanca");
+    await user.upload(within(dialog).getByLabelText("Arrastra la foto del ítem"), foto());
+    await user.click(within(dialog).getByRole("button", { name: "Crear producto" }));
+    await closed();
+    expect(uploadItemPhoto).toHaveBeenCalledTimes(1);
+
+    dialog = await openCreate(user, "Nuevo producto");
+    expect(within(dialog).queryByRole("button", { name: "Quitar taza.png" })).toBeNull();
+
+    await user.type(within(dialog).getByLabelText("Nombre"), "Taza negra");
+    await user.click(within(dialog).getByRole("button", { name: "Crear producto" }));
+    await closed();
+
+    expect(createItem).toHaveBeenCalledTimes(2);
+    expect(uploadItemPhoto).toHaveBeenCalledTimes(1);
+  });
+
+  it("los datos del alta anterior no se conservan", async () => {
+    const user = userEvent.setup();
+    render(screenFor());
+
+    let dialog = await openCreate(user, "Nuevo insumo");
+    await user.type(within(dialog).getByLabelText("Nombre"), "PLA Sunlu");
+    await choose(user, dialog, "Línea", "Sublimación");
+    await choose(user, dialog, "Unidad", "Unidad");
+    await choose(user, dialog, "Categoría", "Filamento");
+    await user.click(within(dialog).getByRole("button", { name: "Crear insumo" }));
+    await closed();
+
+    dialog = await openCreate(user, "Nuevo insumo");
+    expect(within(dialog).getByLabelText("Nombre")).toHaveValue("");
+    expect(within(dialog).getByRole("combobox", { name: "Línea" })).toHaveTextContent("Compartido");
+    expect(within(dialog).getByRole("combobox", { name: "Unidad" })).toHaveTextContent("Sin unidad");
+    expect(within(dialog).getByRole("combobox", { name: "Categoría" })).toHaveTextContent("Sin categoría");
+  });
+
+  it("cancelar descarta lo llenado", async () => {
+    const user = userEvent.setup();
+    render(screenFor({ kind: "product", categories: [VAJILLA] }));
+
+    let dialog = await openCreate(user, "Nuevo producto");
+    await user.type(within(dialog).getByLabelText("Nombre"), "Taza blanca");
+    await user.upload(within(dialog).getByLabelText("Arrastra la foto del ítem"), foto());
+    await choose(user, dialog, "Categoría", "Vajilla");
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await closed();
+
+    dialog = await openCreate(user, "Nuevo producto");
+    expect(within(dialog).getByLabelText("Nombre")).toHaveValue("");
+    expect(within(dialog).queryByRole("button", { name: "Quitar taza.png" })).toBeNull();
+    expect(within(dialog).getByRole("combobox", { name: "Categoría" })).toHaveTextContent("Sin categoría");
+  });
+
+  it("el error anterior no reaparece", async () => {
+    const user = userEvent.setup();
+    vi.mocked(createItem).mockResolvedValueOnce({ error: "Ya existe un ítem con ese nombre." });
+    render(screenFor());
+
+    let dialog = await openCreate(user, "Nuevo insumo");
+    await user.type(within(dialog).getByLabelText("Nombre"), "PLA Sunlu");
+    await user.click(within(dialog).getByRole("button", { name: "Crear insumo" }));
+    expect(await within(dialog).findByText("Ya existe un ítem con ese nombre.")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await closed();
+
+    dialog = await openCreate(user, "Nuevo insumo");
+    expect(within(dialog).queryByText("Ya existe un ítem con ese nombre.")).toBeNull();
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+  });
+
+  it("el alta toma la pestaña vigente", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(screenFor());
+
+    let dialog = await openCreate(user, "Nuevo insumo");
+    await choose(user, dialog, "Categoría", "Filamento");
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await closed();
+
+    rerender(screenFor({ kind: "product", categories: [VAJILLA] }));
+    dialog = await openCreate(user, "Nuevo producto");
+    expect(within(dialog).getByRole("heading", { name: "Nuevo producto" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("combobox", { name: "Categoría" })).toHaveTextContent("Sin categoría");
+  });
+
+  it("el alta toma la línea filtrada vigente", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(screenFor());
+
+    let dialog = await openCreate(user, "Nuevo insumo");
+    await choose(user, dialog, "Línea", "Sublimación");
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await closed();
+
+    rerender(screenFor({ activeLineId: TAZAS.id }));
+    dialog = await openCreate(user, "Nuevo insumo");
+    expect(within(dialog).getByRole("combobox", { name: "Línea" })).toHaveTextContent("Tazas");
+  });
+
+  it("la edición sigue trayendo los datos del registro", async () => {
+    const user = userEvent.setup();
+    render(
+      screenFor({
+        kind: "product",
+        categories: [VAJILLA],
+        items: [item({ kind: "product", name: "Taza personalizada", salePrice: 45 })],
+      }),
+    );
+
+    let dialog = await openCreate(user, "Nuevo producto");
+    await user.type(within(dialog).getByLabelText("Nombre"), "Taza blanca");
+    await user.upload(within(dialog).getByLabelText("Arrastra la foto del ítem"), foto());
+    await user.click(within(dialog).getByRole("button", { name: "Crear producto" }));
+    await closed();
+
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Editar" }));
+    dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByLabelText("Nombre")).toHaveValue("Taza personalizada");
+    expect(within(dialog).queryByRole("button", { name: "Quitar taza.png" })).toBeNull();
   });
 });

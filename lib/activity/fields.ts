@@ -282,6 +282,7 @@ export const FIELDS: Record<string, Record<string, FieldSpec>> = {
     created_by: AUTHOR,
     archived_at: ARCHIVED,
     attributes: hidden("Atributos"),
+    show_in_fair: { label: "Mostrar en venta rápida", kind: "boolean" },
   },
 
   item_variants: {

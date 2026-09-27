@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { addLine } from "./cart";
-import { buildSaleEnvelope, proposedAmount } from "./sale-envelope";
+import { buildSaleEnvelope, buildSaleEnvelopes, proposedAmount } from "./sale-envelope";
 import { directSaleSchema } from "./sale-schema";
 
 const ORG = "00000000-0000-4000-8000-000000000001";
@@ -125,5 +125,75 @@ describe("proposedAmount", () => {
 
   it("el carrito vacío propone cero", () => {
     expect(proposedAmount([])).toBe(0);
+  });
+});
+
+// `fair-all-lines` · Escenarios «Un carrito de dos líneas crea dos ventas» y
+// «Misma hora y canal».
+describe("buildSaleEnvelopes", () => {
+  let counter = 0;
+  const newId = () => `id-${++counter}`;
+  const base = {
+    organizationId: "org",
+    salesChannelId: "canal-feria",
+    contactId: null,
+    method: "transfer" as const,
+    occurredAt: "2026-09-26T15:40:00.000Z",
+    fairLineId: "alfareria",
+  };
+  const taza = {
+    id: "l-taza",
+    itemId: "taza",
+    variantId: null,
+    name: "Taza",
+    quantity: 2,
+    unitPrice: 45,
+    businessLineId: "sublimacion",
+  };
+  const maceta = {
+    id: "l-maceta",
+    itemId: "maceta",
+    variantId: null,
+    name: "Maceta",
+    quantity: 1,
+    unitPrice: 60,
+    businessLineId: "alfareria",
+  };
+
+  it("una venta por línea, con su parte del cobro y la misma hora, canal y método", () => {
+    counter = 0;
+    const sales = buildSaleEnvelopes({ ...base, lines: [taza, maceta], amount: 100, newId });
+
+    expect(sales).toHaveLength(2);
+    expect(sales[0]).toMatchObject({
+      id: "id-1",
+      businessLineId: "sublimacion",
+      salesChannelId: "canal-feria",
+      occurredAt: base.occurredAt,
+      items: [{ id: "l-taza", itemId: "taza", quantity: 2, unitPrice: 45 }],
+      payment: { id: "id-2", amount: 60, method: "transfer" },
+    });
+    expect(sales[1]).toMatchObject({
+      id: "id-3",
+      businessLineId: "alfareria",
+      occurredAt: base.occurredAt,
+      items: [{ id: "l-maceta" }],
+      payment: { id: "id-4", amount: 40, method: "transfer" },
+    });
+  });
+
+  it("una venta cuya parte es cero va sin cobro", () => {
+    counter = 0;
+    const sales = buildSaleEnvelopes({ ...base, lines: [taza, maceta], amount: 0, newId });
+
+    expect(sales.map((sale) => sale.payment)).toEqual([null, null]);
+  });
+
+  it("un carrito de una línea es un solo sobre con el monto entero", () => {
+    counter = 0;
+    const sales = buildSaleEnvelopes({ ...base, lines: [maceta], amount: 60, newId });
+
+    expect(sales).toHaveLength(1);
+    expect(sales[0]).toMatchObject({ businessLineId: "alfareria", payment: { amount: 60 } });
   });
 });

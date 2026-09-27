@@ -31,6 +31,78 @@ describe("FairSaleService.listSellableProducts", () => {
     expect(query.has("not", "sale_price", "is", null)).toBe(true);
   });
 
+  it("Producto oculto de la venta rápida: pide solo los que se muestran", async () => {
+    const client = new FakeClient([
+      { data: [taza], error: null },
+      { data: [], error: null },
+    ]);
+    await new FairSaleService(client.asSupabase()).listSellableProducts(ORG, LINE);
+
+    expect(client.queries[0].has("eq", "show_in_fair", true)).toBe(true);
+  });
+
+  it("Producto con foto: la miniatura firmada de la foto más reciente", async () => {
+    const photo = (id: string, entity: string, createdAt: string) => ({
+      id,
+      organization_id: ORG,
+      entity_type: "item",
+      entity_id: entity,
+      bucket: "item-photos",
+      storage_path: `${ORG}/item/${entity}/${id}.jpg`,
+      file_name: `${id}.jpg`,
+      mime_type: "image/jpeg",
+      size_bytes: 1000,
+      uploaded_by: null,
+      created_at: createdAt,
+      archived_at: null,
+    });
+    const client = new FakeClient([
+      { data: [taza, maceta], error: null },
+      { data: [], error: null },
+      {
+        data: [
+          photo("vieja", "item-taza", "2026-09-01T00:00:00Z"),
+          photo("nueva", "item-taza", "2026-09-20T00:00:00Z"),
+        ],
+        error: null,
+      },
+    ]);
+    client.storageResults.signed = {
+      data: [
+        {
+          path: `${ORG}/item/item-taza/nueva.jpg.thumb.webp`,
+          signedUrl: "https://firmada/nueva-mini",
+        },
+        {
+          path: `${ORG}/item/item-taza/vieja.jpg.thumb.webp`,
+          signedUrl: "https://firmada/vieja-mini",
+        },
+      ],
+      error: null,
+    };
+    const grid = await new FairSaleService(client.asSupabase()).listSellableProducts(ORG, LINE);
+
+    expect(client.tables[2]).toBe("attachments");
+    expect(client.queries[2].has("eq", "entity_type", "item")).toBe(true);
+    const byId = new Map(grid.map((p) => [p.id, p]));
+    expect(byId.get("item-taza")).toMatchObject({
+      photoUrl: "https://firmada/nueva-mini",
+      photoAttachmentId: "nueva",
+    });
+    // Producto sin foto: sin URL, y la tarjeta pinta el sustituto.
+    expect(byId.get("item-maceta")).toMatchObject({ photoUrl: null, photoAttachmentId: null });
+  });
+
+  it("sin productos no pide fotos", async () => {
+    const client = new FakeClient([
+      { data: [], error: null },
+      { data: [], error: null },
+    ]);
+    await new FairSaleService(client.asSupabase()).listSellableProducts(ORG, LINE);
+
+    expect(client.tables).not.toContain("attachments");
+  });
+
   it("pide los de la línea activa y también los compartidos", async () => {
     const client = new FakeClient([
       { data: [taza, bolsa], error: null },
@@ -107,6 +179,142 @@ describe("FairSaleService.listSellableProducts", () => {
     await expect(
       new FairSaleService(client.asSupabase()).listSellableProducts(ORG, LINE),
     ).rejects.toThrow("vista caída");
+  });
+});
+
+/**
+ * `fair-all-lines` · Con la bandera, la cuadrícula es de toda la organización.
+ * Escenarios del delta `fair-mode`: «Con la bandera, productos de todas las
+ * líneas», «Con la bandera, nada de líneas archivadas», «Con la bandera, el
+ * orden es de toda la organización» y «Sin la bandera, nada cambia».
+ */
+describe("FairSaleService.listSellableProducts · todas las líneas", () => {
+  const OTHER = "44444444-4444-4444-4444-444444444444";
+  const lines = [
+    { id: LINE, name: "Alfarería" },
+    { id: OTHER, name: "Sublimación" },
+  ];
+  const tazaSub = { id: "item-taza-sub", name: "Taza sublimada", sale_price: "45.00", business_line_id: OTHER };
+
+  it("Sin la bandera, nada cambia: la línea de la feria y los compartidos", async () => {
+    const client = new FakeClient([
+      { data: [taza], error: null },
+      { data: [], error: null },
+    ]);
+    await new FairSaleService(client.asSupabase()).listSellableProducts(ORG, LINE, {
+      allLines: false,
+      lines,
+    });
+
+    expect(client.queries[0].argsOf("or")?.[0]).toBe(
+      `business_line_id.eq.${LINE},business_line_id.is.null`,
+    );
+    expect(client.queries[1].has("eq", "business_line_id", LINE)).toBe(true);
+  });
+
+  it("Con la bandera, nada de líneas archivadas: pide solo las líneas activas y los compartidos", async () => {
+    const client = new FakeClient([
+      { data: [taza, tazaSub], error: null },
+      { data: [], error: null },
+    ]);
+    await new FairSaleService(client.asSupabase()).listSellableProducts(ORG, LINE, {
+      allLines: true,
+      lines,
+    });
+
+    expect(client.queries[0].argsOf("or")?.[0]).toBe(
+      `business_line_id.in.(${LINE},${OTHER}),business_line_id.is.null`,
+    );
+  });
+
+  it("Con la bandera, productos de todas las líneas, con el nombre de su línea", async () => {
+    const client = new FakeClient([
+      { data: [taza, tazaSub, bolsa], error: null },
+      { data: [], error: null },
+    ]);
+    const grid = await new FairSaleService(client.asSupabase()).listSellableProducts(ORG, LINE, {
+      allLines: true,
+      lines,
+    });
+
+    const byId = new Map(grid.map((p) => [p.id, p]));
+    expect(byId.get("item-taza-sub")?.businessLineName).toBe("Sublimación");
+    expect(byId.get("item-taza")?.businessLineName).toBe("Alfarería");
+    expect(byId.get("item-bolsa")?.businessLineName).toBeNull();
+  });
+
+  it("Con la bandera, el orden es de toda la organización", async () => {
+    const client = new FakeClient([
+      { data: [taza, tazaSub], error: null },
+      {
+        data: [
+          { item_id: "item-taza", quantity_sold: "4" },
+          { item_id: "item-taza-sub", quantity_sold: "20" },
+          { item_id: "item-taza-sub", quantity_sold: "10" },
+        ],
+        error: null,
+      },
+    ]);
+    const grid = await new FairSaleService(client.asSupabase()).listSellableProducts(ORG, LINE, {
+      allLines: true,
+      lines,
+    });
+
+    // Las ventas no se filtran por la línea de la feria.
+    expect(client.queries[1].has("eq", "business_line_id", LINE)).toBe(false);
+    expect(client.queries[1].has("eq", "organization_id", ORG)).toBe(true);
+    expect(grid.map((p) => p.id)).toEqual(["item-taza-sub", "item-taza"]);
+    expect(grid[0].quantitySold).toBe(30);
+  });
+});
+
+describe("FairSaleService.createMany", () => {
+  it("registra el lote con una sola llamada a create_direct_sales", async () => {
+    const client = new FakeClient([{ data: ["s1", "s2"], error: null }]);
+    const base = {
+      organizationId: ORG,
+      contactId: null,
+      salesChannelId: "canal",
+      occurredAt: "2026-09-26T15:40:00.000Z",
+      notes: null,
+    };
+
+    const ids = await new FairSaleService(client.asSupabase()).createMany([
+      {
+        ...base,
+        id: "s1",
+        businessLineId: LINE,
+        items: [{ id: "l1", itemId: "taza", variantId: null, description: null, quantity: 2, unitPrice: 45 }],
+        payment: { id: "p1", amount: 90, method: "cash" },
+      },
+      {
+        ...base,
+        id: "s2",
+        businessLineId: "otra",
+        items: [{ id: "l2", itemId: "maceta", variantId: null, description: null, quantity: 1, unitPrice: 60 }],
+        payment: null,
+      },
+    ]);
+
+    expect(ids).toEqual(["s1", "s2"]);
+    expect(client.rpcCalls).toHaveLength(1);
+    expect(client.rpcCalls[0].name).toBe("create_direct_sales");
+    const [first, second] = (client.rpcCalls[0].params as { p_sales: Record<string, unknown>[] })
+      .p_sales;
+    expect(first).toMatchObject({
+      sale: { id: "s1", business_line_id: LINE, sales_channel_id: "canal", occurred_at: base.occurredAt },
+      items: [{ id: "l1", item_id: "taza", quantity: 2, unit_price: 45 }],
+      payment: { id: "p1", amount: 90, method: "cash", occurred_at: base.occurredAt },
+    });
+    expect(second).toMatchObject({ sale: { id: "s2", business_line_id: "otra" }, payment: null });
+  });
+
+  it("propaga el error de la base", async () => {
+    const client = new FakeClient([{ data: null, error: { message: "La línea no tiene un estado final configurado" } }]);
+
+    await expect(new FairSaleService(client.asSupabase()).createMany([])).rejects.toThrow(
+      "estado final",
+    );
   });
 });
 

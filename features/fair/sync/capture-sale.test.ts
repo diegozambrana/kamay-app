@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DIRECT_SALE_CREATE } from "@/features/sync/operations";
+import { DIRECT_SALE_CREATE, DIRECT_SALE_CREATE_BATCH } from "@/features/sync/operations";
 import type { DirectSaleInput } from "@/lib/fair/sale-schema";
 
 import type { DrainOutcomes, EnqueueInput } from "@/lib/offline";
@@ -22,7 +22,7 @@ vi.mock("@/lib/offline", async (importOriginal) => {
   };
 });
 
-const { captureSale, FAIR_FLUSH_DEADLINE_MS } = await import("./capture-sale");
+const { captureSale, captureSales, FAIR_FLUSH_DEADLINE_MS } = await import("./capture-sale");
 
 const ORG = "00000000-0000-4000-8000-000000000001";
 const SALE = "00000000-0000-4000-8000-000000000004";
@@ -119,5 +119,41 @@ describe("captureSale", () => {
     await captureSale(sale, "user-a", { isOnline: () => false });
 
     expect(drainOutbox).not.toHaveBeenCalled();
+  });
+});
+
+// `fair-all-lines` · Un registro con varias líneas es UNA entrada de la cola.
+describe("captureSales", () => {
+  const second: DirectSaleInput = {
+    ...sale,
+    id: "00000000-0000-4000-8000-000000000006",
+    businessLineId: "00000000-0000-4000-8000-000000000003",
+    payment: null,
+  };
+
+  it("encola una sola entrada directSale.createBatch con todas las ventas", async () => {
+    await captureSales([sale, second], "user-a", { isOnline: () => false });
+
+    expect(enqueue).toHaveBeenCalledTimes(1);
+    const input = enqueue.mock.calls[0][0];
+    expect(input).toMatchObject({
+      // La primera venta identifica el registro: reenviarlo conserva la clave.
+      recordId: SALE,
+      operation: DIRECT_SALE_CREATE_BATCH,
+      organizationId: ORG,
+      userId: "user-a",
+    });
+    expect((input.payload as { sales: DirectSaleInput[] }).sales).toEqual([sale, second]);
+    expect(input.dependsOn ?? []).toEqual([]);
+  });
+
+  it("con red tampoco espera: devuelve encolada", async () => {
+    drainOutbox.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve(new Map()), 5_000)),
+    );
+
+    const result = await captureSales([sale, second], "user-a", { isOnline: () => true });
+
+    expect(result.status).toBe("queued");
   });
 });

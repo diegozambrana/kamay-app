@@ -2,7 +2,11 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DIRECT_SALE_CREATE, ORDER_CREATE } from "@/features/sync/operations";
+import {
+  DIRECT_SALE_CREATE,
+  DIRECT_SALE_CREATE_BATCH,
+  ORDER_CREATE,
+} from "@/features/sync/operations";
 import { OUTBOX_SCHEMA_VERSION, type OutboxEntry } from "@/lib/offline";
 import { useSyncStore } from "@/stores/sync-store";
 
@@ -50,6 +54,20 @@ beforeEach(() => {
 });
 
 describe("PendingSalesIndicator", () => {
+  // `fair-all-lines` · Escenario: Un carrito de dos líneas cuenta dos ventas
+  it("un registro con varias líneas cuenta tantas ventas como lleva", () => {
+    seed([
+      entry(1),
+      entry(2, {
+        operation: DIRECT_SALE_CREATE_BATCH,
+        payload: { sales: [{ items: [] }, { items: [] }] },
+      }),
+    ]);
+    render(<PendingSalesIndicator />);
+
+    expect(screen.getByTestId("fair-pending-count")).toHaveTextContent("3");
+  });
+
   // Escenario: Sube al vender sin conexión
   it("cuenta las ventas encoladas", () => {
     seed([entry(1), entry(2), entry(3)]);

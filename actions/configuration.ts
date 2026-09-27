@@ -10,6 +10,7 @@ import {
 } from "@/lib/activity/retention";
 
 import { writingAssistSettingsSchema } from "@/lib/ai/writing-assist-settings";
+import { fairSettingsSchema } from "@/lib/fair/fair-settings";
 import { getOwnerContext } from "@/lib/auth/session-context";
 import {
   attributeShapeProblem,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/catalog/attribute-definition-schema";
 import { allocationSettingsSchema } from "@/lib/reports/allocation-schema";
 import { AiWritingAssistService } from "@/services/configuration/ai-writing-assist-service";
+import { FairSettingsService } from "@/services/configuration/fair-settings-service";
 import { BusinessLineService } from "@/services/configuration/business-line-service";
 import { ExpenseCategoryService } from "@/services/configuration/expense-category-service";
 import { ItemCategoryAttributeService } from "@/services/configuration/item-category-attribute-service";
@@ -567,6 +569,31 @@ export async function updateWritingAssistSettings(
     );
   } catch {
     return { error: "No se pudo guardar la asistencia de redacción. Intenta de nuevo." };
+  }
+
+  revalidateConfiguration();
+}
+
+/**
+ * La bandera «Venta rápida con todas las líneas» (`fair-all-lines`).
+ *
+ * Apagada por omisión. Encendida, la feria muestra los productos de todas las
+ * líneas activas y registra cada uno en su línea. Solo la persona dueña la
+ * cambia; la RLS de `organizations` lo vuelve a exigir.
+ */
+export async function updateFairSettings(
+  input: z.infer<typeof fairSettingsSchema>,
+): Promise<ActionResult> {
+  const parsed = fairSettingsSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const context = await getOwnerContext();
+  if (!context) return { error: NOT_OWNER };
+
+  try {
+    await new FairSettingsService(context.supabase).save(context.organizationId, parsed.data);
+  } catch {
+    return { error: "No se pudo guardar la venta rápida. Intenta de nuevo." };
   }
 
   revalidateConfiguration();

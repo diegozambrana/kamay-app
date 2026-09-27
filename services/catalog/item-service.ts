@@ -21,11 +21,12 @@ type ItemRow = {
   sale_price: number | string | null;
   min_stock: number | string | null;
   attributes: Record<string, unknown> | null;
+  show_in_fair?: boolean | null;
   archived_at: string | null;
 };
 
 const COLUMNS =
-  "id, organization_id, business_line_id, kind, name, description, unit_id, category_id, sale_price, min_stock, attributes, archived_at";
+  "id, organization_id, business_line_id, kind, name, description, unit_id, category_id, sale_price, min_stock, attributes, show_in_fair, archived_at";
 
 export type ItemFilters = {
   kind?: ItemKind;
@@ -74,6 +75,9 @@ export class ItemService {
       salePrice: toNumber(row.sale_price),
       minStock: toNumber(row.min_stock),
       attributes: row.attributes ?? {},
+      // Sin la columna en la fila (una fila de prueba antigua), el valor de la
+      // base: activado.
+      showInFair: row.show_in_fair ?? true,
       archivedAt: row.archived_at,
     };
   }
@@ -238,6 +242,7 @@ export class ItemService {
         sale_price: input.salePrice,
         min_stock: input.minStock,
         attributes: input.attributes ?? {},
+        show_in_fair: input.showInFair ?? true,
       })
       .select(COLUMNS)
       .single()
@@ -272,6 +277,8 @@ export class ItemService {
         min_stock: input.minStock,
         // Sin `attributes` en la carga, lo guardado no se toca.
         ...(input.attributes === undefined ? {} : { attributes: input.attributes }),
+        // Igual con «Mostrar en venta rápida».
+        ...(input.showInFair === undefined ? {} : { show_in_fair: input.showInFair }),
         updated_at: new Date().toISOString(),
       })
       .eq("organization_id", organizationId)

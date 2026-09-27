@@ -73,6 +73,7 @@ function item(overrides: Partial<Item> = {}): Item {
     attributes: {},
     salePrice: null,
     minStock: null,
+    showInFair: true,
     archivedAt: null,
     ...overrides,
   };
@@ -158,6 +159,22 @@ describe("ItemDetail", () => {
     renderDetail({ businessLineId: null });
 
     expect(screen.getByTestId("item-line")).toHaveTextContent("Compartido");
+  });
+
+  // Escenario «Ocultar un producto de la venta rápida», parte del detalle.
+  it("un producto muestra si se ofrece en la venta rápida", () => {
+    renderDetail({ kind: "product", salePrice: 35, minStock: null, showInFair: false });
+    expect(screen.getByTestId("item-show-in-fair")).toHaveTextContent("No");
+    cleanup();
+
+    renderDetail({ kind: "product", salePrice: 35, minStock: null, showInFair: true });
+    expect(screen.getByTestId("item-show-in-fair")).toHaveTextContent("Sí");
+  });
+
+  it("un insumo no muestra el ajuste de venta rápida", () => {
+    renderDetail({ kind: "supply" });
+    expect(screen.queryByTestId("item-show-in-fair")).toBeNull();
+    expect(screen.queryByText("Mostrar en venta rápida")).toBeNull();
   });
 
   it("un ítem archivado no ofrece edición, solo desarchivar", () => {

@@ -5,28 +5,33 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { selectBusinessLine } from "@/actions/business-line-context";
 
 import { useOnlineStatus } from "@/hooks/use-online-status";
-import { buildSaleEnvelope } from "@/lib/fair/sale-envelope";
+import { buildSaleEnvelope, buildSaleEnvelopes } from "@/lib/fair/sale-envelope";
 import { snapshotAgeLabel } from "@/lib/fair/snapshot";
 import { ALL_LINES, type ActiveLine, type BusinessLine, type PaymentMethod, type SalesChannel } from "@/types";
 import type { FairProduct } from "@/services/fair/fair-sale-service";
 import { useUserStore } from "@/stores/user-store";
 
 import { CartBar } from "./cart-bar";
+import { CartDrawer } from "./cart-drawer";
 import { useCartStore, useCartTotal, useCartUnits } from "./cart-store";
-import { CheckoutSheet } from "./checkout-sheet";
 import { ExitFairMode } from "./exit-fair-mode";
 import { FairStart } from "./fair-start";
 import { useFairSessionStore } from "./fair-session-store";
+import { FairToast, type FairToastMessage } from "./fair-toast";
 import { ProductGrid } from "./product-grid";
-import { captureSale } from "./sync/capture-sale";
+import { captureSale, captureSales } from "./sync/capture-sale";
 import { PendingSalesIndicator } from "./sync/pending-sales-indicator";
+import { useFairPhotoUrls } from "./use-fair-photo-urls";
+
+const SALE_REGISTERED = "Venta registrada";
+const SALE_QUEUED = "Venta guardada. Se enviará al recuperar la señal.";
 
 /**
  * V6 · Venta rápida. La pantalla que decide si el sistema se usa.
  *
- * El recorrido mínimo es de cuatro interacciones: producto, producto,
- * *Cobrar*, *Confirmar*. Todo lo demás de esta pantalla existe para no
- * estorbarlo.
+ * El recorrido mínimo es de cuatro interacciones: *Agregar*, *Agregar*,
+ * *Ver carrito*, *Registrar pedido*. Todo lo demás de esta pantalla existe
+ * para no estorbarlo.
  */
 export function FairScreen({
   organizationId,
@@ -34,12 +39,18 @@ export function FairScreen({
   activeLine,
   channels,
   products,
+  allLines = false,
 }: {
   organizationId: string;
   lines: BusinessLine[];
   activeLine: ActiveLine;
   channels: SalesChannel[];
   products: FairProduct[];
+  /**
+   * «Venta rápida con todas las líneas» (`fair-all-lines`): la cuadrícula
+   * trae productos de todas las líneas y cada uno se registra en la suya.
+   */
+  allLines?: boolean;
 }) {
   const userId = useUserStore((state) => state.user?.id) ?? "";
   const { isOnline, browserOnline, reportSendResult } = useOnlineStatus();
@@ -49,8 +60,12 @@ export function FairScreen({
   const total = useCartTotal();
   const units = useCartUnits();
 
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<FairToastMessage | null>(null);
+  // Cambia en cada venta: remonta la cuadrícula y devuelve todos sus
+  // selectores de cantidad a 1 («la vista queda limpia»).
+  const [saleCount, setSaleCount] = useState(0);
   const [switchingLine, startLineSwitch] = useTransition();
   // El canal elegido en el paso de inicio, guardado mientras el servidor
   // vuelve con el catálogo de la línea nueva.
@@ -68,6 +83,7 @@ export function FairScreen({
         businessLineId: activeLine,
         salesChannelId: pendingChannelId ?? channels[0]?.id ?? null,
         products,
+        allLines,
       });
       return;
     }
@@ -77,6 +93,8 @@ export function FairScreen({
     // en cada render volvería a capturar en bucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId, activeLine, needsLine, browserOnline]);
+
+  const photoUrls = useFairPhotoUrls(session.products, session.photos);
 
   const ageLabel = useMemo(
     () => (session.capturedAt ? snapshotAgeLabel({ capturedAt: session.capturedAt }) : null),
@@ -93,6 +111,7 @@ export function FairScreen({
         lines={lines}
         channels={channels}
         needsLine={needsLine}
+        allLines={allLines}
         offlineWithoutSnapshot={!browserOnline}
         onStart={(businessLineId, salesChannelId) => {
           // Elegir línea aquí tiene que traer SU catálogo. El servidor trajo
@@ -110,44 +129,76 @@ export function FairScreen({
             return;
           }
 
-          void session.start({ organizationId, businessLineId, salesChannelId, products });
+          void session.start({
+            organizationId,
+            businessLineId,
+            salesChannelId,
+            products,
+            allLines,
+          });
         }}
       />
     );
   }
 
   /**
-   * Confirmar: encola y **vuelve a la cuadrícula sin esperar al servidor**.
+   * Registrar: encola y **vuelve a la cuadrícula sin esperar al servidor**.
    *
-   * El orden importa. Se vacía el carrito y se cierra la hoja ANTES de
-   * esperar a `captureSale`, para que la vuelta no dependa de nada remoto
-   * (criterio 3, decisión 6). Lo que venga después solo puede añadir un aviso.
+   * El orden importa. Se vacía el carrito, se cierra el panel, se limpian los
+   * selectores y se avisa ANTES de esperar a `captureSale`, para que la
+   * vuelta no dependa de nada remoto (criterio 3, decisión 6). Lo que venga
+   * después solo puede cambiar el aviso.
    */
-  async function confirm(amount: number, method: PaymentMethod) {
+  async function register(amount: number, method: PaymentMethod) {
     const lines = cart.lines;
     if (lines.length === 0) return;
 
-    const sale = buildSaleEnvelope({
+    const shared = {
       organizationId,
-      businessLineId: session.businessLineId!,
       salesChannelId: session.salesChannelId,
       contactId: null,
       lines,
       amount,
       method,
-      // Identificadores de cliente (convención nº 9): reenviar este sobre no
-      // puede crear una venta distinta.
-      saleId: crypto.randomUUID(),
-      paymentId: crypto.randomUUID(),
       // La hora real del hecho, fijada ahora aunque se sincronice esta noche.
       occurredAt: new Date().toISOString(),
-    });
+    };
+
+    // Con «Venta rápida con todas las líneas», una venta por línea de negocio
+    // (`fair-all-lines`); sin ella, todo a la línea de la feria, como siempre.
+    // Identificadores de cliente (convención nº 9): reenviar un sobre no puede
+    // crear una venta distinta.
+    const sales = session.allLines
+      ? buildSaleEnvelopes({
+          ...shared,
+          fairLineId: session.businessLineId!,
+          newId: () => crypto.randomUUID(),
+        })
+      : [
+          buildSaleEnvelope({
+            ...shared,
+            businessLineId: session.businessLineId!,
+            saleId: crypto.randomUUID(),
+            paymentId: crypto.randomUUID(),
+          }),
+        ];
 
     cart.empty();
-    setCheckoutOpen(false);
+    setCartOpen(false);
+    setSaleCount((count) => count + 1);
     setError(null);
+    // El aviso depende de lo que dice el navegador al registrar, no del
+    // resultado de `captureSale`: en la feria su plazo es cero
+    // (`FAIR_FLUSH_DEADLINE_MS`), así que con red devuelve «en cola» casi
+    // siempre y la venta sale un instante después. Lo que sí queda pendiente
+    // lo cuenta el indicador.
+    setToast({ id: Date.now(), text: browserOnline ? SALE_REGISTERED : SALE_QUEUED });
 
-    const result = await captureSale(sale, userId, { isOnline: () => isOnline });
+    // Varias ventas viajan juntas en un solo sobre: todas o ninguna.
+    const result =
+      sales.length === 1
+        ? await captureSale(sales[0], userId, { isOnline: () => isOnline })
+        : await captureSales(sales, userId, { isOnline: () => isOnline });
 
     // Lo que acaba de pasar es mejor evidencia de conectividad que
     // `navigator.onLine`, que en una WiFi sin salida sigue diciendo que sí.
@@ -174,30 +225,39 @@ export function FairScreen({
       ) : null}
 
       <ProductGrid
+        key={saleCount}
         products={session.products}
+        photoUrls={photoUrls}
         ageLabel={ageLabel}
-        onPick={(product) =>
+        showLine={session.allLines}
+        onAdd={(product, quantity) =>
           cart.add(
-            { id: product.id, name: product.name, salePrice: product.salePrice },
+            {
+              id: product.id,
+              name: product.name,
+              salePrice: product.salePrice,
+              businessLineId: product.businessLineId,
+            },
             crypto.randomUUID(),
+            quantity,
           )
         }
       />
 
-      <CartBar
+      <CartBar units={units} total={total} onOpen={() => setCartOpen(true)} />
+
+      <CartDrawer
+        open={cartOpen}
         lines={cart.lines}
         units={units}
         total={total}
+        onOpenChange={setCartOpen}
+        onSetQuantity={cart.setQuantity}
         onRemove={cart.remove}
-        onCheckout={() => setCheckoutOpen(true)}
+        onRegister={(amount, method) => void register(amount, method)}
       />
 
-      <CheckoutSheet
-        open={checkoutOpen}
-        total={total}
-        onOpenChange={setCheckoutOpen}
-        onConfirm={(amount, method) => void confirm(amount, method)}
-      />
+      <FairToast message={toast} />
     </>
   );
 }

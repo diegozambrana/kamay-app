@@ -1,5 +1,7 @@
 import { execSync } from "node:child_process";
 
+import { signedInClient } from "./helpers/fresh-org";
+import { noisePng } from "./helpers/png";
 import { geeko } from "./helpers/seed-copies";
 import { expect, test, type Locator, type Page } from "./helpers/test";
 import { createClient } from "@supabase/supabase-js";
@@ -21,6 +23,11 @@ import ws from "ws";
  * "Vender sin conexión no falla ni duplica", "Indicador de ventas pendientes
  * de sincronizar", "El modo feria abre sin red desde el catálogo capturado" y
  * "Aislamiento y roles en el modo feria".
+ *
+ * Desde `fair-product-photos-visibility-cart-drawer`, una venta es *Agregar*
+ * en la tarjeta, *Ver carrito* y *Registrar pedido* en el panel; y la
+ * cuadrícula muestra la foto de cada producto y solo los que tienen «Mostrar
+ * en venta rápida» activado.
  */
 
 const PASSWORD = "kamay123";
@@ -226,11 +233,11 @@ async function abrirFeria(page: Page) {
   await expect(page.getByTestId("fair-product").first()).toBeVisible();
 }
 
-/** Una venta completa: un producto, Cobrar, Confirmar. */
+/** Una venta completa: *Agregar* un producto, *Ver carrito*, *Registrar pedido*. */
 async function venderUno(page: Page) {
-  await page.getByTestId("fair-product").first().click();
-  await page.getByTestId("fair-checkout").click();
-  await page.getByTestId("fair-confirm").click();
+  await page.getByTestId("fair-add").first().click();
+  await page.getByTestId("fair-view-cart").click();
+  await page.getByTestId("fair-register").click();
   // La vuelta a la cuadrícula con el carrito vacío es el fin de la venta.
   await expect(page.getByTestId("cart-total")).toHaveText("0");
 }
@@ -274,12 +281,12 @@ test.describe("modo feria", () => {
     await abrirFeria(page);
 
     const gestos = medidor();
-    const productos = page.getByTestId("fair-product");
+    const agregar = page.getByTestId("fair-add");
 
-    await gestos.clic(productos.nth(0));
-    await gestos.clic(productos.nth(1));
-    await gestos.clic(page.getByTestId("fair-checkout"));
-    await gestos.clic(page.getByTestId("fair-confirm"));
+    await gestos.clic(agregar.nth(0));
+    await gestos.clic(agregar.nth(1));
+    await gestos.clic(page.getByTestId("fair-view-cart"));
+    await gestos.clic(page.getByTestId("fair-register"));
 
     await expect(page.getByTestId("cart-total")).toHaveText("0");
     expect(gestos.total).toBeLessThanOrEqual(4);
@@ -288,9 +295,9 @@ test.describe("modo feria", () => {
   test("el precio del catálogo se propone sin escribir nada", async ({ page }) => {
     await abrirFeria(page);
 
-    await page.getByTestId("fair-product").first().click();
+    await page.getByTestId("fair-add").first().click();
     const total = await page.getByTestId("cart-total").textContent();
-    await page.getByTestId("fair-checkout").click();
+    await page.getByTestId("fair-view-cart").click();
 
     await expect(page.getByTestId("fair-amount")).toHaveValue(total ?? "");
   });
@@ -300,17 +307,18 @@ test.describe("modo feria", () => {
     page,
   }) => {
     await abrirFeria(page);
-    await page.getByTestId("fair-product").first().click();
-    await page.getByTestId("fair-checkout").click();
+    await page.getByTestId("fair-add").first().click();
+    await page.getByTestId("fair-view-cart").click();
 
     const inicio = Date.now();
-    await page.getByTestId("fair-confirm").click();
+    await page.getByTestId("fair-register").click();
     await expect(page.getByTestId("cart-total")).toHaveText("0");
     const transcurrido = Date.now() - inicio;
 
     expect(transcurrido).toBeLessThan(VUELTA_MAX_MS);
-    // Ni hoja de cobro abierta ni resumen: la cuadrícula, y nada más.
+    // Ni panel abierto ni resumen: la cuadrícula, el aviso breve, y nada más.
     await expect(page.getByTestId("fair-amount")).toHaveCount(0);
+    await expect(page.getByTestId("fair-toast")).toBeVisible();
     await expect(page.getByTestId("fair-product").first()).toBeVisible();
   });
 
@@ -318,10 +326,119 @@ test.describe("modo feria", () => {
     await abrirFeria(page);
     await venderUno(page);
 
-    await page.getByTestId("fair-product").nth(1).click();
+    await page.getByTestId("fair-add").nth(1).click();
+    await page.getByTestId("fair-view-cart").click();
 
-    // Solo la línea recién tocada: ni rastro de la venta anterior.
-    await expect(page.getByRole("button", { name: /^Quitar / })).toHaveCount(1);
+    // Solo la línea recién agregada: ni rastro de la venta anterior.
+    await expect(page.getByTestId("cart-line")).toHaveCount(1);
+  });
+
+  // ── Foto, visibilidad y cantidad (fair-product-photos-visibility-cart-drawer) ──
+  test("muestra la foto, oculta lo que no va a la feria y la vende sin red", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(120_000);
+    const { organizationId, owner } = geeko();
+    const db = await signedInClient(owner);
+
+    const { data: items, error } = await db
+      .from("items")
+      .select("id, name")
+      .eq("organization_id", organizationId)
+      .in("name", ["Taza de barro", "Plato hondo"]);
+    if (error) throw new Error(error.message);
+    const id = (name: string) => items!.find((item) => item.name === name)!.id as string;
+
+    // «Plato hondo» fuera de la venta rápida; sigue en el catálogo.
+    const hidden = await db
+      .from("items")
+      .update({ show_in_fair: false })
+      .eq("id", id("Plato hondo"));
+    if (hidden.error) throw new Error(hidden.error.message);
+
+    // Una foto para «Taza de barro», por el mismo camino de almacenamiento.
+    const photoId = crypto.randomUUID();
+    const storagePath = `${organizationId}/item/${id("Taza de barro")}/${photoId}.png`;
+    const png = noisePng(64, 64);
+    const upload = await db.storage
+      .from("item-photos")
+      .upload(storagePath, png, { contentType: "image/png" });
+    if (upload.error) throw new Error(upload.error.message);
+    const { data: me } = await db.auth.getUser();
+    const attached = await db.from("attachments").insert({
+      id: photoId,
+      organization_id: organizationId,
+      entity_type: "item",
+      entity_id: id("Taza de barro"),
+      bucket: "item-photos",
+      storage_path: storagePath,
+      file_name: "taza.png",
+      mime_type: "image/png",
+      size_bytes: png.byteLength,
+      uploaded_by: me.user?.id,
+    });
+    if (attached.error) throw new Error(attached.error.message);
+
+    await abrirFeria(page);
+
+    // Escenario: Producto oculto de la venta rápida
+    await expect(page.getByTestId("fair-product").filter({ hasText: "Plato hondo" })).toHaveCount(0);
+
+    // Escenario: Producto con foto
+    const taza = page.getByTestId("fair-product").filter({ hasText: "Taza de barro" });
+    const foto = taza.getByRole("img", { name: "Foto de Taza de barro" });
+    await expect(foto).toBeVisible();
+
+    // La miniatura queda guardada en el dispositivo y la tarjeta pasa a la
+    // copia local: es la que sigue viéndose sin señal.
+    await expect(foto).toHaveAttribute("src", /^blob:/, { timeout: 30_000 });
+
+    await context.setOffline(true);
+
+    // Escenario: Abrir sin red tras haber entrado con red (sin recargar: el
+    // arranque en frío necesita la compilación de producción, abajo).
+    await expect(foto).toHaveAttribute("src", /^blob:/);
+    expect(await foto.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+
+    // Escenario: Agregar varias unidades de una vez
+    const mas = taza.getByRole("button", { name: "Aumentar cantidad de Taza de barro" });
+    await mas.click();
+    await mas.click();
+    await taza.getByTestId("fair-add").click();
+    await expect(page.getByTestId("cart-total")).toHaveText("105");
+    await expect(taza.getByTestId("fair-quantity")).toHaveText("1");
+
+    await page.getByTestId("fair-view-cart").click();
+    await expect(page.getByTestId("cart-line")).toHaveCount(1);
+    await expect(page.getByTestId("cart-line")).toContainText("35 × 3");
+    await page.getByTestId("fair-register").click();
+
+    // Escenario: Mensaje de éxito sin señal
+    await expect(page.getByTestId("fair-toast")).toContainText("Se enviará al recuperar la señal");
+    await expect(page.getByTestId("cart-total")).toHaveText("0");
+
+    await context.setOffline(false);
+    await expect(page.getByTestId("fair-pending-sales")).toHaveCount(0, { timeout: 60_000 });
+  });
+
+  // Escenario: Sin desplazamiento horizontal
+  test("a 390 px no hay desplazamiento horizontal, con el panel abierto o cerrado", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await abrirFeria(page);
+
+    const desborda = () =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      );
+    expect(await desborda()).toBe(false);
+
+    await page.getByTestId("fair-add").first().click();
+    await page.getByTestId("fair-view-cart").click();
+    await expect(page.getByTestId("fair-register")).toBeVisible();
+    expect(await desborda()).toBe(false);
   });
 
   // ── Criterios 4 y 5: el corazón de la prueba ────────────────────────────
@@ -437,6 +554,83 @@ test.describe("modo feria", () => {
 
     await context.setOffline(false);
     await expect(page.getByTestId("fair-pending-sales")).toHaveCount(0, { timeout: 60_000 });
+  });
+});
+
+/**
+ * `fair-all-lines` · Con «Venta rápida con todas las líneas», la feria vende
+ * productos de todas las líneas y cada uno se registra en la suya. Escenarios
+ * del delta `fair-mode`: «Con la bandera, productos de todas las líneas»,
+ * «Un carrito de dos líneas crea dos ventas», «Un carrito de dos líneas
+ * cuenta dos ventas» y «Reenvío sin duplicados».
+ */
+test.describe("modo feria con todas las líneas", () => {
+  test("vende productos de dos líneas sin red y quedan dos ventas, cada una en su línea", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(120_000);
+    await login(page, geeko().owner);
+
+    // La bandera se enciende como lo haría la dueña.
+    await page.goto("/settings/general");
+    const toggle = page.getByRole("switch", { name: "Venta rápida con todas las líneas" });
+    await toggle.click();
+    const form = page.locator("form").filter({ has: toggle });
+    await form.getByRole("button", { name: "Guardar" }).click();
+    await expect(form.getByRole("status")).toHaveText("Cambios guardados.");
+
+    await abrirFeria(page);
+
+    const taza = page.getByTestId("fair-product").filter({ hasText: "Taza personalizada" });
+    const barro = page.getByTestId("fair-product").filter({ hasText: "Taza de barro" });
+    await expect(taza.getByTestId("fair-product-line")).toHaveText("Sublimación");
+    await expect(barro.getByTestId("fair-product-line")).toHaveText("Alfarería");
+
+    await context.setOffline(true);
+
+    await taza.getByTestId("fair-add").click();
+    await barro.getByTestId("fair-add").click();
+    await page.getByTestId("fair-view-cart").click();
+    await page.getByTestId("fair-register").click();
+    await expect(page.getByTestId("cart-total")).toHaveText("0");
+
+    // Dos ventas, aunque sea un solo registro.
+    await expect(page.getByTestId("fair-pending-count")).toHaveText("2");
+
+    const ids = await page.evaluate(async () => {
+      const req = indexedDB.open("kamay-outbox");
+      const db: IDBDatabase = await new Promise((resolve, reject) => {
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      const entries: { operation: string; payload: { sales?: { id: string }[] } }[] =
+        await new Promise((resolve) => {
+          const all = db.transaction("outbox").objectStore("outbox").getAll();
+          all.onsuccess = () => resolve(all.result);
+        });
+      return entries
+        .filter((entry) => entry.operation === "directSale.createBatch")
+        .flatMap((entry) => (entry.payload.sales ?? []).map((sale) => sale.id));
+    });
+    expect(new Set(ids).size).toBe(2);
+
+    await context.setOffline(false);
+    await expect(page.getByTestId("fair-pending-sales")).toHaveCount(0, { timeout: 60_000 });
+
+    expect(await contarVentasDirectas(ids)).toBe(2);
+
+    // Y cada una en su línea.
+    const db = await signedInClient(geeko().owner);
+    const { data, error } = await db
+      .from("orders")
+      .select("business_lines(name)")
+      .in("id", ids);
+    if (error) throw new Error(error.message);
+    const lineas = (data ?? [])
+      .map((row) => (row.business_lines as unknown as { name: string }).name)
+      .sort();
+    expect(lineas).toEqual(["Alfarería", "Sublimación"]);
   });
 });
 

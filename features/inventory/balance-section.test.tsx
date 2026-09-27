@@ -35,6 +35,7 @@ const item: Item = {
   attributes: {},
   salePrice: null,
   minStock: 1,
+  showInFair: true,
   archivedAt: null,
 };
 const balance: ItemBalance = { itemId: ITEM, organizationId: "org", balance: 2.3, minStock: 1, belowMin: false };

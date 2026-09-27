@@ -29,6 +29,7 @@ function item(kind: ItemKind): Item {
     attributes: {},
     salePrice: kind === "product" ? 45 : null,
     minStock: kind === "supply" ? 12 : null,
+    showInFair: true,
     archivedAt: null,
   };
 }
@@ -400,5 +401,76 @@ describe("ItemFormDialog · atributos de la categoría", () => {
 
     expect(within(dialog).getByLabelText("Temperatura mínima")).toHaveValue("190");
     expect(within(dialog).getByRole("combobox", { name: "Marca" })).toHaveTextContent("Sunlu");
+  });
+});
+
+/**
+ * Escenarios del delta spec `catalog-directory`: «Un producto declara si se
+ * muestra en la venta rápida», del lado del formulario.
+ */
+describe("ItemFormDialog · Mostrar en venta rápida", () => {
+  const SWITCH = { name: "Mostrar en venta rápida" };
+
+  it("Un producto nuevo se muestra por omisión", async () => {
+    const dialog = renderDialog("product");
+    const toggle = within(dialog).getByRole("switch", SWITCH);
+    expect(toggle).toBeChecked();
+
+    await userEvent.type(within(dialog).getByLabelText("Nombre"), "Taza azul");
+    await userEvent.type(within(dialog).getByLabelText("Precio de venta referencial"), "35");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Crear producto" }));
+
+    expect(createItem).toHaveBeenCalledWith(expect.objectContaining({ showInFair: true }));
+  });
+
+  it("Ocultar un producto de la venta rápida: desactivarlo envía el ajuste", async () => {
+    const dialog = renderDialog("product", item("product"));
+
+    await userEvent.click(within(dialog).getByRole("switch", SWITCH));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateItem).toHaveBeenCalledWith(expect.objectContaining({ showInFair: false }));
+  });
+
+  it("Volver a mostrarlo: un producto oculto se abre desactivado y se activa", async () => {
+    const dialog = renderDialog("product", { ...item("product"), showInFair: false });
+    const toggle = within(dialog).getByRole("switch", SWITCH);
+    expect(toggle).not.toBeChecked();
+
+    await userEvent.click(toggle);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateItem).toHaveBeenCalledWith(expect.objectContaining({ showInFair: true }));
+  });
+
+  it.each(["supply", "asset"] as const)(
+    "Insumos y activos no ofrecen el ajuste: %s",
+    (kind) => {
+      const nuevo = renderDialog(kind);
+      expect(within(nuevo).queryByRole("switch", SWITCH)).toBeNull();
+      cleanup();
+
+      const edicion = renderDialog(kind, item(kind));
+      expect(within(edicion).queryByRole("switch", SWITCH)).toBeNull();
+    },
+  );
+
+  it("Aviso de producto sin precio", async () => {
+    const dialog = renderDialog("product", { ...item("product"), salePrice: null });
+    expect(within(dialog).getByTestId("item-fair-no-price")).toHaveTextContent(
+      "no aparecerá en la venta rápida hasta que tenga precio",
+    );
+
+    await userEvent.type(within(dialog).getByLabelText("Precio de venta referencial"), "20");
+    expect(within(dialog).queryByTestId("item-fair-no-price")).toBeNull();
+  });
+
+  it("sin aviso cuando el producto está oculto: no se promete nada", async () => {
+    const dialog = renderDialog("product", {
+      ...item("product"),
+      salePrice: null,
+      showInFair: false,
+    });
+    expect(within(dialog).queryByTestId("item-fair-no-price")).toBeNull();
   });
 });

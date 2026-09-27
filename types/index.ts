@@ -223,6 +223,12 @@ export type Item = {
    * archivados o de otra categoría: se conservan y se muestran aparte.
    */
   attributes: AttributeValues;
+  /**
+   * «Mostrar en venta rápida»: si el producto aparece en la cuadrícula del
+   * modo feria. Solo significa algo en productos; en insumos y activos es
+   * siempre `true` (`ITEM_KIND_FIELDS`).
+   */
+  showInFair: boolean;
   archivedAt: string | null;
 };
 

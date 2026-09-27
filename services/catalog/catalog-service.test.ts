@@ -218,6 +218,48 @@ describe("ItemService", () => {
     expect((await service.findById(ORG, ITEM))?.attributes).toEqual({});
   });
 
+  it("crear escribe «Mostrar en venta rápida», activado si no llega; editar solo si llega", async () => {
+    const values = {
+      name: "Taza azul",
+      kind: "product" as const,
+      businessLineId: LINE,
+      unitId: null,
+      categoryId: null,
+      description: null,
+      salePrice: 35,
+      minStock: null,
+    };
+    const client = new FakeClient([
+      { data: itemRow, error: null },
+      { data: itemRow, error: null },
+      { data: itemRow, error: null },
+      { data: itemRow, error: null },
+    ]);
+    const service = new ItemService(client.asSupabase());
+
+    await service.create(ORG, ITEM, { ...values, showInFair: false });
+    await service.create(ORG, ITEM, values);
+    await service.update(ORG, ITEM, { ...values, showInFair: false });
+    await service.update(ORG, ITEM, values);
+
+    const written = (i: number, method: string) =>
+      client.queries[i].argsOf(method)?.[0] as Record<string, unknown>;
+    expect(written(0, "insert").show_in_fair).toBe(false);
+    expect(written(1, "insert").show_in_fair).toBe(true);
+    expect(written(2, "update").show_in_fair).toBe(false);
+    expect(written(3, "update")).not.toHaveProperty("show_in_fair");
+  });
+
+  it("entrega «Mostrar en venta rápida» como showInFair", async () => {
+    const client = new FakeClient([
+      { data: { ...itemRow, show_in_fair: false }, error: null },
+      { data: { ...itemRow, show_in_fair: true }, error: null },
+    ]);
+    const service = new ItemService(client.asSupabase());
+    expect((await service.findById(ORG, ITEM))?.showInFair).toBe(false);
+    expect((await service.findById(ORG, ITEM))?.showInFair).toBe(true);
+  });
+
   // «Editar no cambia el tipo», a nivel de servicio.
   it("editar no escribe el tipo: se fija al crear", async () => {
     const client = new FakeClient([{ data: itemRow, error: null }]);

@@ -107,7 +107,7 @@ El modo feria SHALL presentarse en su propio grupo de rutas, con un layout sin b
 
 ### Requirement: Cuadrícula de productos vendibles ordenada por más vendidos
 
-La cuadrícula SHALL mostrar los ítems de tipo producto no archivados que pertenecen a la línea activa o que son compartidos y tienen precio de venta definido, cada uno con su foto —o un sustituto legible cuando no la tenga—, su nombre y su precio. SHALL ordenarlos por cantidad vendida en los últimos 90 días dentro de la línea, de mayor a menor, y colocar después, por nombre, los que no registran ventas. Los objetivos táctiles SHALL ser alcanzables con el pulgar en una pantalla de 390 px de ancho, sin desplazamiento horizontal.
+La cuadrícula SHALL mostrar los ítems de tipo producto no archivados, con el ajuste «Mostrar en venta rápida» activado, que pertenecen a la línea de la feria o que son compartidos y tienen precio de venta definido. Cuando la organización tiene encendida la bandera «Venta rápida con todas las líneas», la cuadrícula SHALL mostrar además, con los mismos filtros, los productos de todas las demás líneas **activas** de la organización, y SHALL NOT mostrar los de líneas archivadas; cada tarjeta SHALL mostrar el nombre de la línea del producto, o «Compartido» si no tiene. Cada producto SHALL mostrarse en una tarjeta con su foto vigente como miniatura a la izquierda —o un sustituto del mismo tamaño cuando no la tenga o no se pueda cargar—, y a la derecha su nombre, su precio, un selector de cantidad y el botón *Agregar*. La foto vigente de un producto SHALL ser la más reciente de las suyas no archivadas. SHALL ordenarlos por cantidad vendida en los últimos 90 días dentro de la línea —o en toda la organización, con la bandera encendida—, de mayor a menor, y colocar después, por nombre, los que no registran ventas. Los objetivos táctiles SHALL ser alcanzables con el pulgar en una pantalla de 390 px de ancho, sin desplazamiento horizontal. Cuando la línea no tiene ningún producto que mostrar, la cuadrícula SHALL explicar que hacen falta productos con precio de venta y con «Mostrar en venta rápida» activado.
 
 #### Scenario: Orden por ventas recientes
 
@@ -122,6 +122,11 @@ La cuadrícula SHALL mostrar los ítems de tipo producto no archivados que perte
 #### Scenario: Producto sin precio de venta
 
 - **WHEN** un producto no tiene precio de venta definido
+- **THEN** no aparece en la cuadrícula
+
+#### Scenario: Producto oculto de la venta rápida
+
+- **WHEN** un producto con precio tiene el ajuste «Mostrar en venta rápida» desactivado
 - **THEN** no aparece en la cuadrícula
 
 #### Scenario: Insumos y activos fuera
@@ -139,77 +144,152 @@ La cuadrícula SHALL mostrar los ítems de tipo producto no archivados que perte
 - **WHEN** la línea activa es Alfarería y existe un producto exclusivo de Sublimación
 - **THEN** ese producto no aparece, y sí aparecen los productos compartidos
 
+#### Scenario: Producto con foto
+
+- **WHEN** un producto vendible tiene dos fotos
+- **THEN** su tarjeta muestra la más reciente como miniatura a la izquierda del nombre y el precio
+
 #### Scenario: Producto sin foto
 
 - **WHEN** un producto vendible no tiene foto
-- **THEN** aparece igualmente, con un sustituto que permite reconocerlo por su nombre
+- **THEN** aparece igualmente, con un sustituto del mismo tamaño que la miniatura, y se reconoce por su nombre
+
+#### Scenario: Línea sin productos que mostrar
+
+- **WHEN** todos los productos con precio de la línea tienen el ajuste desactivado
+- **THEN** la cuadrícula explica que hacen falta productos con precio y con «Mostrar en venta rápida» activado
 
 #### Scenario: Sin desplazamiento horizontal
 
 - **WHEN** se abre el modo feria en una pantalla de 390 px de ancho
-- **THEN** la cuadrícula y la barra inferior se completan sin desplazamiento horizontal
+- **THEN** la cuadrícula, sus tarjetas con miniatura, selector y *Agregar*, y la barra inferior se completan sin desplazamiento horizontal
+
+#### Scenario: Con la bandera, productos de todas las líneas
+
+- **WHEN** la bandera está encendida, la feria se abrió en Alfarería y existe un producto vendible exclusivo de Sublimación
+- **THEN** ese producto aparece en la cuadrícula, con «Sublimación» en su tarjeta, junto a los de Alfarería y los compartidos
+
+#### Scenario: Con la bandera, nada de líneas archivadas
+
+- **WHEN** la bandera está encendida y una línea archivada tiene productos vendibles
+- **THEN** ninguno de ellos aparece en la cuadrícula
+
+#### Scenario: Con la bandera, el orden es de toda la organización
+
+- **WHEN** la bandera está encendida, una taza de Sublimación vendió 30 unidades en los últimos 90 días y una maceta de Alfarería vendió 4
+- **THEN** la taza aparece antes que la maceta, aunque la feria se haya abierto en Alfarería
+
+#### Scenario: Sin la bandera, nada cambia
+
+- **WHEN** la bandera está apagada
+- **THEN** la cuadrícula muestra solo los productos de la línea de la feria y los compartidos, sin el nombre de la línea en las tarjetas
 
 ### Requirement: Carrito y cobro en cuatro interacciones o menos
 
-Tocar un producto SHALL agregarlo al carrito e incrementar su cantidad si ya estaba, sin abrir ningún diálogo. Una barra inferior fija SHALL mostrar en todo momento el número de unidades y el total del carrito, y ofrecer *Cobrar*. La hoja de cobro SHALL proponer el total como monto por omisión, permitir editarlo, elegir método y elegir cliente de forma opcional, y confirmarse con un solo control. Una venta de dos productos distintos SHALL completarse en cuatro interacciones: producto, producto, *Cobrar*, *Confirmar*. El carrito SHALL permitir quitar una línea o vaciarse, sin que esas acciones formen parte del recorrido mínimo.
+Tocar la tarjeta de un producto SHALL NOT agregarlo al carrito. Cada tarjeta SHALL ofrecer un selector de cantidad, que empieza en 1, baja con − sin pasar de 1 y sube con +, y un botón *Agregar* que suma esa cantidad al carrito —incrementando la línea si el producto ya estaba— sin abrir ningún diálogo, y devuelve el selector a 1. Una barra inferior fija SHALL mostrar en todo momento el número de unidades y el total del carrito, y ofrecer *Ver carrito*, que abre un panel lateral desde la derecha. El panel SHALL mostrar cada línea con su nombre, su precio unitario, su subtotal, controles − y + para cambiar su cantidad y un control para quitarla; el total; el monto a cobrar, propuesto como el total y editable; el método de pago; y *Registrar pedido*, que registra la venta con su cobro con un solo control. La elección de cliente SHALL ser opcional. Bajar con − la cantidad de una línea SHALL detenerse en 1; quitarla SHALL hacerse con su control propio. Una venta de dos productos distintos SHALL completarse en cuatro interacciones: *Agregar*, *Agregar*, *Ver carrito*, *Registrar pedido*.
 
 #### Scenario: Venta de dos productos en cuatro interacciones
 
-- **WHEN** se tocan dos productos distintos, luego *Cobrar* y luego *Confirmar*
+- **WHEN** se pulsa *Agregar* en dos productos distintos, luego *Ver carrito* y luego *Registrar pedido*
 - **THEN** la venta queda registrada con sus dos líneas y su cobro, sin ninguna interacción adicional
+
+#### Scenario: Tocar la tarjeta no agrega
+
+- **WHEN** se toca la tarjeta de un producto fuera de su selector y de *Agregar*
+- **THEN** el carrito no cambia
+
+#### Scenario: Agregar varias unidades de una vez
+
+- **WHEN** se sube el selector de un producto de 1 a 3 y se pulsa *Agregar*
+- **THEN** el carrito tiene una línea de ese producto con cantidad 3, el total refleja el triple del precio y el selector vuelve a 1
 
 #### Scenario: Tocar dos veces el mismo producto
 
-- **WHEN** se toca el mismo producto dos veces
+- **WHEN** se pulsa *Agregar* dos veces en el mismo producto con el selector en 1
 - **THEN** el carrito muestra una sola línea con cantidad 2 y el total refleja el doble del precio
+
+#### Scenario: El selector no baja de 1
+
+- **WHEN** se pulsa − en el selector de un producto que marca 1
+- **THEN** el selector sigue en 1
 
 #### Scenario: El total sigue al carrito
 
-- **WHEN** se agregan y se quitan productos
-- **THEN** la barra inferior muestra en todo momento el número de unidades y el total vigentes
+- **WHEN** se agregan productos, se cambian cantidades en el panel y se quitan líneas
+- **THEN** la barra inferior y el panel muestran en todo momento el número de unidades y el total vigentes
+
+#### Scenario: Cambiar la cantidad desde el panel
+
+- **WHEN** en el panel se pulsa + en una línea de cantidad 2 y después − dos veces
+- **THEN** la línea pasa a 3, luego a 2 y luego a 1, y el total se recalcula en cada paso
+
+#### Scenario: La cantidad de una línea no baja de 1
+
+- **WHEN** en el panel se pulsa − en una línea de cantidad 1
+- **THEN** la línea sigue en el carrito con cantidad 1
+
+#### Scenario: Quitar una línea
+
+- **WHEN** se quita una línea desde el panel
+- **THEN** el total se recalcula y la línea desaparece
 
 #### Scenario: Cobrar con el carrito vacío
 
 - **WHEN** el carrito no tiene ninguna línea
-- **THEN** *Cobrar* no está disponible
+- **THEN** *Ver carrito* no está disponible, y si el panel está abierto porque se quitó la última línea, *Registrar pedido* no está disponible
 
 #### Scenario: Monto propuesto
 
-- **WHEN** se abre la hoja de cobro con un carrito de 115
-- **THEN** el monto propuesto es 115 y se puede confirmar sin escribir nada
+- **WHEN** se abre el panel con un carrito de 115
+- **THEN** el monto propuesto es 115 y se puede registrar sin escribir nada
+
+#### Scenario: El monto propuesto sigue a los cambios del panel
+
+- **WHEN** con el panel abierto y el monto sin editar, se sube una línea y el total pasa de 115 a 150
+- **THEN** el monto propuesto pasa a 150
 
 #### Scenario: Precio del momento
 
 - **WHEN** se vende un producto y después cambia su precio en el catálogo
 - **THEN** la venta conserva el precio unitario con el que se registró
 
-#### Scenario: Quitar una línea
-
-- **WHEN** se quita una línea del carrito
-- **THEN** el total se recalcula y la línea desaparece
-
 ### Requirement: Vuelta inmediata a la cuadrícula tras cada venta
 
-Confirmada la venta, el sistema SHALL devolver la pantalla a la cuadrícula con el carrito vacío en menos de un segundo, sin ninguna pantalla intermedia de confirmación y sin esperar la respuesta del servidor. La confirmación al usuario SHALL ser una señal breve que no interrumpe la siguiente venta.
+Registrado el pedido, el sistema SHALL cerrar el panel y devolver la pantalla a la cuadrícula con el carrito vacío y todos los selectores de cantidad en 1 en menos de un segundo, sin ninguna pantalla intermedia y sin esperar la respuesta del servidor. SHALL mostrar un mensaje breve de éxito que no bloquea la cuadrícula ni exige cerrarlo, y que desaparece solo. Cuando la venta quedó en cola por falta de conexión, el mensaje SHALL decir que se enviará al recuperar la señal.
 
 #### Scenario: Retorno sin pantallas intermedias
 
-- **WHEN** se confirma una venta
-- **THEN** la pantalla vuelve a la cuadrícula en menos de un segundo, con el carrito vacío y sin ninguna pantalla de resumen
+- **WHEN** se registra un pedido
+- **THEN** el panel se cierra y la pantalla vuelve a la cuadrícula en menos de un segundo, con el carrito vacío y sin ninguna pantalla de resumen
+
+#### Scenario: Mensaje de éxito
+
+- **WHEN** se registra un pedido con conexión
+- **THEN** aparece un mensaje breve de éxito que desaparece solo, sin que haya que cerrarlo
+
+#### Scenario: Mensaje de éxito sin señal
+
+- **WHEN** se registra un pedido sin conexión
+- **THEN** el mensaje de éxito indica que la venta se enviará al recuperar la señal
+
+#### Scenario: La vista queda limpia
+
+- **WHEN** se deja un producto con el selector en 4 sin agregarlo y se registra un pedido de otros productos
+- **THEN** al volver a la cuadrícula todos los selectores están en 1
 
 #### Scenario: No se espera al servidor
 
-- **WHEN** se confirma una venta con la red degradada
+- **WHEN** se registra un pedido con la red degradada
 - **THEN** la interfaz vuelve a la cuadrícula sin bloquearse a la espera de la respuesta
 
 #### Scenario: Venta siguiente inmediata
 
-- **WHEN** se confirma una venta y se toca un producto en cuanto vuelve la cuadrícula
+- **WHEN** se registra un pedido y se pulsa *Agregar* en un producto mientras el mensaje de éxito sigue a la vista
 - **THEN** ese producto entra en un carrito nuevo, sin rastro del anterior
 
 ### Requirement: Línea y canal se eligen una vez por feria, no en cada venta
 
-Al entrar al modo feria el sistema SHALL fijar la línea de negocio y el canal de venta de toda la sesión, y SHALL mantenerlos en cada venta sin volver a preguntarlos. La línea SHALL preseleccionarse desde la línea activa; cuando la línea activa es «Todas», el sistema SHALL exigir elegir una antes de mostrar la cuadrícula. El canal SHALL preseleccionarse al primero por posición de la organización y SHALL poder cambiarse en ese mismo paso de inicio, nunca durante la venta. La elección SHALL sobrevivir a cerrar y reabrir la aplicación dentro de la misma feria.
+Al entrar al modo feria el sistema SHALL fijar la línea de negocio y el canal de venta de toda la sesión, y SHALL mantenerlos en cada venta sin volver a preguntarlos. Con la bandera «Venta rápida con todas las líneas» encendida, la línea elegida SHALL ser aquella en la que se registran los productos compartidos, y el paso de inicio SHALL decirlo así; los demás productos se registran en su propia línea. La línea SHALL preseleccionarse desde la línea activa; cuando la línea activa es «Todas», el sistema SHALL exigir elegir una antes de mostrar la cuadrícula. El canal SHALL preseleccionarse al primero por posición de la organización y SHALL poder cambiarse en ese mismo paso de inicio, nunca durante la venta. La elección SHALL sobrevivir a cerrar y reabrir la aplicación dentro de la misma feria.
 
 #### Scenario: Línea activa preseleccionada
 
@@ -240,6 +320,11 @@ Al entrar al modo feria el sistema SHALL fijar la línea de negocio y el canal d
 
 - **WHEN** se cierra la aplicación en modo feria y se vuelve a abrir
 - **THEN** la línea y el canal de la sesión siguen fijados y la cuadrícula aparece sin volver a preguntarlos
+
+#### Scenario: Con la bandera, la línea de la feria recibe los compartidos
+
+- **WHEN** la bandera está encendida, la feria se abrió en Alfarería y se vende una bolsa de regalo compartida
+- **THEN** la venta de la bolsa queda en la línea Alfarería
 
 ### Requirement: Vender sin conexión no falla ni duplica
 
@@ -272,17 +357,27 @@ El modo feria SHALL permitir registrar ventas con el dispositivo sin red, encol�
 
 ### Requirement: El modo feria abre sin red desde el catálogo capturado
 
-Al entrar al modo feria **con conexión**, el sistema SHALL capturar y guardar localmente el catálogo vendible de la línea, la línea y el canal de la sesión, y el instante de la captura. Abrir el modo feria **sin conexión** SHALL mostrar la cuadrícula a partir de esa captura, no una página de sin conexión. La cuadrícula SHALL indicar en todo momento de cuándo es el catálogo que está mostrando. Sin conexión y sin ninguna captura previa, el sistema SHALL decir explícitamente que hay que abrir la feria una vez con señal, y SHALL NOT mostrar una cuadrícula vacía sin explicación. Volver a entrar con conexión SHALL renovar la captura.
+Al entrar al modo feria **con conexión**, el sistema SHALL capturar y guardar localmente el catálogo vendible de la línea —incluida la miniatura de la foto vigente de cada producto—, la línea y el canal de la sesión, y el instante de la captura. Abrir el modo feria **sin conexión** SHALL mostrar la cuadrícula a partir de esa captura, con las miniaturas guardadas, no una página de sin conexión. Una miniatura que no se pudo guardar SHALL mostrarse como el sustituto, sin impedir abrir la feria ni vender. Guardar las miniaturas SHALL NOT retrasar la aparición de la cuadrícula. La cuadrícula SHALL indicar en todo momento de cuándo es el catálogo que está mostrando. Sin conexión y sin ninguna captura previa, el sistema SHALL decir explícitamente que hay que abrir la feria una vez con señal, y SHALL NOT mostrar una cuadrícula vacía sin explicación. Volver a entrar con conexión SHALL renovar la captura.
 
 #### Scenario: Entrar con red captura el catálogo
 
 - **WHEN** se entra al modo feria con conexión
-- **THEN** el catálogo vendible de la línea, la línea, el canal y la hora de la captura quedan guardados localmente
+- **THEN** el catálogo vendible de la línea con las miniaturas de sus productos, la línea, el canal y la hora de la captura quedan guardados localmente
 
 #### Scenario: Abrir sin red tras haber entrado con red
 
 - **WHEN** se cierra la aplicación, se pierde la señal y se vuelve a abrir el modo feria
-- **THEN** aparece la cuadrícula con los productos capturados y se puede vender
+- **THEN** aparece la cuadrícula con los productos capturados y sus miniaturas, y se puede vender
+
+#### Scenario: Las miniaturas no caducan durante la feria
+
+- **WHEN** se vende sin señal desde una captura hecha hace seis horas
+- **THEN** los productos que tenían foto al capturar siguen mostrando su miniatura
+
+#### Scenario: Una miniatura que no se pudo guardar
+
+- **WHEN** la descarga de la miniatura de un producto falla al capturar
+- **THEN** ese producto aparece con el sustituto y la feria abre y vende con normalidad
 
 #### Scenario: La antigüedad del catálogo está a la vista
 
@@ -296,17 +391,17 @@ Al entrar al modo feria **con conexión**, el sistema SHALL capturar y guardar l
 
 #### Scenario: Volver a entrar con red renueva la captura
 
-- **WHEN** se cambia el precio de un producto y después se entra al modo feria con conexión
-- **THEN** la captura se renueva y la cuadrícula muestra el precio nuevo con la hora nueva
+- **WHEN** se cambia el precio de un producto y su foto, y después se entra al modo feria con conexión
+- **THEN** la captura se renueva y la cuadrícula muestra el precio nuevo y la foto nueva con la hora nueva
 
 #### Scenario: Un cambio hecho sin señal no altera la captura
 
-- **WHEN** un producto se archiva desde otro dispositivo mientras la feria está sin señal
+- **WHEN** un producto se archiva, o se oculta de la venta rápida, desde otro dispositivo mientras la feria está sin señal
 - **THEN** la cuadrícula sigue mostrando el catálogo capturado, con su hora, hasta que se renueve con conexión
 
 ### Requirement: Indicador de ventas pendientes de sincronizar
 
-El modo feria SHALL mostrar de forma persistente cuántas ventas quedan por sincronizar, sin ocupar ningún control de venta. El indicador SHALL aumentar al confirmar una venta sin conexión, disminuir a medida que se envían y llegar a cero cuando no queda ninguna pendiente.
+El modo feria SHALL mostrar de forma persistente cuántas ventas quedan por sincronizar, sin ocupar ningún control de venta. El indicador SHALL aumentar al confirmar una venta sin conexión, disminuir a medida que se envían y llegar a cero cuando no queda ninguna pendiente. Un registro que genera varias ventas —un carrito con productos de varias líneas— SHALL contar tantas ventas como genera.
 
 #### Scenario: Sube al vender sin conexión
 
@@ -333,6 +428,11 @@ El modo feria SHALL mostrar de forma persistente cuántas ventas quedan por sinc
 - **WHEN** una venta encolada falla y se abre el indicador
 - **THEN** se puede reintentarla o descartarla sin salir del modo feria
 
+#### Scenario: Un carrito de dos líneas cuenta dos ventas
+
+- **WHEN** con la bandera encendida y sin conexión se registra un carrito con productos de Alfarería y de Sublimación
+- **THEN** el indicador aumenta en dos
+
 ### Requirement: Aislamiento y roles en el modo feria
 
 El ayudante SHALL poder registrar ventas directas y sus cobros, porque atender un puesto de feria es parte de su trabajo. Ninguna venta SHALL ser visible ni modificable desde otra organización. Las ventas directas SHALL archivarse, nunca borrarse.
@@ -356,3 +456,61 @@ El ayudante SHALL poder registrar ventas directas y sus cobros, porque atender u
 
 - **WHEN** se abre el modo feria
 - **THEN** la cuadrícula solo ofrece productos de la organización activa
+
+### Requirement: Con todas las líneas, cada producto se registra en su línea
+
+Con la bandera «Venta rápida con todas las líneas» encendida, registrar un carrito SHALL crear **una venta directa por cada línea** presente en él: cada producto en la línea a la que pertenece, y los productos compartidos en la línea de la feria. Un carrito cuyos productos van todos a la misma línea SHALL crear una sola venta, como sin la bandera. Todas las ventas de un mismo registro SHALL compartir canal, hora real del hecho y método de pago.
+
+El monto cobrado SHALL repartirse entre las ventas en proporción al subtotal de cada una, redondeado a centavos, con la última venta —en el orden en que aparecen sus líneas en el carrito— absorbiendo la diferencia de redondeo, de modo que la suma de los cobros sea exactamente el monto cobrado. Una venta cuya parte sea cero SHALL registrarse sin cobro.
+
+Todas las ventas de un registro SHALL guardarse en **una única operación de base de datos**: si cualquiera falla, no SHALL persistir ninguna. Sin conexión, el registro SHALL viajar en la cola como una sola entrada; reenviarla SHALL NOT crear ninguna venta, línea ni cobro de más. La vuelta a la cuadrícula y el mensaje de éxito SHALL comportarse igual que con una sola venta.
+
+#### Scenario: Un carrito de dos líneas crea dos ventas
+
+- **WHEN** con la bandera encendida se registran 2 tazas de Sublimación a 45 y 1 maceta de Alfarería a 60, cobrando el total de 150
+- **THEN** existen dos ventas directas: una en Sublimación de 90 con un cobro de 90 y otra en Alfarería de 60 con un cobro de 60
+
+#### Scenario: Un carrito de una línea crea una venta
+
+- **WHEN** con la bandera encendida se registra un carrito cuyos productos son todos de Sublimación
+- **THEN** existe una sola venta directa, en Sublimación
+
+#### Scenario: Los compartidos van a la línea de la feria
+
+- **WHEN** con la bandera encendida y la feria abierta en Alfarería se registran una taza de Sublimación y una bolsa compartida
+- **THEN** la taza queda en una venta de Sublimación y la bolsa en una venta de Alfarería
+
+#### Scenario: Cobro parcial repartido en proporción
+
+- **WHEN** se registra un carrito con 90 de Sublimación y 60 de Alfarería cobrando 100
+- **THEN** la venta de Sublimación recibe un cobro de 60 y la de Alfarería uno de 40, con el mismo método de pago
+
+#### Scenario: El redondeo no pierde centavos
+
+- **WHEN** se registra un carrito con tres líneas de 10 cada una cobrando 10
+- **THEN** los cobros son 3.33, 3.33 y 3.34, y suman exactamente 10
+
+#### Scenario: Sin cobro
+
+- **WHEN** se registra un carrito de dos líneas con monto 0
+- **THEN** existen las dos ventas y ninguna tiene cobro
+
+#### Scenario: Todo o nada
+
+- **WHEN** al registrar un carrito de dos líneas falla el guardado de la segunda venta
+- **THEN** no existe ninguna de las dos ventas, ni sus líneas, ni sus cobros
+
+#### Scenario: Reenvío sin duplicados
+
+- **WHEN** el registro de un carrito de dos líneas hecho sin conexión se reenvía dos veces al volver la señal
+- **THEN** existen exactamente dos ventas, cada una con sus líneas y su cobro, y ninguna repetida
+
+#### Scenario: Misma hora y canal
+
+- **WHEN** se registra un carrito de dos líneas a las 15:40 con el canal Feria
+- **THEN** las dos ventas tienen `occurred_at` 15:40 y el canal Feria
+
+#### Scenario: Cuatro interacciones con varias líneas
+
+- **WHEN** con la bandera encendida se pulsa *Agregar* en un producto de Sublimación y en uno de Alfarería, luego *Ver carrito* y *Registrar pedido*
+- **THEN** quedan registradas las dos ventas con sus cobros, sin ninguna interacción adicional

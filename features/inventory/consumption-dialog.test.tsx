@@ -53,6 +53,7 @@ function supply(id: string, name: string): Item {
     attributes: {},
     salePrice: null,
     minStock: 12,
+    showInFair: true,
     archivedAt: null,
   };
 }

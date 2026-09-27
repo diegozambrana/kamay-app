@@ -28,6 +28,7 @@ function product(overrides: Partial<PickableItem> & { name: string }): PickableI
     attributes: {},
     salePrice: 45,
     minStock: null,
+    showInFair: true,
     archivedAt: null,
     variants: [],
     ...overrides,

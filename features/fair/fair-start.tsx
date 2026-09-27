@@ -30,6 +30,7 @@ export function FairStart({
   lines,
   channels,
   needsLine,
+  allLines = false,
   offlineWithoutSnapshot,
   onStart,
 }: {
@@ -37,6 +38,12 @@ export function FairStart({
   channels: readonly SalesChannel[];
   /** La línea activa es «Todas»: hay que elegir una antes de la cuadrícula. */
   needsLine: boolean;
+  /**
+   * «Venta rápida con todas las líneas» (`fair-all-lines`): la línea elegida
+   * deja de filtrar la cuadrícula y pasa a ser la de los productos
+   * compartidos.
+   */
+  allLines?: boolean;
   /** Sin red y sin captura previa: no hay cuadrícula que mostrar. */
   offlineWithoutSnapshot: boolean;
   onStart: (businessLineId: string, salesChannelId: string | null) => void;
@@ -81,7 +88,7 @@ export function FairStart({
         {needsLine ? (
         <div className="grid gap-2">
           <label className="text-sm" htmlFor="fair-line">
-            Línea de negocio
+            {allLines ? "Línea para los productos compartidos" : "Línea de negocio"}
           </label>
           <Select value={lineId} onValueChange={setLineId}>
             <SelectTrigger id="fair-line" data-testid="fair-line" className="h-12">
@@ -95,11 +102,23 @@ export function FairStart({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            Se vende de una línea a la vez. Puedes cambiarla saliendo y
-            volviendo a entrar.
-          </p>
+          {allLines ? (
+            <p data-testid="fair-all-lines-help" className="text-xs text-muted-foreground">
+              Cada producto se registra en su propia línea; los compartidos, en
+              esta.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Se vende de una línea a la vez. Puedes cambiarla saliendo y
+              volviendo a entrar.
+            </p>
+          )}
         </div>
+        ) : allLines ? (
+          <p data-testid="fair-all-lines-help" className="text-sm text-muted-foreground">
+            Se venden productos de todas las líneas: cada uno se registra en su
+            propia línea, y los compartidos, en la línea activa.
+          </p>
         ) : null}
 
         {channels.length > 0 ? (

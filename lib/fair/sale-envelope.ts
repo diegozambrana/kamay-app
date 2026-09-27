@@ -1,5 +1,6 @@
 import type { CartLine } from "./cart";
 import { cartTotal } from "./cart";
+import { splitSale } from "./split-sale";
 import type { DirectSaleInput } from "./sale-schema";
 import type { PaymentMethod } from "@/types";
 
@@ -62,6 +63,38 @@ export function buildSaleEnvelope(input: BuildSaleEnvelopeInput): DirectSaleInpu
         ? { id: input.paymentId, amount: input.amount, method: input.method }
         : null,
   };
+}
+
+export type BuildSaleEnvelopesInput = Omit<
+  BuildSaleEnvelopeInput,
+  "businessLineId" | "saleId" | "paymentId"
+> & {
+  /** La línea de la feria: la de los productos compartidos. */
+  fairLineId: string;
+  /** Genera los `id` de cada venta y de cada cobro. Inyectado para probar. */
+  newId: () => string;
+};
+
+/**
+ * Los sobres de un carrito con «Venta rápida con todas las líneas»
+ * (`fair-all-lines`): una venta por línea de negocio, con su parte del cobro
+ * (`splitSale`). Todas comparten canal, cliente, hora y método; cada una lleva
+ * sus propios `id` de venta y de cobro, y las líneas conservan los suyos, así
+ * que reenviar el lote es idempotente venta por venta.
+ */
+export function buildSaleEnvelopes(input: BuildSaleEnvelopesInput): DirectSaleInput[] {
+  const { fairLineId, newId, lines, amount, ...shared } = input;
+
+  return splitSale(lines, fairLineId, amount).map((group) =>
+    buildSaleEnvelope({
+      ...shared,
+      businessLineId: group.businessLineId,
+      lines: group.lines,
+      amount: group.amount,
+      saleId: newId(),
+      paymentId: newId(),
+    }),
+  );
 }
 
 /** El monto que la hoja de cobro propone: el total del carrito, entero. */

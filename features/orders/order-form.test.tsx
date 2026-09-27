@@ -104,6 +104,7 @@ function product(id: string, name: string, businessLineId: string | null): Picka
     attributes: {},
     salePrice: 45,
     minStock: null,
+    showInFair: true,
     archivedAt: null,
     variants: [],
   };

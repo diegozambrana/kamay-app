@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { SyncTray } from "@/features/sync/sync-tray";
-import { DIRECT_SALE_CREATE } from "@/features/sync/operations";
+import { DIRECT_SALE_CREATE, DIRECT_SALE_CREATE_BATCH } from "@/features/sync/operations";
 import { discardEntry, retryEntry } from "@/lib/offline";
 import { cn } from "@/lib/utils";
 import { useSyncStore } from "@/stores/sync-store";
@@ -27,11 +27,25 @@ export function PendingSalesIndicator({ className }: { className?: string }) {
   const items = useSyncStore((state) => state.items);
   const [open, setOpen] = useState(false);
 
-  const sales = items.filter((item) => item.entry.operation === DIRECT_SALE_CREATE);
+  const sales = items.filter(
+    (item) =>
+      item.entry.operation === DIRECT_SALE_CREATE ||
+      item.entry.operation === DIRECT_SALE_CREATE_BATCH,
+  );
+  // Un registro con varias líneas son varias ventas (`fair-all-lines`): el
+  // número dice ventas, no entradas de la cola.
+  const count = sales.reduce(
+    (sum, item) =>
+      sum +
+      (item.entry.operation === DIRECT_SALE_CREATE_BATCH
+        ? ((item.entry.payload as { sales?: unknown[] }).sales?.length ?? 1)
+        : 1),
+    0,
+  );
 
   // A cero desaparece: un indicador que siempre está deja de mirarse, y aquí
   // el espacio es de los controles de venta.
-  if (sales.length === 0) return null;
+  if (count === 0) return null;
 
   const failed = sales.filter((item) => item.entry.state === "failed").length;
 
@@ -42,7 +56,7 @@ export function PendingSalesIndicator({ className }: { className?: string }) {
         variant="ghost"
         size="sm"
         data-testid="fair-pending-sales"
-        aria-label={`${sales.length} ventas por sincronizar`}
+        aria-label={`${count} ventas por sincronizar`}
         onClick={() => setOpen(true)}
         className={cn("gap-1.5", failed > 0 && "text-destructive", className)}
       >
@@ -52,7 +66,7 @@ export function PendingSalesIndicator({ className }: { className?: string }) {
           <RefreshCw className="size-4" aria-hidden />
         )}
         <span data-testid="fair-pending-count" className="tabular-nums">
-          {sales.length}
+          {count}
         </span>
       </Button>
 

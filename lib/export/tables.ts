@@ -258,6 +258,8 @@ export const EXPORT_TABLES: readonly ExportTable[] = [
       "category_id",
       // Añadida por `catalog-custom-attributes`, también al final.
       "attributes",
+      // Añadida por `fair-product-photos-visibility-cart-drawer`, al final.
+      "show_in_fair",
     ],
   },
   {

@@ -25,6 +25,7 @@ export {
   type OfflineOperation,
 } from "./registry";
 export type {
+  FairPhoto,
   FairSnapshot,
   FairSnapshotProduct,
   HoldReason,

@@ -1,4 +1,4 @@
-import { registerDirectSale } from "@/actions/fair";
+import { registerDirectSale, registerDirectSales } from "@/actions/fair";
 import { registerConsumption, registerCountAdjustment } from "@/actions/inventory";
 import { createOrder, updateOrder } from "@/actions/orders";
 import { registerOperation } from "@/lib/offline";
@@ -22,6 +22,11 @@ export const ORDER_CREATE = "order.create";
 export const ORDER_UPDATE = "order.update";
 /** Venta de feria: la venta, sus líneas y su cobro en un solo sobre (KAM-12). */
 export const DIRECT_SALE_CREATE = "directSale.create";
+/**
+ * Las ventas de un carrito con productos de varias líneas, una por línea, en
+ * un solo sobre: se guardan todas o ninguna (`fair-all-lines`).
+ */
+export const DIRECT_SALE_CREATE_BATCH = "directSale.createBatch";
 /** Consumo de inventario (KAM-18). Un movimiento es siempre un sobre completo. */
 export const INVENTORY_CONSUMPTION = "inventory.consumption";
 /** Ajuste por conteo físico (KAM-18). */
@@ -47,6 +52,22 @@ export function describeDirectSale(payload: unknown): string {
     sale.items?.reduce((sum, line) => sum + (line.quantity ?? 0) * (line.unitPrice ?? 0), 0) ?? 0;
 
   return `Venta de feria · ${units} ${units === 1 ? "unidad" : "unidades"} · ${total}`;
+}
+
+/** Lo que la bandeja enseña de un registro de feria con varias líneas. */
+export function describeDirectSaleBatch(payload: unknown): string {
+  const sales = (payload as { sales?: Partial<DirectSaleInput>[] }).sales ?? [];
+  const total = sales.reduce(
+    (sum, sale) =>
+      sum +
+      (sale.items ?? []).reduce(
+        (lineSum, line) => lineSum + (line.quantity ?? 0) * (line.unitPrice ?? 0),
+        0,
+      ),
+    0,
+  );
+
+  return `Venta de feria · ${sales.length} ${sales.length === 1 ? "venta" : "ventas"} · ${total}`;
 }
 
 /**
@@ -85,6 +106,12 @@ export function registerOfflineOperations(): void {
   registerOperation(DIRECT_SALE_CREATE, {
     send: (payload) => registerDirectSale(payload),
     describe: describeDirectSale,
+  });
+
+  // `fair-all-lines`. Varias ventas, un solo sobre: tampoco depende de nada.
+  registerOperation(DIRECT_SALE_CREATE_BATCH, {
+    send: (payload) => registerDirectSales((payload as { sales?: unknown }).sales),
+    describe: describeDirectSaleBatch,
   });
 
   // KAM-18. Un movimiento de inventario tampoco declara `dependsOn`: no espera

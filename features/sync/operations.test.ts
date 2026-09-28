@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import { clearOperations, getOperation } from "@/lib/offline";
 
 import {
+  DIRECT_SALE_CREATE_BATCH,
   INVENTORY_ADJUSTMENT,
   INVENTORY_CONSUMPTION,
   describeAdjustment,
   describeConsumption,
+  describeDirectSaleBatch,
   registerOfflineOperations,
 } from "./operations";
 
@@ -48,5 +50,26 @@ describe("describeAdjustment", () => {
 
   it("no se rompe con un sobre incompleto", () => {
     expect(describeAdjustment({})).toBe("Ajuste por conteo · 0");
+  });
+});
+
+// `fair-all-lines` · La venta de un carrito con varias líneas.
+describe("directSale.createBatch", () => {
+  it("se registra con el resto", () => {
+    clearOperations();
+    registerOfflineOperations();
+
+    expect(getOperation(DIRECT_SALE_CREATE_BATCH)).toBeDefined();
+  });
+
+  it("la bandeja dice cuántas ventas y el total", () => {
+    expect(
+      describeDirectSaleBatch({
+        sales: [
+          { items: [{ quantity: 2, unitPrice: 45 }] },
+          { items: [{ quantity: 1, unitPrice: 60 }] },
+        ],
+      }),
+    ).toBe("Venta de feria · 2 ventas · 150");
   });
 });

@@ -1,0 +1,21 @@
+-- Cambio `fair-product-photos-visibility-cart-drawer` · Qué productos se
+-- ofrecen en la venta rápida (V6).
+--
+-- Hasta aquí, todo producto con precio aparecía en la feria, y la única forma
+-- de sacarlo era archivarlo: eso lo retira también del catálogo, de los
+-- buscadores de pedidos y de los reportes. `show_in_fair` controla solo la
+-- cuadrícula de la feria.
+--
+-- Verdadero por omisión: al aplicar la migración ninguna feria se vacía, y un
+-- producto nuevo aparece solo, que es justo el que más falta hace mostrar
+-- (design.md, decisión 1).
+--
+-- `add column ... not null default` no reescribe la tabla ni dispara
+-- `log_activity()`: la bitácora no registra una edición por cada ítem, porque
+-- nadie los editó.
+--
+-- Solo tiene sentido en productos. En insumos y activos la acción de servidor
+-- lo deja siempre en `true` (lib/catalog/fields.ts): un booleano no nulo no se
+-- «vacía», y así un ítem nunca nace oculto por un valor que no le corresponde.
+
+alter table items add column show_in_fair boolean not null default true;

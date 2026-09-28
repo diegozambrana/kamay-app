@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { getSessionContext } from "@/lib/auth/session-context";
 import { directSaleSchema } from "@/lib/fair/sale-schema";
@@ -8,6 +9,16 @@ import { orderErrorMessage } from "@/lib/orders/errors";
 import { FairSaleService } from "@/services/fair/fair-sale-service";
 
 export type RegisterDirectSaleResult = { error: string } | { saleId: string };
+export type RegisterDirectSalesResult = { error: string } | { saleIds: string[] };
+
+/**
+ * Un carrito con productos de varias líneas: dos ventas o más, y un tope que
+ * ningún carrito de feria alcanza —una por línea de la organización—.
+ */
+const directSalesSchema = z
+  .array(directSaleSchema)
+  .min(2, "Un lote necesita al menos dos ventas.")
+  .max(20, "Demasiadas ventas en un mismo registro.");
 
 const NO_SESSION = "Tu sesión terminó. Vuelve a entrar.";
 
@@ -53,6 +64,43 @@ export async function registerDirectSale(
   } catch (error) {
     return {
       error: orderErrorMessage(error, "No se pudo registrar la venta."),
+    };
+  }
+}
+
+/**
+ * Registrar las ventas de un carrito con productos de varias líneas
+ * (`fair-all-lines`): una por línea, todas o ninguna.
+ *
+ * Como `registerDirectSale`, es lo que la cola reenvía: idempotente por los
+ * `id` del cliente, y la organización de cada venta tiene que ser la de la
+ * sesión. Una sola ajena rechaza el lote entero antes de escribir nada.
+ */
+export async function registerDirectSales(
+  input: unknown,
+): Promise<RegisterDirectSalesResult> {
+  const parsed = directSalesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const context = await getSessionContext();
+  if (!context) return { error: NO_SESSION };
+
+  if (parsed.data.some((sale) => sale.organizationId !== context.organizationId)) {
+    return { error: "Esa venta pertenece a otra organización." };
+  }
+
+  try {
+    const saleIds = await new FairSaleService(context.supabase).createMany(parsed.data);
+
+    revalidatePath("/orders");
+    revalidatePath("/dashboard");
+
+    return { saleIds };
+  } catch (error) {
+    return {
+      error: orderErrorMessage(error, "No se pudieron registrar las ventas."),
     };
   }
 }

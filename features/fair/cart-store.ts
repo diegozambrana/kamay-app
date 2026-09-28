@@ -8,6 +8,7 @@ import {
   cartUnits,
   clear,
   removeLine,
+  setLineQuantity,
   type CartLine,
   type SellableProduct,
 } from "@/lib/fair/cart";
@@ -26,15 +27,18 @@ import {
 
 type CartState = {
   lines: CartLine[];
-  add: (product: SellableProduct, newId: string) => void;
+  add: (product: SellableProduct, newId: string, quantity?: number) => void;
+  setQuantity: (lineId: string, quantity: number) => void;
   remove: (lineId: string) => void;
   empty: () => void;
 };
 
 export const useCartStore = create<CartState>()((set) => ({
   lines: [],
-  add: (product, newId) =>
-    set((state) => ({ lines: addLine(state.lines, product, newId) })),
+  add: (product, newId, quantity = 1) =>
+    set((state) => ({ lines: addLine(state.lines, product, newId, quantity) })),
+  setQuantity: (lineId, quantity) =>
+    set((state) => ({ lines: setLineQuantity(state.lines, lineId, quantity) })),
   remove: (lineId) => set((state) => ({ lines: removeLine(state.lines, lineId) })),
   empty: () => set({ lines: clear() }),
 }));

@@ -52,6 +52,7 @@ const item: Item = {
   attributes: {},
   salePrice: null,
   minStock: 12,
+  showInFair: true,
   archivedAt: null,
 };
 

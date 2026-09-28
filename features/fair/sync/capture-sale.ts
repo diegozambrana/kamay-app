@@ -1,4 +1,4 @@
-import { DIRECT_SALE_CREATE } from "@/features/sync/operations";
+import { DIRECT_SALE_CREATE, DIRECT_SALE_CREATE_BATCH } from "@/features/sync/operations";
 import type { DirectSaleInput } from "@/lib/fair/sale-schema";
 import {
   capture,
@@ -52,6 +52,42 @@ export async function captureSale(
       drain: () =>
         drainOutbox({
           session: { organizationId: sale.organizationId, userId },
+        }),
+      isOnline: deps.isOnline,
+      deadlineMs: FAIR_FLUSH_DEADLINE_MS,
+    },
+  );
+}
+
+/**
+ * Encolar las ventas de un carrito con productos de varias líneas
+ * (`fair-all-lines`, design.md decisión 5): **una** entrada con todas. Si
+ * fueran N entradas, con red a medias podrían salir unas y otras no, y el
+ * cobro quedaría partido sin que nadie lo reconcilie.
+ *
+ * La clave del sobre es el `id` de la primera venta: reenviar el mismo
+ * registro conserva la clave, y la base es idempotente venta por venta.
+ */
+export async function captureSales(
+  sales: readonly DirectSaleInput[],
+  userId: string,
+  deps: CaptureSaleDeps,
+): Promise<CaptureResult> {
+  const [first] = sales;
+
+  return capture(
+    {
+      recordId: first.id,
+      operation: DIRECT_SALE_CREATE_BATCH,
+      payload: { sales },
+      organizationId: first.organizationId,
+      userId,
+    },
+    {
+      enqueue: (input) => enqueue(input, outboxDatabase()),
+      drain: () =>
+        drainOutbox({
+          session: { organizationId: first.organizationId, userId },
         }),
       isOnline: deps.isOnline,
       deadlineMs: FAIR_FLUSH_DEADLINE_MS,

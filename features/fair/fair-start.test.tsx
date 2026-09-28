@@ -157,3 +157,59 @@ describe("FairStart", () => {
     expect(screen.getByTestId("fair-start")).toBeDisabled();
   });
 });
+
+// `fair-all-lines` · Escenario «Con la bandera, la línea de la feria recibe
+// los compartidos», en el paso de inicio.
+describe("FairStart · todas las líneas", () => {
+  it("con la bandera, la línea se pide como la de los productos compartidos", () => {
+    render(
+      <FairStart
+        lines={lines}
+        channels={channels}
+        needsLine
+        allLines
+        offlineWithoutSnapshot={false}
+        onStart={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Línea para los productos compartidos")).toBeInTheDocument();
+    expect(screen.getByTestId("fair-all-lines-help")).toHaveTextContent(
+      "Cada producto se registra en su propia línea",
+    );
+    expect(screen.queryByText("Línea de negocio")).toBeNull();
+  });
+
+  it("con la bandera y la línea ya activa, lo explica sin pedirla", () => {
+    render(
+      <FairStart
+        lines={lines}
+        channels={channels}
+        needsLine={false}
+        allLines
+        offlineWithoutSnapshot={false}
+        onStart={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByTestId("fair-line")).toBeNull();
+    expect(screen.getByTestId("fair-all-lines-help")).toHaveTextContent(
+      "los compartidos, en la línea activa",
+    );
+  });
+
+  it("sin la bandera, igual que siempre", () => {
+    render(
+      <FairStart
+        lines={lines}
+        channels={channels}
+        needsLine
+        offlineWithoutSnapshot={false}
+        onStart={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Línea de negocio")).toBeInTheDocument();
+    expect(screen.queryByTestId("fair-all-lines-help")).toBeNull();
+  });
+});

@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   attributeFieldsFor,
@@ -134,6 +135,12 @@ export function ItemFormDialog({
     "item",
   );
   const [photos, setPhotos] = useState<File[]>([]);
+  // «Mostrar en venta rápida» y el precio se siguen en estado: el aviso de
+  // «sin precio no aparece» cambia mientras se escribe.
+  const [showInFair, setShowInFair] = useState(item?.showInFair ?? true);
+  const [salePriceText, setSalePriceText] = useState(
+    item?.salePrice === null || item?.salePrice === undefined ? "" : String(item.salePrice),
+  );
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -148,6 +155,8 @@ export function ItemFormDialog({
       description: String(data.get("description") ?? ""),
       salePrice: String(data.get("salePrice") ?? ""),
       minStock: String(data.get("minStock") ?? ""),
+      // Solo los productos lo ofrecen; en los demás lo fija el servidor.
+      ...(fields.showInFair ? { showInFair } : {}),
     });
 
     if (!parsed.success) {
@@ -317,7 +326,8 @@ export function ItemFormDialog({
                     id="item-sale-price"
                     name="salePrice"
                     inputMode="decimal"
-                    defaultValue={item?.salePrice ?? ""}
+                    value={salePriceText}
+                    onChange={(event) => setSalePriceText(event.target.value)}
                   />
                   <FieldDescription>No es el costo de compra.</FieldDescription>
                 </Field>
@@ -335,6 +345,31 @@ export function ItemFormDialog({
                 </Field>
               )}
             </div>
+
+            {fields.showInFair && (
+              <Field orientation="horizontal">
+                <Switch
+                  id="item-show-in-fair"
+                  checked={showInFair}
+                  onCheckedChange={setShowInFair}
+                />
+                <div className="grid gap-1">
+                  <FieldLabel htmlFor="item-show-in-fair">Mostrar en venta rápida</FieldLabel>
+                  <FieldDescription>
+                    Apagado, el producto no sale en el modo feria, pero sigue en el
+                    catálogo y en los pedidos.
+                  </FieldDescription>
+                  {/* Un producto sin precio no se puede vender en dos toques:
+                      la feria lo deja fuera aunque el ajuste esté encendido. */}
+                  {showInFair && salePriceText.trim() === "" && (
+                    <FieldDescription data-testid="item-fair-no-price">
+                      Sin precio de venta, no aparecerá en la venta rápida hasta que
+                      tenga precio.
+                    </FieldDescription>
+                  )}
+                </div>
+              </Field>
+            )}
 
             {/* Los atributos de la categoría elegida; la clave los reinicia al
                 cambiar de categoría. */}

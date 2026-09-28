@@ -63,6 +63,7 @@ function item(overrides: Partial<CatalogRow> = {}): CatalogRow {
     attributes: {},
     salePrice: 45,
     minStock: null,
+    showInFair: true,
     archivedAt: null,
     photoUrl: null,
     ...overrides,

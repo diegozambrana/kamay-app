@@ -64,6 +64,12 @@ export const itemFieldsSchema = z.object({
   description: optionalText,
   salePrice: optionalAmount,
   minStock: optionalAmount,
+  /**
+   * «Mostrar en venta rápida». Sin valor en la carga, el alta lo deja
+   * activado y la edición no lo toca: una petición que no lo conoce no puede
+   * volver a mostrar un producto que alguien ocultó.
+   */
+  showInFair: z.boolean().optional(),
 });
 
 /**

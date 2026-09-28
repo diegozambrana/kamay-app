@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -14,9 +14,15 @@ const captureSale = vi.fn<
   (sale: DirectSaleInput, userId: string, deps: unknown) => Promise<CaptureResult>
 >(async () => ({ status: "queued" }));
 
+const captureSales = vi.fn<
+  (sales: DirectSaleInput[], userId: string, deps: unknown) => Promise<CaptureResult>
+>(async () => ({ status: "queued" }));
+
 vi.mock("./sync/capture-sale", () => ({
   captureSale: (sale: DirectSaleInput, userId: string, deps: unknown) =>
     captureSale(sale, userId, deps),
+  captureSales: (sales: DirectSaleInput[], userId: string, deps: unknown) =>
+    captureSales(sales, userId, deps),
   FAIR_FLUSH_DEADLINE_MS: 0,
 }));
 
@@ -40,22 +46,55 @@ const ORG = "00000000-0000-4000-8000-000000000001";
 const LINE = "00000000-0000-4000-8000-000000000002";
 
 const products: FairProduct[] = [
-  { id: "taza", name: "Taza de barro", salePrice: 35, quantitySold: 30, businessLineId: LINE },
-  { id: "maceta", name: "Maceta", salePrice: 60, quantitySold: 4, businessLineId: LINE },
+  {
+    id: "taza",
+    name: "Taza de barro",
+    salePrice: 35,
+    quantitySold: 30,
+    businessLineId: LINE,
+    photoUrl: null,
+    photoAttachmentId: null,
+    businessLineName: null,
+  },
+  {
+    id: "maceta",
+    name: "Maceta",
+    salePrice: 60,
+    quantitySold: 4,
+    businessLineId: LINE,
+    photoUrl: null,
+    photoAttachmentId: null,
+    businessLineName: null,
+  },
 ];
 
 const channels = [
   { id: "canal-feria", organizationId: ORG, name: "Feria", position: 1 },
 ] as never[];
 
-function renderScreen(activeLine: string = LINE) {
+/** *Agregar* en la tarjeta de un producto: el único gesto que llena el carrito. */
+async function agregar(name: string) {
+  await userEvent.click(screen.getByRole("button", { name: `Agregar ${name}` }));
+}
+
+/** *Ver carrito* y *Registrar pedido*: los dos últimos toques de una venta. */
+async function registrar() {
+  await userEvent.click(screen.getByRole("button", { name: "Ver carrito" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Registrar pedido" }));
+}
+
+function renderScreen(
+  activeLine: string = LINE,
+  { allLines = false, grid = products }: { allLines?: boolean; grid?: FairProduct[] } = {},
+) {
   return render(
     <FairScreen
       organizationId={ORG}
       lines={[] as never[]}
       activeLine={activeLine}
       channels={channels}
-      products={products}
+      products={grid}
+      allLines={allLines}
     />,
   );
 }
@@ -64,6 +103,7 @@ afterEach(cleanup);
 
 beforeEach(() => {
   captureSale.mockClear();
+  captureSales.mockClear();
   saveSnapshot.mockClear();
   readSnapshot.mockClear();
   useUserStore.setState({ user: { id: "user-a", email: "a@kamay.test" } } as never);
@@ -77,7 +117,9 @@ beforeEach(() => {
     businessLineId: null,
     salesChannelId: null,
     products: [],
+    photos: new Map(),
     capturedAt: null,
+    allLines: false,
     loading: true,
   });
 });
@@ -95,11 +137,10 @@ describe("FairScreen", () => {
     renderScreen();
     await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
 
-    const [taza, maceta] = screen.getAllByTestId("fair-product");
-    await userEvent.click(taza); // 1
-    await userEvent.click(maceta); // 2
-    await userEvent.click(screen.getByTestId("fair-checkout")); // 3
-    await userEvent.click(await screen.findByTestId("fair-confirm")); // 4
+    await agregar("Taza de barro"); // 1
+    await agregar("Maceta"); // 2
+    await userEvent.click(screen.getByRole("button", { name: "Ver carrito" })); // 3
+    await userEvent.click(await screen.findByRole("button", { name: "Registrar pedido" })); // 4
 
     await waitFor(() => expect(captureSale).toHaveBeenCalledTimes(1));
 
@@ -109,17 +150,179 @@ describe("FairScreen", () => {
   });
 
   // Escenario: Retorno sin pantallas intermedias · Venta siguiente inmediata
-  it("vuelve a la cuadrícula con el carrito vacío y sin pantalla intermedia", async () => {
+  it("vuelve a la cuadrícula con el carrito vacío, el panel cerrado y sin pantalla intermedia", async () => {
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    await agregar("Taza de barro");
+    await registrar();
+
+    await waitFor(() => expect(screen.getByTestId("cart-total")).toHaveTextContent("0"));
+    expect(screen.queryByTestId("fair-amount")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("fair-product")).toHaveLength(2);
+  });
+
+  // Escenario: Agregar varias unidades de una vez
+  it("agregar 3 de un producto registra una línea con 3", async () => {
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    const mas = screen.getByRole("button", { name: "Aumentar cantidad de Taza de barro" });
+    await userEvent.click(mas);
+    await userEvent.click(mas);
+    await agregar("Taza de barro");
+    expect(screen.getByTestId("cart-total")).toHaveTextContent("105");
+
+    await registrar();
+
+    await waitFor(() => expect(captureSale).toHaveBeenCalledTimes(1));
+    const [sale] = captureSale.mock.calls[0];
+    expect(sale.items).toEqual([expect.objectContaining({ itemId: "taza", quantity: 3 })]);
+  });
+
+  // Escenario: Tocar la tarjeta no agrega
+  it("tocar la tarjeta no agrega", async () => {
     renderScreen();
     await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
 
     await userEvent.click(screen.getAllByTestId("fair-product")[0]);
-    await userEvent.click(screen.getByTestId("fair-checkout"));
-    await userEvent.click(await screen.findByTestId("fair-confirm"));
 
-    await waitFor(() => expect(screen.getByTestId("cart-total")).toHaveTextContent("0"));
-    expect(screen.queryByTestId("fair-amount")).not.toBeInTheDocument();
-    expect(screen.getAllByTestId("fair-product")).toHaveLength(2);
+    expect(screen.getByTestId("cart-total")).toHaveTextContent("0");
+  });
+
+  // Escenario: Cambiar la cantidad desde el panel
+  it("el panel cambia cantidades y el monto propuesto las sigue", async () => {
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    await agregar("Taza de barro");
+    await userEvent.click(screen.getByRole("button", { name: "Ver carrito" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Aumentar Taza de barro" }));
+
+    expect(screen.getByTestId("fair-amount")).toHaveValue("70");
+    await userEvent.click(screen.getByRole("button", { name: "Registrar pedido" }));
+
+    await waitFor(() => expect(captureSale).toHaveBeenCalledTimes(1));
+    expect(captureSale.mock.calls[0][0].payment?.amount).toBe(70);
+  });
+
+  // Escenario: Quitar una línea
+  it("quitar la última línea deja el panel abierto y sin poder registrar", async () => {
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    await agregar("Taza de barro");
+    await userEvent.click(screen.getByRole("button", { name: "Ver carrito" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Quitar Taza de barro" }));
+
+    expect(screen.getByText("El carrito está vacío.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Registrar pedido" })).toBeDisabled();
+    expect(screen.getByTestId("cart-total")).toHaveTextContent("0");
+  });
+
+  // Escenario: La vista queda limpia
+  it("tras registrar, todos los selectores vuelven a 1", async () => {
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    // Un selector en 4 que nunca se agregó.
+    const mas = screen.getByRole("button", { name: "Aumentar cantidad de Maceta" });
+    for (let i = 0; i < 3; i++) await userEvent.click(mas);
+    expect(screen.getAllByTestId("fair-quantity")[1]).toHaveTextContent("4");
+
+    await agregar("Taza de barro");
+    await registrar();
+
+    await waitFor(() =>
+      screen.getAllByTestId("fair-quantity").forEach((selector) =>
+        expect(selector).toHaveTextContent("1"),
+      ),
+    );
+  });
+
+  // Escenario: Mensaje de éxito
+  it("muestra el mensaje de éxito antes de que la venta salga", async () => {
+    let resolver: (() => void) | null = null;
+    captureSale.mockImplementation(
+      () =>
+        new Promise<CaptureResult>((resolve) => {
+          resolver = () => resolve({ status: "sent", result: null });
+        }),
+    );
+
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    await agregar("Taza de barro");
+    await registrar();
+
+    expect(await screen.findByTestId("fair-toast")).toHaveTextContent("Venta registrada");
+    resolver!();
+  });
+
+  // Escenario: Mensaje de éxito sin señal
+  it("sin red, el mensaje dice que se enviará al recuperar la señal", async () => {
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    // Se pierde la señal con la feria ya abierta, como en el puesto.
+    const onLine = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      act(() => window.dispatchEvent(new Event("offline")));
+
+      await agregar("Taza de barro");
+      await registrar();
+
+      expect(await screen.findByTestId("fair-toast")).toHaveTextContent(
+        "Se enviará al recuperar la señal",
+      );
+    } finally {
+      onLine.mockRestore();
+    }
+  });
+
+  // Con red, `captureSale` de la feria devuelve «en cola» casi siempre (plazo
+  // cero): eso no es falta de señal y el aviso no puede decir que lo es.
+  it("con red, una venta que sale después sigue diciendo «Venta registrada»", async () => {
+    captureSale.mockImplementation(async (): Promise<CaptureResult> => ({ status: "queued" }));
+
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    await agregar("Taza de barro");
+    await registrar();
+
+    await waitFor(() => expect(captureSale).toHaveBeenCalled());
+    expect(screen.getByTestId("fair-toast")).toHaveTextContent("Venta registrada");
+    expect(screen.getByTestId("fair-toast")).not.toHaveTextContent("señal");
+  });
+
+  // Escenario: Venta siguiente inmediata
+  it("agregar con el mensaje a la vista entra en un carrito nuevo", async () => {
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    await agregar("Taza de barro");
+    await registrar();
+    await screen.findByTestId("fair-toast");
+
+    await agregar("Maceta");
+
+    expect(screen.getByTestId("fair-toast")).toBeInTheDocument();
+    expect(screen.getByTestId("cart-total")).toHaveTextContent("60");
+  });
+
+  // Escenario: Precio del momento
+  it("la venta lleva el precio del catálogo en el momento de agregar", async () => {
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
+
+    await agregar("Maceta");
+    await registrar();
+
+    await waitFor(() => expect(captureSale).toHaveBeenCalledTimes(1));
+    expect(captureSale.mock.calls[0][0].items[0]).toMatchObject({ itemId: "maceta", unitPrice: 60 });
   });
 
   // Escenario: No se espera al servidor
@@ -135,9 +338,8 @@ describe("FairScreen", () => {
     renderScreen();
     await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
 
-    await userEvent.click(screen.getAllByTestId("fair-product")[0]);
-    await userEvent.click(screen.getByTestId("fair-checkout"));
-    await userEvent.click(await screen.findByTestId("fair-confirm"));
+    await agregar("Taza de barro");
+    await registrar();
 
     // La venta sigue en vuelo y la cuadrícula ya está lista para la siguiente.
     await waitFor(() => expect(screen.getByTestId("cart-total")).toHaveTextContent("0"));
@@ -149,12 +351,11 @@ describe("FairScreen", () => {
     renderScreen();
     await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
 
-    await userEvent.click(screen.getAllByTestId("fair-product")[0]);
-    await userEvent.click(screen.getByTestId("fair-checkout"));
-    await userEvent.click(await screen.findByTestId("fair-confirm"));
+    await agregar("Taza de barro");
+    await registrar();
     await waitFor(() => expect(screen.getByTestId("cart-total")).toHaveTextContent("0"));
 
-    await userEvent.click(screen.getAllByTestId("fair-product")[1]);
+    await agregar("Maceta");
 
     expect(screen.getByTestId("cart-total")).toHaveTextContent("60");
   });
@@ -164,8 +365,8 @@ describe("FairScreen", () => {
     renderScreen();
     await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
 
-    await userEvent.click(screen.getAllByTestId("fair-product")[0]);
-    await userEvent.click(screen.getByTestId("fair-checkout"));
+    await agregar("Taza de barro");
+    await userEvent.click(screen.getByRole("button", { name: "Ver carrito" }));
 
     expect(screen.queryByTestId("fair-line")).not.toBeInTheDocument();
     expect(screen.queryByTestId("fair-channel")).not.toBeInTheDocument();
@@ -199,9 +400,8 @@ describe("FairScreen", () => {
     renderScreen();
     await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
 
-    await userEvent.click(screen.getAllByTestId("fair-product")[0]);
-    await userEvent.click(screen.getByTestId("fair-checkout"));
-    await userEvent.click(await screen.findByTestId("fair-confirm"));
+    await agregar("Taza de barro");
+    await registrar();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/otra organización/);
     // La cuadrícula sigue lista: el aviso no bloquea.
@@ -212,12 +412,118 @@ describe("FairScreen", () => {
     renderScreen();
     await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(2));
 
-    await userEvent.click(screen.getAllByTestId("fair-product")[0]);
-    await userEvent.click(screen.getByTestId("fair-checkout"));
-    await userEvent.click(await screen.findByTestId("fair-confirm"));
+    await agregar("Taza de barro");
+    await registrar();
 
     await waitFor(() => expect(captureSale).toHaveBeenCalled());
     const [sale] = captureSale.mock.calls[0];
     expect(Number.isFinite(Date.parse(sale.occurredAt))).toBe(true);
+  });
+
+});
+
+/**
+ * `fair-all-lines` · Con la bandera, cada producto se registra en su línea.
+ * Escenarios del delta `fair-mode`: «Cuatro interacciones con varias líneas»,
+ * «Un carrito de una línea crea una venta» y «Los compartidos van a la línea
+ * de la feria».
+ */
+describe("FairScreen · todas las líneas", () => {
+  const SUB = "00000000-0000-4000-8000-000000000003";
+  const grid: FairProduct[] = [
+    { ...products[0], businessLineName: "Alfarería" },
+    {
+      id: "taza-sub",
+      name: "Taza sublimada",
+      salePrice: 45,
+      quantitySold: 10,
+      businessLineId: SUB,
+      businessLineName: "Sublimación",
+      photoUrl: null,
+      photoAttachmentId: null,
+    },
+    {
+      id: "bolsa",
+      name: "Bolsa de regalo",
+      salePrice: 5,
+      quantitySold: 0,
+      businessLineId: null,
+      businessLineName: null,
+      photoUrl: null,
+      photoAttachmentId: null,
+    },
+  ];
+
+  it("muestra la línea en cada tarjeta", async () => {
+    renderScreen(LINE, { allLines: true, grid });
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(3));
+
+    expect(screen.getAllByTestId("fair-product-line").map((el) => el.textContent)).toEqual([
+      "Alfarería",
+      "Sublimación",
+      "Compartido",
+    ]);
+  });
+
+  it("Cuatro interacciones con varias líneas: dos ventas en un solo registro", async () => {
+    renderScreen(LINE, { allLines: true, grid });
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(3));
+
+    await agregar("Taza sublimada"); // 1
+    await agregar("Taza de barro"); // 2
+    await userEvent.click(screen.getByRole("button", { name: "Ver carrito" })); // 3
+    await userEvent.click(await screen.findByRole("button", { name: "Registrar pedido" })); // 4
+
+    await waitFor(() => expect(captureSales).toHaveBeenCalledTimes(1));
+    expect(captureSale).not.toHaveBeenCalled();
+    const [sales] = captureSales.mock.calls[0];
+    expect(sales.map((sale) => sale.businessLineId)).toEqual([SUB, LINE]);
+    expect(sales.map((sale) => sale.payment?.amount)).toEqual([45, 35]);
+    expect(new Set(sales.map((sale) => sale.occurredAt)).size).toBe(1);
+    expect(sales[0].id).not.toBe(sales[1].id);
+
+    // La vista queda limpia igual que con una venta.
+    await waitFor(() => expect(screen.getByTestId("cart-total")).toHaveTextContent("0"));
+    expect(await screen.findByTestId("fair-toast")).toHaveTextContent("Venta registrada");
+  });
+
+  it("Los compartidos van a la línea de la feria: taza de barro y bolsa, una sola venta", async () => {
+    renderScreen(LINE, { allLines: true, grid });
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(3));
+
+    await agregar("Taza de barro");
+    await agregar("Bolsa de regalo");
+    await registrar();
+
+    await waitFor(() => expect(captureSale).toHaveBeenCalledTimes(1));
+    expect(captureSales).not.toHaveBeenCalled();
+    const [sale] = captureSale.mock.calls[0];
+    expect(sale.businessLineId).toBe(LINE);
+    expect(sale.items).toHaveLength(2);
+  });
+
+  it("Un carrito de una línea crea una venta, aunque no sea la de la feria", async () => {
+    renderScreen(LINE, { allLines: true, grid });
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(3));
+
+    await agregar("Taza sublimada");
+    await registrar();
+
+    await waitFor(() => expect(captureSale).toHaveBeenCalledTimes(1));
+    expect(captureSale.mock.calls[0][0].businessLineId).toBe(SUB);
+  });
+
+  it("sin la bandera, un producto de otra línea igual va a la línea de la feria", async () => {
+    renderScreen(LINE, { grid });
+    await waitFor(() => expect(screen.getAllByTestId("fair-product")).toHaveLength(3));
+
+    expect(screen.queryByTestId("fair-product-line")).toBeNull();
+    await agregar("Taza sublimada");
+    await agregar("Taza de barro");
+    await registrar();
+
+    await waitFor(() => expect(captureSale).toHaveBeenCalledTimes(1));
+    expect(captureSale.mock.calls[0][0].businessLineId).toBe(LINE);
+    expect(captureSales).not.toHaveBeenCalled();
   });
 });

@@ -145,7 +145,41 @@ describe("createItem", () => {
   });
 });
 
+describe("createItem · Mostrar en venta rápida", () => {
+  it("El servidor ignora el ajuste en un insumo: se crea activado", async () => {
+    await createItem({ ...base, kind: "supply", showInFair: false });
+
+    const [{ values }] = estado.creados as { values: Record<string, unknown> }[];
+    expect(values.showInFair).toBe(true);
+  });
+
+  it("un producto se crea con el ajuste que trae", async () => {
+    await createItem({ ...base, kind: "product", salePrice: "35", showInFair: false });
+
+    const [{ values }] = estado.creados as { values: Record<string, unknown> }[];
+    expect(values.showInFair).toBe(false);
+  });
+});
+
 describe("updateItem", () => {
+  it("Ocultar un producto de la venta rápida: el ajuste llega al servicio", async () => {
+    guardar("product", { salePrice: 35 });
+
+    await updateItem({ ...base, kind: "product", salePrice: "35", showInFair: false });
+
+    const [{ values }] = estado.editados as { values: Record<string, unknown> }[];
+    expect(values.showInFair).toBe(false);
+  });
+
+  it("un activo editado queda con el ajuste activado aunque la petición diga lo contrario", async () => {
+    guardar("asset");
+
+    await updateItem({ ...base, kind: "asset", showInFair: false });
+
+    const [{ values }] = estado.editados as { values: Record<string, unknown> }[];
+    expect(values.showInFair).toBe(true);
+  });
+
   it("un producto se guarda sin mínimo aunque la petición lo traiga", async () => {
     guardar("product", { salePrice: 45 });
 

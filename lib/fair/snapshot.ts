@@ -1,5 +1,5 @@
 import { outboxDatabase, type OutboxDatabase } from "@/lib/offline";
-import type { FairSnapshot, FairSnapshotProduct } from "@/lib/offline";
+import type { FairPhoto, FairSnapshot, FairSnapshotProduct } from "@/lib/offline";
 
 /**
  * El snapshot de feria (KAM-12, design.md decisión 12).
@@ -93,3 +93,154 @@ export function snapshotAgeLabel(
   const days = Math.floor(hours / 24);
   return days === 1 ? "Catálogo cargado ayer" : `Catálogo cargado hace ${days} días`;
 }
+
+/* ── Miniaturas ──────────────────────────────────────────────────────────
+ * `fair-product-photos-visibility-cart-drawer`, design.md decisión 2.
+ *
+ * La URL firmada de una foto caduca a la hora y no carga sin red, y una
+ * feria dura más que eso. Así que la captura también guarda los bytes de cada
+ * miniatura. Va **después** de pintar la cuadrícula y nunca la retrasa: una
+ * foto que no se guarda deja el sustituto, no una feria que no abre.
+ */
+
+/** Lo que hace falta saber de un producto para guardar su miniatura. */
+export type PhotoSource = {
+  id: string;
+  photoUrl: string | null;
+  photoAttachmentId: string | null;
+};
+
+/** Una miniatura lista para pintar, con la foto a la que corresponde. */
+export type StoredPhoto = { attachmentId: string; blob: Blob };
+
+type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
+
+const PHOTO_CONCURRENCY = 4;
+const PHOTO_TIMEOUT_MS = 8_000;
+
+function photoId(snapshot: string, itemId: string): string {
+  return `${snapshot}:${itemId}`;
+}
+
+/** Bajar una miniatura, o `null` si falla o tarda demasiado. Nunca lanza. */
+async function download(
+  url: string,
+  fetcher: Fetcher,
+  timeoutMs: number,
+): Promise<{ bytes: ArrayBuffer; mimeType: string } | null> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      resolve(null);
+    }, timeoutMs);
+  });
+
+  try {
+    const fetched = (async () => {
+      const response = await fetcher(url, { signal: controller.signal });
+      if (!response.ok) return null;
+      const bytes = await response.arrayBuffer();
+      return { bytes, mimeType: response.headers.get("content-type") ?? "image/webp" };
+    })();
+    return await Promise.race([fetched, timeout]);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Guardar las miniaturas de una feria. Reutiliza las que ya tiene de la misma
+ * foto, baja las que faltan —como mucho cuatro a la vez— y borra las de
+ * productos que ya no están o que cambiaron de foto: una miniatura por
+ * producto y por feria, nunca más.
+ *
+ * No lanza: un fallo de red o una cuota llena dejan esos productos con el
+ * sustituto.
+ */
+export async function captureFairPhotos(
+  organizationId: string,
+  businessLineId: string,
+  products: readonly PhotoSource[],
+  {
+    db = outboxDatabase(),
+    fetcher = (url, init) => fetch(url, init),
+    timeoutMs = PHOTO_TIMEOUT_MS,
+  }: { db?: OutboxDatabase; fetcher?: Fetcher; timeoutMs?: number } = {},
+): Promise<void> {
+  const snapshot = snapshotId(organizationId, businessLineId);
+
+  try {
+    const stored = await db.fairPhotos.where("snapshotId").equals(snapshot).toArray();
+    const current = new Map(stored.map((photo) => [photo.itemId, photo]));
+    const wanted = new Map(
+      products
+        .filter((product) => product.photoAttachmentId !== null)
+        .map((product) => [product.id, product]),
+    );
+
+    const stale = stored
+      .filter((photo) => wanted.get(photo.itemId)?.photoAttachmentId !== photo.attachmentId)
+      .map((photo) => photo.id);
+    if (stale.length > 0) await db.fairPhotos.bulkDelete(stale);
+
+    const missing = [...wanted.values()].filter(
+      (product) =>
+        product.photoUrl !== null &&
+        current.get(product.id)?.attachmentId !== product.photoAttachmentId,
+    );
+
+    let next = 0;
+    async function worker() {
+      while (next < missing.length) {
+        const product = missing[next++];
+        const photo = await download(product.photoUrl!, fetcher, timeoutMs);
+        if (!photo) continue;
+        try {
+          await db.fairPhotos.put({
+            id: photoId(snapshot, product.id),
+            snapshotId: snapshot,
+            itemId: product.id,
+            attachmentId: product.photoAttachmentId!,
+            bytes: photo.bytes,
+            mimeType: photo.mimeType,
+          } satisfies FairPhoto);
+        } catch {
+          // Cuota llena u otro fallo del almacén: sin miniatura, con sustituto.
+        }
+      }
+    }
+
+    await Promise.all(
+      Array.from({ length: Math.min(PHOTO_CONCURRENCY, missing.length) }, worker),
+    );
+  } catch {
+    // Sin IndexedDB o con el almacén caído, la feria sigue sin fotos guardadas.
+  }
+}
+
+/** Las miniaturas guardadas de una feria, por producto. */
+export async function readFairPhotos(
+  organizationId: string,
+  businessLineId: string,
+  db: OutboxDatabase = outboxDatabase(),
+): Promise<Map<string, StoredPhoto>> {
+  const photos = await db.fairPhotos
+    .where("snapshotId")
+    .equals(snapshotId(organizationId, businessLineId))
+    .toArray();
+
+  return new Map(
+    photos.map((photo) => [
+      photo.itemId,
+      {
+        attachmentId: photo.attachmentId,
+        blob: new Blob([photo.bytes], { type: photo.mimeType }),
+      },
+    ]),
+  );
+}
+

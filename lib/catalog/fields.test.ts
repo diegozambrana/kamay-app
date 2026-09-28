@@ -12,9 +12,9 @@ const values = {
 describe("ITEM_KIND_FIELDS", () => {
   it("el precio de venta es solo de productos y el mínimo, solo de insumos", () => {
     expect(ITEM_KIND_FIELDS).toEqual({
-      supply: { salePrice: false, minStock: true },
-      product: { salePrice: true, minStock: false },
-      asset: { salePrice: false, minStock: false },
+      supply: { salePrice: false, minStock: true, showInFair: false },
+      product: { salePrice: true, minStock: false, showInFair: true },
+      asset: { salePrice: false, minStock: false, showInFair: false },
     });
   });
 });
@@ -24,6 +24,7 @@ describe("applyKindFields", () => {
     expect(applyKindFields("supply", values)).toEqual({
       ...values,
       salePrice: null,
+      showInFair: true,
     });
   });
 
@@ -39,6 +40,7 @@ describe("applyKindFields", () => {
       ...values,
       salePrice: null,
       minStock: null,
+      showInFair: true,
     });
   });
 
@@ -48,6 +50,26 @@ describe("applyKindFields", () => {
     expect(result.name).toBe(values.name);
     expect(result.category).toBe(values.category);
     expect(input).toEqual(values);
+  });
+});
+
+describe("applyKindFields · Mostrar en venta rápida", () => {
+  it("un producto conserva el ajuste que trae, también desactivado", () => {
+    expect(applyKindFields("product", { ...values, showInFair: false }).showInFair).toBe(false);
+    expect(applyKindFields("product", { ...values, showInFair: true }).showInFair).toBe(true);
+  });
+
+  it("un producto sin ajuste en la carga lo deja sin tocar", () => {
+    expect(applyKindFields("product", values)).not.toHaveProperty("showInFair");
+  });
+
+  it("El servidor ignora el ajuste en un insumo: queda activado", () => {
+    expect(applyKindFields("supply", { ...values, showInFair: false }).showInFair).toBe(true);
+  });
+
+  it("un activo también queda con el ajuste activado", () => {
+    expect(applyKindFields("asset", { ...values, showInFair: false }).showInFair).toBe(true);
+    expect(applyKindFields("asset", values).showInFair).toBe(true);
   });
 });
 

@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from "dexie";
 
-import type { FairSnapshot, OutboxEntry } from "./types";
+import type { FairPhoto, FairSnapshot, OutboxEntry } from "./types";
 
 /**
  * Versión del formato de una entrada de la cola.
@@ -28,6 +28,7 @@ export type OutboxDatabase = Dexie & {
    * dos almacenes abre la puerta a que uno sobreviva sin el otro.
    */
   fairSnapshots: EntityTable<FairSnapshot, "id">;
+  fairPhotos: EntityTable<FairPhoto, "id">;
 };
 
 export function createOutboxDatabase(name: string = OUTBOX_DB_NAME): OutboxDatabase {
@@ -43,6 +44,13 @@ export function createOutboxDatabase(name: string = OUTBOX_DB_NAME): OutboxDatab
   // el formato de una entrada no se ha tocado.
   db.version(2).stores({
     fairSnapshots: "id, organizationId",
+  });
+
+  // La versión 3 también solo añade una tabla —las miniaturas de la feria—,
+  // por la misma razón: la cola no se toca y `OUTBOX_SCHEMA_VERSION` sigue
+  // igual.
+  db.version(3).stores({
+    fairPhotos: "id, snapshotId",
   });
 
   return db;

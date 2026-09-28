@@ -4,6 +4,8 @@ import { freshOutbox } from "@/lib/offline/test-support";
 import type { OutboxDatabase } from "@/lib/offline";
 
 import {
+  captureFairPhotos,
+  readFairPhotos,
   readLatestSnapshot,
   readSnapshot,
   saveSnapshot,
@@ -191,5 +193,128 @@ describe("snapshotAgeMinutes y snapshotAgeLabel", () => {
     expect(snapshotAgeLabel({ capturedAt: "2026-08-29T15:00:00.000Z" }, ahora)).toBe(
       "Catálogo cargado hace 3 días",
     );
+  });
+});
+
+/**
+ * `fair-product-photos-visibility-cart-drawer` · Las miniaturas que se guardan
+ * al capturar, para verlas sin señal. Escenarios del delta `fair-mode`:
+ * «Entrar con red captura el catálogo», «Una miniatura que no se pudo
+ * guardar» y «Volver a entrar con red renueva la captura».
+ */
+describe("captureFairPhotos y readFairPhotos", () => {
+  const bytes = (text: string) => new TextEncoder().encode(text).buffer as ArrayBuffer;
+
+  /** Un `fetch` falso que cuenta qué se pidió y responde por URL. */
+  function fakeFetch(responses: Record<string, string | "fail" | number>) {
+    const calls: string[] = [];
+    const fetcher = async (url: string) => {
+      calls.push(url);
+      const answer = responses[url];
+      if (answer === "fail") throw new TypeError("Failed to fetch");
+      if (typeof answer === "number") return new Response(null, { status: answer });
+      return new Response(bytes(answer ?? ""), { headers: { "content-type": "image/webp" } });
+    };
+    return { fetcher, calls };
+  }
+
+  const conFoto = [
+    { id: "taza", photoUrl: "https://firmada/taza", photoAttachmentId: "foto-taza" },
+    { id: "maceta", photoUrl: "https://firmada/maceta", photoAttachmentId: "foto-maceta" },
+    { id: "bolsa", photoUrl: null, photoAttachmentId: null },
+  ];
+
+  it("Entrar con red captura el catálogo: guarda la miniatura de cada producto con foto", async () => {
+    const { fetcher } = fakeFetch({
+      "https://firmada/taza": "TAZA",
+      "https://firmada/maceta": "MACETA",
+    });
+
+    await captureFairPhotos(ORG, LINE, conFoto, { db, fetcher });
+    const fotos = await readFairPhotos(ORG, LINE, db);
+
+    expect([...fotos.keys()].sort()).toEqual(["maceta", "taza"]);
+    expect(fotos.get("taza")?.attachmentId).toBe("foto-taza");
+    expect(await fotos.get("taza")?.blob.text()).toBe("TAZA");
+    expect(fotos.get("taza")?.blob.type).toBe("image/webp");
+  });
+
+  it("no vuelve a bajar una foto que ya tiene", async () => {
+    const primera = fakeFetch({ "https://firmada/taza": "TAZA", "https://firmada/maceta": "M" });
+    await captureFairPhotos(ORG, LINE, conFoto, { db, fetcher: primera.fetcher });
+
+    const segunda = fakeFetch({ "https://firmada/taza": "OTRA", "https://firmada/maceta": "M" });
+    await captureFairPhotos(ORG, LINE, conFoto, { db, fetcher: segunda.fetcher });
+
+    expect(segunda.calls).toEqual([]);
+    expect(await (await readFairPhotos(ORG, LINE, db)).get("taza")?.blob.text()).toBe("TAZA");
+  });
+
+  it("Volver a entrar con red renueva la captura: una foto nueva reemplaza a la vieja y lo que salió se borra", async () => {
+    const primera = fakeFetch({ "https://firmada/taza": "VIEJA", "https://firmada/maceta": "M" });
+    await captureFairPhotos(ORG, LINE, conFoto, { db, fetcher: primera.fetcher });
+
+    const segunda = fakeFetch({ "https://firmada/taza-2": "NUEVA" });
+    await captureFairPhotos(
+      ORG,
+      LINE,
+      [{ id: "taza", photoUrl: "https://firmada/taza-2", photoAttachmentId: "foto-taza-2" }],
+      { db, fetcher: segunda.fetcher },
+    );
+
+    const fotos = await readFairPhotos(ORG, LINE, db);
+    expect([...fotos.keys()]).toEqual(["taza"]);
+    expect(fotos.get("taza")?.attachmentId).toBe("foto-taza-2");
+    expect(await fotos.get("taza")?.blob.text()).toBe("NUEVA");
+  });
+
+  it("Una miniatura que no se pudo guardar: el resto se guarda y no lanza", async () => {
+    const { fetcher } = fakeFetch({
+      "https://firmada/taza": "fail",
+      "https://firmada/maceta": 403,
+    });
+
+    await expect(captureFairPhotos(ORG, LINE, conFoto, { db, fetcher })).resolves.toBeUndefined();
+    expect((await readFairPhotos(ORG, LINE, db)).size).toBe(0);
+  });
+
+  it("una foto que tarda demasiado se abandona", async () => {
+    const lenta = () => new Promise<Response>(() => {});
+
+    await captureFairPhotos(ORG, LINE, conFoto.slice(0, 1), {
+      db,
+      fetcher: lenta,
+      timeoutMs: 10,
+    });
+    expect((await readFairPhotos(ORG, LINE, db)).size).toBe(0);
+  });
+
+  it("las fotos de una feria no se mezclan con las de otra línea", async () => {
+    const { fetcher } = fakeFetch({ "https://firmada/taza": "TAZA", "https://firmada/maceta": "M" });
+    await captureFairPhotos(ORG, LINE, conFoto, { db, fetcher });
+
+    expect((await readFairPhotos(ORG, OTRA_LINEA, db)).size).toBe(0);
+  });
+
+  it("baja como mucho cuatro a la vez", async () => {
+    let enVuelo = 0;
+    let maximo = 0;
+    const fetcher = async () => {
+      enVuelo += 1;
+      maximo = Math.max(maximo, enVuelo);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      enVuelo -= 1;
+      return new Response(bytes("X"), { headers: { "content-type": "image/webp" } });
+    };
+    const muchos = Array.from({ length: 10 }, (_, index) => ({
+      id: `p${index}`,
+      photoUrl: `https://firmada/p${index}`,
+      photoAttachmentId: `f${index}`,
+    }));
+
+    await captureFairPhotos(ORG, LINE, muchos, { db, fetcher });
+
+    expect(maximo).toBeLessThanOrEqual(4);
+    expect((await readFairPhotos(ORG, LINE, db)).size).toBe(10);
   });
 });

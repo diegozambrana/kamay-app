@@ -21,6 +21,30 @@ function uniqueName(prefix: string) {
 test.describe("configuración de la organización", () => {
   test.skip(({ isMobile }) => isMobile, "V15 es una pantalla de escritorio");
 
+  // `fair-all-lines` · Escenario «Owner turns it on» y persistencia.
+  test("la dueña enciende «Venta rápida con todas las líneas» y el valor persiste", async ({
+    page,
+  }) => {
+    await login(page, geeko().owner);
+    await page.goto("/settings/general");
+
+    const toggle = page.getByRole("switch", { name: "Venta rápida con todas las líneas" });
+    await expect(toggle).not.toBeChecked();
+    await expect(page.getByTestId("fair-all-lines-notice")).toContainText(
+      "cada producto se registra en su propia línea",
+    );
+
+    await toggle.click();
+    const form = page.locator("form").filter({ has: toggle });
+    await form.getByRole("button", { name: "Guardar" }).click();
+    await expect(form.getByRole("status")).toHaveText("Cambios guardados.");
+
+    await page.reload();
+    await expect(
+      page.getByRole("switch", { name: "Venta rápida con todas las líneas" }),
+    ).toBeChecked();
+  });
+
   test("la línea creada queda disponible en el selector con su color", async ({
     page,
   }) => {

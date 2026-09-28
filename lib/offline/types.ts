@@ -73,6 +73,11 @@ export interface FairSnapshot {
   products: FairSnapshotProduct[];
   /** Cuándo se capturó, en ISO. Es lo que la cuadrícula muestra. */
   capturedAt: string;
+  /**
+   * Si se capturó con «Venta rápida con todas las líneas» (`fair-all-lines`).
+   * Opcional: un snapshot anterior se lee como capturado sin la bandera.
+   */
+  allLines?: boolean;
 }
 
 /** Un producto tal como se guarda para vender sin señal. */
@@ -81,4 +86,38 @@ export interface FairSnapshotProduct {
   name: string;
   salePrice: number;
   quantitySold: number;
+  /**
+   * La foto vigente al capturar, o `null` sin foto. Opcional: un snapshot
+   * guardado antes de que existiera no la trae y se lee como «sin foto»
+   * hasta la siguiente captura con red.
+   */
+  photoAttachmentId?: string | null;
+  /**
+   * La línea del producto y su nombre, o `null` si es compartido
+   * (`fair-all-lines`). Opcionales: un snapshot anterior no los trae, y sus
+   * productos eran todos de la línea de la feria o compartidos.
+   */
+  businessLineId?: string | null;
+  businessLineName?: string | null;
+}
+
+/**
+ * La miniatura de un producto guardada para verla sin señal
+ * (`fair-product-photos-visibility-cart-drawer`, design.md decisión 2).
+ *
+ * Vive en su propia tabla y no dentro del snapshot: guardar el snapshot no
+ * reescribe megas de imágenes, y leer la cuadrícula no las arrastra.
+ *
+ * Los bytes van como `ArrayBuffer` y no como `Blob`: se clonan igual en
+ * cualquier IndexedDB, y el `Blob` se arma al leer.
+ */
+export interface FairPhoto {
+  /** `<snapshotId>:<itemId>`: una miniatura por producto y por feria. */
+  id: string;
+  snapshotId: string;
+  itemId: string;
+  /** Qué foto es: si el producto cambia de foto, se vuelve a bajar. */
+  attachmentId: string;
+  bytes: ArrayBuffer;
+  mimeType: string;
 }

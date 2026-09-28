@@ -258,6 +258,14 @@ export function ItemDetail({
                     </dd>
                   </div>
                 )}
+                {fields.showInFair && (
+                  <div className="flex flex-col gap-1">
+                    <dt className="text-muted-foreground">Mostrar en venta rápida</dt>
+                    <dd data-testid="item-show-in-fair">
+                      {item.showInFair ? "Sí" : "No"}
+                    </dd>
+                  </div>
+                )}
                 {fields.minStock && (
                   <div className="flex flex-col gap-1">
                     <dt className="text-muted-foreground">Mínimo</dt>
